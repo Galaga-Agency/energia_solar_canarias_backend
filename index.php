@@ -1,0 +1,3 @@
+<?php
+Echo "ENSAYO DEL SERVIDOR AWS";
+?>
