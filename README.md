@@ -7,5 +7,4 @@ FRONTEND: https://app-energiasolarcanarias.com
 
 En desarrollo...
 
-
 ## APIREST
