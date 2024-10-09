@@ -1,0 +1,2 @@
+http://ec2-51-92-121-143.eu-south-2.compute.amazonaws.com/phpmyadmin/
+http://ec2-51-92-121-143.eu-south-2.compute.amazonaws.com/info.php
