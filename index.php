@@ -1,5 +1,7 @@
 <?php
 
+require_once "configApi.php";
+
 // Obtener la ruta solicitada
 $request = $_SERVER['REQUEST_URI'];
 
@@ -18,13 +20,12 @@ if (strpos($request, $baseDir) === 0) {
     $request = trim($request, '/'); // Elimina cualquier barra adicional al inicio o final
 }
 
-// Rutas y endpoints simples
+// Rutas y endpoints
 switch ($method) {
     case 'GET':
-        if ($request === 'products') {
-            // Lógica para devolver una lista de productos
-            echo json_encode(['message' => 'Lista de productos']);
-        } elseif (preg_match('/^products\/(\d+)$/', $request, $matches)) {
+        if ($request === 'usuarios') {
+            require_once "usuarios.php";
+        } elseif (preg_match('/^usuarios\/(\d+)$/', $request, $matches)) {
             $productId = $matches[1];
             // Lógica para devolver un producto específico por ID
             echo json_encode(['message' => 'Producto con ID: ' . $productId]);

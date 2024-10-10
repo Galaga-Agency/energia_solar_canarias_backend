@@ -2,14 +2,14 @@
 
 require_once 'config.php';
 require_once "clases/conexion_clase.php";
-require_once 'clases/respuestas_clase.php';
+require_once 'clases/respuesta_clase.php';
 require_once './../vendor/autoload.php';
 
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
 $_conexion = new Conexion;
-$_respuestas = new respuestas;
+$_respuestas = new Respuesta;
 
 if ($_SERVER['REQUEST_METHOD'] == "POST") {
     $postBody = file_get_contents("php://input");
