@@ -1,20 +1,41 @@
 <?php
 
+class Paginacion
+{
+    public $currentPage;
+    public $perPage = 200;
+    public $totalItems;
+    public $totalPages;
+    public $nextPageUrl;
+    public $previousPageUrl;
+}
+
 class Respuesta
 {
     public $status;
-    public $code;
+    public $code = 200;
     public $message;
     public $data;
+    public $pagination;
 
-    public function success ($datos)
+    function __construct()
+    {
+        $this->pagination = new Paginacion;
+    }
+
+    public function success($datos,$pagination)
     {
         $this->status = 'success';
         $this->code = 200;
         $this->message = '200 - Solicitud exitosa';
         $this->data = $datos;
+        $this->pagination->currentPage = $pagination['currentPage'];
+        $this->pagination->perPage = $pagination['perPage'];
+        $this->pagination->totalItems = $pagination['totalItems'];
+        $this->pagination->totalPages = $pagination['totalPages'];
+        $this->pagination->nextPageUrl = $pagination['nextPageUrl'];
+        $this->pagination->previousPageUrl = $pagination['previousPageUrl'];
     }
-
 }
 
 class Errores
@@ -23,8 +44,8 @@ class Errores
     public $code;
     public $message;
     public $errors;
-    
-    public function _400 ($errores)
+
+    public function _400($errores = [])
     {
         $this->status = 'error';
         $this->code = 400;
@@ -32,7 +53,7 @@ class Errores
         $this->errors = $errores;
     }
 
-    public function _401 ($errores)
+    public function _401($errores = [])
     {
         $this->status = 'error';
         $this->code = 401;
@@ -40,7 +61,7 @@ class Errores
         $this->errors = $errores;
     }
 
-    public function _405 ($errores)
+    public function _405($errores = [])
     {
         $this->status = 'error';
         $this->code = 405;
@@ -48,12 +69,11 @@ class Errores
         $this->errors = $errores;
     }
 
-    public function _500 ($errores)
+    public function _500($errores = [])
     {
         $this->status = 'error';
         $this->code = 500;
         $this->message = '500 - Error interno en el servidor o en la API';
         $this->errors = $errores;
     }
-
 }

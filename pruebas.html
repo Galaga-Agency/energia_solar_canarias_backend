@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Preubas de la APIREST</title>
+</head>
+
+<body>
+    <h1>PRUEBAS DE LA APIREST</h1>
+</body>
+<script>
+    fetch('http://localhost/esc-backend/usuarios', {
+        method: 'GET',
+        headers: {
+            'usuario': 'anfego1', // Cambia esto por el usuario que quieras enviar
+            'apiKey': '***REMOVED***'    // Cambia esto por tu API key
+        }
+    })
+        .then(response => {
+            // Verifica si la respuesta es exitosa
+            if (!response.ok) {
+                throw new Error(`Error en la solicitud: ${response.status}`);
+            }
+            return response.json(); // Convierte la respuesta a JSON
+        })
+        .then(data => {
+            // Maneja la respuesta JSON aquí
+            console.log('Respuesta de la API:', data);
+        })
+        .catch(error => {
+            // Maneja errores en la solicitud
+            console.error('Error:', error);
+        });
+
+</script>
+
+</html>

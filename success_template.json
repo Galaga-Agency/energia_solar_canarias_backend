@@ -2,5 +2,13 @@
     "status": "success",
     "code": 200,
     "message": "Operación completada con éxito",
-    "data": []
+    "data": [],
+    "pagination": {
+        "currentPage": 1,
+        "perPage": 10,
+        "totalItems": 50,
+        "totalPages": 5,
+        "nextPageUrl": "/api/productos?page=2",
+        "previousPageUrl": null
+    }
 }
