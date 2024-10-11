@@ -1,6 +1,6 @@
 <?php
 
-// Manejo de solicitudes OPTIONS (preflight)
+// Manejo de solicitudes OPTIONS - (preflight)
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     header('HTTP/1.1 200 OK');
     exit();
