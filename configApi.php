@@ -10,7 +10,7 @@ ini_set("display_errors", 0);
 ini_set("display_startup_errors", 0);
 mysqli_report(MYSQLI_REPORT_OFF);
 /*
-header("Access-Control-Allow-Headers: Origin, X-Requested-With, Content-Type, Accept");
+    header("Access-Control-Allow-Headers: Origin, X-Requested-With, Content-Type, Accept");
 header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE');
 header('Content-Type: application/json; charset=utf-8');
 */
@@ -23,7 +23,7 @@ $allowed_origins = [
 if (isset($_SERVER['HTTP_ORIGIN']) && in_array($_SERVER['HTTP_ORIGIN'], $allowed_origins)) {
     header('Access-Control-Allow-Origin: ' . $_SERVER['HTTP_ORIGIN']);
     header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
-    header('Access-Control-Allow-Headers: Content-Type, Authorization');
+    header('Access-Control-Allow-Headers: Origin, X-Requested-With, Content-Type, Accept, Authorization, usuario, apiKey');
     header('Access-Control-Allow-Credentials: true'); // Solo si necesitas enviar cookies o encabezados de autenticación
     header('Content-Type: application/json; charset=utf-8');
 }
