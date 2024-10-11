@@ -1,5 +1,11 @@
 <?php
 
+// Manejo de solicitudes OPTIONS (preflight)
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    header('HTTP/1.1 200 OK');
+    exit();
+}
+
 $allowed_origins = [
     'http://localhost',  // Durante desarrollo desde localhost
     'http://localhost:3000',  // Durante desarrollo desde localhost
@@ -14,12 +20,6 @@ if (isset($_SERVER['HTTP_ORIGIN']) && in_array($_SERVER['HTTP_ORIGIN'], $allowed
     header('Access-Control-Allow-Headers: Origin, X-Requested-With, Content-Type, Accept, Authorization, usuario, apiKey');
     header('Access-Control-Allow-Credentials: true'); // Solo si necesitas enviar cookies o encabezados de autenticación
     header('Content-Type: application/json; charset=utf-8');
-}
-
-// Manejo de solicitudes OPTIONS (preflight)
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    header('HTTP/1.1 200 OK');
-    exit();
 }
 
 date_default_timezone_set('Atlantic/Canary');
