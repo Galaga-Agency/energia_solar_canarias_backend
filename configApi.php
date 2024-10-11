@@ -13,5 +13,5 @@ mysqli_report(MYSQLI_REPORT_OFF);
 header("Access-Control-Allow-Headers: Origin, X-Requested-With, Content-Type, Accept");
 header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE');
 header('Content-Type: application/json; charset=utf-8');
-header('Access-Control-Allow-Origin: http://localhost/esc-backend, https://app-energiasolarcanarias.com');
+header('Access-Control-Allow-Origin: http://localhost/esc-backend/pruebas, https://app-energiasolarcanarias.com');
 
