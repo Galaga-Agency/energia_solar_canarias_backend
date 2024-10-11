@@ -1,5 +1,17 @@
 <?php
 
+// Manejo de solicitudes OPTIONS (preflight)
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    header('HTTP/1.1 200 OK');
+    exit();
+}
+
+header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
+header('Access-Control-Allow-Headers: Origin, X-Requested-With, Content-Type, Accept, usuario, apiKey');
+header('Access-Control-Allow-Credentials: true'); // Solo si necesitas enviar cookies o encabezados de autenticación
+header('Content-Type: application/json; charset=utf-8');
+
 date_default_timezone_set('Atlantic/Canary');
 
 ini_set('curl.cainfo', '/dev/null');
