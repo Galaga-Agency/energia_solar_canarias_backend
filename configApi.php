@@ -1,22 +1,10 @@
 <?php
 
-date_default_timezone_set('Atlantic/Canary');
-
-ini_set('curl.cainfo', '/dev/null');
-set_time_limit(0);
-ini_set('default_socket_timeout', 7200);
-
-ini_set("display_errors", 0);
-ini_set("display_startup_errors", 0);
-mysqli_report(MYSQLI_REPORT_OFF);
-/*
-    header("Access-Control-Allow-Headers: Origin, X-Requested-With, Content-Type, Accept");
-header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE');
-header('Content-Type: application/json; charset=utf-8');
-*/
 $allowed_origins = [
     'http://localhost',  // Durante desarrollo desde localhost
+    'http://localhost:3000',  // Durante desarrollo desde localhost
     'https://app-energiasolarcanarias.com', // Producción
+    'http://app-energiasolarcanarias.com', // Desarrollo desde el servidor de producción
     // Agrega más dominios permitidos aquí si es necesario
 ];
 
@@ -34,3 +22,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit();
 }
 
+date_default_timezone_set('Atlantic/Canary');
+
+ini_set('curl.cainfo', '/dev/null');
+set_time_limit(0);
+ini_set('default_socket_timeout', 7200);
+
+ini_set("display_errors", 0);
+ini_set("display_startup_errors", 0);
+mysqli_report(MYSQLI_REPORT_OFF);

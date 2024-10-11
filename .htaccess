@@ -1,3 +1,9 @@
+<IfModule mod_headers.c>
+    Header set Access-Control-Allow-Origin "*"
+    Header set Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
+    Header set Access-Control-Allow-Headers "Origin, X-Requested-With, Content-Type, Accept, Authorization, usuario, apiKey"
+</IfModule>
+
 RewriteEngine On
 
 # Permitir que los archivos .html se accedan sin la extensión y con ella
