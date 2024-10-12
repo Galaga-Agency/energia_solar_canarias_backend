@@ -1,18 +1,18 @@
 RewriteEngine On
 
-# Permitir que los archivos .html se accedan sin la extensión y con ella
+# 1. Permitir que los archivos .html se accedan sin la extensión y con ella
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteCond %{REQUEST_FILENAME}.html -f
 RewriteRule ^([^/]+)/?$ $1.html [L,QSA]
 
-# Permitir que los archivos .php se accedan sin la extensión y con ella
+# 2. Permitir que los archivos .php se accedan sin la extensión y con ella
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteCond %{REQUEST_FILENAME}.php -f
 RewriteRule ^([^/]+)/?$ $1.php [L,QSA]
 
-# Redirigir todo lo demás a index.php para manejo de rutas en la API
+# 3. Redirigir todo lo demás a rutas.php para manejo de rutas en la API
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^(.*)$ index.php [L,QSA]
+RewriteRule ^.*$ rutas.php [L,QSA]

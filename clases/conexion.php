@@ -30,8 +30,8 @@ class Conexion
 
     private function datosConexion()
     {
-        $direccion = dirname(__FILE__);
-        $jsondata = file_get_contents($direccion . "/" . "conexion.json");
+        $direccion = $_SERVER['DOCUMENT_ROOT'] . '/conexion_esc-backend.json';
+        $jsondata = file_get_contents($direccion);
         return json_decode($jsondata, true);
     }
 
