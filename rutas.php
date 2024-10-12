@@ -1,17 +1,30 @@
 <?php
 
-echo $_SERVER['REQUEST_URI'];
-
-if (!$_SERVER['REQUEST_URI']) {
-    header("Location: index.php");
-    exit();
-}
-
 require_once "configApi.php";
 require_once "clases/respuesta.php";
 
 $respuesta = new Respuesta;
 $error = new Errores;
+
+// Obtener la ruta solicitada
+$request = $_SERVER['REQUEST_URI'];
+
+// Obtener el método HTTP (GET, POST, PUT, DELETE, etc.)
+$method = $_SERVER['REQUEST_METHOD'];
+
+// Parsear la ruta para quitar parámetros o el prefijo del archivo
+$request = trim(parse_url($request, PHP_URL_PATH), '/');
+
+// Define la subcarpeta donde está el proyecto
+$baseDir = 'esc-backend';
+
+// Si la ruta comienza con el nombre de la subcarpeta, elimínala
+if (strpos($request, $baseDir) === 0) {
+    $request = substr($request, strlen($baseDir));
+    $request = trim($request, '/'); // Elimina cualquier barra adicional al inicio o final
+}
+
+echo $request;
 
 // Verificar si la cabecera 'usuario' y 'apiKey' están presentes en $_SERVER
 $usuario = isset($_SERVER['HTTP_USUARIO']) ? $_SERVER['HTTP_USUARIO'] : null;
@@ -24,24 +37,6 @@ if ($usuario && $apiKey) {
     $apiKeyEsperada = '***REMOVED***';
 
     if ($usuario === $usuarioEsperado && $apiKey === $apiKeyEsperada) {
-        // Obtener la ruta solicitada
-        $request = $_SERVER['REQUEST_URI'];
-
-        // Obtener el método HTTP (GET, POST, PUT, DELETE, etc.)
-        $method = $_SERVER['REQUEST_METHOD'];
-
-        // Parsear la ruta para quitar parámetros o el prefijo del archivo
-        $request = trim(parse_url($request, PHP_URL_PATH), '/');
-
-        // Define la subcarpeta donde está el proyecto
-        $baseDir = 'esc-backend';
-
-        // Si la ruta comienza con el nombre de la subcarpeta, elimínala
-        if (strpos($request, $baseDir) === 0) {
-            $request = substr($request, strlen($baseDir));
-            $request = trim($request, '/'); // Elimina cualquier barra adicional al inicio o final
-        }
-
         // Rutas y endpoints
         switch ($method) {
             case 'GET':
