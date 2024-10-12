@@ -24,7 +24,7 @@ if (strpos($request, $baseDir) === 0) {
     $request = trim($request, '/'); // Elimina cualquier barra adicional al inicio o final
 }
 
-echo $request;
+//echo $request;
 
 // Verificar si la cabecera 'usuario' y 'apiKey' están presentes en $_SERVER
 $usuario = isset($_SERVER['HTTP_USUARIO']) ? $_SERVER['HTTP_USUARIO'] : null;
