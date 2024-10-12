@@ -1,3 +1,3 @@
 <?php
-echo "VERIFICACIÓN: HELLO MUNDO2!"
+echo "VERIFICACIÓN: HELLO MUNDO3!"
 ?>

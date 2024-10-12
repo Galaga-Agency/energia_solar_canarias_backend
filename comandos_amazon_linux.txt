@@ -1,0 +1,152 @@
+1. Gestión de Archivos y Directorios
+ls: Lista archivos y directorios.
+
+ls -l: Lista archivos en formato largo (con detalles).
+ls -a: Muestra archivos ocultos.
+cd: Cambia de directorio.
+
+cd /var/www/html: Cambia al directorio /var/www/html.
+pwd: Muestra la ruta actual.
+
+pwd: Muestra la ruta del directorio actual.
+cp: Copia archivos y directorios.
+
+cp archivo1 archivo2: Copia archivo1 a archivo2.
+cp -r directorio1 directorio2: Copia un directorio y su contenido.
+mv: Mueve o renombra archivos y directorios.
+
+mv archivo1 archivo2: Renombra archivo1 a archivo2.
+mv archivo.txt /ruta/destino/: Mueve el archivo a otra ubicación.
+rm: Elimina archivos y directorios.
+
+rm archivo.txt: Elimina un archivo.
+rm -r directorio/: Elimina un directorio y su contenido.
+mkdir: Crea un nuevo directorio.
+
+mkdir nuevo_directorio: Crea un directorio llamado nuevo_directorio.
+find: Busca archivos o directorios en el sistema.
+
+find /ruta -name "archivo.txt": Busca archivos con el nombre "archivo.txt".
+
+2. Gestión de Permisos y Propiedad
+chmod: Cambia los permisos de archivos o directorios.
+
+chmod 755 archivo.txt: Otorga permisos al dueño (rwx), grupo y otros (rx).
+chown: Cambia el propietario de un archivo o directorio.
+
+sudo chown apache:apache archivo.txt: Cambia el propietario y grupo de archivo.txt a apache.
+umask: Configura los permisos predeterminados para nuevos archivos.
+
+umask 022: Configura los permisos predeterminados.
+
+3. Gestión de Paquetes con yum (Específico de Amazon Linux)
+Instalar un paquete:
+
+sudo yum install paquete: Instala un paquete.
+Actualizar todos los paquetes:
+
+sudo yum update: Actualiza todos los paquetes.
+Eliminar un paquete:
+
+sudo yum remove paquete: Elimina un paquete.
+Buscar un paquete:
+
+yum search paquete: Busca un paquete.
+Ver detalles de un paquete:
+
+yum info paquete: Muestra la información de un paquete.
+Ver qué paquetes están instalados:
+
+yum list installed: Lista los paquetes instalados.
+
+4. Gestión de Procesos
+top: Muestra información en tiempo real sobre los procesos y el uso de recursos del sistema.
+
+top: Muestra una lista en tiempo real de los procesos.
+ps: Muestra información sobre los procesos en ejecución.
+
+ps aux: Lista todos los procesos en ejecución.
+kill: Termina un proceso.
+
+kill PID: Termina un proceso por su ID.
+kill -9 PID: Fuerza la terminación del proceso.
+htop: Alternativa más visual y avanzada a top (requiere instalación).
+
+sudo yum install htop: Instala htop.
+htop: Muestra la lista de procesos de manera visual.
+
+5. Gestión de Usuarios
+useradd: Crea un nuevo usuario.
+
+sudo useradd nuevo_usuario: Crea un nuevo usuario.
+sudo passwd nuevo_usuario: Establece una contraseña para el nuevo usuario.
+usermod: Modifica un usuario existente.
+
+sudo usermod -a -G grupo usuario: Añade al usuario a un grupo.
+passwd: Cambia la contraseña de un usuario.
+
+sudo passwd usuario: Cambia la contraseña de un usuario.
+whoami: Muestra el usuario actual.
+
+whoami: Muestra el nombre del usuario que está ejecutando los comandos.
+su: Cambia al usuario root o a otro usuario.
+
+su - usuario: Cambia al usuario especificado.
+id: Muestra el ID de usuario y grupo.
+
+id: Muestra el ID y los grupos a los que pertenece el usuario actual.
+
+6. Red y Conexiones
+curl: Realiza solicitudes HTTP y recupera datos desde una URL.
+
+curl http://ejemplo.com: Realiza una solicitud HTTP a http://ejemplo.com.
+ping: Verifica la conectividad de red a un host.
+
+ping ejemplo.com: Verifica la conectividad con el host ejemplo.com.
+ifconfig: Muestra o configura las interfaces de red (puede que necesites instalar net-tools).
+
+sudo yum install net-tools: Instala net-tools.
+ifconfig: Muestra las interfaces de red.
+ss: Muestra estadísticas y conexiones de sockets.
+
+ss -tuln: Muestra los puertos en escucha.
+scp: Copia archivos entre servidores utilizando SSH.
+
+scp archivo.txt usuario@servidor:/ruta/destino/: Copia un archivo de un servidor a otro.
+ssh: Conexión segura a otro servidor.
+
+ssh usuario@servidor: Conexión SSH al servidor.
+
+7. Control de Servicios
+systemctl: Gestiona servicios del sistema (iniciar, detener, reiniciar servicios).
+
+Iniciar un servicio:
+
+sudo systemctl start httpd: Inicia el servicio httpd.
+Detener un servicio:
+
+sudo systemctl stop httpd: Detiene el servicio httpd.
+Reiniciar un servicio:
+
+sudo systemctl restart httpd: Reinicia el servicio httpd.
+Ver el estado de un servicio:
+
+sudo systemctl status httpd: Verifica el estado del servicio httpd.
+Habilitar un servicio en el arranque:
+
+sudo systemctl enable httpd: Configura el servicio httpd para que se inicie automáticamente.
+Deshabilitar un servicio del arranque:
+
+sudo systemctl disable httpd: Deshabilita el inicio automático del servicio httpd.
+
+8. Gestión de Logs
+journalctl: Muestra los logs del sistema.
+
+sudo journalctl -xe: Muestra los logs del sistema con detalles extendidos.
+tail: Muestra las últimas líneas de un archivo.
+
+tail -f /var/log/httpd/access_log: Muestra el log de Apache en tiempo real.
+dmesg: Muestra mensajes del kernel.
+
+dmesg: Muestra los mensajes de arranque y del kernel.
+Con estos comandos podrás administrar y gestionar tu instancia de Amazon Linux de manera efectiva.

@@ -1,0 +1,132 @@
+#Esquema General de Archivos en Amazon Linux
+/ (Raíz)
+
+El directorio raíz de Linux, donde todos los demás directorios y archivos residen. Es el punto de partida de la estructura de archivos.
+
+/bin
+
+Contiene los binarios (programas ejecutables) esenciales del sistema, como comandos básicos (ls, cp, mv, rm, etc.) que pueden ser ejecutados tanto por el superusuario como por usuarios normales.
+
+/boot
+
+Almacena archivos necesarios para el arranque del sistema, como el kernel de Linux, el cargador de arranque (grub) y los initramfs (sistema de archivos de arranque).
+
+/dev
+
+Contiene archivos de dispositivo. Aquí es donde Linux representa todos los dispositivos del sistema (discos, impresoras, etc.) como archivos.
+En Linux, las particiones de disco y los dispositivos de almacenamiento (como discos duros, SSD, unidades USB, etc.) están representados como archivos de dispositivo en el directorio /dev. Cada disco y partición aparece en /dev con un nombre específico.
+Estructura de los Dispositivos de Almacenamiento en /dev
+/dev/sdX: Los discos físicos en Linux generalmente se nombran /dev/sda, /dev/sdb, etc., donde:
+sda: Representa el primer disco físico.
+sdb: Representa el segundo disco físico, y así sucesivamente.
+/dev/sdXN: Las particiones dentro de un disco se identifican con un número, por ejemplo:
+/dev/sda1: La primera partición del primer disco.
+/dev/sda2: La segunda partición del primer disco.
+/dev/sdb1: La primera partición del segundo disco, y así sucesivamente.
+Ejemplo de un Disco y sus Particiones
+/dev/sda: Representa el primer disco.
+/dev/sda1: Primera partición del disco sda.
+/dev/sda2: Segunda partición del disco sda.
+Si tienes discos adicionales conectados al sistema, verás /dev/sdb, /dev/sdc, y así sucesivamente, cada uno con sus propias particiones (por ejemplo, /dev/sdb1, /dev/sdb2).
+Cómo Ver los Discos y Particiones en tu Sistema
+Para listar los discos y particiones en tu sistema, puedes utilizar varios comandos:
+lsblk: Lista los dispositivos de bloques, como discos y particiones.
+lsblk
+Este comando muestra una vista jerárquica de los discos y sus particiones, incluyendo los puntos de montaje.
+fdisk -l: Lista las particiones de todos los discos.
+sudo fdisk -l
+Este comando muestra información detallada sobre todos los discos y particiones disponibles.
+parted: También puedes usar el comando parted para administrar las particiones de disco.
+sudo parted /dev/sda print
+Esto muestra las particiones en el disco /dev/sda.
+Crear y Administrar Particiones
+Si deseas crear o administrar particiones en un disco, puedes usar herramientas como fdisk, parted o gparted (si tienes acceso a una interfaz gráfica):
+fdisk:
+Ejecuta sudo fdisk /dev/sdX para administrar las particiones en el disco sdX.
+parted:
+sudo parted /dev/sdX te permite crear, redimensionar o eliminar particiones.
+Resumen
+Las particiones de disco en Linux se encuentran en /dev, con nombres como /dev/sda1, /dev/sda2, etc.
+Usa comandos como lsblk, fdisk -l o parted para ver y gestionar los discos y particiones en tu sistema.
+Las particiones se crean y administran con herramientas como fdisk o parted, y el directorio /dev es donde Linux representa los discos y particiones como archivos de dispositivo.
+
+/etc
+
+Contiene archivos de configuración de todo el sistema. Aquí es donde se encuentran la mayoría de los archivos de configuración para servicios como Apache, bases de datos, red, etc.
+Ejemplo:
+/etc/httpd/: Archivos de configuración de Apache.
+/etc/passwd: Archivo que almacena la información de usuarios.
+/etc/ssh/: Configuraciones del servicio SSH.
+
+/home
+
+Directorio donde se encuentran los directorios de los usuarios. Cada usuario tiene su propio directorio en /home.
+Ejemplo: El usuario ec2-user (usuario predeterminado en Amazon Linux) tendría su directorio en /home/ec2-user.
+
+/lib y /lib64
+
+Contiene las bibliotecas esenciales (archivos de código compartido) que usan los binarios del sistema y el kernel.
+
+/media y /mnt
+
+Directorios usados para montar sistemas de archivos o dispositivos externos (como unidades USB o discos adicionales).
+/media: Usualmente para montajes automáticos.
+/mnt: Generalmente para montajes temporales manuales.
+
+/opt
+
+Usado para instalar paquetes de software opcionales que no vienen con la distribución predeterminada. Los paquetes instalados manualmente o de proveedores externos a menudo se colocan aquí.
+
+/proc
+
+Sistema de archivos virtual que proporciona información sobre los procesos en ejecución y el kernel. Contiene información sobre el estado del sistema y procesos activos. Ejemplo: /proc/cpuinfo y /proc/meminfo.
+/root
+
+Es el directorio de inicio del usuario root (superusuario del sistema).
+
+/run
+
+Directorio que almacena información de estado y procesos en ejecución desde el arranque del sistema. Se usa para archivos de socket, PID y otros datos temporales que necesita el sistema.
+
+/sbin
+
+Similar a /bin, pero contiene binarios ejecutables del sistema utilizados principalmente por el administrador (superusuario) para tareas de administración del sistema, como ifconfig, reboot, shutdown.
+/srv
+
+Contiene datos para servicios proporcionados por el sistema, como servidores web o FTP.
+
+/sys
+
+Sistema de archivos virtual que expone información sobre el hardware y los dispositivos conectados. Similar a /proc, pero centrado en dispositivos de hardware.
+
+/tmp
+
+Directorio para almacenar archivos temporales creados por programas o por el sistema. A menudo se borra automáticamente al reiniciar el sistema.
+
+/usr
+
+Uno de los directorios más grandes en un sistema Linux. Almacena binarios adicionales, documentación, bibliotecas y archivos de datos que no son esenciales para el arranque del sistema.
+/usr/bin: Binarios de usuario adicionales (aplicaciones instaladas).
+/usr/sbin: Binarios del sistema adicionales (para el administrador).
+/usr/local: Para programas que el administrador del sistema instala manualmente.
+/usr/share: Archivos de datos que son compartidos entre los programas.
+
+/var
+Directorio que almacena archivos variables (archivos que cambian constantemente durante la operación del sistema). Aquí suelen estar archivos de log y datos dinámicos.
+/var/log: Archivos de log del sistema.
+/var/www: Directorio común para almacenar archivos web (utilizado por Apache u otros servidores web).
+/var/tmp: Similar a /tmp, pero con archivos temporales que pueden sobrevivir entre reinicios.
+
+Directorios Clave en Amazon Linux para Servidores Web
+/var/www/html: Este es el directorio raíz por defecto para Apache. Aquí se almacenan los archivos HTML o PHP que serán servidos por el servidor web.
+/etc/httpd: Contiene los archivos de configuración de Apache, como httpd.conf y los módulos habilitados.
+
+Resumen
+/var/www/html es el directorio principal donde se almacenan los archivos web.
+/etc/httpd/ es donde se configuran los archivos de Apache.
+Los binarios importantes del sistema y las bibliotecas esenciales se encuentran en /bin, /sbin, /lib y /lib64.
+Los directorios /home, /root y /tmp son para datos de usuarios, superusuario, y archivos temporales, respectivamente.
+Este esquema proporciona una visión clara de cómo está organizado el sistema de archivos en Amazon Linux, permitiendo identificar rápidamente dónde se almacenan los archivos y configuraciones importantes.
+
+
+

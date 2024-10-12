@@ -1,4 +1,7 @@
 <?php
+
+echo $_SERVER['DOCUMENT_ROOT'];
+
 //ENSAYO DE WEBHOOK
 $direccion = $_SERVER['DOCUMENT_ROOT'] . '/conexion_esc-backend.json';
 $jsondata = file_get_contents($direccion);
