@@ -1,14 +1,13 @@
 <?php
 
-echo $_SERVER['DOCUMENT_ROOT'];
-
-//ENSAYO DE WEBHOOK
-$direccion = $_SERVER['DOCUMENT_ROOT'] . '/conexion_esc-backend.json';
-$jsondata = file_get_contents($direccion);
+//ENSAYO ACCESO A ARCHIVOS PROHIBIDOS DESDE EL PROYECTO
+$direccion = dirname(__FILE__);
+$jsondata = file_get_contents($direccion . "/clases/" . "conexion.json");
 
 if ($jsondata !== false) {
     echo $jsondata;
 } else {
     echo "Error al obtener el contenido del archivo JSON.";
 }
+
 ?>
