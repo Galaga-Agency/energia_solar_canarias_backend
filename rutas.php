@@ -1,5 +1,10 @@
 <?php
 
+if ($_SERVER['REQUEST_URI'] == '/') {
+    header("Location: index.php");
+    exit();
+}
+
 require_once "configApi.php";
 require_once "clases/respuesta.php";
 
