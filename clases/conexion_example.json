@@ -1,0 +1,9 @@
+{
+    "conexion":{
+        "server" : "xxxxxxx",
+        "user" : "xxxxxxx",
+        "password" : "xxxxxxx",
+        "database" : "xxxxxxx",
+        "port": "3306"
+    }
+}
