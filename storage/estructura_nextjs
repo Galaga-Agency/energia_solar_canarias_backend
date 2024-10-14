@@ -1,0 +1,80 @@
+/tu-proyecto-nextjs
+│
+├── /src                  --> Código fuente de la aplicación Next.js
+│   ├── /components       --> Componentes reutilizables (Button.js, Navbar.js, etc.)
+│   ├── /pages            --> Páginas de la aplicación (index.js, about.js, [id].js)
+│   │   ├── /api          --> API routes para manejar peticiones HTTP (auth.js, products.js)
+│   ├── /services         --> Lógica de negocio, peticiones API, autenticación (authService.js, apiService.js)
+│   ├── /hooks            --> Hooks personalizados de React (useAuth.js, useFetch.js)
+│   ├── /context          --> Contextos de Next.js/React para manejar estados globales (AuthContext.js)
+│   ├── /utils            --> Funciones o clases auxiliares reutilizables (formatDate.js, calculateAge.js)
+│   ├── /assets           --> Recursos estáticos (imágenes, fuentes, CSS)
+│   │   ├── /css          --> Archivos de estilos CSS (styles.css)
+│   │   ├── /js           --> Archivos JavaScript o scripts (analytics.js)
+│   │   ├── /img          --> Imágenes (logo.png, banner.jpg)
+│   │   └── /fonts        --> Fuentes personalizadas (custom-font.ttf)
+│   ├── /layouts          --> Componentes de layout reutilizables (MainLayout.js)
+│   ├── /middleware       --> Middlewares personalizados para manejo de autenticación o protección de rutas
+│   ├── _app.js           --> Punto de entrada global de la aplicación (envoltura general)
+│   └── _document.js      --> Modificaciones en la estructura del documento HTML global
+│
+├── /public               --> Archivos públicos accesibles directamente desde el navegador (favicon.ico, robots.txt)
+│   ├── /assets           --> Archivos estáticos servidos por Next.js
+│   ├── favicon.ico       --> Icono de la aplicación
+│   ├── robots.txt        --> Configuración para los bots de búsqueda
+│   └── manifest.json     --> Manifesto de la aplicación web (para PWA)
+│
+├── /node_modules         --> Dependencias externas instaladas con npm
+│
+├── .env.local            --> Variables de entorno locales (credenciales API, configuraciones sensibles)
+├── .gitignore            --> Archivos/carpetas que Git debe ignorar
+├── next.config.js        --> Configuración personalizada de Next.js
+├── package.json          --> Gestión de dependencias del proyecto
+└── README.md             --> Documentación del proyecto
+
+Descripción rápida de cada carpeta:
+1. /src: Directorio fuente de la aplicación.
+/components: Aquí se almacenan todos los componentes reutilizables de la aplicación (botones, menús, formularios, etc.).
+
+/pages: La característica clave de Next.js. Todo archivo en la carpeta /pages se convierte automáticamente en una ruta accesible.
+
+index.js: Se convierte en la ruta principal (/).
+
+about.js: Se convierte en la ruta /about.
+
+[id].js: Se convierte en una ruta dinámica (/product/[id]).
+
+/api: Subcarpeta dentro de /pages que contiene los API routes de Next.js, los cuales actúan como endpoints de una API. Puedes tener archivos como products.js que manejen peticiones a la API.
+
+/services: Aquí se aloja la lógica de negocio, como autenticación o llamadas a APIs externas, de manera similar a los servicios de PHP. Estos archivos se pueden llamar desde cualquier componente o página.
+
+/hooks: Hooks personalizados que encapsulan lógica reutilizable para ser compartida entre diferentes componentes.
+
+/context: Implementación de Context API para manejar estados globales (autenticación, tema, etc.).
+
+/utils: Funciones y utilidades reutilizables (formateo de fechas, cálculos, validaciones).
+
+/assets: Aquí puedes almacenar imágenes, fuentes, y otros archivos estáticos. Estos archivos se gestionan mediante el sistema estático de Next.js.
+
+/layouts: Componentes de layout reutilizables que envuelven páginas para aplicar estilos o estructuras comunes (barra de navegación, pie de página).
+
+/middleware: Middlewares personalizados para tareas como autenticación o control de permisos, si necesitas implementar protecciones adicionales.
+
+_app.js: Es el punto de entrada global para la aplicación, donde puedes definir envolturas comunes (contextos, temas, etc.) y persisten en todas las páginas.
+
+_document.js: Permite modificar la estructura del HTML global (por ejemplo, añadir fuentes, metaetiquetas).
+
+2. /public: Archivos estáticos accesibles directamente desde el navegador.
+/assets: Aquí puedes colocar recursos estáticos accesibles sin pasar por el enrutamiento de Next.js, como imágenes, videos, o archivos PDF.
+
+favicon.ico: Ícono de la página.
+
+robots.txt: Archivo que indica a los motores de búsqueda cómo indexar o no indexar tu sitio.
+
+manifest.json: Archivo de manifiesto usado en aplicaciones web progresivas (PWA), que define cómo debe comportarse tu app cuando se instala en dispositivos móviles.
+
+3. /node_modules: Contiene las dependencias del proyecto instaladas a través de npm o yarn.
+4. .env.local: Variables de entorno locales, como las claves API o URLs del backend, que no quieres exponer directamente en tu código.
+5. next.config.js: Archivo donde puedes personalizar el comportamiento de Next.js (por ejemplo, añadir configuraciones de compilación, rutas, plugins, etc.).
+6. package.json: Contiene la configuración del proyecto y las dependencias que necesitas para construir la aplicación.
+7. README.md: Documentación del proyecto, donde describes cómo configurar y ejecutar la aplicación.

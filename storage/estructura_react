@@ -1,0 +1,71 @@
+/tu-proyecto-react
+│
+├── /src                --> Código fuente de la aplicación React
+│   ├── /components     --> Componentes reutilizables (Button.js, Header.js, etc.)
+│   ├── /pages          --> Páginas de la aplicación (HomePage.js, AboutPage.js, etc.)
+│   ├── /services       --> Lógica de negocio, peticiones API, autenticación (authService.js, apiService.js)
+│   ├── /hooks          --> Hooks personalizados de React (useAuth.js, useFetch.js)
+│   ├── /context        --> Contextos de React para manejar estados globales (AuthContext.js, ThemeContext.js)
+│   ├── /utils          --> Funciones o clases auxiliares reutilizables (formatDate.js, calculateAge.js)
+│   ├── /assets         --> Recursos estáticos como imágenes y fuentes (logo.png, custom-font.ttf)
+│   │   ├── /css        --> Archivos de estilos CSS (styles.css)
+│   │   ├── /img        --> Imágenes (logo.png, banner.jpg)
+│   │   └── /fonts      --> Fuentes personalizadas (custom-font.ttf)
+│   ├── App.js          --> Componente raíz de la aplicación
+│   ├── index.js        --> Punto de entrada del proyecto React
+│   └── /routes         --> Configuración de rutas (Route.js, PrivateRoute.js)
+│
+├── /public             --> Archivos públicos accesibles desde el navegador (index.html)
+│   ├── index.html      --> Plantilla HTML que envuelve tu aplicación React
+│   ├── favicon.ico     --> Icono de la aplicación
+│   ├── manifest.json   --> Manifesto de la aplicación web
+│   └── robots.txt      --> Configuración para los bots de búsqueda
+│
+├── /node_modules       --> Dependencias externas instaladas con npm
+│
+├── .env                --> Variables de entorno para configuraciones sensibles (API keys, etc.)
+├── .gitignore          --> Lista de archivos/carpetas que Git debe ignorar
+├── package.json        --> Gestión de dependencias del proyecto (librerías externas)
+├── README.md           --> Documentación del proyecto
+└── webpack.config.js   --> Configuración de Webpack (si no usas Create React App)
+
+Descripción rápida de cada carpeta:
+/src: Aquí está todo el código fuente de la aplicación React. Contiene los componentes, páginas, servicios, hooks, contextos, utilidades, y los recursos estáticos como imágenes y estilos.
+
+/components: Componentes reutilizables que se pueden usar en distintas partes de la aplicación (por ejemplo, botones, formularios, menús, etc.).
+
+/pages: Componentes que representan páginas completas de tu aplicación, como la página de inicio, sobre nosotros, etc.
+
+/services: Aquí puedes centralizar la lógica que interactúa con API o cualquier otra lógica de negocio. Servicios para autenticación, llamadas HTTP, etc.
+
+/hooks: Hooks personalizados que encapsulan lógica común y se reutilizan en distintos componentes.
+
+/context: Configuración de Context API para manejar estados globales como autenticación, tema, etc.
+
+/utils: Funciones o clases auxiliares y reutilizables, como formateadores de fecha, cálculos, etc.
+
+/assets: Aquí puedes almacenar los recursos estáticos como CSS, imágenes y fuentes que son utilizados dentro de los componentes React.
+
+App.js: El componente raíz de tu aplicación React, donde se configura la estructura general de la app.
+
+index.js: El archivo que ReactDOM.render() usa para montar la aplicación en el DOM (normalmente se vincula con el id="root" en el index.html del directorio /public).
+
+/routes: Configuración de las rutas de la aplicación, puede incluir rutas públicas, privadas, y la lógica de enrutamiento.
+
+/public: Contiene los archivos públicos a los que el navegador puede acceder directamente. Aquí está el index.html, que es el archivo HTML base donde React inyecta la aplicación.
+
+index.html: Este archivo es la estructura HTML inicial de tu aplicación React. En él se define el contenedor div#root, donde React renderiza la app.
+
+favicon.ico: El ícono que aparece en la pestaña del navegador.
+
+manifest.json: Define cómo debe comportarse tu aplicación cuando se instala en un dispositivo (si estás desarrollando una PWA).
+
+robots.txt: Configura cómo los motores de búsqueda (como Google) deben interactuar con tu sitio.
+
+/node_modules: Aquí es donde se instalan las dependencias del proyecto que se gestionan a través de npm o yarn.
+
+.env: Archivo para definir variables de entorno, como las claves API, URLs de backend, o cualquier otra información sensible que no quieras exponer directamente en tu código.
+
+package.json: Archivo que gestiona las dependencias de tu proyecto, scripts, información del proyecto, versiones de librerías, etc.
+
+webpack.config.js: Archivo de configuración de Webpack, si no estás usando Create React App y prefieres configurar manualmente Webpack para la construcción de tu proyecto.

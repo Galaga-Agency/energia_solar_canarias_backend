@@ -1,4 +1,2 @@
 vendor/
-clases/conexion.json
-
-
+config/conexion.json

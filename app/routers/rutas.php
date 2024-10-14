@@ -1,7 +1,7 @@
 <?php
 
-require_once "configApi.php";
-require_once "clases/respuesta.php";
+require_once "../../config/configApi.php";
+require_once "../utils/respuesta.php";
 
 $respuesta = new Respuesta;
 $error = new Errores;
@@ -41,21 +41,21 @@ if ($usuario && $apiKey) {
         switch ($method) {
             case 'GET':
                 if ($request === 'usuarios') {
-                    require_once "clases/usuarios.php";
+                    require_once "../models/usuarios.php";
                     $usuarios = new Usuarios;
                     $response = $usuarios->getAllUsers();
                     http_response_code($response->code);
                     echo json_encode($response);
                 } elseif (preg_match('/^usuarios\/(\d+)$/', $request, $matches)) {
                     $id = $matches[1];
-                    require_once "clases/usuarios.php";
+                    require_once "../models/usuarios.php";
                     $usuarios = new Usuarios;
                     $response = $usuarios->getUser($id);
                     http_response_code($response->code);
                     echo json_encode($response);
                 } elseif (preg_match('/^\/usuarios\/pages\/(\d+)$/', $request, $matches)) {
                     $page = $matches[1]; // Capturamos el número de página de la URL
-                    require_once "clases/usuarios.php";
+                    require_once "../models/usuarios.php";
                     $usuarios = new Usuarios;
                     $response = $usuarios->getUser($id);
                     http_response_code($response->code);

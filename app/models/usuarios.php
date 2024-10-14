@@ -1,9 +1,9 @@
 <?php
 
 require_once "conexion.php";
-require_once "respuesta.php";
+require_once "utils/respuesta.php";
 
-class Usuarios
+class Usuarios extends Conexion
 {
     public $conexion;
     public $respuesta;

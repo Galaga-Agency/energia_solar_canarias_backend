@@ -31,7 +31,7 @@ class Conexion
     private function datosConexion()
     {
         $direccion = dirname(__FILE__);
-        $jsondata = file_get_contents($direccion . "/" . "conexion.json");
+        $jsondata = file_get_contents("../" . $direccion . "config" . "/" . "conexion.json");
         return json_decode($jsondata, true);
     }
 
