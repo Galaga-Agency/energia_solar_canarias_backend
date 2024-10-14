@@ -1,2 +1,2 @@
 <?php
-echo "Bienvenido al backend de app-energiasolarcanarias.com";
+echo "Bienvenido al backend de app-energiasolarcanarias.com, la documentación de la APIRESTFULL está en proceso y se visualizará prontamente en esta página.... Por ahora, si eres desarrollador FRONTEND del proyecto, puedes usar el ENPOINT https://app-energiasolarcanarias-backend.com/usuarios para primeras pruebas";
