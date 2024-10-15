@@ -21,9 +21,7 @@ En desarrollo...
 
 /app/routers = Enrutadores que gestionan las rutas de la aplicación
 
-
 /config = Archivos de configuración
-
 
 /public = Archivos accesibles desde el navegador
 
@@ -31,12 +29,9 @@ En desarrollo...
 
 /public/uploads = Archivos subidos por los usuarios
 
-
 /storage = Almacenamiento de datos temporales o logs
 
-
 /vendor = Dependencias externas instaladas con Composer
-
 
 .htaccess = Configuración del servidor web para manejo de rutas y acceso
 
