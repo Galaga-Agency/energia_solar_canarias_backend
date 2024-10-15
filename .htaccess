@@ -14,17 +14,13 @@ RewriteRule ^(.*)$ $1 [R=200,L]
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteCond %{REQUEST_FILENAME}.html -f
-RewriteRule ^([^/]+)/?$ $1.html [L,QSA]
+RewriteRule ^(.*?)/?$ $1.html [L,QSA]
 
 #Permitir que los archivos .php se accedan sin la extensión y con ella
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteCond %{REQUEST_FILENAME}.php -f
-RewriteRule ^([^/]+)/?$ $1.php [L,QSA]
-
-#Permitir archivos sin extensión
-RewriteCond %{REQUEST_FILENAME} -f
-RewriteRule ^(.*)$ $1 [L,QSA]
+RewriteRule ^(.*?)/?$ $1.php [L,QSA]
 
 #Redirigir todo lo demás a rutas.php para manejo de rutas en la API
 RewriteCond %{REQUEST_FILENAME} !-f
