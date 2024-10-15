@@ -1,6 +1,6 @@
 <?php
 
-require_once "../models/usuario.php";
+require_once "../models/usuarios.php";
 
 class UsuariosController
 {
@@ -26,3 +26,9 @@ class UsuariosController
         echo json_encode($response);
     }
 }
+
+/*
+//PRUEBAS
+$users = new UsuariosController;
+$users->getAllUsers();
+*/
