@@ -1,7 +1,7 @@
 <?php
 
 require_once "conexion.php";
-require_once "utils/respuesta.php";
+require_once "../utils/respuesta.php";
 
 class Usuarios extends Conexion
 {
