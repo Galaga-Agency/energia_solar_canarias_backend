@@ -5,21 +5,13 @@ require_once "../utils/respuesta.php";
 
 class Usuarios extends Conexion
 {
-    public $conexion;
     public $respuesta;
     public $error;
 
     function __construct()
     {
-        try {
-            $this->conexion = new Conexion;
-            $this->respuesta = new Respuesta;
-            $this->error = new Errores;
-        } catch (\Throwable $th) {
-            $this->error->_500($th);
-            $this->error->message = 'Error en la función constructora de la clase Usuarios al crear los objetos en la propiedades: conexion, respuesta, error';
-            return $this->error;
-        }
+        $this->respuesta = new Respuesta;
+        $this->error = new Errores;
     }
 
     public function getAllUsers()

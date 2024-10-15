@@ -1,7 +1,7 @@
 <?php
 
 require_once "../../config/configApi.php";
-require_once "../utils/respuesta.php";
+require_once "../controllers/usuario.php";
 
 $respuesta = new Respuesta;
 $error = new Errores;
