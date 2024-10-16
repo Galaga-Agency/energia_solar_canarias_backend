@@ -5,6 +5,9 @@ RewriteEngine On
 <Files "conexion.json">
     Require all denied
 </Files>
+<Files "smtp.json">
+    Require all denied
+</Files>
 
 #CORS
 RewriteCond %{REQUEST_METHOD} OPTIONS

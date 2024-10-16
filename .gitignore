@@ -1,2 +1,4 @@
 vendor/
 config/conexion.json
+config/smtp.json
+config/tokkenLogin.json
