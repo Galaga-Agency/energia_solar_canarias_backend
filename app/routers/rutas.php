@@ -26,17 +26,16 @@ if (strpos($request, $baseDir) === 0) {
     $request = trim($request, '/'); // Elimina cualquier barra adicional al inicio o final
 }
 
-$autenticacion = new Autenticacion;
-$autenticacion->autenticar();
-
 // Rutas y endpoints
 switch ($method) {
     case 'GET':
         if ($request === 'usuarios') {
+            $autenticar = new Autenticacion('getAllUsers');
             $usuarios = new UsuariosController;
             $usuarios->getAllUsers();
         } elseif (preg_match('/^usuarios\/(\d+)$/', $request, $matches)) {
             $id = $matches[1];
+            $autenticar = new Autenticacion('getUser');
             $usuarios = new UsuariosController;
             $usuarios->getUser($id);
         } elseif (preg_match('/^\/usuarios\/pages\/(\d+)$/', $request, $matches)) {
@@ -54,9 +53,9 @@ switch ($method) {
         break;
 
     case 'POST':
-        if ($request === 'products') {
-            // Lógica para crear un nuevo producto
-            echo json_encode(['message' => 'Producto creado']);
+        if ($request === 'login') {
+            $autenticar = new Autenticacion('userLogin');
+            $postBody = file_get_contents("php://input");
         }
         break;
 

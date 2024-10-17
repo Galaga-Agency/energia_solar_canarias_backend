@@ -23,18 +23,20 @@ class Respuesta
         $this->pagination = new Paginacion;
     }
 
-    public function success($datos,$pagination)
+    public function success($datos = [], $pagination = null)
     {
         $this->status = 'success';
         $this->code = 200;
         $this->message = '200 - Solicitud exitosa';
         $this->data = $datos;
-        $this->pagination->currentPage = $pagination['currentPage'];
-        $this->pagination->perPage = $pagination['perPage'];
-        $this->pagination->totalItems = $pagination['totalItems'];
-        $this->pagination->totalPages = $pagination['totalPages'];
-        $this->pagination->nextPageUrl = $pagination['nextPageUrl'];
-        $this->pagination->previousPageUrl = $pagination['previousPageUrl'];
+        if ($pagination) {
+            $this->pagination->currentPage = $pagination['currentPage'];
+            $this->pagination->perPage = $pagination['perPage'];
+            $this->pagination->totalItems = $pagination['totalItems'];
+            $this->pagination->totalPages = $pagination['totalPages'];
+            $this->pagination->nextPageUrl = $pagination['nextPageUrl'];
+            $this->pagination->previousPageUrl = $pagination['previousPageUrl'];
+        }
     }
 }
 
