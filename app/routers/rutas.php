@@ -32,11 +32,13 @@ switch ($method) {
     case 'GET':
         if ($request === 'usuarios') {
             $autenticar = new Autenticacion('getAllUsers');
+            $autenticar->execute();
             $usuarios = new UsuariosController;
             $usuarios->getAllUsers();
         } elseif (preg_match('/^usuarios\/(\d+)$/', $request, $matches)) {
             $id = $matches[1];
             $autenticar = new Autenticacion('getUser');
+            $autenticar->execute();
             $usuarios = new UsuariosController;
             $usuarios->getUser($id);
         } elseif (preg_match('/^\/usuarios\/pages\/(\d+)$/', $request, $matches)) {
@@ -56,6 +58,7 @@ switch ($method) {
     case 'POST':
         if ($request === 'login') {
             $autenticar = new Autenticacion('userLogin');
+            $autenticar->execute();
             $postBody = file_get_contents("php://input");
             $loginController = new LoginController($postBody);
             $loginController->userLogin();
@@ -80,7 +83,7 @@ switch ($method) {
 
     default:
     $this->error->_405();
-    $this->error->message = 'Este método no está permitido en la APIREST. Para cualquier duda o asesoría contactar por favor con soporte@galagaagency.com';
+    $this->error->message = 'Este método no está permitido en la API. Para cualquier duda o asesoría contactar por favor con soporte@galagaagency.com';
     http_response_code($this->error->code);
     echo json_encode($this->error);
 }

@@ -36,7 +36,7 @@ class LoginController
             $this->insertToken = new InsertToken($this->dataUsuario, $this->token->value, $this->token->timeCreated);
             $responseInsertToken = $this->insertToken->execute();
             if ($responseInsertToken->status == "success") {
-                $responseCorreo = $this->correo->login($this->dataUsuario, $this->idiomaUsuario);
+                $responseCorreo = $this->correo->login($this->dataUsuario, $this->idiomaUsuario, $this->token->value);
                 http_response_code($responseCorreo->code);
                 echo json_encode($responseCorreo);
             } else {
