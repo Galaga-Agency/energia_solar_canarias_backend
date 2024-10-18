@@ -3,15 +3,17 @@
 require_once "conexion.php";
 require_once "../utils/respuesta.php";
 
-class Usuarios extends Conexion
+class Usuarios
 {
     public $respuesta;
     public $error;
+    private $conexion;
 
     function __construct()
     {
         $this->respuesta = new Respuesta;
         $this->error = new Errores;
+        $this->conexion = new Conexion;
     }
 
     public function getAllUsers()
@@ -52,7 +54,16 @@ class Usuarios extends Conexion
             $this->respuesta->message .= '- Consulta exitosa de todos los usuarios';
             return $this->respuesta;
         } catch (\Throwable $th) {
-            $this->error->_500($th);
+            $mensajeError = $th->getMessage();
+            $archivoError = $th->getFile();
+            $lineaError = $th->getLine();
+            $trazaError = $th->getTraceAsString();
+            $errores = [];
+            $errores['mensajeError'] = $mensajeError;
+            $errores['archivoError'] = $archivoError;
+            $errores['lineaError'] = $lineaError;
+            $errores['trazaError'] = $trazaError;
+            $this->error->_500($errores);
             $this->error->message = 'Error en la función getAllUsers de la clase Usuarios al realizar la consulta de todos los usuarios';
             return $this->error;
         }
@@ -86,7 +97,16 @@ class Usuarios extends Conexion
             $this->respuesta->message .= '- Consulta exitosa de todos los usuarios';
             return $this->respuesta;
         } catch (\Throwable $th) {
-            $this->error->_500($th);
+            $mensajeError = $th->getMessage();
+            $archivoError = $th->getFile();
+            $lineaError = $th->getLine();
+            $trazaError = $th->getTraceAsString();
+            $errores = [];
+            $errores['mensajeError'] = $mensajeError;
+            $errores['archivoError'] = $archivoError;
+            $errores['lineaError'] = $lineaError;
+            $errores['trazaError'] = $trazaError;
+            $this->error->_500($errores);
             $this->error->message = 'Error en la función getAllUsers de la clase Usuarios al realizar la consulta de todos los usuarios';
             return $this->error;
         }

@@ -31,7 +31,7 @@ class Conexion
     private function datosConexion()
     {
         $direccion = dirname(__FILE__);
-        $jsondata = file_get_contents("../" . $direccion . "config" . "/" . "conexion.json");
+        $jsondata = file_get_contents("../../config/conexion.json");
         return json_decode($jsondata, true);
     }
 
@@ -73,8 +73,16 @@ class Conexion
         return $array;
     }
 
-    public function sanitizar($datos)
+    public function sanitizar($datos, $conexion)
     {
-        return mysqli_real_escape_string($this->conexion, htmlspecialchars(trim(strip_tags($datos ?? ""))));
+        // Sanitizar primero los datos y luego usar mysqli_real_escape_string
+        $datos = trim(strip_tags($datos ?? "")); // Eliminar espacios en blanco y etiquetas HTML
+        $datos = htmlspecialchars($datos, ENT_QUOTES, 'UTF-8'); // Escapar caracteres especiales de HTML
+        // Asegurarse de que la conexión esté activa antes de usar mysqli_real_escape_string
+        if ($this->conexion) {
+            return mysqli_real_escape_string($conexion, $datos);
+        } else {
+            return false;
+        }
     }
 }

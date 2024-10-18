@@ -1,0 +1,20 @@
+<br />
+<b>Warning</b>:  file_get_contents(../C:\xampp\htdocs\esc-backend\app\servicesconfig/smtp.json): Failed to open stream: No such file or directory in <b>C:\xampp\htdocs\esc-backend\app\services\correo.php</b> on line <b>27</b><br />
+<br />
+<b>Warning</b>:  foreach() argument must be of type array|object, null given in <b>C:\xampp\htdocs\esc-backend\app\services\correo.php</b> on line <b>29</b><br />
+<br />
+<b>Warning</b>:  Undefined variable $login in <b>C:\xampp\htdocs\esc-backend\app\routers\rutas.php</b> on line <b>61</b><br />
+<br />
+<b>Fatal error</b>:  Uncaught Error: Call to a member function userLogin() on null in C:\xampp\htdocs\esc-backend\app\routers\rutas.php:61
+Stack trace:
+#0 {main}
+  thrown in <b>C:\xampp\htdocs\esc-backend\app\routers\rutas.php</b> on line <b>61</b><br />
+
+
+  <br />
+<b>Warning</b>:  Undefined variable $login in <b>C:\xampp\htdocs\esc-backend\app\routers\rutas.php</b> on line <b>61</b><br />
+<br />
+<b>Fatal error</b>:  Uncaught Error: Call to a member function userLogin() on null in C:\xampp\htdocs\esc-backend\app\routers\rutas.php:61
+Stack trace:
+#0 {main}
+  thrown in <b>C:\xampp\htdocs\esc-backend\app\routers\rutas.php</b> on line <b>61</b><br />
