@@ -34,14 +34,14 @@ class Correo
         }
     }
 
-    public function login($dataUsuario, $idiomaUsuario = 'es')
+    public function login($dataUsuario, $idiomaUsuario = 'es', $token)
     {
         try {
             if (isset($dataUsuario['email']) && isset($dataUsuario['nombre']) && isset($dataUsuario['tokenLogin'])) {
                 $emailUsuario = $dataUsuario['email'];
                 $nombreUsuario = $dataUsuario['nombre'];
-                $token = $dataUsuario['tokenLogin'];
                 $dataUsuario['tokenLogin'] = 'Información no disponible en esta consulta';
+                $dataUsuario['password'] = 'Información no disponible en esta consulta';
                 $dataUsuario['activo'] = 'Información no disponible en esta consulta';
                 $dataUsuario['eliminado'] = 'Información no disponible en esta consulta';
                 // Configuración SMTP para Amazon WorkMail
@@ -58,24 +58,25 @@ class Correo
                 $this->mail->addAddress($emailUsuario, $nombreUsuario); // Dirección del destinatario
 
                 $this->mail->isHTML(true);
+
                 $textoEspanol = 'Saludos ' . $nombreUsuario . '. ' . 'El token para iniciar sesión en app-energiasolarcanarias.com es: ';
                 $textoEspanolHtml = htmlentities($textoEspanol);
                 $textoEnglish = 'Greetings ' . $nombreUsuario . '. ' . 'The token to complete the login on app-energiasolarcanarias.com is: ';
                 $textoEnglishlHtml = htmlentities($textoEnglish);
                 $validezEs = "El token sólo tiene una validez de 5 minutos";
-                $validezEs = htmlentities($textoEnglish);
+                $validezEs = htmlentities($validezEs);
                 $validezEn = "The token is only valid for 5 minutes";
-                $validezEn = htmlentities($textoEnglish);
+                $validezEn = htmlentities($validezEn);
 
                 if ($idiomaUsuario == 'es') {
-                    $this->mail->Subject = 'Energía Solar Canarias - Token para inciar sesión';
-
-                    $message = '<p style="font-size: 20px; color: black; text-align: center;">' . $textoEspanolHtml . '</p><br/><p style="font-size: 20px; color: black; text-align: center;"><b>' . $token . '</b></p><p style="font-size: 20px; color: black; text-align: center;">' . $validezEs . '</p><br/><div style="display: flex; width: 100%; justify-content: center; align-items: center; text-align: center;"><img src="https://app-energiasolarcanarias-backend.com/public/assets/img/logo.webp" style="width: 260px;"></div>';
+                    $this->mail->Subject = 'Token';
+                    $this->message = '<p style="font-size: 20px; color: black; text-align: center;">' . $textoEspanolHtml . '</p><p style="font-size: 20px; color: black; text-align: center;"><b>' . $token . '</b></p><p style="font-size: 20px; color: black; text-align: center;">' . $validezEs . '</p><div style="display: flex; width: 100%; justify-content: center; align-items: center;"><img src="https://app-energiasolarcanarias-backend.com/public/assets/img/logo.webp" style="width: 260px;"></div>';
                 } else {
-                    $this->mail->Subject = 'Solar Energy Canary Islands - Login link';
-                    $message = '<p style="font-size: 20px; color: black; text-align: center;">' . $textoEnglishlHtml . '</p><br/><p style="font-size: 20px; color: black; text-align: center;"><b>' . $token . '</b></p><p style="font-size: 20px; color: black; text-align: center;">' . $validezEn . '</p><br/><div style="display: flex; width: 100%; justify-content: center; align-items: center; text-align: center;"><img src="https://app-energiasolarcanarias-backend.com/public/assets/img/logo.webp" style="width: 260px;"></div>';
+                    $this->mail->Subject = 'Token';
+                    $this->message = '<p style="font-size: 20px; color: black; text-align: center;">' . $textoEnglishlHtml . '</p><p style="font-size: 20px; color: black; text-align: center;"><b>' . $token . '</b></p><p style="font-size: 20px; color: black; text-align: center;">' . $validezEn . '</p><div style="display: flex; width: 100%; justify-content: center; align-items: center;"><img src="https://app-energiasolarcanarias-backend.com/public/assets/img/logo.webp" style="width: 260px;"></div>';
                 }
-                $this->mail->Body = $message;
+
+                $this->mail->Body = $this->message;
                 // Enviar correo
                 $this->mail->send();
                 //Retornar respuesta
