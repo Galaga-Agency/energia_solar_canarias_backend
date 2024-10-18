@@ -24,7 +24,7 @@ class Correo
         $this->respuesta = new Respuesta;
         $this->error = new Errores;
         $direccion = dirname(__FILE__);
-        $jsondata = file_get_contents("../" . $direccion . "config" . "/" . "smtp.json");
+        $jsondata = file_get_contents("../../config/smtp.json");
         $dataSmtp =  json_decode($jsondata, true);
         foreach ($dataSmtp as $key => $value) {
             $this->host = $value['host'];
@@ -37,11 +37,13 @@ class Correo
     public function login($dataUsuario, $idiomaUsuario = 'es')
     {
         try {
-            $emailUsuario = $dataUsuario['email'];
-            $nombreUsuario = $dataUsuario['nombre'];
-            $token = $dataUsuario['tokenLogin'];
-
-            if ($dataUsuario['login']) {
+            if (isset($dataUsuario['email']) && isset($dataUsuario['nombre']) && isset($dataUsuario['tokenLogin'])) {
+                $emailUsuario = $dataUsuario['email'];
+                $nombreUsuario = $dataUsuario['nombre'];
+                $token = $dataUsuario['tokenLogin'];
+                $dataUsuario['tokenLogin'] = 'Información no disponible en esta consulta';
+                $dataUsuario['activo'] = 'Información no disponible en esta consulta';
+                $dataUsuario['eliminado'] = 'Información no disponible en esta consulta';
                 // Configuración SMTP para Amazon WorkMail
                 $this->mail->isSMTP();
                 $this->mail->Host =  $this->host; // Servidor SMTP para WorkMail en Irlanda
@@ -83,10 +85,11 @@ class Correo
                 } else {
                     $this->respuesta->message = 'Successful login, the token to continue has been sent to your email with a validity of 5 minutes';
                 }
+                $this->respuesta->pagination = null;
                 return $this->respuesta;
             } else {
-                $this->error->_401();
-                $this->error->message = 'Error en el servicio correo: No se ha recibido en los datos del usuario ($dataUsuario) la validación del login al intentar enviar el correo electrónico con el token al usuario';
+                $this->error->_500();
+                $this->error->message = 'Error en el servicio correo: No se ha recibido en los datos del usuario ($dataUsuario) los datos necesarios para intentar enviar el correo electrónico con el token al usuario';
                 return $this->error;
             }
         } catch (Exception $e) {

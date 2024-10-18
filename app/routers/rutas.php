@@ -3,6 +3,7 @@
 require_once "../../config/configApi.php";
 require_once "../middlewares/autenticacion.php";
 require_once "../controllers/usuarios.php";
+require_once "../controllers/login.php";
 require_once "../utils/respuesta.php";
 
 $respuesta = new Respuesta;
@@ -56,6 +57,8 @@ switch ($method) {
         if ($request === 'login') {
             $autenticar = new Autenticacion('userLogin');
             $postBody = file_get_contents("php://input");
+            $loginController = new LoginController($postBody);
+            $loginController->userLogin();
         }
         break;
 

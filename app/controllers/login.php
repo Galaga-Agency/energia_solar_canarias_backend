@@ -52,6 +52,8 @@ class LoginController
 
 /*
 //PRUEBAS
-$users = new UsuariosController;
-$users->getAllUsers();
+$postBody = '{"email": "soporte@galagaagency.com","password": "***REMOVED***","idiomaUsuario": "es"}';
+$loginController = new LoginController($postBody);
+$loginController->userLogin();
 */
+

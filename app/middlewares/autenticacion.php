@@ -31,7 +31,7 @@ class Autenticacion extends Conexion
         if ($this->usuario && $this->apiKey) {
             // Aquí podrías comparar con los valores esperados o buscarlos en una base de datos
 
-            $query = "SELECT * FROM $this->table WHERE usuario = '$this->usuario' AND apiKey = '$this->apiKey'";
+            $query = "SELECT * FROM $this->table WHERE email = '$this->usuario' AND apiKey = '$this->apiKey'";
             $result = parent::datos($query);
             if ($result) {
                 if ($result->num_rows) {
@@ -39,7 +39,7 @@ class Autenticacion extends Conexion
                     while ($row = mysqli_fetch_assoc($result)) {
                         $dataUsuario['id'] = $row['id'];
                         $dataUsuario['email'] = $row['email'];
-                        $dataUsuario['contrasena'] = $row['contrasena'];
+                        $dataUsuario['password'] = $row['password'];
                         $dataUsuario['cod'] = $row['cod'];
                         $dataUsuario['clase'] = $row['clase'];
                         $dataUsuario['movil'] = $row['movil'];
