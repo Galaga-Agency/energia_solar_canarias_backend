@@ -35,6 +35,13 @@ class LoginController
             $this->token = new Token;
             $this->insertToken = new InsertToken($this->dataUsuario, $this->token->value, $this->token->timeCreated);
             $responseInsertToken = $this->insertToken->execute();
+
+            /*
+            //PRUEBAS
+            http_response_code($responseInsertToken->code);
+            echo json_encode($responseInsertToken);
+            */
+            
             if ($responseInsertToken->status == "success") {
                 $responseCorreo = $this->correo->login($this->dataUsuario, $this->idiomaUsuario, $this->token->value);
                 http_response_code($responseCorreo->code);
@@ -56,4 +63,3 @@ $postBody = '{"email": "soporte@galagaagency.com","password": "***REMOVED***","i
 $loginController = new LoginController($postBody);
 $loginController->userLogin();
 */
-

@@ -66,17 +66,15 @@ class Autenticacion
                             $this->dataUsuario = $dataUsuario;
                             if (!$this->dataUsuario['activo'] || $this->dataUsuario['eliminado']) {
                                 $this->error->_401();
-                                $this->error->message = 'No autorizad@, el usuario ha sido inactivado o eliminado. Para cualquier duda o asesoría contactar por favor con soporte@galagaagency.com';
+                                $this->error->message = 'No autorizad@, el usuario al que pertenece la apiKey ha sido inactivado o eliminado. Para cualquier duda o asesoría contactar por favor con soporte@galagaagency.com';
                                 http_response_code($this->error->code);
                                 echo json_encode($this->error);
                                 die();
                             }
                             if ($this->dataUsuario['apiScope'] == 2) {
-                                $direccion = dirname(__FILE__);
-                                $jsondata = file_get_contents("../../config/scope_1.json");
-                                $scope1 = json_decode($jsondata, true);
+                                $scope1 = require_once "../../config/scope_1.php";;
                                 foreach ($scope1 as $value) {
-                                    if ($this->request == '$value') {
+                                    if ($this->request == $value) {
                                         $this->error->_401();
                                         $this->error->message = 'No autorizad@, la APIKEY no tiene el alcance suficiente para esta consulta. Para cualquier duda o asesoría contactar por favor con soporte@galagaagency.com';
                                         http_response_code($this->error->code);

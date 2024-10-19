@@ -49,9 +49,10 @@ switch ($method) {
             http_response_code($response->code);
             echo json_encode($response);
         } else {
-            // Endpoint no encontrado
-            http_response_code(404);
-            echo json_encode(['error' => 'Endpoint no encontrado']);
+            $error->_400();
+            $error->message = 'El End Point no existe en la API';
+            http_response_code($error->code);
+            echo json_encode($error);
         }
         break;
 
@@ -62,6 +63,11 @@ switch ($method) {
             $postBody = file_get_contents("php://input");
             $loginController = new LoginController($postBody);
             $loginController->userLogin();
+        } else {
+            $error->_400();
+            $error->message = 'El End Point no existe en la API';
+            http_response_code($error->code);
+            echo json_encode($error);
         }
         break;
 
@@ -70,6 +76,11 @@ switch ($method) {
             $productId = $matches[1];
             // Lógica para actualizar un producto específico por ID
             echo json_encode(['message' => 'Producto actualizado con ID: ' . $productId]);
+        } else {
+            $error->_400();
+            $error->message = 'El End Point no existe en la API';
+            http_response_code($error->code);
+            echo json_encode($error);
         }
         break;
 
@@ -78,12 +89,17 @@ switch ($method) {
             $productId = $matches[1];
             // Lógica para eliminar un producto específico por ID
             echo json_encode(['message' => 'Producto eliminado con ID: ' . $productId]);
+        } else {
+            $error->_400();
+            $error->message = 'El End Point no existe en la API';
+            http_response_code($error->code);
+            echo json_encode($error);
         }
         break;
 
     default:
-    $this->error->_405();
-    $this->error->message = 'Este método no está permitido en la API. Para cualquier duda o asesoría contactar por favor con soporte@galagaagency.com';
-    http_response_code($this->error->code);
-    echo json_encode($this->error);
+        $this->error->_405();
+        $this->error->message = 'Este método no está permitido en la API. Para cualquier duda o asesoría contactar por favor con soporte@galagaagency.com';
+        http_response_code($this->error->code);
+        echo json_encode($this->error);
 }
