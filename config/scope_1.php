@@ -2,5 +2,6 @@
 
 return [
     "getAllUsers",
-    "userLogin"
+    "userLogin",
+    "validarToken"
 ];
