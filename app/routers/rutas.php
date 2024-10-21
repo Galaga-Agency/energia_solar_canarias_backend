@@ -4,6 +4,7 @@ require_once "../../config/configApi.php";
 require_once "../middlewares/autenticacion.php";
 require_once "../controllers/usuarios.php";
 require_once "../controllers/login.php";
+require_once "../controllers/token.php";
 require_once "../utils/respuesta.php";
 
 $respuesta = new Respuesta;
@@ -63,6 +64,12 @@ switch ($method) {
             $postBody = file_get_contents("php://input");
             $loginController = new LoginController($postBody);
             $loginController->userLogin();
+        } elseif ($request === 'token') {
+            $autenticar = new Autenticacion('validarToken');
+            $autenticar->execute();
+            $postBody = file_get_contents("php://input");
+            $tokenController = new TokenController($postBody);
+            $tokenController->validarToken();
         } else {
             $error->_400();
             $error->message = 'El End Point no existe en la API';
