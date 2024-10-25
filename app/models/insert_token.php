@@ -28,9 +28,21 @@ class InsertToken
     public function execute()
     {
         try {
-            $query = "UPDATE $this->table SET tokenLogin = '$this->tokenLogin', timeTokenLogin = '$this->timeTokenLogin' WHERE id = $this->usuarioId";
-            $result = $this->conexion->datos($query);
-            if ($result) {
+            // Crear instancia de la conexion
+            $conexion = new Conexion();
+
+            // Obtener la conexion
+            $conn = $conexion->getConexion();
+            $query = "UPDATE $this->table SET tokenLogin = ?, timeTokenLogin = ? WHERE id = ?";
+    
+            // Preparar la consulta
+            $stmt = $conn->prepare($query);
+
+            // Ligar parámetros para los marcadores (s es de String, i de Int)
+            $stmt->bind_param("ssi", $this->tokenLogin, $this->timeTokenLogin, $this->usuarioId);
+
+            // Ejecutar la consulta
+            if ($stmt->execute()) {
                 $this->respuesta->success();
                 $this->respuesta->message = 'El token ha sido insertado exitosamente';
                 $this->respuesta->pagination = null;
@@ -40,6 +52,10 @@ class InsertToken
                 $this->error->message = 'Error en el modelo insert_token en la consulta SQL de la API';
                 return $this->error;
             }
+            // Cerrar el statement
+            $stmt->close();
+            // Cerrar la conexion
+            $conexion->close();
         } catch (\Throwable $th) {
             $mensajeError = $th->getMessage();
             $archivoError = $th->getFile();

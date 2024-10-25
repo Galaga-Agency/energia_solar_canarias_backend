@@ -40,9 +40,23 @@ class Autenticacion
                 if ($usuarioSanitizado && $apiKeySanitizada) {
                     $this->usuario = $usuarioSanitizado;
                     $this->apiKey = $apiKeySanitizada;
-                    // Comparar los valores con la base de datos
-                    $query = "SELECT * FROM $this->table WHERE email = '$this->usuario'";
-                    $result = $this->conexion->datos($query);
+                    // Crear instancia de la conexión
+                    $conexion = new Conexion();
+                     // Obtener la conexión
+                    $conn = $conexion->getConexion();
+                    $query = "SELECT * FROM $this->table WHERE email = ?";
+
+                    // Preparar la consulta
+                    $stmt = $conn->prepare($query);
+
+                    // Ligar parámetros para los marcadores (s es de String, i de Int)
+                    $stmt->bind_param("s", $this->usuario);
+
+                    // Ejecutar la consulta
+                    $stmt->execute();
+
+                    // Obtener el resultado
+                    $result = $stmt->get_result();
                     if ($result) {
                         if ($result->num_rows) {
                             $dataUsuario = [];

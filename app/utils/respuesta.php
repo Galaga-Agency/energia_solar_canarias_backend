@@ -2,13 +2,78 @@
 
 class Paginacion
 {
-    public $currentPage;
-    public $perPage = 200;
-    public $totalItems;
-    public $totalPages;
-    public $nextPageUrl;
-    public $previousPageUrl;
+    private $currentPage;
+    private $perPage;
+    private $totalItems;
+    private $totalPages;
+    private $nextPageUrl;
+    private $previousPageUrl;
+
+    // Constructor para inicializar las propiedades
+    public function __construct($currentPage = 1, $perPage = 200, $totalItems = 0, $totalPages = 0, $nextPageUrl = '', $previousPageUrl = '') {
+        $this->currentPage = $currentPage;
+        $this->perPage = $perPage;
+        $this->totalItems = $totalItems;
+        $this->totalPages = $totalPages;
+        $this->nextPageUrl = $nextPageUrl;
+        $this->previousPageUrl = $previousPageUrl;
+    }
+
+    // Getter y setter para 'currentPage'
+    public function getCurrentPage() {
+        return $this->currentPage;
+    }
+
+    public function setCurrentPage($currentPage) {
+        $this->currentPage = $currentPage;
+    }
+
+    // Getter y setter para 'perPage'
+    public function getPerPage() {
+        return $this->perPage;
+    }
+
+    public function setPerPage($perPage) {
+        $this->perPage = $perPage;
+    }
+
+    // Getter y setter para 'totalItems'
+    public function getTotalItems() {
+        return $this->totalItems;
+    }
+
+    public function setTotalItems($totalItems) {
+        $this->totalItems = $totalItems;
+    }
+
+    // Getter y setter para 'totalPages'
+    public function getTotalPages() {
+        return $this->totalPages;
+    }
+
+    public function setTotalPages($totalPages) {
+        $this->totalPages = $totalPages;
+    }
+
+    // Getter y setter para 'nextPageUrl'
+    public function getNextPageUrl() {
+        return $this->nextPageUrl;
+    }
+
+    public function setNextPageUrl($nextPageUrl) {
+        $this->nextPageUrl = $nextPageUrl;
+    }
+
+    // Getter y setter para 'previousPageUrl'
+    public function getPreviousPageUrl() {
+        return $this->previousPageUrl;
+    }
+
+    public function setPreviousPageUrl($previousPageUrl) {
+        $this->previousPageUrl = $previousPageUrl;
+    }
 }
+
 
 class Respuesta
 {
@@ -30,12 +95,12 @@ class Respuesta
         $this->message = '200 - Solicitud exitosa';
         $this->data = $datos;
         if ($pagination) {
-            $this->pagination->currentPage = $pagination['currentPage'];
-            $this->pagination->perPage = $pagination['perPage'];
-            $this->pagination->totalItems = $pagination['totalItems'];
-            $this->pagination->totalPages = $pagination['totalPages'];
-            $this->pagination->nextPageUrl = $pagination['nextPageUrl'];
-            $this->pagination->previousPageUrl = $pagination['previousPageUrl'];
+            $this->pagination->setCurrentPage($pagination['currentPage']);
+            $this->pagination->setPerPage($pagination['perPage']);
+            $this->pagination->setTotalItems($pagination['totalItems']);
+            $this->pagination->setTotalPages($pagination['totalPages']);
+            $this->pagination->setNextPageUrl($pagination['nextPageUrl']);
+            $this->pagination->setPreviousPageUrl($pagination['previousPageUrl']);
         }
     }
 }

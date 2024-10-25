@@ -51,8 +51,8 @@ switch ($method) {
             echo json_encode($response);
         } else {
             $error->_400();
-            $error->message = 'El End Point no existe en la API';
-            http_response_code($error->code);
+            $error->message = "El End Point no existe en la API {$request}";
+            http_response_code("$error->code");
             echo json_encode($error);
         }
         break;

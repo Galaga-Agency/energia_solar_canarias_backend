@@ -6,32 +6,167 @@ require_once "../utils/token.php";
 
 class ValidToken
 {
-    public $respuesta;
-    public $error;
+    private $respuesta;
+    private $error;
     private $dataUsuario;
     private $tokenLogin;
     private $timeTokenLogin;
     private $table = 'usuarios';
     private $id;
-    private $conexion;
     private $token;
     private $tokenEsperado;
     private $valido = false;
 
+    /**
+     * =========================================================================
+     * ORGANIZACION DEL OBJETO COMO CONSTRUCTOR -> PARAMETROS -> FUNCIONES
+     * =========================================================================
+     */
+
+    //Constructor que se inicia cada vez que se le llama a la clase
     function __construct()
     {
         $this->respuesta = new Respuesta;
         $this->error = new Errores;
-        $this->conexion = new Conexion;
         $this->token = new Token;
     }
 
+    //GETTERS Y SETTERS
+
+    // Getter y Setter para $respuesta
+    public function getRespuesta()
+    {
+        return $this->respuesta;
+    }
+
+    public function setRespuesta($respuesta)
+    {
+        $this->respuesta = $respuesta;
+    }
+
+    // Getter y Setter para $error
+    public function getError()
+    {
+        return $this->error;
+    }
+
+    public function setError($error)
+    {
+        $this->error = $error;
+    }
+
+    // Getter y Setter para $dataUsuario
+    public function getDataUsuario()
+    {
+        return $this->dataUsuario;
+    }
+
+    public function setDataUsuario($dataUsuario)
+    {
+        $this->dataUsuario = $dataUsuario;
+    }
+
+    // Getter y Setter para $tokenLogin
+    public function getTokenLogin()
+    {
+        return $this->tokenLogin;
+    }
+
+    public function setTokenLogin($tokenLogin)
+    {
+        $this->tokenLogin = $tokenLogin;
+    }
+
+    // Getter y Setter para $timeTokenLogin
+    public function getTimeTokenLogin()
+    {
+        return $this->timeTokenLogin;
+    }
+
+    public function setTimeTokenLogin($timeTokenLogin)
+    {
+        $this->timeTokenLogin = $timeTokenLogin;
+    }
+
+    // Getter y Setter para $table
+    public function getTable()
+    {
+        return $this->table;
+    }
+
+    public function setTable($table)
+    {
+        $this->table = $table;
+    }
+
+    // Getter y Setter para $id
+    public function getId()
+    {
+        return $this->id;
+    }
+
+    public function setId($id)
+    {
+        $this->id = $id;
+    }
+
+    // Getter y Setter para $token
+    public function getToken()
+    {
+        return $this->token;
+    }
+
+    public function setToken($token)
+    {
+        $this->token = $token;
+    }
+
+    // Getter y Setter para $tokenEsperado
+    public function getTokenEsperado()
+    {
+        return $this->tokenEsperado;
+    }
+
+    public function setTokenEsperado($tokenEsperado)
+    {
+        $this->tokenEsperado = $tokenEsperado;
+    }
+
+    // Getter y Setter para $valido
+    public function isValido()
+    {
+        return $this->valido;
+    }
+
+    public function setValido($valido)
+    {
+        $this->valido = $valido;
+    }
+
+    //FUNCION DE VALIDACION DE TOKEN
     public function execute($id, $token)
     {
         try {
             $this->id = $id;
-            $query = "SELECT * FROM $this->table WHERE id = $this->id";
-            $result = $this->conexion->datos($query);
+            // Creamos una nueva conexión (buena práctica para abrir y cerrar peticiones)
+            $conexion = new Conexion();
+            $conn = $conexion->getConexion();
+
+            
+            //Preparar la consulta
+            $query = "SELECT * FROM $this->table WHERE id = ?";
+
+            // Preparamos la consulta
+            $stmt = $conn->prepare($query);
+
+            // Ligar parámetros para el marcador (s es de String)
+            $stmt->bind_param("s", $id);
+
+            // Ejecutar la consulta
+            $stmt->execute();
+
+            // Obtener los resultados
+            $result = $stmt->get_result();
             if ($result) {
                 if ($result->num_rows) {
                     $dataUsuario = [];
