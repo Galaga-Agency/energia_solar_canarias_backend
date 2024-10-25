@@ -85,4 +85,19 @@ class Conexion
             return false;
         }
     }
+     // Método para cerrar la conexión
+     public function close() {
+        if ($this->conexion) {
+            $this->conexion->close();
+            echo "Conexión cerrada correctamente.";
+        }
+    }
+    // Método opcional para obtener la conexión actual
+    public function getConexion() {
+        return $this->conexion;
+    }
+    // Método para reemplazar y obtener la conexión actual
+    public function setConexion($conexion) {
+        $this->conexion = $conexion;
+    }
 }

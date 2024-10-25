@@ -5,13 +5,19 @@ require_once "../utils/respuesta.php";
 
 class ApiKey
 {
-    public $respuesta;
-    public $error;
+    private $respuesta;
+    private $error;
     private $email;
     private $password;
     private $token;
     private $table = 'usuarios';
     private $conexion;
+
+    /**
+     * =========================================================================
+     * ORGANIZACION DEL OBJETO COMO CONSTRUCTOR -> PARAMETROS -> FUNCIONES
+     * =========================================================================
+     */
 
     function __construct()
     {
@@ -20,22 +26,104 @@ class ApiKey
         $this->token = new Token;
         $this->conexion = new Conexion;
     }
+    // Getter y setter para 'email'
+    public function getEmail() {
+        return $this->email;
+    }
 
+    public function setEmail($email) {
+        $this->email = $email;
+    }
+
+    // Getter y setter para 'password'
+    public function getPassword() {
+        return $this->password;
+    }
+
+    public function setPassword($password) {
+        $this->password = $password;
+    }
+
+    // Getter y setter para 'token'
+    public function getToken() {
+        return $this->token;
+    }
+
+    public function setToken($token) {
+        $this->token = $token;
+    }
+
+    // Getter para 'table' (ya que es una propiedad privada y constante, no es necesario un setter)
+    public function getTable() {
+        return $this->table;
+    }
+
+    // Getter y setter para 'conexion'
+    public function getConexion() {
+        return $this->conexion;
+    }
+
+    public function setConexion($conexion) {
+        $this->conexion = $conexion;
+    }
+
+    // Getter y setter para 'respuesta'
+    public function getRespuesta() {
+        return $this->respuesta;
+    }
+
+    public function setRespuesta($respuesta) {
+        $this->respuesta = $respuesta;
+    }
+
+    // Getter y setter para 'error'
+    public function getError() {
+        return $this->error;
+    }
+
+    public function setError($error) {
+        $this->error = $error;
+    }
+
+    //Funcion de logueo
+    /**
+     * acceso
+     *  HEADER:     KEY         VALUE
+     *        - 1: usuario      String
+     *        - 2: apiKey       String
+     * 
+     *  JSON:
+     *      {
+     *          "email": "string",
+     *          "password": "string",
+     *          "idiomaUsuario": "string"
+     *      }
+     */
     public function login($datos)
     {
         try {
-
+            echo $datos;
             if (!isset($datos['user']) || !isset($datos['password'])) {
                 $this->error->_500();
                 $this->error->message = 'Error en el formato de los datos que has enviado - O no has especificado un dato obligatorio';
                 return $this->error;
             } else {
+
+                //recogemos el email y la contraseña
                 $usuario = $datos['email'];
                 $password = $datos['password'];
-                $usuarioSanitizado = $this->conexion->sanitizar($datos['email'], $this->conexion->conexion);
-                $passwordSanitizada = $this->conexion->sanitizar($datos['password'], $this->conexion->conexion);
-                $query = "SELECT * FROM $this->table WHERE usuario = '$usuario' AND password = '$password'";
-                $result = $this->conexion->datos($query);
+
+                //Sanitizacion y validacion de los datos de entrada
+                $usuarioSanitizado = $this->conexion->sanitizar($usuario, $this->conexion->conexion);
+                $passwordSanitizada = $this->conexion->sanitizar($password, $this->conexion->conexion);
+
+                //Consulta preparada para evitar inyecciones SQL
+                $stmt = $this->conexion->prepare("SELECT * FROM {$this->table} WHERE email = :email AND password = :password");
+                $stmt->bind_param(":email", $usuarioSanitizado, PDO::PARAM_STR);
+                $stmt->bind_param(":password", $passwordSanitizada, PDO::PARAM_STR);
+                $stmt->execute();
+                $result = $stmt->get_result();
+
                 if ($result) {
                     if ($result->num_rows) {
                         $dataUsuario = [];
@@ -56,7 +144,7 @@ class ApiKey
                             $this->respuesta->message = 'Login exitoso';
                             $this->respuesta->pagination = null;
                             return $this->respuesta;
-                        }
+                        } 
                     } else {
                         $this->error->_401();
                         $this->error->message = 'No autorizado en la API, las credenciales no son correctas';
@@ -69,6 +157,7 @@ class ApiKey
                 }
             }
         } catch (\Throwable $th) {
+            $this->conexion->close();
             $mensajeError = $th->getMessage();
             $archivoError = $th->getFile();
             $lineaError = $th->getLine();

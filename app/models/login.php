@@ -43,8 +43,26 @@ class Login
                 if ($usuarioSanitizado && $passwordSanitizada) {
                     $this->usuarioSanitizado = $usuarioSanitizado;
                     $this->passwordSanitizada = $passwordSanitizada;
-                    $query = "SELECT * FROM $this->table WHERE email = '$this->usuarioSanitizado'";
-                    $result = $this->conexion->datos($query);
+
+                    // Creamos una nueva conexión (buena práctica para abrir y cerrar peticiones)
+                    $conexion = new Conexion();
+                    $conn = $conexion->getConexion();
+
+                    // Definimos la consulta con marcador de posición
+                    $query = "SELECT * FROM $this->table WHERE email = ?";
+
+                    // Preparamos la consulta
+                    $stmt = $conn->prepare($query);
+
+                    // Ligar parámetros para el marcador (s es de String)
+                    $stmt->bind_param("s", $this->usuarioSanitizado);
+
+                    // Ejecutar la consulta
+                    $stmt->execute();
+
+                    // Obtener los resultados
+                    $result = $stmt->get_result();
+
                     if ($result) {
                         if ($result->num_rows) {
                             $dataUsuario = [];
@@ -105,6 +123,7 @@ class Login
                 }
             }
         } catch (\Throwable $th) {
+            $conexion->close();
             $mensajeError = $th->getMessage();
             $archivoError = $th->getFile();
             $lineaError = $th->getLine();
