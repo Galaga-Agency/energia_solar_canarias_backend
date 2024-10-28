@@ -1,4 +1,3 @@
 vendor/
 config/conexion.json
 config/smtp.json
-config/scope_1.json
