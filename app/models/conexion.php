@@ -1,7 +1,16 @@
 <?php
 
+require_once "../../vendor/autoload.php";
+
+use Firebase\JWT\JWT;
+use Firebase\JWT\Key;
+
 class Conexion
 {
+    //ESTA ES LA API KEY DEL SERVIDOR
+    private static $secret_key = '***REMOVED***';
+    //ESTA ES EL ALGORITMO DE CIFRADO
+    private static $algorithm = 'HS256';
     private $server;
     private $user;
     private $password;
@@ -99,5 +108,36 @@ class Conexion
     // Método para reemplazar y obtener la conexión actual
     public function setConexion($conexion) {
         $this->conexion = $conexion;
+    }
+
+    static public function jwt($id, $email){
+        $time = time(); // Devuelve la fecha Unix actual
+        $token = array(
+            "iat" => $time, // Tiempo en que inicia el token
+            "exp" => $time + (60 * 60 * 24 * 180), // Tiempo en el que expira el token (180 días)
+            "data" => [
+                "id" => $id,
+                "email" => $email
+            ]
+        );
+
+        $jwt = JWT::encode($token, self::$secret_key, self::$algorithm);
+
+        return $jwt;
+        //echo '<pre>'; print_r($jwt); echo '</pre>'; // Sirve para saber que nos devuelve el token
+    }
+       /**
+     * Verificar JWT
+     * @param string $jwt Token JWT recibido
+     * @return array|false Devuelve los datos del token si es válido, o false si no lo es
+     */
+    public static function verifyJwt($jwt) {
+        try {
+            $decoded = JWT::decode($jwt, new Key(self::$secret_key, self::$algorithm));
+            return (array) $decoded->data; // Devuelve los datos si el token es válido
+        } catch (Exception $e) {
+            error_log("Error al verificar JWT: " . $e->getMessage());
+            return false; // Token inválido o expirado
+        }
     }
 }

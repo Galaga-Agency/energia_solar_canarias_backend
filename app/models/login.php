@@ -49,7 +49,12 @@ class Login
                     $conn = $conexion->getConexion();
 
                     // Definimos la consulta con marcador de posición
-                    $query = "SELECT * FROM $this->table WHERE email = ?";
+                    $query = "SELECT usuarios.usuario_id, usuarios.email, usuarios.password_hash, clases.nombre as clase, usuarios.movil,
+                    usuarios.nombre, usuarios.apellido, usuarios.imagen, usuarios.activo, usuarios.eliminado
+                    FROM usuarios 
+                    inner join clases 
+                    on clases.clase_id = usuarios.clase_id
+                    WHERE email = ?";
 
                     // Preparamos la consulta
                     $stmt = $conn->prepare($query);
@@ -67,21 +72,22 @@ class Login
                         if ($result->num_rows) {
                             $dataUsuario = [];
                             while ($row = mysqli_fetch_assoc($result)) {
-                                $dataUsuario['id'] = $row['id'];
+                                $dataUsuario['id'] = $row['usuario_id'];
                                 $dataUsuario['email'] = $row['email'];
-                                $dataUsuario['password'] = $row['password'];
-                                $dataUsuario['cod'] = $row['cod'];
+                                $dataUsuario['password'] = $row['password_hash'];
                                 $dataUsuario['clase'] = $row['clase'];
                                 $dataUsuario['movil'] = $row['movil'];
                                 $dataUsuario['nombre'] = $row['nombre'];
                                 $dataUsuario['apellido'] = $row['apellido'];
                                 $dataUsuario['imagen'] = $row['imagen'];
                                 $dataUsuario['activo'] = $row['activo'];
-                                $dataUsuario['tokenLogin'] = $row['tokenLogin'];
                                 $dataUsuario['eliminado'] = $row['eliminado'];
                                 $dataUsuario['idiomaUsuario'] = $this->idiomaUsuario;
                             }
+                            //mientras no se pasen los datos y se reemplacen
+                            while($this->dataUsuario != $dataUsuario){
                             $this->dataUsuario = $dataUsuario;
+                            }
                             if ($this->dataUsuario['activo']) {
                                 if (!$dataUsuario['eliminado']) {
                                     $this->passwordEsperada = $this->dataUsuario['password'];
@@ -89,6 +95,10 @@ class Login
                                         $this->dataUsuario['password'] = "Información no disponible en esta consulta";
                                         $this->respuesta->success($this->dataUsuario);
                                         $this->respuesta->message = 'Login exitoso';
+
+                                        //Con esta operacion recogemos los datos id y email y llamamos a una funcion de token que nos va a generar datos con ella encriptados
+                                        $token = Conexion::jwt($this->dataUsuario['id'], $this->dataUsuario['email']);
+
                                         $this->respuesta->pagination = null;
                                         return $this->respuesta;
                                     } else {

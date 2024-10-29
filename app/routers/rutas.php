@@ -6,6 +6,7 @@ require_once "../controllers/usuarios.php";
 require_once "../controllers/login.php";
 require_once "../controllers/token.php";
 require_once "../utils/respuesta.php";
+require_once "../DBObjects/usuariosDB.php";
 
 $respuesta = new Respuesta;
 $error = new Errores;
@@ -32,10 +33,45 @@ if (strpos($request, $baseDir) === 0) {
 switch ($method) {
     case 'GET':
         if ($request === 'usuarios') {
-            $autenticar = new Autenticacion('getAllUsers');
-            $autenticar->execute();
-            $usuarios = new UsuariosController;
-            $usuarios->getAllUsers();
+            // Obtener el token del encabezado Authorization
+            $headers = getallheaders();
+            $authHeader = isset($headers['Authorization']) ? $headers['Authorization'] : null;
+            if ($authHeader && preg_match('/Bearer\s(\S+)/', $authHeader, $matches)) {
+                $jwtToken = $matches[1]; // Extraer el token
+
+                // Verificar el token
+                $autenticar = Conexion::verifyJwt($jwtToken);
+                
+                if ($autenticar) {
+                        // Si el token es válido, continuar con la lógica
+                        $usuarios = new UsuariosController;
+                        $dboUser = new UsuariosDB();
+                    if($dboUser->getAdmin($autenticar['id'])){
+                        $usuarios->getAllUsers();
+                    }else{
+                        // Si el token no es válido, enviar un error de autorización
+                        $error->_400();
+                        $error->message = 'Operación no autorizada. No eres administrador.';
+                        http_response_code($error->code);
+                        echo json_encode($error);
+                        die();
+                    }
+                } else {
+                    // Si el token no es válido, enviar un error de autorización
+                    $error->_400();
+                    $error->message = 'No autorizado. Token inválido o expirado.';
+                    http_response_code("$error->code");
+                    echo json_encode($error);
+                    die();
+                }
+            } else {
+               // Si no se proporciona el token o no es un Bearer Token
+               $error->_400();
+               $error->message = 'Encabezado de autorización faltante o incorrecto';
+               http_response_code($error->code);
+               echo json_encode($error);
+               die();
+            }
         } elseif (preg_match('/^usuarios\/(\d+)$/', $request, $matches)) {
             $id = $matches[1];
             $autenticar = new Autenticacion('getUser');

@@ -154,7 +154,12 @@ class ValidToken
 
             
             //Preparar la consulta
-            $query = "SELECT * FROM $this->table WHERE id = ?";
+            $query = "SELECT usuarios.usuario_id, usuarios.email, clases.nombre as clase, usuarios.movil, usuarios.nombre, usuarios.apellido, usuarios.imagen, token.token_login as tokenLogin, token.time_token_login as timeTokenLogin FROM usuarios 
+            inner join clases
+            on clases.clase_id = usuarios.clase_id
+            inner join token
+            on token.usuario_id = usuarios.usuario_id
+            WHERE usuarios.usuario_id = ? ORDER BY token.time_token_login DESC LIMIT 1;";
 
             // Preparamos la consulta
             $stmt = $conn->prepare($query);
@@ -167,13 +172,14 @@ class ValidToken
 
             // Obtener los resultados
             $result = $stmt->get_result();
+
+            //var_dump(mysqli_fetch_assoc($result), $id);
             if ($result) {
                 if ($result->num_rows) {
                     $dataUsuario = [];
                     while ($row = mysqli_fetch_assoc($result)) {
-                        $dataUsuario['id'] = $row['id'];
+                        $dataUsuario['id'] = $row['usuario_id'];
                         $dataUsuario['email'] = $row['email'];
-                        $dataUsuario['cod'] = $row['cod'];
                         $dataUsuario['clase'] = $row['clase'];
                         $dataUsuario['movil'] = $row['movil'];
                         $dataUsuario['nombre'] = $row['nombre'];
@@ -196,6 +202,9 @@ class ValidToken
                             $this->respuesta->pagination = null;
                             return $this->respuesta;
                         } else {
+                            //Eliminamos todos los tokens del usuario que ya no sean validos
+                            $token = new Token();
+                            $token->deleteTokenUser($this->dataUsuario['id']);
                             $this->error->_401();
                             $this->error->message = 'No autorizado, el token NO es válido para el usuario enviado';
                             return $this->error;

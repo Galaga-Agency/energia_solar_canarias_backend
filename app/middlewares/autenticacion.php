@@ -44,7 +44,64 @@ class Autenticacion
                     $conexion = new Conexion();
                      // Obtener la conexión
                     $conn = $conexion->getConexion();
-                    $query = "SELECT * FROM $this->table WHERE email = ?";
+
+                    //Consulta que verifica si el usuario tiene activo algun token de verificacion
+
+                    $queryVerificarToken = "SELECT COUNT(token.token_id) as total_tokens from token 
+                    INNER JOIN usuarios on usuarios.usuario_id = token.usuario_id
+                    WHERE usuarios.email = ?;";
+
+                    $stmt = $conn->prepare($queryVerificarToken);
+
+                    // Ligar parámetros para los marcadores (s es de String, i de Int)
+                    $stmt->bind_param("s", $this->usuario);
+
+                    //Ejecutar la consulta con los parametros
+                    $stmt->execute();
+
+                    $result = $stmt->get_result();
+
+                    //Si el token existe ejecuta esto
+                    if ($result) {
+                        $row = $result->fetch_assoc();
+                        $totalTokens = $row['total_tokens'];
+                    
+                        // Verificamos si el usuario tiene muchos tokens activos para bloquear el spam o intento de injeccion
+                        if ($totalTokens > 5) {
+                            $token = new Token();
+                            $token->deleteTokenUserPorEmail($this->usuario);
+                            $this->error->_401();
+                            $this->error->message = 'No autorizad@, has superado el numero de intentos por favor espere 5 minutos para probar mas intentos por favor contactar por favor con soporte@galagaagency.com';
+                            http_response_code($this->error->code);
+                            echo json_encode($this->error);
+                            die();
+                        }
+                    //Si no hay token retornamos un error de no hay tokens activos
+                    }else{
+                        $this->error->_401();
+                            $this->error->message = 'No autorizad@, no tiene tokens activos en su usuario vuelve a loguearse si tiene dudas por favor contactar por favor con soporte@galagaagency.com';
+                            http_response_code($this->error->code);
+                            echo json_encode($this->error);
+                            die();
+                    }
+
+                    // Cerrar el statement y la conexión
+                    $stmt->close();
+
+                    //Abrimos la conexion para realizar la segunda consulta
+                    $conexion->getConexion();
+
+
+                    $query = "
+                    SELECT usuarios.usuario_id, usuarios.email, usuarios.password_hash, 
+                    clases.nombre as clase, usuarios.movil, usuarios.nombre, usuarios.apellido, usuarios.imagen, usuarios.activo, usuarios.eliminado, 
+                    api_accesos.api_key as apiKey, api_accesos.api_scope as apiScope
+                    FROM {$this->table} 
+                    INNER JOIN clases 
+                    ON usuarios.clase_id = clases.clase_id 
+                    INNER JOIN api_accesos
+                    ON api_accesos.usuario_id = usuarios.usuario_id
+                    WHERE email = ?;";
 
                     // Preparar la consulta
                     $stmt = $conn->prepare($query);
@@ -57,27 +114,28 @@ class Autenticacion
 
                     // Obtener el resultado
                     $result = $stmt->get_result();
+
                     if ($result) {
                         if ($result->num_rows) {
                             $dataUsuario = [];
                             while ($row = mysqli_fetch_assoc($result)) {
-                                $dataUsuario['id'] = $row['id'];
+                                $dataUsuario['usuario_id'] = $row['usuario_id'];
                                 $dataUsuario['email'] = $row['email'];
-                                $dataUsuario['password'] = $row['password'];
-                                $dataUsuario['cod'] = $row['cod'];
+                                $dataUsuario['password_hash'] = $row['password_hash'];
                                 $dataUsuario['clase'] = $row['clase'];
                                 $dataUsuario['movil'] = $row['movil'];
                                 $dataUsuario['nombre'] = $row['nombre'];
                                 $dataUsuario['apellido'] = $row['apellido'];
                                 $dataUsuario['imagen'] = $row['imagen'];
                                 $dataUsuario['activo'] = $row['activo'];
-                                $dataUsuario['tokenLogin'] = $row['tokenLogin'];
-                                $dataUsuario['timeTokenLogin'] = $row['timeTokenLogin'];
                                 $dataUsuario['apiKey'] = $row['apiKey'];
                                 $dataUsuario['apiScope'] = $row['apiScope'];
                                 $dataUsuario['eliminado'] = $row['eliminado'];
                             }
+                            //mientras que los datos no sean iguales
+                            while($this->dataUsuario != $dataUsuario){
                             $this->dataUsuario = $dataUsuario;
+                            }
                             if (!$this->dataUsuario['activo'] || $this->dataUsuario['eliminado']) {
                                 $this->error->_401();
                                 $this->error->message = 'No autorizad@, el usuario al que pertenece la apiKey ha sido inactivado o eliminado. Para cualquier duda o asesoría contactar por favor con soporte@galagaagency.com';
@@ -85,7 +143,7 @@ class Autenticacion
                                 echo json_encode($this->error);
                                 die();
                             }
-                            if ($this->dataUsuario['apiScope'] == 2) {
+                            if ($this->dataUsuario['apiScope'] == "2") {
                                 $scope1 = require_once "../../config/scope_1.php";;
                                 foreach ($scope1 as $value) {
                                     if ($this->request == $value) {

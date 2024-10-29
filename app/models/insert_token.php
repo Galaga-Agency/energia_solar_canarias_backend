@@ -10,7 +10,7 @@ class InsertToken
     private $dataUsuario;
     private $tokenLogin;
     private $timeTokenLogin;
-    private $table = 'usuarios';
+    private $table = 'token';
     private $usuarioId;
     private $conexion;
 
@@ -33,13 +33,14 @@ class InsertToken
 
             // Obtener la conexion
             $conn = $conexion->getConexion();
-            $query = "UPDATE $this->table SET tokenLogin = ?, timeTokenLogin = ? WHERE id = ?";
+            $query = "INSERT INTO `token`( `usuario_id`, `token_login`, `time_token_login`) 
+            VALUES (?,?,?)";
     
             // Preparar la consulta
             $stmt = $conn->prepare($query);
 
             // Ligar parámetros para los marcadores (s es de String, i de Int)
-            $stmt->bind_param("ssi", $this->tokenLogin, $this->timeTokenLogin, $this->usuarioId);
+            $stmt->bind_param("iss", $this->usuarioId, $this->tokenLogin, $this->timeTokenLogin);
 
             // Ejecutar la consulta
             if ($stmt->execute()) {

@@ -40,10 +40,7 @@ class Correo
             if (isset($dataUsuario['email']) && isset($dataUsuario['nombre']) && isset($dataUsuario['tokenLogin'])) {
                 $emailUsuario = $dataUsuario['email'];
                 $nombreUsuario = $dataUsuario['nombre'];
-                $dataUsuario['tokenLogin'] = 'Información no disponible en esta consulta';
-                $dataUsuario['password'] = 'Información no disponible en esta consulta';
-                $dataUsuario['activo'] = 'Información no disponible en esta consulta';
-                $dataUsuario['eliminado'] = 'Información no disponible en esta consulta';
+
                 // Configuración SMTP para Amazon WorkMail
                 $this->mail->isSMTP();
                 $this->mail->Host =  $this->host; // Servidor SMTP para WorkMail en Irlanda
@@ -79,6 +76,9 @@ class Correo
                 $this->mail->Body = $this->message;
                 // Enviar correo
                 $this->mail->send();
+                //el unset borra los parametros que le digamos
+                unset($dataUsuario['tokenLogin']);
+                unset($dataUsuario['timeTokenLogin']);
                 //Retornar respuesta
                 $this->respuesta->success($dataUsuario);
                 if ($idiomaUsuario == 'es') {
