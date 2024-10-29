@@ -2,6 +2,7 @@
 
 require_once "conexion.php";
 require_once "../utils/respuesta.php";
+require_once "./../DBObjects/usuariosDB.php";
 
 class Usuarios
 {
