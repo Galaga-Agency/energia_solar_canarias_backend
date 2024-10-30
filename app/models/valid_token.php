@@ -195,11 +195,17 @@ class ValidToken
                         $this->timeTokenLogin = $this->dataUsuario['timeTokenLogin'];
                         $this->valido = $this->token->isTokenValid($this->dataUsuario['timeTokenLogin']);
                         if ($this->valido) {
-                            $this->dataUsuario['tokenLogin'] = 'Información no disponible en esta consulta';
-                            $this->dataUsuario['timeTokenLogin'] = 'Información no disponible en esta consulta';
+                            //Eliminamos los parametros de la base de datos
+                            unset($this->dataUsuario['tokenLogin']);
+                            unset($this->dataUsuario['timeTokenLogin']);
+                            //Creamos un token que dura 180 dias en la base de datos
+                            $this->dataUsuario['tokenIdentificador'] = $token = Conexion::jwt($this->dataUsuario['id'],$this->dataUsuario['email']);
                             $this->respuesta->success($this->dataUsuario);
                             $this->respuesta->message = 'El token aún es válido para el usuario enviado';
                             $this->respuesta->pagination = null;
+                            //cuando este el token validado borramos todos los tokens que tiene el usuario
+                            $token = new Token();
+                            $token->deleteAllTokensUser($this->dataUsuario['id']);
                             return $this->respuesta;
                         } else {
                             //Eliminamos todos los tokens del usuario que ya no sean validos
