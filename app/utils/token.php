@@ -27,7 +27,31 @@ class Token {
         return $timeElapsed <= 300;
     }
 
-    // Método para borrar el token del usuario que exceda de 5 minutos
+    // Método para borrar todos los tokens temporales del usuario
+    public function deleteAllTokensUser($user) {
+        
+        $conexion = new Conexion();
+        $conn = $conexion->getConexion();
+        //borramos todos los tokens que excedan de 5 minutos
+        $sql = "
+            DELETE token 
+            FROM token
+            INNER JOIN usuarios ON token.usuario_id = usuarios.usuario_id
+            WHERE usuarios.usuario_id = ? ";
+        //preparamos la consulta contra injecciones
+        $stmt = $conn->prepare($sql);
+        //le metemos el parametro int y string
+        $stmt->bind_param('s', $user);
+        //ejecutamos la consulta
+        $stmt->execute();
+        //cerramos la consulta
+        $stmt->close();
+        $conn->close();
+        // Mensaje de control
+        //echo ("<script>console.log('PHP: Borrados correctamentes los token del usuario que han excedido los 5 minutos');</script>");
+    }
+
+    // Método para borrar el token temporal del usuario que exceda de 5 minutos
     public function deleteTokenUser($user) {
         $time_actual = time(); // Tiempo actual en segundos
 

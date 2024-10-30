@@ -128,6 +128,14 @@ class Errores
         $this->errors = $errores;
     }
 
+    public function _403($errores = [])
+    {
+        $this->status = 'error';
+        $this->code = 403;
+        $this->message = '403 - Operación no autorizada. No eres administrador.';
+        $this->errors = $errores;
+    }
+
     public function _405($errores = [])
     {
         $this->status = 'error';

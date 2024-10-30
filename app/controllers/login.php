@@ -47,7 +47,6 @@ class LoginController
                 $tokenUser = $token->getLastTokenUser($this->dataUsuario['id']);
                 $this->dataUsuario['tokenLogin'] = $tokenUser['token_login'];
                 $this->dataUsuario['timeTokenLogin'] = $tokenUser['time_token_login'];
-                $this->dataUsuario['tokenIdentificador'] = $token = Conexion::jwt($this->dataUsuario['id'],$this->dataUsuario['email']);
                 $responseCorreo = $this->correo->login($this->dataUsuario, $this->idiomaUsuario, $this->token->value);
                 http_response_code($responseCorreo->code);
                 echo json_encode($responseCorreo);

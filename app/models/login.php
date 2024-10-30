@@ -14,8 +14,6 @@ class Login
     private $idiomaUsuario;
     private $conexion;
     private $dataUsuario;
-    private $usuarioSanitizado;
-    private $passwordSanitizada;
     private $passwordEsperada;
 
     function __construct($datos, $idiomaUsuario = 'es')
@@ -36,14 +34,8 @@ class Login
                 $this->error->message = 'Error en el formato de los datos que has enviado - O no has especificado un dato obligatorio';
                 return $this->error;
             } else {
-                $this->usuario = $this->datos['email'];
-                $this->password = $this->datos['password'];
-                $usuarioSanitizado = $this->conexion->sanitizar($this->datos['email'], $this->conexion->conexion);
-                $passwordSanitizada = $this->conexion->sanitizar($this->datos['password'], $this->conexion->conexion);
-                if ($usuarioSanitizado && $passwordSanitizada) {
-                    $this->usuarioSanitizado = $usuarioSanitizado;
-                    $this->passwordSanitizada = $passwordSanitizada;
-
+                    $this->password = $this->datos['password'];
+                    $this->usuario = $this->datos['email'];
                     // Creamos una nueva conexión (buena práctica para abrir y cerrar peticiones)
                     $conexion = new Conexion();
                     $conn = $conexion->getConexion();
@@ -60,7 +52,7 @@ class Login
                     $stmt = $conn->prepare($query);
 
                     // Ligar parámetros para el marcador (s es de String)
-                    $stmt->bind_param("s", $this->usuarioSanitizado);
+                    $stmt->bind_param("s", $this->usuario);
 
                     // Ejecutar la consulta
                     $stmt->execute();
@@ -91,13 +83,11 @@ class Login
                             if ($this->dataUsuario['activo']) {
                                 if (!$dataUsuario['eliminado']) {
                                     $this->passwordEsperada = $this->dataUsuario['password'];
-                                    if ($this->passwordSanitizada == $this->passwordEsperada) {
+                                    if (password_verify($this->password, $this->passwordEsperada)) {
+                                        // Si la contraseña es correcta, devuelve una respuesta exitosa o genera un token
                                         $this->dataUsuario['password'] = "Información no disponible en esta consulta";
                                         $this->respuesta->success($this->dataUsuario);
                                         $this->respuesta->message = 'Login exitoso';
-
-                                        //Con esta operacion recogemos los datos id y email y llamamos a una funcion de token que nos va a generar datos con ella encriptados
-                                        $token = Conexion::jwt($this->dataUsuario['id'], $this->dataUsuario['email']);
 
                                         $this->respuesta->pagination = null;
                                         return $this->respuesta;
@@ -126,11 +116,6 @@ class Login
                         $this->error->message = 'Error en el modelo Login de la API, en la consulta SQL de las credenciales del usuario';
                         return $this->error;
                     }
-                } else {
-                    $this->error->_500();
-                    $this->error->message = 'Error en el modelo Login de la API, al tratar de sanitizar los datos para la consulta SQL de las credenciales del usuario' . '___usuario: ' . $this->usuario . '___password: ' . $this->password . '___usuarioSanitizado: ' . $this->usuarioSanitizado . '___passwordSanitizada: ' . $this->passwordSanitizada;
-                    return $this->error;
-                }
             }
         } catch (\Throwable $th) {
             $conexion->close();
