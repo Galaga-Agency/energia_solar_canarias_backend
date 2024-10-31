@@ -6,8 +6,6 @@ require_once "../utils/token.php";
 
 class ValidToken
 {
-    private $respuesta;
-    private $error;
     private $dataUsuario;
     private $tokenLogin;
     private $timeTokenLogin;
@@ -26,33 +24,7 @@ class ValidToken
     //Constructor que se inicia cada vez que se le llama a la clase
     function __construct()
     {
-        $this->respuesta = new Respuesta;
-        $this->error = new Errores;
         $this->token = new Token;
-    }
-
-    //GETTERS Y SETTERS
-
-    // Getter y Setter para $respuesta
-    public function getRespuesta()
-    {
-        return $this->respuesta;
-    }
-
-    public function setRespuesta($respuesta)
-    {
-        $this->respuesta = $respuesta;
-    }
-
-    // Getter y Setter para $error
-    public function getError()
-    {
-        return $this->error;
-    }
-
-    public function setError($error)
-    {
-        $this->error = $error;
     }
 
     // Getter y Setter para $dataUsuario
@@ -146,13 +118,14 @@ class ValidToken
     //FUNCION DE VALIDACION DE TOKEN
     public function execute($id, $token)
     {
+        $respuesta = new Respuesta();
         try {
             $this->id = $id;
             // Creamos una nueva conexión (buena práctica para abrir y cerrar peticiones)
             $conexion = new Conexion();
             $conn = $conexion->getConexion();
 
-            
+
             //Preparar la consulta
             $query = "SELECT usuarios.usuario_id, usuarios.email, clases.nombre as clase, usuarios.movil, usuarios.nombre, usuarios.apellido, usuarios.imagen, token.token_login as tokenLogin, token.time_token_login as timeTokenLogin FROM usuarios 
             inner join clases
@@ -199,36 +172,35 @@ class ValidToken
                             unset($this->dataUsuario['tokenLogin']);
                             unset($this->dataUsuario['timeTokenLogin']);
                             //Creamos un token que dura 180 dias en la base de datos
-                            $this->dataUsuario['tokenIdentificador'] = $token = Conexion::jwt($this->dataUsuario['id'],$this->dataUsuario['email']);
-                            $this->respuesta->success($this->dataUsuario);
-                            $this->respuesta->message = 'El token aún es válido para el usuario enviado';
-                            $this->respuesta->pagination = null;
+                            $this->dataUsuario['tokenIdentificador'] = $token = Conexion::jwt($this->dataUsuario['id'], $this->dataUsuario['email']);
+                            $respuesta->success($this->dataUsuario);
+                            $respuesta->message = 'El token aún es válido para el usuario enviado';
                             //cuando este el token validado borramos todos los tokens que tiene el usuario
                             $token = new Token();
                             $token->deleteAllTokensUser($this->dataUsuario['id']);
-                            return $this->respuesta;
+                            return $respuesta;
                         } else {
                             //Eliminamos todos los tokens del usuario que ya no sean validos
                             $token = new Token();
                             $token->deleteTokenUser($this->dataUsuario['id']);
-                            $this->error->_401();
-                            $this->error->message = 'No autorizado, el token NO es válido para el usuario enviado';
-                            return $this->error;
+                            $respuesta->_401();
+                            $respuesta->message = 'No autorizado, el token NO es válido para el usuario enviado';
+                            return $respuesta;
                         }
                     } else {
-                        $this->error->_401();
-                        $this->error->message = 'No autorizado, el token enviado NO coincide con el token que tiene asignado el usuario';
-                        return $this->error;
+                        $respuesta->_401();
+                        $respuesta->message = 'No autorizado, el token enviado NO coincide con el token que tiene asignado el usuario';
+                        return $respuesta;
                     }
                 } else {
-                    $this->error->_400();
-                    $this->error->message = 'El usuario enviado no existe en la base de datos';
-                    return $this->error;
+                    $respuesta->_400();
+                    $respuesta->message = 'El usuario enviado no existe en la base de datos';
+                    return $respuesta;
                 }
             } else {
-                $this->error->_500();
-                $this->error->message = 'Error en el modelo insert_token en la consulta SQL de la API, en la función validez, al intentar obtener los datos del usuario para validar el token';
-                return $this->error;
+                $respuesta->_500();
+                $respuesta->message = 'Error en el modelo insert_token en la consulta SQL de la API, en la función validez, al intentar obtener los datos del usuario para validar el token';
+                return $respuesta;
             }
         } catch (\Throwable $th) {
             $mensajeError = $th->getMessage();
@@ -240,9 +212,9 @@ class ValidToken
             $errores['archivoError'] = $archivoError;
             $errores['lineaError'] = $lineaError;
             $errores['trazaError'] = $trazaError;
-            $this->error->_500($errores);
-            $this->error->message = 'Error en el modelo insert_token de la API';
-            return $this->error;
+            $respuesta->_500($errores);
+            $respuesta->message = 'Error en el modelo insert_token de la API';
+            return $respuesta;
         }
     }
 }

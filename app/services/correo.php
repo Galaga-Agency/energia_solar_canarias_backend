@@ -10,8 +10,6 @@ class Correo
 {
 
     public $mail;
-    public $respuesta;
-    public $error;
     public $host;
     public $username;
     public $password;
@@ -21,8 +19,6 @@ class Correo
     public function __construct()
     {
         $this->mail = new PHPMailer(true);
-        $this->respuesta = new Respuesta;
-        $this->error = new Errores;
         $direccion = dirname(__FILE__);
         $jsondata = file_get_contents("../../config/smtp.json");
         $dataSmtp =  json_decode($jsondata, true);
@@ -80,23 +76,25 @@ class Correo
                 unset($dataUsuario['tokenLogin']);
                 unset($dataUsuario['timeTokenLogin']);
                 //Retornar respuesta
-                $this->respuesta->success($dataUsuario);
+                $respuesta = new Respuesta;
+                $respuesta->success($dataUsuario);
                 if ($idiomaUsuario == 'es') {
-                    $this->respuesta->message = 'Login exitoso, el token para continuar ha sido enviado a tu email con una validez de 5 minutos';
+                    $respuesta->message = 'Login exitoso, el token para continuar ha sido enviado a tu email con una validez de 5 minutos';
                 } else {
-                    $this->respuesta->message = 'Successful login, the token to continue has been sent to your email with a validity of 5 minutes';
+                    $respuesta->message = 'Successful login, the token to continue has been sent to your email with a validity of 5 minutes';
                 }
-                $this->respuesta->pagination = null;
-                return $this->respuesta;
+                return $respuesta;
             } else {
-                $this->error->_500();
-                $this->error->message = 'Error en el servicio correo: No se ha recibido en los datos del usuario ($dataUsuario) los datos necesarios para intentar enviar el correo electrónico con el token al usuario';
-                return $this->error;
+                $respuesta = new Respuesta;
+                $respuesta->_500();
+                $respuesta->message = 'Error en el servicio correo: No se ha recibido en los datos del usuario ($dataUsuario) los datos necesarios para intentar enviar el correo electrónico con el token al usuario';
+                return $respuesta;
             }
         } catch (Exception $e) {
-            $this->error->_500($e);
-            $this->error->message = 'Error de SMTP o de la dependencia PHP-MAILER en el servicio correo al enviar el token de login al usuario' . $this->mail->ErrorInfo;
-            return $this->error;
+            $respuesta = new Respuesta;
+            $respuesta->_500($e);
+            $respuesta->message = 'Error de SMTP o de la dependencia PHP-MAILER en el servicio correo al enviar el token de login al usuario' . $this->mail->ErrorInfo;
+            return $respuesta;
         }
     }
 }

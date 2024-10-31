@@ -5,8 +5,6 @@ require_once "../utils/respuesta.php";
 
 class ApiKey
 {
-    private $respuesta;
-    private $error;
     private $email;
     private $password;
     private $token;
@@ -21,68 +19,57 @@ class ApiKey
 
     function __construct()
     {
-        $this->respuesta = new Respuesta;
-        $this->error = new Errores;
         $this->token = new Token;
         $this->conexion = new Conexion;
     }
     // Getter y setter para 'email'
-    public function getEmail() {
+    public function getEmail()
+    {
         return $this->email;
     }
 
-    public function setEmail($email) {
+    public function setEmail($email)
+    {
         $this->email = $email;
     }
 
     // Getter y setter para 'password'
-    public function getPassword() {
+    public function getPassword()
+    {
         return $this->password;
     }
 
-    public function setPassword($password) {
+    public function setPassword($password)
+    {
         $this->password = $password;
     }
 
     // Getter y setter para 'token'
-    public function getToken() {
+    public function getToken()
+    {
         return $this->token;
     }
 
-    public function setToken($token) {
+    public function setToken($token)
+    {
         $this->token = $token;
     }
 
     // Getter para 'table' (ya que es una propiedad privada y constante, no es necesario un setter)
-    public function getTable() {
+    public function getTable()
+    {
         return $this->table;
     }
 
     // Getter y setter para 'conexion'
-    public function getConexion() {
+    public function getConexion()
+    {
         return $this->conexion;
     }
 
-    public function setConexion($conexion) {
+    public function setConexion($conexion)
+    {
         $this->conexion = $conexion;
-    }
-
-    // Getter y setter para 'respuesta'
-    public function getRespuesta() {
-        return $this->respuesta;
-    }
-
-    public function setRespuesta($respuesta) {
-        $this->respuesta = $respuesta;
-    }
-
-    // Getter y setter para 'error'
-    public function getError() {
-        return $this->error;
-    }
-
-    public function setError($error) {
-        $this->error = $error;
     }
 
     //Funcion de logueo
@@ -101,12 +88,13 @@ class ApiKey
      */
     public function login($datos)
     {
+        $respuesta = new Respuesta;
         try {
             echo $datos;
             if (!isset($datos['user']) || !isset($datos['password'])) {
-                $this->error->_500();
-                $this->error->message = 'Error en el formato de los datos que has enviado - O no has especificado un dato obligatorio';
-                return $this->error;
+                $respuesta->_500();
+                $respuesta->message = 'Error en el formato de los datos que has enviado - O no has especificado un dato obligatorio';
+                return $respuesta;
             } else {
 
                 //recogemos el email y la contraseña
@@ -140,20 +128,19 @@ class ApiKey
                             $dataUsuario['activo'] = $row['activo'];
                             $dataUsuario['tokenLogin'] = $row['tokenLogin'];
                             $dataUsuario['eliminado'] = $row['eliminado'];
-                            $this->respuesta->success($dataUsuario);
-                            $this->respuesta->message = 'Login exitoso';
-                            $this->respuesta->pagination = null;
-                            return $this->respuesta;
-                        } 
+                            $respuesta->success($dataUsuario);
+                            $respuesta->message = 'Login exitoso';
+                            return $respuesta;
+                        }
                     } else {
-                        $this->error->_401();
-                        $this->error->message = 'No autorizado en la API, las credenciales no son correctas';
-                        return $this->error;
+                        $respuesta->_401();
+                        $respuesta->message = 'No autorizado en la API, las credenciales no son correctas';
+                        return $respuesta;
                     }
                 } else {
-                    $this->error->_500();
-                    $this->error->message = 'Error en el modelo Login de la API, en la consulta SQL de las credenciales del usuario';
-                    return $this->error;
+                    $respuesta->_500();
+                    $respuesta->message = 'Error en el modelo Login de la API, en la consulta SQL de las credenciales del usuario';
+                    return $respuesta;
                 }
             }
         } catch (\Throwable $th) {
@@ -167,9 +154,9 @@ class ApiKey
             $errores['archivoError'] = $archivoError;
             $errores['lineaError'] = $lineaError;
             $errores['trazaError'] = $trazaError;
-            $this->error->_500($errores);
-            $this->error->message = 'Error en el modelo Login de la API';
-            return $this->error;
+            $respuesta->_500($errores);
+            $respuesta->message = 'Error en el modelo Login de la API';
+            return $respuesta;
         }
     }
 }

@@ -30,7 +30,7 @@ class LoginController
     public function userLogin()
     {
         $responseLogin = $this->login->userLogin();
-        if ($responseLogin->status == "success") {
+        if ($responseLogin->status) {
             $this->dataUsuario = $responseLogin->data;
             $this->token = new Token;
             $this->insertToken = new InsertToken($this->dataUsuario, $this->token->value, $this->token->timeCreated);
@@ -41,8 +41,8 @@ class LoginController
             http_response_code($responseInsertToken->code);
             echo json_encode($responseInsertToken);
             */
-            
-            if ($responseInsertToken->status == "success") {
+
+            if ($responseInsertToken->status) {
                 $token = new Token();
                 $tokenUser = $token->getLastTokenUser($this->dataUsuario['id']);
                 $this->dataUsuario['tokenLogin'] = $tokenUser['token_login'];

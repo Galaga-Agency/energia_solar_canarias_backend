@@ -11,7 +11,6 @@ class TokenController
     private $dataUsuario;
     private $id;
     private $validToken;
-    public $error;
     public $respuesta;
 
     function __construct($datos)
@@ -20,7 +19,6 @@ class TokenController
         $this->id = $this->datos['id'];
         $this->token = $this->datos['token'];
         $this->validToken = new ValidToken;
-        $this->error = new Errores;
         $this->respuesta = new Respuesta;
     }
 
@@ -31,10 +29,11 @@ class TokenController
             http_response_code($responseValidToken->code);
             echo json_encode($responseValidToken);
         } else {
-            $this->error->_400();
-            $this->error->message = 'Error en el controlador token de la API, no se ha recibido la información requerida en la solicitud: id, token';
-            http_response_code($this->error->code);
-            echo json_encode($this->error);
+            $respuesta = new Respuesta;
+            $respuesta->_400();
+            $respuesta->message = 'Error en el controlador token de la API, no se ha recibido la información requerida en la solicitud: id, token';
+            http_response_code($respuesta->code);
+            echo json_encode($respuesta);
         }
     }
 }
