@@ -9,7 +9,6 @@ require_once "../utils/respuesta.php";
 require_once "../DBObjects/usuariosDB.php";
 
 $respuesta = new Respuesta;
-$error = new Errores;
 $authMiddleware = new Autenticacion();
 
 // Obtener la ruta solicitada
@@ -36,14 +35,14 @@ switch ($method) {
         switch (true) {
             case ($request === 'usuarios'):
                 //Verificamos que existe el usuario CREADOR del token y sino manejamos el error dentro de la funcion
-                if($authMiddleware->verificarTokenUsuarioActivo()){
+                if ($authMiddleware->verificarTokenUsuarioActivo()) {
                     // Verificar si el usuario es administrador
                     if ($authMiddleware->verificarAdmin()) {
                         $usuarios = new UsuariosController;
                         $usuarios->getAllUsers();
                     } else {
-                        $error->_403();
-                        $error->message = 'No tienes permisos para hacer esta consulta';
+                        $respuesta->_403();
+                        $respuesta->message = 'No tienes permisos para hacer esta consulta';
                         http_response_code($error->code);
                         echo json_encode($error);
                     }
@@ -57,10 +56,10 @@ switch ($method) {
                 break;
 
             default:
-                $error->_400();
-                $error->message = 'El End Point no existe en la API';
-                http_response_code($error->code);
-                echo json_encode($error);
+                $respuesta->_400();
+                $respuesta->message = 'El End Point no existe en la API';
+                http_response_code($respuesta->code);
+                echo json_encode($respuesta);
                 break;
         }
         break;
@@ -80,26 +79,26 @@ switch ($method) {
                 break;
 
             case ($request === 'usuarios'):
-                if($authMiddleware->verificarTokenUsuarioActivo()){
+                if ($authMiddleware->verificarTokenUsuarioActivo()) {
                     // Verificar si el usuario es administrador
                     if ($authMiddleware->verificarAdmin()) {
                         $usuarios = new UsuariosController;
                         $usuarios->crearUser();
                     } else {
-                        $error->_403();
-                        $error->message = 'No tienes permisos para hacer esta consulta';
-                        http_response_code($error->code);
-                        echo json_encode($error);
+                        $respuesta->_403();
+                        $respuesta->message = 'No tienes permisos para hacer esta consulta';
+                        http_response_code($respuesta->code);
+                        echo json_encode($respuesta);
                     }
                 }
                 break;
-            
+
 
             default:
-                $error->_400();
-                $error->message = 'El End Point no existe en la API';
-                http_response_code($error->code);
-                echo json_encode($error);
+                $respuesta->_400();
+                $respuesta->message = 'El End Point no existe en la API';
+                http_response_code($respuesta->code);
+                echo json_encode($respuesta);
                 break;
         }
         break;
@@ -115,25 +114,25 @@ switch ($method) {
                 // Extraer el ID del usuario desde la URL
                 $id = $matches[1];
                 //Verificamos que existe el usuario CREADOR del token y sino manejamos el error dentro de la funcion
-                if($authMiddleware->verificarTokenUsuarioActivo()){
+                if ($authMiddleware->verificarTokenUsuarioActivo()) {
                     // Verificar si el usuario es administrador
                     if ($authMiddleware->verificarAdmin()) {
                         $usuarios = new UsuariosController;
                         $usuarios->actualizarUser($id); // Pasar el ID al método de actualización
                     } else {
-                        $error->_403();
-                        $error->message = 'No tienes permisos para hacer esta consulta';
-                        http_response_code($error->code);
-                        echo json_encode($error);
+                        $respuesta->_403();
+                        $respuesta->message = 'No tienes permisos para hacer esta consulta';
+                        http_response_code($respuesta->code);
+                        echo json_encode($respuesta);
                     }
                 }
                 break;
 
             default:
-                $error->_400();
-                $error->message = 'El End Point no existe en la API';
-                http_response_code($error->code);
-                echo json_encode($error);
+                $respuesta->_400();
+                $respuesta->message = 'El End Point no existe en la API';
+                http_response_code($respuesta->code);
+                echo json_encode($respuesta);
                 break;
         }
         break;
@@ -147,36 +146,36 @@ switch ($method) {
                 break;
 
             case (preg_match('/^usuarios\/(\d+)$/', $request, $matches) ? true : false):
-                    // Extraer el ID del usuario desde la URL
+                // Extraer el ID del usuario desde la URL
                 $id = $matches[1];
                 //Verificamos que existe el usuario CREADOR del token y sino manejamos el error dentro de la funcion
-                if($authMiddleware->verificarTokenUsuarioActivo()){
+                if ($authMiddleware->verificarTokenUsuarioActivo()) {
                     // Verificar si el usuario es administrador
                     if ($authMiddleware->verificarAdmin()) {
                         $usuarios = new UsuariosController;
                         $usuarios->eliminarUser($id); // Pasar el ID al método de actualización
                     } else {
-                        $error->_403();
-                        $error->message = 'No tienes permisos para hacer esta consulta';
-                        http_response_code($error->code);
-                        echo json_encode($error);
+                        $respuesta->_403();
+                        $respuesta->message = 'No tienes permisos para hacer esta consulta';
+                        http_response_code($respuesta->code);
+                        echo json_encode($respuesta);
                     }
                 }
                 break;
 
             default:
-                $error->_400();
-                $error->message = 'El End Point no existe en la API';
-                http_response_code($error->code);
-                echo json_encode($error);
+                $respuesta->_400();
+                $respuesta->message = 'El End Point no existe en la API';
+                http_response_code($respuesta->code);
+                echo json_encode($respuesta);
                 break;
         }
         break;
 
     default:
-        $error->_405();
-        $error->message = 'Este método no está permitido en la API. Para cualquier duda o asesoría contactar por favor con soporte@galagaagency.com';
-        http_response_code($error->code);
-        echo json_encode($error);
+        $respuesta->_405();
+        $respuesta->message = 'Este método no está permitido en la API. Para cualquier duda o asesoría contactar por favor con soporte@galagaagency.com';
+        http_response_code($respuesta->code);
+        echo json_encode($respuesta);
         break;
 }

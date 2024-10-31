@@ -2,25 +2,29 @@
 
 require_once './../models/conexion.php';
 
-class Token {
+class Token
+{
 
     public $value;
     public $timeCreated;
 
     // Constructor que genera el token y guarda el tiempo de creación
-    public function __construct($length = 32) {
+    public function __construct($length = 32)
+    {
         $this->value = $this->generateToken($length);
         $this->timeCreated = time(); // Obtiene el tiempo actual en segundos desde el 1 de enero de 1970
     }
 
     // Método para generar un token seguro
-    private function generateToken($length = 32) {
+    private function generateToken($length = 32)
+    {
         $bytes = random_bytes($length / 2);
         return bin2hex($bytes);
     }
 
     // Método para verificar si el token es válido dentro de 5 minutos
-    public function isTokenValid($tiempoCreado) {
+    public function isTokenValid($tiempoCreado)
+    {
         $currentTime = time(); // Tiempo actual en segundos
         $timeElapsed = $currentTime - $tiempoCreado;
         // Verifica si han pasado menos de 5 minutos (300 segundos)
@@ -28,8 +32,9 @@ class Token {
     }
 
     // Método para borrar todos los tokens temporales del usuario
-    public function deleteAllTokensUser($user) {
-        
+    public function deleteAllTokensUser($user)
+    {
+
         $conexion = new Conexion();
         $conn = $conexion->getConexion();
         //borramos todos los tokens que excedan de 5 minutos
@@ -52,7 +57,8 @@ class Token {
     }
 
     // Método para borrar el token temporal del usuario que exceda de 5 minutos
-    public function deleteTokenUser($user) {
+    public function deleteTokenUser($user)
+    {
         $time_actual = time(); // Tiempo actual en segundos
 
         $conexion = new Conexion();
@@ -77,7 +83,8 @@ class Token {
         //echo ("<script>console.log('PHP: Borrados correctamentes los token del usuario que han excedido los 5 minutos');</script>");
     }
     // Método para borrar el token del usuario que exceda de 5 minutos
-    public function deleteTokenUserPorEmail($user) {
+    public function deleteTokenUserPorEmail($user)
+    {
         $time_actual = time(); // Tiempo actual en segundos
 
         $conexion = new Conexion();
@@ -102,7 +109,7 @@ class Token {
          *} else {
          *    echo "Error al eliminar tokens: " . $stmt->error;
          *}
-        */
+         */
         //cerramos la consulta
         $stmt->close();
         $conn->close();
@@ -110,7 +117,8 @@ class Token {
         //echo ("<script>console.log('PHP: Borrados correctamentes los token del usuario que han excedido los 5 minutos');</script>");
     }
     // Método para recoger el ultimo token del usuario
-    public function getLastTokenUser($userId) {
+    public function getLastTokenUser($userId)
+    {
         $conexion = new Conexion();
         $conn = $conexion->getConexion();
         //recogemos el ultimo token activo del usuario
@@ -120,20 +128,19 @@ class Token {
             WHERE token.usuario_id = ? 
             ORDER BY token.time_token_login DESC 
             LIMIT 1;";
-            $stmt = $conn->prepare($sql);
-            $stmt->bind_param('i', $userId); // Solo el `userId` como parámetro
-            $stmt->execute();
-            $result = $stmt->get_result();
-        
-            // Si hay un token, obtén los datos
-            $lastToken = $result->fetch_assoc();
-        
-            $stmt->close();
-            $conn->close();
-            //echo ("<script>console.log('PHP: Borrados correctamentes los token del usuario que han excedido los 5 minutos');</script>");
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param('i', $userId); // Solo el `userId` como parámetro
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        // Si hay un token, obtén los datos
+        $lastToken = $result->fetch_assoc();
+
+        $stmt->close();
+        $conn->close();
+        //echo ("<script>console.log('PHP: Borrados correctamentes los token del usuario que han excedido los 5 minutos');</script>");
         return $lastToken ? $lastToken : null; // Devuelve el token o null si no existe
     }
-
 }
 
 /*

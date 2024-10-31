@@ -94,23 +94,26 @@ class Conexion
             return false;
         }
     }
-     // Método para cerrar la conexión
-     public function close() {
+    // Método para cerrar la conexión
+    public function close()
+    {
         if ($this->conexion) {
             $this->conexion->close();
-            echo "Conexión cerrada correctamente.";
         }
     }
     // Método opcional para obtener la conexión actual
-    public function getConexion() {
+    public function getConexion()
+    {
         return $this->conexion;
     }
     // Método para reemplazar y obtener la conexión actual
-    public function setConexion($conexion) {
+    public function setConexion($conexion)
+    {
         $this->conexion = $conexion;
     }
 
-    static public function jwt($id, $email){
+    static public function jwt($id, $email)
+    {
         $time = time(); // Devuelve la fecha Unix actual
         $token = array(
             "iat" => $time, // Tiempo en que inicia el token
@@ -126,12 +129,13 @@ class Conexion
         return $jwt;
         //echo '<pre>'; print_r($jwt); echo '</pre>'; // Sirve para saber que nos devuelve el token
     }
-       /**
+    /**
      * Verificar JWT
      * @param string $jwt Token JWT recibido
      * @return array|false Devuelve los datos del token si es válido, o false si no lo es
      */
-    public static function verifyJwt($jwt) {
+    public static function verifyJwt($jwt)
+    {
         try {
             $decoded = JWT::decode($jwt, new Key(self::$secret_key, self::$algorithm));
             return (array) $decoded->data; // Devuelve los datos si el token es válido

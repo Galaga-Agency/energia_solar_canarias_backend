@@ -6,46 +6,39 @@ require_once "./../DBObjects/usuariosDB.php";
 
 class Usuarios
 {
-    private $respuesta;
     public $error;
     private $conexion;
 
     function __construct()
     {
-        $this->respuesta = new Respuesta;
-        $this->error = new Errores;
         $this->conexion = new Conexion;
     }
 
-   // Getter y setter para 'respuesta'
-   public function getRespuesta(){
-    return $this->respuesta;
-    }
-
-    public function setRespuesta($respuesta){
-        $this->respuesta = $respuesta;
-    }
-
-        // Getter y setter para 'error'
-    public function getError(){
+    // Getter y setter para 'error'
+    public function getError()
+    {
         return $this->error;
     }
 
-    public function setError($error){
+    public function setError($error)
+    {
         $this->error = $error;
     }
 
     // Getter y setter para 'conexion'
-    public function getConexion(){
+    public function getConexion()
+    {
         return $this->conexion;
     }
 
-    public function setConexion($conexion){
+    public function setConexion($conexion)
+    {
         $this->conexion = $conexion;
     }
 
     public function getAllUsers()
     {
+        $respuesta = new Respuesta();
         try {
             //Consulta de datos
             $data = [];
@@ -78,9 +71,9 @@ class Usuarios
             $pagination['nextPageUrl'] = '/usuarios/pages/3';
             $pagination['previousPageUrl'] = '/usuarios/pages/1';
             //Retornar respuesta
-            $this->respuesta->success($data, $pagination);
-            $this->respuesta->message .= '- Consulta exitosa de todos los usuarios';
-            return $this->respuesta;
+            $respuesta->success($data);
+            $respuesta->message .= '- Consulta exitosa de todos los usuarios';
+            return $respuesta;
         } catch (\Throwable $th) {
             $mensajeError = $th->getMessage();
             $archivoError = $th->getFile();
@@ -91,14 +84,15 @@ class Usuarios
             $errores['archivoError'] = $archivoError;
             $errores['lineaError'] = $lineaError;
             $errores['trazaError'] = $trazaError;
-            $this->error->_500($errores);
-            $this->error->message = 'Error en la función getAllUsers de la clase Usuarios al realizar la consulta de todos los usuarios';
-            return $this->error;
+            $respuesta->_500($errores);
+            $respuesta->message = 'Error en la función getAllUsers de la clase Usuarios al realizar la consulta de todos los usuarios';
+            return $respuesta;
         }
     }
 
     public function getUser($id)
     {
+        $respuesta = new Respuesta();
         try {
             //Consulta de datos
             $data = [];
@@ -121,9 +115,9 @@ class Usuarios
             $pagination['nextPageUrl'] = '';
             $pagination['previousPageUrl'] = '';
             //Retornar respuesta
-            $this->respuesta->success($data, $pagination);
-            $this->respuesta->message .= '- Consulta exitosa de todos los usuarios';
-            return $this->respuesta;
+            $respuesta->success($data);
+            $respuesta->message .= '- Consulta exitosa de todos los usuarios';
+            return $respuesta;
         } catch (\Throwable $th) {
             $mensajeError = $th->getMessage();
             $archivoError = $th->getFile();
