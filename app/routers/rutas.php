@@ -7,6 +7,8 @@ require_once "../controllers/login.php";
 require_once "../controllers/token.php";
 require_once "../utils/respuesta.php";
 require_once "../DBObjects/usuariosDB.php";
+require_once "../controllers/SolarEdgeController.php";
+require_once "../services/ApiControladorService.php";
 
 $respuesta = new Respuesta;
 $authMiddleware = new Autenticacion();
@@ -54,6 +56,40 @@ switch ($method) {
                 $usuarios = new UsuariosController;
                 $usuarios->getUser($id);
                 break;
+            //Devuelve una lista de todas las plantas (Admin)
+            case ($request === 'plants'):
+                //Verificamos que existe el usuario CREADOR del token y sino manejamos el error dentro de la funcion
+                if ($authMiddleware->verificarTokenUsuarioActivo()) {
+                    // Verificar si el usuario es administrador
+                    if ($authMiddleware->verificarAdmin()) {
+                        $solarEdgeController = new ApiControladorService();
+                        $solarEdgeController->getAllPlants();
+                    } else {
+                        $respuesta->_403();
+                        $respuesta->message = 'No tienes permisos para hacer esta consulta';
+                        http_response_code($error->code);
+                        echo json_encode($error);
+                    }
+                }
+                break;
+            case (preg_match('/^plants\/(\d+)$/', $request, $matches) ? true : false):
+                // Extraer el ID del usuario desde la URL
+                $id = $matches[1];
+                //Verificamos que existe el usuario CREADOR del token y sino manejamos el error dentro de la funcion
+                if ($authMiddleware->verificarTokenUsuarioActivo()) {
+                    // Verificar si el usuario es administrador
+                    if ($authMiddleware->verificarAdmin()) {
+                        $solarEdgeController = new ApiControladorService();
+                        $solarEdgeController->getSiteDetail($id);
+                    } else {
+                        $respuesta->_403();
+                        $respuesta->message = 'No tienes permisos para hacer esta consulta';
+                        http_response_code($respuesta->code);
+                        echo json_encode($respuesta);
+                    }
+                }
+                break;
+    
 
             default:
                 $respuesta->_400();
