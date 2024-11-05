@@ -1,0 +1,144 @@
+{
+  "es": {
+    "menu": {
+      "titulo": "Energia Solar Canarias",
+      "inicio": "Inicio",
+      "usuarios": "Usuarios",
+      "GET": "GET",
+      "POST": "POST",
+      "PUT": "PUT",
+      "DELETE": "DELETE",
+      "bearer_token": "Bearer Token",
+      "login": "Login",
+      "configuracion": "Configuración",
+      "ayuda": "Ayuda",
+      "idiomas": "Idiomas"
+    },
+    "inicio": {
+      "titulo": "Inicio",
+      "descripcion": "Bienvenido a la API de Energía Solar Canarias. Aquí puedes acceder a información detallada sobre los servicios de la api para desarrolladores.",
+      "usuarios": "Usuarios",
+      "descripcionUsuarios": "Obtén una lista de Usuarios, modifica, crea o elimina usuarios (Solo permisos de administrador).",
+      "ver_mas": "Ver más",
+      "loginytokens": "Login y Tokens",
+      "login_descripcion": "Crea el login y accede a tu token privado para hacer llamadas a la app",
+      "datos_api": "Datos de la API",
+      "datos_api_descripcion": "Obtén los datos que obtiene la api de manera más simple haciendo incapié en los endpoints que necesitas consultar como desarrollador",
+      "mas_funcionalidades": "Disponible próximamente..."
+    },
+    "usuarios_get": {
+      "titulo": "GET /usuarios",
+      "descripcion": "El endpoint GET /usuarios permite obtener la lista de usuarios registrados en el sistema. Puedes utilizarlo para recuperar información detallada de los usuarios, incluyendo su nombre, correo electrónico, imagen de perfil, estado y más.",
+      "parametros_consulta": "Parámetros de Consulta",
+      "page": "page",
+      "page_descripcion":"(opcional): Número de página para la paginación (por defecto 1).",
+      "limit": "limit",
+      "limit_descripcion":"(opcional): Número máximo de usuarios a devolver (por defecto 200).",
+      "respuesta_ejemplo": "Respuesta de Ejemplo",
+      "ejemplo_uso": "Ejemplo de Uso"
+    },
+    "usuarios_post": {
+      "titulo": "POST /usuarios",
+      "descripcion": "El endpoint POST /usuarios permite crear un nuevo usuario en el sistema. Se debe proporcionar un `Bearer token` válido en el encabezado de la solicitud para asegurar que el usuario tenga los permisos necesarios.",
+      "cuerpo_solicitud": "Cuerpo de la Solicitud",
+      "respuesta_ejemplo": "Respuesta de Ejemplo",
+      "ejemplo_uso": "Ejemplo de Uso"
+    },
+    "usuarios_put": {
+      "titulo": "PUT /usuarios/{id}",
+      "descripcion": "El endpoint PUT /usuarios/{id} permite actualizar los datos de un usuario específico en el sistema. Debes proporcionar el `id` del usuario en la URL y un `Bearer token` válido en el encabezado de la solicitud para asegurar que el usuario tenga los permisos necesarios.",
+      "cuerpo_solicitud": "Cuerpo de la Solicitud",
+      "respuesta_ejemplo": "Respuesta de Ejemplo",
+      "ejemplo_uso": "Ejemplo de Uso"
+    },
+    "usuarios_delete": {
+      "titulo": "DELETE /usuarios/{id}",
+      "descripcion": "El endpoint DELETE /usuarios/{id} permite eliminar un usuario específico del sistema. Debes proporcionar el `id` del usuario en la URL y un `Bearer token` válido en el encabezado de la solicitud para asegurar que el usuario tenga los permisos necesarios para realizar esta operación.",
+      "parametros_solicitud": "Parámetros de la Solicitud",
+      "parametros_solicitud_respuesta": "No se necesita cuerpo de la solicitud. Solo es necesario proporcionar el `Bearer token` en el encabezado y el `id` del usuario en la URL.",
+      "respuesta_ejemplo": "Respuesta de Ejemplo",
+      "ejemplo_uso": "Ejemplo de Uso"
+    },
+    "login": {
+      "titulo_login": "POST /login",
+      "titulo_token": "POST /token",
+      "descripcion_login": "Este endpoint se utiliza para iniciar sesión en la aplicación. Debes proporcionar el correo electrónico, contraseña y el idioma preferido. Un token con validez de 5 minutos se enviará al correo electrónico proporcionado si el inicio de sesión es exitoso.",
+      "descripcion_token": "Este endpoint se utiliza para validar el token enviado al correo electrónico. Debes proporcionar el ID del usuario y el token recibido para verificar su validez.",
+      "cuerpo_solicitud": "Cuerpo de la Solicitud",
+      "respuesta_ejemplo": "Respuesta de Ejemplo",
+      "ejemplo_uso_login": "Ejemplo de Uso - Login",
+      "ejemplo_uso_token": "Ejemplo de Uso - Validación de Token"
+    }
+  },
+  "en": {
+    "menu": {
+      "titulo": "Energia Solar Canarias",
+      "inicio": "Home",
+      "usuarios": "Users",
+      "GET": "GET",
+      "POST": "POST",
+      "PUT": "PUT",
+      "DELETE": "DELETE",
+      "bearer_token": "Bearer Token",
+      "login": "Login",
+      "configuracion": "Settings",
+      "ayuda": "Help",
+      "idiomas": "languages"
+    },
+    "inicio": {
+      "titulo": "Home",
+      "descripcion": "Welcome to the Solar Energy Canarias API. Here you can access detailed information about the API services for developers.",
+      "usuarios": "Users",
+      "descripcionUsuarios": "Get a list of users, modify, create, or delete users (Admin permissions only).",
+      "ver_mas": "Learn more",
+      "loginytokens": "Login and Tokens",
+      "login_descripcion": "Create the login and access your private token to make API calls",
+      "datos_api": "API Data",
+      "datos_api_descripcion": "Retrieve the data provided by the API in a simpler way, focusing on the endpoints you need as a developer",
+      "mas_funcionalidades": "Coming soon..."
+    },
+    "usuarios_get": {
+      "titulo": "GET /users",
+      "descripcion": "The GET /users endpoint allows you to obtain the list of users registered in the system. You can use it to retrieve detailed information about users, including their name, email, profile picture, status, and more.",
+      "parametros_consulta": "Query Parameters",
+      "page": "page",
+      "page_descripcion": "(optional): Page number for pagination (default is 1).",
+      "limit": "limit",
+      "limit_descripcion": "(optional): Maximum number of users to return (default is 200).",
+      "respuesta_ejemplo": "Example Response",
+      "ejemplo_uso": "Usage Example"
+    },
+    "usuarios_post": {
+      "titulo": "POST /users",
+      "descripcion": "The POST /users endpoint allows you to create a new user in the system. You must provide a valid `Bearer token` in the request header to ensure the user has the necessary permissions.",
+      "cuerpo_solicitud": "Request Body",
+      "respuesta_ejemplo": "Example Response",
+      "ejemplo_uso": "Usage Example"
+    },
+    "usuarios_put": {
+      "titulo": "PUT /users/{id}",
+      "descripcion": "The PUT /users/{id} endpoint allows you to update the data of a specific user in the system. You must provide the `id` of the user in the URL and a valid `Bearer token` in the request header to ensure the user has the necessary permissions.",
+      "cuerpo_solicitud": "Request Body",
+      "respuesta_ejemplo": "Example Response",
+      "ejemplo_uso": "Usage Example"
+    },
+    "usuarios_delete": {
+      "titulo": "DELETE /users/{id}",
+      "descripcion": "The DELETE /users/{id} endpoint allows you to delete a specific user from the system. You must provide the `id` of the user in the URL and a valid `Bearer token` in the request header to ensure the user has the necessary permissions to perform this operation.",
+      "parametros_solicitud": "Request Parameters",
+      "parametros_solicitud_respuesta": "No request body is needed. You only need to provide the `Bearer token` in the header and the `id` of the user in the URL.",
+      "respuesta_ejemplo": "Example Response",
+      "ejemplo_uso": "Usage Example"
+    },
+    "login": {
+      "titulo_login": "POST /login",
+      "titulo_token": "POST /token",
+      "descripcion_login": "This endpoint is used to log in to the application. You must provide the email, password, and preferred language. A token valid for 5 minutes will be sent to the provided email if the login is successful.",
+      "descripcion_token": "This endpoint is used to validate the token sent to the email. You must provide the user ID and the received token to verify its validity.",
+      "cuerpo_solicitud": "Request Body",
+      "respuesta_ejemplo": "Example Response",
+      "ejemplo_uso_login": "Usage Example - Login",
+      "ejemplo_uso_token": "Usage Example - Token Validation"
+    }
+  }
+}
