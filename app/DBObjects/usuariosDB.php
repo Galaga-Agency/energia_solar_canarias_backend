@@ -28,6 +28,10 @@ class UsuariosDB {
             
             $usuarios = [];
             while ($row = $result->fetch_assoc()) {
+                //quitamos la contraseña hasheada para enviar los datos
+                if (isset($row['password_hash'])) {
+                    unset($row['password_hash']);
+                }
                 $usuarios[] = $row;
             }
     
@@ -39,7 +43,37 @@ class UsuariosDB {
             error_log("Error al obtener usuarios: " . $e->getMessage());
             return false;
         }
-    }    
+    }
+    /**
+     * Obtener todos los usuarios
+     * @return array|false Array con los usuarios o false en caso de error
+     */
+    public function getUser($id) {
+        try {
+            $conexion = new Conexion();
+            $conn = $conexion->getConexion();
+    
+            $query = "SELECT * FROM usuarios WHERE usuario_id = ?";
+            $stmt = $conn->prepare($query);
+            $stmt->bind_param('i', $id); // Bind de los parámetros para LIMIT y OFFSET
+            
+            $stmt->execute();
+            $result = $stmt->get_result();
+            
+            $usuarios = [];
+            while ($row = $result->fetch_assoc()) {
+                $usuarios[] = $row;
+            }
+    
+            $stmt->close();
+            $conn->close();
+            return $usuarios;
+    
+        } catch (Exception $e) {
+            error_log("Error al obtener usuarios: " . $e->getMessage());
+            return false;
+        }
+    }       
 
     /**
      * Agregar un nuevo usuario

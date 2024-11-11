@@ -15,4 +15,17 @@ class ApiControladorService {
         $plantsSolarEdge = $this->solarEdgeController->getSiteDetails($id);
         echo $plantsSolarEdge;
     }
+    public function getSiteEnergy($siteId, $startDate, $endDate){
+        $plantsSolarEdge = $this->solarEdgeController->getSiteEnergy($siteId, $startDate, $endDate);
+        echo $plantsSolarEdge;
+    }
+    public function getQuarterHourlyEnergy($siteId, $startDate, $endDate){
+        $plantsSolarEdge = $this->solarEdgeController->getQuarterHourlyEnergy($siteId, $startDate, $endDate);
+        echo $plantsSolarEdge;
+    }
+    public function getYearlyEnergy($siteId, $startDate, $endDate){
+        $plantsSolarEdge = $this->solarEdgeController->getYearlyEnergy($siteId,$startDate,$endDate);
+        echo $plantsSolarEdge;
+
+    }
 }

@@ -41,22 +41,26 @@ class UsuariosController
     }
 
 
-    public function consultarAdmin()
-    {
-        // Ejemplo de uso
-        $usuariosDB = new UsuariosDB();
-        $usuarios = $usuariosDB->getUsers();
-        $response = $this->usuarios->getAllUsers();
-        http_response_code($response->code);
-        echo json_encode($usuarios);
-    }
-
-
     public function getUser($id)
     {
-        $response = $this->usuarios->getUser($id);
-        http_response_code($response->code);
-        echo json_encode($response);
+        // Instanciar el objeto de acceso a la base de datos
+        $usuariosDB = new UsuariosDB();
+        $usuario = $usuariosDB->getUser($id);
+        if($usuario != false){
+            //quitamos la contraseña hasheada para enviar los datos
+            if (isset($usuario[0]['password_hash'])) {
+                unset($usuario[0]['password_hash']);
+            }
+            $respuesta = new Respuesta();
+            $respuesta->success($usuario);
+            http_response_code($respuesta->code);
+            echo json_encode($respuesta);
+        }else{
+            $respuesta = new Respuesta();
+            $respuesta->_404();
+            $respuesta->message = "Error al obtener el usuario.";
+            echo json_encode($respuesta);
+        }
     }
 
     public function crearUser()
