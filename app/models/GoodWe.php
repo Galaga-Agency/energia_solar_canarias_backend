@@ -62,7 +62,6 @@ class GoodWeTokenAuthentified extends GoodWeToken{
         $this->uid = $uid;
         $this->token = $token;
     }
-
     public function getTimestamp(){
         return $this->timestamp;
     }
@@ -81,6 +80,5 @@ class GoodWeTokenAuthentified extends GoodWeToken{
     public function setToken($token){
         $this->uid = $token;
     }
-
 }
 ?>
