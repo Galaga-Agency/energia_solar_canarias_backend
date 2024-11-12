@@ -1,11 +1,15 @@
 <?php
 class GoodWe{
     private $url;
+    private $account;
+    private $pwd;
 
     //definimos el constructor de la clase
     public function __construct()
     {
         $this->url = 'https://www.semsportal.com/';
+        $this->account = "energiasolarcanarias1@gmail.com";
+        $this->pwd = "***REMOVED***";
     }
 
     //definimos el getter y setter
@@ -14,6 +18,18 @@ class GoodWe{
     }
     public function setUrl($url){
         $this->url = $url;
+    }
+    public function getAccount(){
+        return $this->account;
+    }
+    public function setAccount($account){
+        $this->account = $account;
+    }
+    public function getPwd(){
+        return $this->pwd;
+    }
+    public function setPwd($pwd){
+        $this->pwd = $pwd;
     }
 }
 //Esta clase es para loguearse
@@ -65,7 +81,7 @@ class GoodWeTokenAuthentified extends GoodWeToken{
     public function getTimestamp(){
         return $this->timestamp;
     }
-    public function setClient($timestamp){
+    public function setTimestamp($timestamp){
         $this->timestamp = $timestamp;
     }
     public function getUid(){

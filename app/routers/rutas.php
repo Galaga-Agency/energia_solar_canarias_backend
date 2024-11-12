@@ -9,6 +9,7 @@ require_once "../utils/respuesta.php";
 require_once "../DBObjects/usuariosDB.php";
 require_once "../controllers/SolarEdgeController.php";
 require_once "../services/ApiControladorService.php";
+require_once "../services/GoodWeService.php";
 
 $respuesta = new Respuesta;
 $authMiddleware = new Autenticacion();
@@ -30,11 +31,29 @@ if (strpos($request, $baseDir) === 0) {
     $request = substr($request, strlen($baseDir));
     $request = trim($request, '/'); // Elimina cualquier barra adicional al inicio o final
 }
-
 // Rutas y endpoints
 switch ($method) {
     case 'GET':
         switch (true) {
+            // Nuevo caso para obtener los detalles de una planta por ID
+            case (preg_match('/^plants\/details\/([\w-]+)$/', $request, $matches) ? true : false):
+                $powerStationId = $matches[1];
+                
+                // Verificamos que el usuario esté autenticado y sea administrador
+                if ($authMiddleware->verificarTokenUsuarioActivo()) {
+                    if ($authMiddleware->verificarAdmin()) {
+                        // Instanciar el controlador de plantas y obtener detalles
+                        $solarEdgeController = new ApiControladorService();
+                        $solarEdgeController->getSiteDetail($powerStationId);
+
+                    } else {
+                        $respuesta->_403();
+                        $respuesta->message = 'No tienes permisos para hacer esta consulta';
+                        http_response_code($respuesta->code);
+                        echo json_encode($respuesta);
+                    }
+                }
+                break;
             case ($request === 'usuarios'):
                 //Verificamos que existe el usuario CREADOR del token y sino manejamos el error dentro de la funcion
                 if ($authMiddleware->verificarTokenUsuarioActivo()) {
