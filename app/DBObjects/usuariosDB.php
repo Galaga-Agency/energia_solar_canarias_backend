@@ -19,7 +19,10 @@ class UsuariosDB {
             
             $offset = ($page - 1) * $limit; // Calcula el desplazamiento en base a la página actual
     
-            $query = "SELECT * FROM usuarios LIMIT ? OFFSET ?";
+            $query = "SELECT usuarios.usuario_id, usuarios.nombre AS usuario_nombre,  usuarios.apellido, usuarios.email,  usuarios.movil, usuarios.imagen, usuarios.activo, usuarios.eliminado, clases.nombre AS clase
+            FROM usuarios 
+            INNER JOIN clases ON usuarios.clase_id = clases.clase_id
+            LIMIT ? OFFSET ?";
             $stmt = $conn->prepare($query);
             $stmt->bind_param('ii', $limit, $offset); // Bind de los parámetros para LIMIT y OFFSET
             
@@ -53,24 +56,25 @@ class UsuariosDB {
             $conexion = new Conexion();
             $conn = $conexion->getConexion();
     
-            $query = "SELECT * FROM usuarios WHERE usuario_id = ?";
+            $query = "SELECT usuarios.usuario_id, usuarios.nombre AS usuario_nombre,  usuarios.apellido, usuarios.email,  usuarios.movil, usuarios.imagen, usuarios.activo, usuarios.eliminado, clases.nombre AS clase
+            FROM usuarios 
+            INNER JOIN clases ON usuarios.clase_id = clases.clase_id
+            WHERE usuarios.usuario_id = ?";
             $stmt = $conn->prepare($query);
-            $stmt->bind_param('i', $id); // Bind de los parámetros para LIMIT y OFFSET
-            
+            $stmt->bind_param('i', $id); // Vincula el parámetro $id como entero
+    
             $stmt->execute();
             $result = $stmt->get_result();
-            
-            $usuarios = [];
-            while ($row = $result->fetch_assoc()) {
-                $usuarios[] = $row;
-            }
+    
+            $usuario = $result->fetch_assoc(); // Obtiene una sola fila
     
             $stmt->close();
             $conn->close();
-            return $usuarios;
+    
+            return $usuario;
     
         } catch (Exception $e) {
-            error_log("Error al obtener usuarios: " . $e->getMessage());
+            error_log("Error al obtener el usuario: " . $e->getMessage());
             return false;
         }
     }       
