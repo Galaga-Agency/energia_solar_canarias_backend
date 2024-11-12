@@ -43,17 +43,38 @@ class ApiControladorService {
     public function getSiteDetail($id) {
         // Obtener los detalles de SolarEdge y GoodWe
         $plantsSolarEdge = $this->solarEdgeController->getSiteDetails($id);
+        $solarEdgeData = json_decode($plantsSolarEdge, true);
+    
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            // Manejar el error de decodificación JSON
+            error_log('Error al decodificar JSON de SolarEdge: ' . json_last_error_msg());
+            $solarEdgeData = []; // O maneja el error según tu lógica
+        }
+    
         $goodWeController = $this->goodWeController->getPlantDetails($id);
+        $goodWeData = json_decode($goodWeController, true);
     
-        // Crear la respuesta con ambas secciones
-        $response = [
-            'status' => 'success',
-            'SolarEdge' => json_decode($plantsSolarEdge, true), // Convertimos a array si es JSON
-            'GoodWe' => json_decode($goodWeController, true) // Convertimos a array si es JSON
-        ];
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            // Manejar el error de decodificación JSON
+            error_log('Error al decodificar JSON de GoodWe: ' . json_last_error_msg());
+            $goodWeData = []; // O maneja el error según tu lógica
+        }
     
-        // Enviar la respuesta como JSON
-        echo json_encode($response, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+        // Asegúrate de que ambos datos sean arrays antes de pasarlos a unifyPlantData
+        if (is_array($goodWeData) && is_array($solarEdgeData)) {
+            $data = $this->unifyPlantData($goodWeData, $solarEdgeData);
+        } else {
+            // Manejar el caso donde los datos no son arrays
+            error_log('Los datos de GoodWe o SolarEdge no son arrays.');
+            $data = []; // O maneja el error según tu lógica
+        }
+    
+        $response = new Respuesta;
+        $response->success($data);
+    
+        // Devolver el resultado como JSON
+        header('Content-Type: application/json');
+        echo json_encode($response);
     }
     public function getSiteEnergy($siteId, $startDate, $endDate){
         $plantsSolarEdge = $this->solarEdgeController->getSiteEnergy($siteId, $startDate, $endDate);
@@ -68,7 +89,7 @@ class ApiControladorService {
         echo $plantsSolarEdge;
 
     }
-    //Aquí va la lógica de las apis conversiones etc..
+    //Aquí va la lógica de las apis conversiones etc.. (Lista plantas)
     public function processPlants(array $goodWeData, array $solarEdgeData): array {
         $plants = [];
 
@@ -77,23 +98,7 @@ class ApiControladorService {
             foreach ($goodWeData['data']['list'] as $plant) {
                 $status = "";
                 // Mapear el código de estado a una descripción legible
-                switch ($plant['status']) {
-                    case 2:
-                    $status = 'error';
-                    break;
-                case 1:
-                    $status = 'disconnected';
-                    break;
-                case 0:
-                    $status = 'waiting';
-                    break;
-                case -1:
-                    $status = 'working';
-                    break;
-                default:
-                    $status = 'unknown'; // Para códigos de estado no reconocidos
-                    break;
-                }   
+                $status = $this->mapGoodWeStatus($plant['status']);
                 $plants[] = [
                     'id' => $plant['powerstation_id'] ?? '',
                     'name' => $plant['stationname'] ?? '',
@@ -131,17 +136,7 @@ class ApiControladorService {
 
                 $status = "";
                 // Mapear el código de estado a una descripción legible
-                switch ($site['status']) {
-                    case "PendingCommunication":
-                    $status = 'waiting';
-                    break;
-                case "Active":
-                    $status = 'working';
-                    break;
-                default:
-                    $status = 'unknown'; // Para códigos de estado no reconocidos
-                    break;
-                }
+                $status = $this->mapSolarEdgeStatus($site['status']);
 
                 $plants[] = [
                     'id' => $site['id'] ?? '',
@@ -170,4 +165,36 @@ class ApiControladorService {
 
         return $plants;
     }
+    //Aquí va la lógica de las apis conversiones etc.. (Datos precisos de la planta)
+    function unifyPlantData(array $goodWeData, array $solarEdgeData): array {
+        $plants = ["hola"];
+        return $plants;
+    }
+  // Función para mapear el estado de GoodWe a una descripción legible
+private function mapGoodWeStatus($statusCode) {
+    switch ($statusCode) {
+        case 2:
+            return 'error';
+        case 1:
+            return 'disconnected';
+        case 0:
+            return 'waiting';
+        case -1:
+            return 'working';
+        default:
+            return 'unknown';
+    }
+}
+
+// Función para mapear el estado de SolarEdge a una descripción legible
+private function mapSolarEdgeStatus($status) {
+    switch ($status) {
+        case 'PendingCommunication':
+            return 'waiting';
+        case 'Active':
+            return 'working';
+        default:
+            return 'unknown';
+    }
+}  
 }

@@ -15,7 +15,7 @@ class SolarEdgeService {
         $url = $this->solarEdge->getUrl() . "site/$siteId/details?api_key=" . $this->solarEdge->getApiKey();
         try {
             $response = $this->httpClient->get($url);
-            return json_decode($response, true);
+            return $response;
         } catch (Exception $e) {
             return ['error' => $e->getMessage()];
         }

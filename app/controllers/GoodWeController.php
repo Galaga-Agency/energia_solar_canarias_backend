@@ -19,7 +19,7 @@ class GoodWeController {
         $result = $this->goodWeService->GetPlantDetailByPowerstationId($powerStationId);
         // Configura el tipo de contenido de la respuesta como JSON
         header('Content-Type: application/json');
-        return $result;
+        return json_encode($result);
     }
 
     /**
