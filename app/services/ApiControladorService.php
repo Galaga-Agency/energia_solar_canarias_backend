@@ -75,12 +75,31 @@ class ApiControladorService {
         // Procesar datos de GoodWe
         if (isset($goodWeData['data']['list']) && is_array($goodWeData['data']['list'])) {
             foreach ($goodWeData['data']['list'] as $plant) {
+                $status = "";
+                // Mapear el código de estado a una descripción legible
+                switch ($plant['status']) {
+                    case 2:
+                    $status = 'error';
+                    break;
+                case 1:
+                    $status = 'disconnected';
+                    break;
+                case 0:
+                    $status = 'waiting';
+                    break;
+                case -1:
+                    $status = 'working';
+                    break;
+                default:
+                    $status = 'unknown'; // Para códigos de estado no reconocidos
+                    break;
+                }   
                 $plants[] = [
                     'id' => $plant['powerstation_id'] ?? '',
                     'name' => $plant['stationname'] ?? '',
                     'address' => $plant['location'] ?? '',
                     'capacity' => $plant['capacity'] ?? 0,
-                    'status' => $plant['status'] ?? '',
+                    'status' => $status,
                     'type' => $plant['powerstation_type'] ?? '',
                     'latitude' => $plant['latitude'] ?? '',
                     'longitude' => $plant['longitude'] ?? '',
@@ -110,12 +129,26 @@ class ApiControladorService {
                 ];
                 $address = implode(', ', array_filter($addressParts));
 
+                $status = "";
+                // Mapear el código de estado a una descripción legible
+                switch ($site['status']) {
+                    case "PendingCommunication":
+                    $status = 'waiting';
+                    break;
+                case "Active":
+                    $status = 'working';
+                    break;
+                default:
+                    $status = 'unknown'; // Para códigos de estado no reconocidos
+                    break;
+                }
+
                 $plants[] = [
                     'id' => $site['id'] ?? '',
                     'name' => $site['name'] ?? '',
                     'address' => $address,
                     'capacity' => $site['peakPower'] ?? 0,
-                    'status' => $site['status'] ?? '',
+                    'status' => $status,
                     'type' => $site['type'] ?? '',
                     'latitude' => $site['location']['latitude'] ?? '',
                     'longitude' => $site['location']['longitude'] ?? '',
