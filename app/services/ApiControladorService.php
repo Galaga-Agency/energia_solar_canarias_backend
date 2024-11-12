@@ -69,9 +69,9 @@ class ApiControladorService {
 
     }
     //Aquí va la lógica de las apis conversiones etc..
-    public function processPlants(array $goodWeData, array $solarEdgeData): array{
+    public function processPlants(array $goodWeData, array $solarEdgeData): array {
         $plants = [];
-    
+
         // Procesar datos de GoodWe
         if (isset($goodWeData['data']['list']) && is_array($goodWeData['data']['list'])) {
             foreach ($goodWeData['data']['list'] as $plant) {
@@ -84,11 +84,22 @@ class ApiControladorService {
                     'type' => $plant['powerstation_type'] ?? '',
                     'latitude' => $plant['latitude'] ?? '',
                     'longitude' => $plant['longitude'] ?? '',
-                    'organization' => $plant['org_name'] ?? 'GoodWe'
+                    'organization' => $plant['org_name'] ?? 'GoodWe',
+                    'current_power' => $plant['pac'] ?? 0, // Potencia actual en W
+                    'total_energy' => $plant['etotal'] ?? 0, // Energía total generada en kWh
+                    'daily_energy' => $plant['eday'] ?? 0, // Energía generada hoy en kWh
+                    'monthly_energy' => $plant['emonth'] ?? 0, // Energía generada este mes en kWh
+                    'installation_date' => null, // No disponible en GoodWe
+                    'pto_date' => null, // No disponible en GoodWe
+                    'notes' => null, // No disponible en GoodWe
+                    'alert_quantity' => null, // No disponible en GoodWe
+                    'highest_impact' => null, // No disponible en GoodWe
+                    'primary_module' => null, // No disponible en GoodWe
+                    'public_settings' => null // No disponible en GoodWe
                 ];
             }
         }
-    
+
         // Procesar datos de SolarEdge
         if (isset($solarEdgeData['sites']['site']) && is_array($solarEdgeData['sites']['site'])) {
             foreach ($solarEdgeData['sites']['site'] as $site) {
@@ -98,7 +109,7 @@ class ApiControladorService {
                     $site['location']['country'] ?? ''
                 ];
                 $address = implode(', ', array_filter($addressParts));
-    
+
                 $plants[] = [
                     'id' => $site['id'] ?? '',
                     'name' => $site['name'] ?? '',
@@ -108,10 +119,22 @@ class ApiControladorService {
                     'type' => $site['type'] ?? '',
                     'latitude' => $site['location']['latitude'] ?? '',
                     'longitude' => $site['location']['longitude'] ?? '',
-                    'organization' => 'SolarEdge'
+                    'organization' => 'SolarEdge',
+                    'current_power' => null, // No disponible en SolarEdge
+                    'total_energy' => null, // No disponible en SolarEdge
+                    'daily_energy' => null, // No disponible en SolarEdge
+                    'monthly_energy' => null, // No disponible en SolarEdge
+                    'installation_date' => $site['installationDate'] ?? null,
+                    'pto_date' => $site['ptoDate'] ?? null,
+                    'notes' => $site['notes'] ?? null,
+                    'alert_quantity' => $site['alertQuantity'] ?? null,
+                    'highest_impact' => $site['highestImpact'] ?? null,
+                    'primary_module' => $site['primaryModule'] ?? null,
+                    'public_settings' => $site['publicSettings'] ?? null
                 ];
             }
         }
+
         return $plants;
     }
 }
