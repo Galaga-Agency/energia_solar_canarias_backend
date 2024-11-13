@@ -35,7 +35,7 @@ class GoodWeService {
             "powerstation_type" => "",
             "powerstation_status" => "",
             "page_index" => 1,
-            "page_size" => 10000,
+            "page_size" => 100000,
             "adcode" => "",
             "org_id" => "",
             "condition" => ""
