@@ -175,6 +175,8 @@ class ApiControladorService {
             $data['location']['country'] ?? ''
         ];
         $address = implode(', ', array_filter($addressParts));
+
+        $status = $this->mapSolarEdgeStatus($data['status']);
     
         // Construcción del array planta
         $planta = [
@@ -182,7 +184,7 @@ class ApiControladorService {
             'id' => $data['id'] ?? '',
             'name' => $data['name'] ?? '',
             'accountId' => $data['accountId'] ?? '',
-            'status' => $data['status'] ?? '',
+            'status' => $status ?? '',
             'peakPower' => $data['peakPower'] ?? '',
             'lastUpdateTime' => $data['lastUpdateTime'] ?? '',
             'installationDate' => $data['installationDate'] ?? '',
@@ -234,6 +236,8 @@ class ApiControladorService {
         $kpi = $goodWeData['data']['kpi'];
         $chartsTypesByPlant = $goodWeData['data']['chartsTypesByPlant'];
         $data = $goodWeData['data'];
+
+        $status = $this->mapGoodWeStatus($info['status']);
     
         // Construcción del array planta
         $planta = [
@@ -241,7 +245,7 @@ class ApiControladorService {
             'id' => $info['powerstation_id'] ?? '',
             'name' => $info['stationname'] ?? '',
             'accountId' => null, // La API de GoodWe no tiene
-            'status' => $info['status'] ?? '',
+            'status' => $status ?? '',
             'peakPower' => $info['capacity'] ?? '',
             'lastUpdateTime' => $info['local_date'] ?? '',
             'installationDate' => $info['create_time'] ?? '',
