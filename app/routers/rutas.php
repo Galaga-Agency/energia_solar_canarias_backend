@@ -196,7 +196,23 @@ switch ($method) {
                     }
                 }
                 break;
-
+            case ($request === 'usuarios/relacionar'  && isset($_GET['idplanta']) && isset($_GET['idusuario']) && isset($_GET['proveedor'])):
+                if ($authMiddleware->verificarTokenUsuarioActivo()) {
+                    // Verificar si el usuario es administrador
+                    if ($authMiddleware->verificarAdmin()) {
+                        $idPlanta = $_GET['idplanta'];
+                        $idUsuario = $_GET['idusuario'];
+                        $proveedor = $_GET['proveedor'];
+                        $usuarios = new UsuariosController;
+                        $usuarios->relacionarUsers($idUsuario, $idPlanta, $proveedor);
+                    } else {
+                        $respuesta->_403();
+                        $respuesta->message = 'No tienes permisos para hacer esta consulta';
+                        http_response_code($respuesta->code);
+                        echo json_encode($respuesta);
+                    }
+                }
+                break;
 
             default:
                 $respuesta->_400();

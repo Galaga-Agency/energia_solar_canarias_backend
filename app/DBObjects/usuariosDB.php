@@ -7,6 +7,44 @@ class UsuariosDB {
     public function __construct() {
         $this->conexion = new Conexion();
     }
+    /**
+   * Relacionar un usuario con una planta
+    * 
+    * @param int $idPlanta El ID de la planta
+    * @param int $idUsuario El ID del usuario
+    * @param string $proveedor El nombre del proveedor
+    * @return bool true en caso de éxito o false en caso de error
+    */
+    public function relacionarUsers($idPlanta, $idUsuario, $proveedor) {
+        try {
+            $conexion = new Conexion();
+            $conn = $conexion->getConexion();
+
+            $query = "INSERT INTO plantas_asociadas(usuario_id, planta_id, nombre_proveedor) VALUES (?, ?, ?)";
+            $stmt = $conn->prepare($query);
+            if (!$stmt) {
+                throw new Exception("Error en la preparación de la consulta: " . $conn->error);
+            }
+        
+            // Vincula los parámetros: 'i' para enteros (usuario y planta) y 's' para string (proveedor)
+            $stmt->bind_param('iis', $idUsuario, $idPlanta, $proveedor);
+        
+            // Ejecuta la consulta
+            if (!$stmt->execute()) {
+                throw new Exception("Error en la ejecución de la consulta: " . $stmt->error);
+                return false;
+            }
+
+            // Cierra la consulta y la conexión
+            $stmt->close();
+            $conn->close();
+        
+            return true;
+        } catch (Exception $e) {
+            error_log("Error al relacionar usuario y planta: " . $e->getMessage());
+            return false;
+        }
+    }
 
     /**
      * Obtener todos los usuarios
@@ -236,27 +274,29 @@ class UsuariosDB {
             $stmt->execute();
             $result = $stmt->get_result();
     
+            $isAdmin = false; // Variable para determinar si el usuario es admin
+    
             if ($result && $row = $result->fetch_assoc()) {
-                $clase = $row['clase']; // Obtener el nombre de la clase
-                $stmt->close();
-                $conn->close();
+                $clase = $row['clase'];
                 
                 // Verificar si el usuario es admin
                 if (strtolower($clase) === 'admin') {
-                    return true;
+                    $isAdmin = true;
                 }
             }
     
-            // Cerrar el statement y la conexión en caso de que no se encuentre la clase o no sea admin
+            // Cerrar el statement y la conexión
             $stmt->close();
             $conn->close();
-            return false;
+    
+            return $isAdmin; // Devolver el resultado
     
         } catch (Exception $e) {
             error_log("Error al obtener clase del usuario: " . $e->getMessage());
             return false;
         }
-    }  
+    }
+     
     /**
      * Comprueba que el email no exista en la base de datos
      *  @param string $email Email a verificar
@@ -381,6 +421,41 @@ class UsuariosDB {
     
             $stmt = $conn->prepare($query);
             $stmt->bind_param('s', $clase); // Cambiamos a 's' para string
+            $stmt->execute();
+            $result = $stmt->get_result();
+    
+            // Verificar si se encontró un registro
+            if ($result && $result->num_rows > 0) {
+                $stmt->close();
+                $conn->close();
+                return true; // La clase existe
+            }
+    
+            // Cerrar el statement y la conexión si no se encontró la clase
+            $stmt->close();
+            $conn->close();
+            return false; // La clase no existe
+    
+        } catch (Exception $e) {
+            error_log("Error al verificar si la clase existe: " . $e->getMessage());
+            return false;
+        }
+    }
+    /**
+     * Comprueba que la clase por ejemplo admin, usuario etc... existe en la base de datos
+     *  @param string $clase verifica que la clase existe
+     *  @return bool True en caso de que la clase exista, false en caso de que la clase no exista
+     */ 
+    public function comprobarUsuarioAsociadoPlanta($usuarioId,$plantaId,$proveedor) {
+        try {
+            $conexion = new Conexion();
+            $conn = $conexion->getConexion();
+    
+            // Consulta para verificar si la clase existe
+            $query = "SELECT * FROM plantas_asociadas where planta_id = ? && usuario_id = ? && nombre_proveedor = ?";
+    
+            $stmt = $conn->prepare($query);
+            $stmt->bind_param('sis', $plantaId,$usuarioId,$proveedor); // Cambiamos a 's' para string 'i' para int
             $stmt->execute();
             $result = $stmt->get_result();
     
