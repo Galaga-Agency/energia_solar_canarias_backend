@@ -83,8 +83,11 @@
     },
     "asociar_plantas_usuarios": {
       "titulo_login": "GET /usuarios/relacionar",
-      "descripcion": "La solicitud POST /usuarios/relacionar permite asociar una planta específica a un usuario en el sistema. (solo para administradores)"
-    }
+      "descripcion": "La solicitud POST /usuarios/relacionar permite asociar una planta específica a un usuario en el sistema. (solo para administradores)",
+      "idplanta":"(requerido): ID único de la planta que se va a asociar.",
+      "idusuario":"(requerido): ID único del usuario al que se asociará la planta.",
+      "proveedor":"(requerido): Nombre del proveedor de la planta."
+    }  
   },
   "en": {
     "menu": {
@@ -170,7 +173,10 @@
     },
     "asociar_plantas_usuarios": {
       "titulo_login": "GET /usuarios/relacionar",
-      "descripcion": "The POST /usuarios/relacionar request allows associating a specific plant with a user in the system. (administrators only)"
+      "descripcion": "The POST /usuarios/relacionar request allows associating a specific plant with a user in the system. (administrators only)",
+      "idplanta":"(required): Unique ID of the plant to be associated.",
+      "idusuario":"(required): Unique ID of the user with whom the plant will be associated.",
+      "proveedor":"(required): Name of the plant provider."
     }
   }
 }
