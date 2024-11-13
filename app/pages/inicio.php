@@ -30,7 +30,7 @@
         <p class="text-gray-600">
             <?php echo translate('inicio.datos_api_descripcion'); ?>
         </p>
-        <a href="#" class="inline-block mt-4 text-yellow-600 font-semibold hover:underline"><?php echo translate('inicio.ver_mas'); ?> &rarr;</a>
+        <a href="?page=get-lista-plantas" class="inline-block mt-4 text-yellow-600 font-semibold hover:underline"><?php echo translate('inicio.ver_mas'); ?> &rarr;</a>
     </div>
 
     <!-- Tarjeta de ejemplo 4 -->

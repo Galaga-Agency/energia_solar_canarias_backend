@@ -82,7 +82,7 @@ $page = $_GET['page'] ?? 'inicio';
       </li>
       <li>
         <button onclick="toggleSubmenu('perfilSubmenu')" class="w-full text-left px-4 py-2 text-gray-700 hover:bg-blue-100 rounded focus:outline-none">
-          Usuarios
+        <?php echo translate('menu.usuarios') ?>
         </button>
         <ul id="perfilSubmenu" class="ml-4 mt-2 space-y-1 hidden">
           <li><a href="?page=get-usuarios" class="block px-4 py-2 text-gray-600 hover:bg-blue-50 rounded"><?php echo translate('menu.GET') ?></a></li>
@@ -93,11 +93,21 @@ $page = $_GET['page'] ?? 'inicio';
       </li>
       <li>
         <button onclick="toggleSubmenu('configSubmenu')" class="w-full text-left px-4 py-2 text-gray-700 hover:bg-blue-100 rounded focus:outline-none">
-          Configuración
+        <?php echo translate('menu.configuracion') ?>
         </button>
         <ul id="configSubmenu" class="ml-4 mt-2 space-y-1 hidden">
           <li><a href="?page=bearer-token" class="block px-4 py-2 text-gray-600 hover:bg-blue-50 rounded"><?php echo translate('menu.bearer_token') ?></a></li>
           <li><a href="?page=login" class="block px-4 py-2 text-gray-600 hover:bg-blue-50 rounded"><?php echo translate('menu.login') ?></a></li>
+        </ul>
+      </li>
+      <li>
+        <button onclick="toggleSubmenu('configLLamadaApi')" class="w-full text-left px-4 py-2 text-gray-700 hover:bg-blue-100 rounded focus:outline-none">
+        <?php echo translate('menu.datos_api') ?>
+        </button>
+        <ul id="configLLamadaApi" class="ml-4 mt-2 space-y-1 hidden">
+          <li><a href="?page=get-lista-plantas" class="block px-4 py-2 text-gray-600 hover:bg-blue-50 rounded"><?php echo translate('menu.lista_plantas') ?></a></li>
+          <li><a href="?page=get-planta" class="block px-4 py-2 text-gray-600 hover:bg-blue-50 rounded"><?php echo translate('menu.detalles_plantas') ?></a></li>
+          <li><a href="?page=post-asociar-plantas-usuarios" class="block px-4 py-2 text-gray-600 hover:bg-blue-50 rounded"><?php echo translate('menu.asociarplantas') ?></a></li>
         </ul>
       </li>
       <li>
@@ -140,6 +150,15 @@ $page = $_GET['page'] ?? 'inicio';
             break;
         case 'login':
             include('./app/pages/login.php');
+            break;
+        case 'get-lista-plantas':
+            include('./app/pages/llamada-lista-plantas.php');
+            break;
+        case 'get-planta':
+            include('./app/pages/llamada-planta.php');
+            break;
+        case 'post-asociar-plantas-usuarios':
+            include('./app/pages/post-asociar-plantas-usuarios.php');
             break;
         case 'ayuda':
             echo "<h1 class='text-2xl font-bold'>Ayuda</h1>";

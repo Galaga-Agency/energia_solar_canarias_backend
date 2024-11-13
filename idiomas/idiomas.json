@@ -3,6 +3,10 @@
     "menu": {
       "titulo": "Energia Solar Canarias",
       "inicio": "Inicio",
+      "lista_plantas": "GET Lista de plantas",
+      "detalles_plantas": "GET Detalles de la planta",
+      "asociarplantas": "POST Asociar plantas a un usuario",
+      "datos_api": "LLamadas a la api",
       "usuarios": "Usuarios",
       "GET": "GET",
       "POST": "POST",
@@ -22,8 +26,8 @@
       "ver_mas": "Ver más",
       "loginytokens": "Login y Tokens",
       "login_descripcion": "Crea el login y accede a tu token privado para hacer llamadas a la app",
-      "datos_api": "Datos de la API",
-      "datos_api_descripcion": "Obtén los datos que obtiene la api de manera más simple haciendo incapié en los endpoints que necesitas consultar como desarrollador",
+      "datos_api": "LLamadas a la api",
+      "datos_api_descripcion": "Solicita plantas si eres un cliente o asocia plantas a los clientes si eres administrador esta sección explica como puedes llamar los datos de la api",
       "mas_funcionalidades": "Disponible próximamente..."
     },
     "usuarios_get": {
@@ -68,12 +72,28 @@
       "respuesta_ejemplo": "Respuesta de Ejemplo",
       "ejemplo_uso_login": "Ejemplo de Uso - Login",
       "ejemplo_uso_token": "Ejemplo de Uso - Validación de Token"
+    },
+    "get_lista_plantas": {
+      "titulo_login": "GET /plants",
+      "descripcion": "El endpoint GET /plants permite obtener la lista de plantas registrados en el sistema. Sacamos los datos genéricos que hay en una planta, el administrador sacara todas las plantas y el usuario solo sacara las plantas que tendrá asociadas"
+    },
+    "get_detalles_planta": {
+      "titulo_login": "GET /plants",
+      "descripcion": "El endpoint GET /plants/details/{id} permite obtener la planta con el id (identificador) proporcionado. Sacamos los datos detallados que hay en una planta, el administrador podrá acceder a todos los detalles de todas las plantas y el usuario solo a las que tiene a su disposición (si no sabe el id de su planta haga una consulta de todas sus plantas con /plants)"
+    },
+    "asociar_plantas_usuarios": {
+      "titulo_login": "GET /usuarios/relacionar",
+      "descripcion": "La solicitud POST /usuarios/relacionar permite asociar una planta específica a un usuario en el sistema. (solo para administradores)"
     }
   },
   "en": {
     "menu": {
       "titulo": "Energia Solar Canarias",
+      "datos_api": "API Calls",
       "inicio": "Home",
+      "lista_plantas": "GET List of plants",
+      "detalles_plantas": "GET Plant details",
+      "asociarplantas": "POST Associate plants with a user",
       "usuarios": "Users",
       "GET": "GET",
       "POST": "POST",
@@ -93,8 +113,8 @@
       "ver_mas": "Learn more",
       "loginytokens": "Login and Tokens",
       "login_descripcion": "Create the login and access your private token to make API calls",
-      "datos_api": "API Data",
-      "datos_api_descripcion": "Retrieve the data provided by the API in a simpler way, focusing on the endpoints you need as a developer",
+      "datos_api": "API Calls",
+      "datos_api_descripcion": "Request plants if you are a client, or associate plants with clients if you are an administrator. This section explains how you can fetch data from the API.",
       "mas_funcionalidades": "Coming soon..."
     },
     "usuarios_get": {
@@ -139,6 +159,18 @@
       "respuesta_ejemplo": "Example Response",
       "ejemplo_uso_login": "Usage Example - Login",
       "ejemplo_uso_token": "Usage Example - Token Validation"
+    },
+    "get_lista_plantas": {
+      "titulo_login": "GET /plants",
+      "descripcion": "The endpoint GET /plants allows retrieving the list of plants registered in the system. We obtain the generic data available for each plant; the administrator will retrieve all plants, while the user will only retrieve the plants associated with them."
+    },
+    "get_detalles_planta": {
+      "titulo_login": "GET /plants/detalles",
+      "descripcion": "The endpoint GET /plants/details/{id} allows retrieving the plant with the provided ID (identifier). We obtain the detailed data for a plant; the administrator can access all details of all plants, while the user can only access the plants available to them. (If the user does not know their plant's ID, they can retrieve all their plants with /plants.)"
+    },
+    "asociar_plantas_usuarios": {
+      "titulo_login": "GET /usuarios/relacionar",
+      "descripcion": "The POST /usuarios/relacionar request allows associating a specific plant with a user in the system. (administrators only)"
     }
   }
 }

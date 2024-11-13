@@ -49,13 +49,13 @@ curl -X POST "https://app-energiasolarcanarias-backend.com/usuarios" \\
 -H "Content-Type: application/json" \\
 -H "Authorization: Bearer tu_token_de_acceso" \\
 -d '{
-  "email": "carlaisari@energiasolarcanarias.es",
-  "password": "***REMOVED***",
+  "email": "ejemplo@galagaagency.com",
+  "password": "contraseña",
   "clase": "admin",
-  "nombre": "Carla",
-  "apellido": "Isari",
+  "nombre": "ejemplo",
+  "apellido": "1",
   "imagen": "https://cuv.upc.edu/es/shared/imatges/fotos-professorat-i-professionals/anonimo.jpg",
-  "movil": "666555444",
+  "movil": "123456789",
   "activo": true,
   "eliminado": false
 }'
