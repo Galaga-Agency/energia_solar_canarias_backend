@@ -12,6 +12,49 @@ class UsuariosController
         $this->usuarios = new Usuarios;
     }
 
+    public function relacionarUsers($idUsuario, $idPlanta, $proveedor){
+         // Instanciar el objeto de acceso a la base de datos
+         $usuariosDB = new UsuariosDB();
+         $user = $usuariosDB->getAdmin($idUsuario);
+         if($user == true){
+            $respuesta = new Respuesta();
+            $respuesta->_400();
+            $respuesta->message = "No puedes asociar una planta a un usuario admin el usuario admin tiene acceso a todas las plantas";
+            http_response_code(400);
+            echo json_encode($respuesta);
+            return;
+         }
+         if (!$usuariosDB->verificarEstadoUsuario($idUsuario)) {
+            $respuesta = new Respuesta();
+            $respuesta->_404();
+            $respuesta->message = "El usuario que se intenta relacionar no existe en la base de datos o a sido eliminado";
+            http_response_code(404);
+            echo json_encode($respuesta);
+            return;
+        }
+        if ($usuariosDB->comprobarUsuarioAsociadoPlanta($idUsuario, $idPlanta, $proveedor)) {
+            $respuesta = new Respuesta();
+            $respuesta->_400();
+            $respuesta->message = "El usuario que se intenta relacionar ya esta relacionado con esa misma planta";
+            http_response_code(400);
+            echo json_encode($respuesta);
+            return;
+        }
+         $usuario = $usuariosDB->relacionarUsers($idPlanta, $idUsuario, $proveedor);
+         if($usuario != false){
+             $respuesta = new Respuesta();
+             $respuesta->success($usuario);
+             http_response_code($respuesta->code);
+             echo json_encode($respuesta);
+         }else{
+             $respuesta = new Respuesta();
+             $respuesta->_400();
+             $respuesta->message = "Error al realizar la operación";
+             http_response_code(400);
+             echo json_encode($respuesta);
+         }
+    }
+
     public function getAllUsers()
     {
         // Definir los valores predeterminados de paginación
