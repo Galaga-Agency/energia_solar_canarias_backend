@@ -7,9 +7,9 @@
       </p>
       <h2 class="text-xl font-semibold text-gray-800 mb-2"><?php echo translate('usuarios_get.parametros_consulta') ?></h2>
         <ul class="list-disc list-inside text-gray-700 mb-4">
-            <li><strong>idplanta</strong> (requerido): ID único de la planta que se va a asociar.</li>
-            <li><strong>idusuario</strong> (requerido): ID único del usuario al que se asociará la planta.</li>
-            <li><strong>proveedor</strong> (requerido): Nombre del proveedor de la planta.</li>
+            <li><strong>idplanta</strong> <?php echo translate('asociar_plantas_usuarios.idplanta')?></li>
+            <li><strong>idusuario</strong> <?php echo translate('asociar_plantas_usuarios.idusuario')?></li>
+            <li><strong>proveedor</strong> <?php echo translate('asociar_plantas_usuarios.proveedor')?></li>
         </ul>
       <h2 class="text-xl font-semibold text-gray-800 mb-2">Respuesta de Ejemplo</h2>
       <pre class="bg-gray-100 rounded-lg p-4 text-sm text-gray-900 overflow-auto">
