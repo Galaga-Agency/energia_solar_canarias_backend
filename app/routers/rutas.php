@@ -8,8 +8,10 @@ require_once "../controllers/token.php";
 require_once "../utils/respuesta.php";
 require_once "../DBObjects/usuariosDB.php";
 require_once "../controllers/SolarEdgeController.php";
+require_once "../controllers/GoodWeController.php";
 require_once "../services/ApiControladorService.php";
 require_once "../services/GoodWeService.php";
+require_once "../services/SolarEdgeService.php";
 
 $respuesta = new Respuesta;
 $authMiddleware = new Autenticacion();
@@ -105,14 +107,49 @@ switch ($method) {
             case ($request === 'plants'):
                 //Verificamos que existe el usuario CREADOR del token y sino manejamos el error dentro de la funcion
                 if ($authMiddleware->verificarTokenUsuarioActivo()) {
+                    $admin = $authMiddleware->verificarAdmin();
+                    if(isset($_GET['proveedor'])){
+                        $apiControladorService = new ApiControladorService;
+                        $proveedor = $_GET['proveedor'];
+                    switch($proveedor){
+                        case $proveedores['GoodWe']:
+                            if($admin){
+                                $apiControladorService->getAllPlantsGoodWe();
+                            }else{
+                                $respuesta->_403();
+                                $respuesta->message = 'No tienes permisos para hacer esta consulta';
+                                http_response_code($respuesta->code);
+                                echo json_encode($respuesta);
+                            }
+                            break;
+                        case $proveedores['SolarEdge']:
+                            if($admin){
+                                $apiControladorService->getAllPlantsSolarEdge();
+                            }else{
+                                $respuesta->_403();
+                                $respuesta->message = 'No tienes permisos para hacer esta consulta';
+                                http_response_code($respuesta->code);
+                                echo json_encode($respuesta);
+                            }
+                            break;
+                        default:
+                            $respuesta->_404();
+                            $respuesta->message = 'No se ha encontrado el proveedor';
+                            http_response_code($respuesta->code);
+                            echo json_encode($respuesta);
+                            break;
+                    }
+                    
+                    }else{
                     // Verificar si el usuario es administrador
-                    if ($authMiddleware->verificarAdmin()) {
+                    if ($admin) {
                         $solarEdgeController = new ApiControladorService();
                         $solarEdgeController->getAllPlants();
                     } else {
                         $idUsuario = $authMiddleware->obtenerIdUsuarioActivo();
                         $solarEdgeController = new ApiControladorService();
                         $solarEdgeController->getAllPlantsCliente($idUsuario);
+                    }
                     }
                 }
                 break;
