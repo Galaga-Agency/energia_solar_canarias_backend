@@ -64,8 +64,8 @@ switch ($method) {
                     } else {
                         $respuesta->_403();
                         $respuesta->message = 'No tienes permisos para hacer esta consulta';
-                        http_response_code($error->code);
-                        echo json_encode($error);
+                        http_response_code($respuesta->code);
+                        echo json_encode($respuesta);
                     }
                 }
                 break;
@@ -81,8 +81,8 @@ switch ($method) {
                     } else {
                         $respuesta->_403();
                         $respuesta->message = 'No tienes permisos para hacer esta consulta';
-                        http_response_code($error->code);
-                        echo json_encode($error);
+                        http_response_code($respuesta->code);
+                        echo json_encode($respuesta);
                     }
                 }
                 break;
@@ -95,10 +95,9 @@ switch ($method) {
                         $solarEdgeController = new ApiControladorService();
                         $solarEdgeController->getAllPlants();
                     } else {
-                        $respuesta->_403();
-                        $respuesta->message = 'No tienes permisos para hacer esta consulta';
-                        http_response_code($error->code);
-                        echo json_encode($error);
+                        $idUsuario = $authMiddleware->obtenerIdUsuarioActivo();
+                        $solarEdgeController = new ApiControladorService();
+                        $solarEdgeController->getAllPlantsCliente($idUsuario);
                     }
                 }
                 break;
@@ -151,10 +150,11 @@ switch ($method) {
                         $solarEdgeController = new ApiControladorService();
                         $solarEdgeController->getSiteDetail($id);
                     } else {
-                        $respuesta->_403();
-                        $respuesta->message = 'No tienes permisos para hacer esta consulta';
-                        http_response_code($respuesta->code);
-                        echo json_encode($respuesta);
+                        
+                        $idUsuario = $authMiddleware->obtenerIdUsuarioActivo();
+                        echo $idUsuario;
+                        //$solarEdgeController = new ApiControladorService();
+                        //$solarEdgeController->getSiteDetail($id);
                     }
                 }
                 break;

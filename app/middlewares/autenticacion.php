@@ -68,11 +68,7 @@ class Autenticacion
                 if ($dboUser->getAdmin($autenticar['id'])) {
                     return true;
                 } else {
-                    // El usuario no es administrador
-                    $respuesta->_403();
-                    $respuesta->message = 'Operación no autorizada. No eres administrador.';
-                    http_response_code($respuesta->code);
-                    echo json_encode($respuesta);
+                    return false;
                     die();
                 }
             } else {
@@ -135,6 +131,51 @@ class Autenticacion
 
         return false; // En caso de error o usuario inactivo/eliminado
     }
+        public function obtenerIdUsuarioActivo()
+    {
+        // Definir la respuesta para manejar errores
+        $respuesta = new Respuesta;
+    
+        // Obtener el token del encabezado
+        $auth = new Autenticacion();
+        $jwtToken = $auth->getBearerToken();
+
+        if (!$jwtToken) {
+            $respuesta->_401();
+            $respuesta->message = "Token de autorización no proporcionado.";
+            http_response_code($respuesta->code);
+            echo json_encode($respuesta);
+            return false;
+        }
+
+        // Decodificar el token para obtener id y email
+        try {
+            $decoded = JWT::decode($jwtToken, new Key(self::$secret_key, self::$algorithm));
+            $userId = $decoded->data->id;
+
+            // Instancia de la clase UsuariosDB para verificar el estado
+            $usuariosDB = new UsuariosDB();
+            $estadoUsuario = $usuariosDB->verificarEstadoUsuario($userId);
+
+            if ($estadoUsuario) {
+                return $userId; // Retornar el ID del usuario activo
+            } else {
+                $respuesta->_404();
+                $respuesta->message = "Usuario del token no encontrado.";
+                http_response_code($respuesta->code);
+                echo json_encode($respuesta);
+            }
+        } catch (Exception $e) {
+            // Token inválido o expirado
+            $respuesta->_401();
+            $respuesta->message = "Token inválido o expirado.";
+            http_response_code($respuesta->code);
+            echo json_encode($respuesta);
+        }
+
+    return false; // En caso de error o usuario inactivo/eliminado
+}
+
 }
 
 /*
