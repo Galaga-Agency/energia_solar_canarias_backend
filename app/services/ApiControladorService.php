@@ -41,6 +41,56 @@ class ApiControladorService {
         header('Content-Type: application/json');
         echo json_encode($respuesta);
     }
+    public function getAllPlantsGoodWe() {
+        $respuesta = new Respuesta;
+        try{
+            // Obtener datos de GoodWe
+            $goodWeResponse = $this->goodWeController->getAllPlants();
+            $goodWeData = json_decode($goodWeResponse, true);
+
+            $plants = $this->processPlants($goodWeData, []);
+            
+            if($plants != null){
+            $respuesta->success($plants);
+            }else{
+                $respuesta->_400($plants);
+                $respuesta->message = "No se han encontrado plantas";
+                http_response_code(400);
+            }
+        }catch(Throwable $e){
+            $respuesta->_500();
+            $respuesta->message = "Error en el servidor de algun proveedor";
+            http_response_code(500);
+        }
+        // Devolver el resultado como JSON
+        header('Content-Type: application/json');
+        echo json_encode($respuesta);
+    }
+    public function getAllPlantsSolarEdge() {
+        $respuesta = new Respuesta;
+        try{
+            // Obtener datos de SolarEdge
+            $solarEdgeResponse = $this->solarEdgeController->getAllPlants();
+            $solarEdgeData = json_decode($solarEdgeResponse, true);
+
+            $plants = $this->processPlants([], $solarEdgeData);
+            
+            if($plants != null){
+            $respuesta->success($plants);
+            }else{
+                $respuesta->_400($plants);
+                $respuesta->message = "No se han encontrado plantas";
+                http_response_code(400);
+            }
+        }catch(Throwable $e){
+            $respuesta->_500();
+            $respuesta->message = "Error en el servidor de algun proveedor";
+            http_response_code(500);
+        }
+        // Devolver el resultado como JSON
+        header('Content-Type: application/json');
+        echo json_encode($respuesta);
+    }
     public function getAllPlantsCliente($idUsuario) {
         $respuesta = new Respuesta;
         try {
