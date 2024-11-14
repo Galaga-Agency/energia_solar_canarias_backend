@@ -44,6 +44,26 @@ if (strpos($request, $baseDir) === 0) {
 switch ($method) {
     case 'GET':
         switch (true) {
+            case ($request === 'proveedores'):
+                //Verificamos que existe el usuario CREADOR del token y sino manejamos el error dentro de la funcion
+                if ($authMiddleware->verificarTokenUsuarioActivo()) {
+                    // Verificar si el usuario es administrador
+                    if ($authMiddleware->verificarAdmin()) {
+                        $arrayProveedores = [];
+                        foreach ($proveedores as $key => $value) {
+                            $arrayProveedores[] =  $value;
+                        }
+                        $respuesta->success($arrayProveedores);
+                        http_response_code($respuesta->code);
+                        echo json_encode($respuesta);
+                    } else {
+                        $respuesta->_403();
+                        $respuesta->message = 'No tienes permisos para hacer esta consulta';
+                        http_response_code($respuesta->code);
+                        echo json_encode($respuesta);
+                    }
+                }
+                break;
             // Nuevo caso para obtener los detalles de una planta por ID
             case (preg_match('/^plants\/details\/([\w-]+)$/', $request, $matches) ? true : false):
                 $powerStationId = $matches[1];
@@ -191,26 +211,6 @@ switch ($method) {
                     echo json_encode($respuesta);
                 }
                 break;
-
-            case (preg_match('/^plants\/(\d+)$/', $request, $matches) ? true : false):
-                // Extraer el ID del usuario desde la URL
-                $id = $matches[1];
-                //Verificamos que existe el usuario CREADOR del token y sino manejamos el error dentro de la funcion
-                if ($authMiddleware->verificarTokenUsuarioActivo()) {
-                    // Verificar si el usuario es administrador
-                    if ($authMiddleware->verificarAdmin()) {
-                        $solarEdgeController = new ApiControladorService();
-                        $solarEdgeController->getSiteDetail($id);
-                    } else {
-                        
-                        $idUsuario = $authMiddleware->obtenerIdUsuarioActivo();
-                        echo $idUsuario;
-                        //$solarEdgeController = new ApiControladorService();
-                        //$solarEdgeController->getSiteDetail($id);
-                    }
-                }
-                break;
-
             default:
                 $respuesta->_400();
                 $respuesta->message = 'El End Point no existe en la API';
