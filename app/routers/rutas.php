@@ -18,8 +18,8 @@ $authMiddleware = new Autenticacion();
 
 // Definir el array de proveedores de manera global
 $proveedores = [
-    'GoodWe' => 'GoodWe',
-    'SolarEdge' => 'SolarEdge',
+    'GoodWe' => 'goodwe',
+    'SolarEdge' => 'solaredge',
     // Añadir más proveedores según sea necesario
 ];
 
