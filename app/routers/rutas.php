@@ -14,6 +14,13 @@ require_once "../services/GoodWeService.php";
 $respuesta = new Respuesta;
 $authMiddleware = new Autenticacion();
 
+// Definir el array de proveedores de manera global
+$proveedores = [
+    'GoodWe' => 'GoodWe',
+    'SolarEdge' => 'SolarEdge',
+    // Añadir más proveedores según sea necesario
+];
+
 // Obtener la ruta solicitada
 $request = $_SERVER['REQUEST_URI'];
 
@@ -47,10 +54,18 @@ switch ($method) {
                         $solarEdgeController->getSiteDetail($powerStationId);
 
                     } else {
-                        $respuesta->_403();
-                        $respuesta->message = 'No tienes permisos para hacer esta consulta';
-                        http_response_code($respuesta->code);
-                        echo json_encode($respuesta);
+                         // El usuario nos tiene que mandar obligatoriamente el proveedor para que verifiquemos si tiene acceso a ese id
+                         if(isset($_GET['proveedor'])){
+                            $idUsuario = $authMiddleware->obtenerIdUsuarioActivo();
+                            $proveedor = $_GET['proveedor'];
+                            $solarEdgeController = new ApiControladorService();
+                            $solarEdgeController->getSiteDetailCliente($idUsuario,$powerStationId,$proveedor);
+                        }else{
+                            $respuesta->_403();
+                            $respuesta->message = 'Tienes que enviar el proveedor si eres cliente';
+                            http_response_code($respuesta->code);
+                            echo json_encode($respuesta);
+                        }
                     }
                 }
                 break;
