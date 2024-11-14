@@ -55,7 +55,50 @@ class PlantasAsociadasDB {
             return false;
         }
     }
-    
+    /**
+ * Verificar si una planta está asociada a un usuario.
+ * 
+ * @param int $usuarioId El ID del usuario
+ * @param int $idPlanta El ID de la planta
+ * @param string $proveedor El nombre del proveedor
+ * @return bool true en caso de éxito o false en caso de error
+ */
+public function isPlantasAsociadasAlUsuario($usuarioId, $idPlanta, $proveedor) {
+    try {
+        $conexion = new Conexion();
+        $conn = $conexion->getConexion();
+
+        $query = "SELECT * FROM plantas_asociadas WHERE usuario_id = ? AND planta_id = ? AND nombre_proveedor = ?;";
+        $stmt = $conn->prepare($query);
+        if (!$stmt) {
+            throw new Exception("Error en la preparación de la consulta: " . $conn->error);
+        }
+
+        // Vincula los parámetros
+        $stmt->bind_param('iss', $usuarioId, $idPlanta, $proveedor);
+
+        // Ejecuta la consulta
+        if (!$stmt->execute()) {
+            throw new Exception("Error en la ejecución de la consulta: " . $stmt->error);
+        }
+
+        // Recoge el resultado
+        $result = $stmt->get_result();
+
+        // Devuelve true si se encontró una fila, false en caso contrario
+        $existeAsociacion = $result->num_rows > 0;
+
+        // Cierra la consulta y la conexión
+        $stmt->close();
+        $conn->close();
+
+        return $existeAsociacion;
+
+    } catch (Exception $e) {
+        error_log("Error al verificar la asociación entre usuario y planta: " . $e->getMessage());
+        return false;
+    }
+} 
 }
 
 ?>

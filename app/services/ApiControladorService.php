@@ -142,25 +142,42 @@ class ApiControladorService {
         header('Content-Type: application/json');
         echo json_encode($respuesta, true);
     }
-    public function getSiteDetailCliente($id) {
+    public function getSiteDetailCliente($usuarioId, $idPlanta, $proveedor) {
         $respuesta = new Respuesta;
         try{
-            // Obtener datos de GoodWe
-            $goodWeResponse = $this->goodWeController->getPlantDetails($id);
-            $goodWeData = json_decode($goodWeResponse, true);
-    
-            // Obtener datos de SolarEdge
-            $solarEdgeResponse = $this->solarEdgeController->getSiteDetails($id);
-            $solarEdgeData = json_decode($solarEdgeResponse, true);
+            global $proveedores; // Acceder al array global dentro de la función
+             // Verificar si el proveedor está en el array global de proveedores
+            $plantasAsociadas = new PlantasAsociadasDB;
+            if($plantasAsociadas->isPlantasAsociadasAlUsuario($usuarioId, $idPlanta, $proveedor)){
+                if($proveedor == "GoodWe"){
+                // Obtener datos de GoodWe
+                $goodWeResponse = $this->goodWeController->getPlantDetails($idPlanta);
+                $goodWeData = json_decode($goodWeResponse, true);
+                }else{
+                    $goodWeData = "";
+                }
+                
+                if($proveedor == "SolarEdge"){
+                // Obtener datos de SolarEdge
+                $solarEdgeResponse = $this->solarEdgeController->getSiteDetails($idPlanta);
+                $solarEdgeData = json_decode($solarEdgeResponse, true);
+                }else{
+                    $solarEdgeData = "";
+                }
 
-            $plants = $this->unifyPlantData($goodWeData,$solarEdgeData);
+                $plants = $this->unifyPlantData($goodWeData,$solarEdgeData);
             
-            if($plants != null){
-            $respuesta->success($plants);
+                if($plants != null){
+                    $respuesta->success($plants);
+                }else{
+                    $respuesta->_400($plants);
+                    $respuesta->message = "No se han encontrado plantas";
+                    http_response_code(400);
+                }
             }else{
-                $respuesta->_400($plants);
-                $respuesta->message = "No se han encontrado plantas";
-                http_response_code(400);
+                $respuesta->_404();
+                $respuesta->message = "El id del usuario y id de la planta no coincide o no esta disponible para ese usuario";
+                http_response_code(404);
             }
         }catch(Throwable $e){
             $respuesta->_500();
