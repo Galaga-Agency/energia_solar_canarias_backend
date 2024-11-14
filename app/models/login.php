@@ -2,6 +2,7 @@
 
 require_once "conexion.php";
 require_once "../utils/respuesta.php";
+require_once "../DBObjects/usuariosDB.php";
 
 class Login
 {
@@ -81,6 +82,8 @@ class Login
                             if (!$dataUsuario['eliminado']) {
                                 $this->passwordEsperada = $this->dataUsuario['password'];
                                 if (password_verify($this->password, $this->passwordEsperada)) {
+                                    $usuarioLogueado = new UsuariosDB;
+                                    $usuarioLogueado->actualizarUltimoLogin($dataUsuario['id']);
                                     // Si la contraseña es correcta, devuelve una respuesta exitosa o genera un token
                                     $this->dataUsuario['password'] = "Información no disponible en esta consulta";
                                     $respuesta->success($this->dataUsuario);
