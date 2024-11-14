@@ -7,6 +7,7 @@ require_once "../controllers/login.php";
 require_once "../controllers/token.php";
 require_once "../utils/respuesta.php";
 require_once "../DBObjects/usuariosDB.php";
+require_once "../DBObjects/clasesDB.php";
 require_once "../controllers/SolarEdgeController.php";
 require_once "../controllers/GoodWeController.php";
 require_once "../services/ApiControladorService.php";
@@ -44,6 +45,24 @@ if (strpos($request, $baseDir) === 0) {
 switch ($method) {
     case 'GET':
         switch (true) {
+            case ($request === 'clases'):
+                //Verificamos que existe el usuario CREADOR del token y sino manejamos el error dentro de la funcion
+                if ($authMiddleware->verificarTokenUsuarioActivo()) {
+                    // Verificar si el usuario es administrador
+                    if ($authMiddleware->verificarAdmin()) {
+                        $clasesDB = new ClasesDB;
+                        $clases = $clasesDB->getClases();
+                        $respuesta->success($clases);
+                        http_response_code($respuesta->code);
+                        echo json_encode($respuesta);
+                    } else {
+                        $respuesta->_403();
+                        $respuesta->message = 'No tienes permisos para hacer esta consulta';
+                        http_response_code($respuesta->code);
+                        echo json_encode($respuesta);
+                    }
+                }
+                break;
             case ($request === 'proveedores'):
                 //Verificamos que existe el usuario CREADOR del token y sino manejamos el error dentro de la funcion
                 if ($authMiddleware->verificarTokenUsuarioActivo()) {
