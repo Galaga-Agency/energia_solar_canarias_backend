@@ -476,5 +476,40 @@ class UsuariosDB {
             return false;
         }
     }
+    /**
+ * Actualiza el campo ultimo_login para un usuario en la base de datos.
+ * 
+ * @param int $usuarioId El ID del usuario
+ * @return bool True en caso de éxito, false en caso de error
+ */
+public function actualizarUltimoLogin($usuarioId) {
+    try {
+        $conexion = new Conexion();
+        $conn = $conexion->getConexion();
+
+        // Consulta para actualizar el campo ultimo_login
+        $query = "UPDATE usuarios SET ultimo_login = NOW() WHERE usuario_id = ?";
+        $stmt = $conn->prepare($query);
+        if (!$stmt) {
+            throw new Exception("Error en la preparación de la consulta: " . $conn->error);
+        }
+
+        // Vincula el parámetro del ID de usuario
+        $stmt->bind_param('i', $usuarioId);
+
+        // Ejecuta la consulta
+        $resultado = $stmt->execute();
+
+        // Cierra la consulta y la conexión
+        $stmt->close();
+        $conn->close();
+
+        return $resultado; // True si se ejecutó correctamente, false si no
+    } catch (Exception $e) {
+        error_log("Error al actualizar el último login: " . $e->getMessage());
+        return false;
+    }
+}
+
 }
 ?>
