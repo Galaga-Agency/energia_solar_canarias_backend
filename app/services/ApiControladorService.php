@@ -2,6 +2,7 @@
 require_once './../controllers/SolarEdgeController.php';
 require_once './../controllers/GoodWeController.php';
 require_once './../utils/respuesta.php';
+require_once './../DBObjects/plantasAsociadasDB.php';
 
 class ApiControladorService {
     private $solarEdgeController;
@@ -40,7 +41,108 @@ class ApiControladorService {
         header('Content-Type: application/json');
         echo json_encode($respuesta);
     }
+    public function getAllPlantsCliente($idUsuario) {
+        $respuesta = new Respuesta;
+        try {
+            $plantasAsociadasDB = new PlantasAsociadasDB;
+            $plantasAsociadas = $plantasAsociadasDB->getPlantasAsociadasAlUsuario($idUsuario);
+    
+            if ($plantasAsociadas == false) {
+                $respuesta->_404();
+                $respuesta->message = 'No se han encontrado plantas para este usuario';
+                http_response_code(404);
+                echo json_encode($respuesta);
+                return;
+            }
+    
+            $goodWeArray = [];
+            $solarEdgeArray = [];
+    
+            foreach ($plantasAsociadas as $planta) {
+                if ($planta['nombre_proveedor'] === 'GoodWe') {
+                    // Obtener y decodificar datos de GoodWe
+                    $goodWeResponse = $this->goodWeController->getPlantDetails($planta['planta_id']);
+                    $goodWeData = $this->decodeJsonResponse($goodWeResponse);
+                    
+                    if (is_array($goodWeData) && isset($goodWeData['data']['info']['powerstation_id'])) {
+                        // Usar el ID como clave para evitar duplicados
+                        $goodWeArray[$goodWeData['data']['info']['powerstation_id']] = $goodWeData;
+                    }
+                    
+                } elseif ($planta['nombre_proveedor'] === 'SolarEdge') {
+                    // Obtener y decodificar datos de SolarEdge
+                    $solarEdgeResponse = $this->solarEdgeController->getSiteDetails($planta['planta_id']);
+                    $solarEdgeData = $this->decodeJsonResponse($solarEdgeResponse);
+                    
+                    if (is_array($solarEdgeData) && isset($solarEdgeData['details']['id'])) {
+                        // Usar el ID como clave para evitar duplicados
+                        $solarEdgeArray[$solarEdgeData['details']['id']] = $solarEdgeData;
+                    }
+                }
+            }
+    
+            // Convertir los arrays asociativos en arrays simples para procesarlos
+            $goodWeArray = array_values($goodWeArray);
+            $solarEdgeArray = array_values($solarEdgeArray);
+    
+            $processedPlants = $this->processPlantsCliente($goodWeArray, $solarEdgeArray);
+            $respuesta->success($processedPlants);
+    
+        } catch (Throwable $e) {
+            $respuesta->_500();
+            $respuesta->message = "Error en el servidor de algún proveedor";
+            http_response_code(500);
+        }
+    
+        header('Content-Type: application/json');
+        echo json_encode($respuesta);
+    }
+    
+    
+    /**
+     * Función privada para decodificar respuestas JSON con posible doble codificación
+     */
+    private function decodeJsonResponse($response) {
+        $decodedData = json_decode($response, true);
+    
+        if (is_string($decodedData)) {
+            $decodedData = json_decode($decodedData, true);
+        }
+    
+        return $decodedData;
+    }
+    
+    
     public function getSiteDetail($id) {
+        $respuesta = new Respuesta;
+        try{
+            // Obtener datos de GoodWe
+            $goodWeResponse = $this->goodWeController->getPlantDetails($id);
+            $goodWeData = json_decode($goodWeResponse, true);
+    
+            // Obtener datos de SolarEdge
+            $solarEdgeResponse = $this->solarEdgeController->getSiteDetails($id);
+            $solarEdgeData = json_decode($solarEdgeResponse, true);
+
+            $plants = $this->unifyPlantData($goodWeData,$solarEdgeData);
+            
+            if($plants != null){
+            $respuesta->success($plants);
+            }else{
+                $respuesta->_400($plants);
+                $respuesta->message = "No se han encontrado plantas";
+                http_response_code(400);
+            }
+        }catch(Throwable $e){
+            $respuesta->_500();
+            $respuesta->message = $e->getMessage();;
+            http_response_code(500);
+        }
+        // Devolver el resultado como JSON
+        header('Content-Type: application/json');
+        echo json_encode($respuesta, true);
+    }
+    public function getSiteDetailCliente($id) {
         $respuesta = new Respuesta;
         try{
             // Obtener datos de GoodWe
@@ -84,7 +186,7 @@ class ApiControladorService {
         echo $plantsSolarEdge;
 
     }
-    //Aquí va la lógica de las apis conversiones etc.. (Lista plantas)
+    //Aquí va la lógica de las apis conversiones etc.. (Lista plantas Admin)
     public function processPlants(array $goodWeData, array $solarEdgeData): array {
         $plants = [];
 
@@ -160,6 +262,81 @@ class ApiControladorService {
 
         return $plants;
     }
+    //Aquí va la lógica de las apis conversiones etc.. (Lista plantas Cliente)
+    public function processPlantsCliente(array $goodWeData, array $solarEdgeData): array {
+        $plants = [];
+    
+        // Procesar datos de GoodWe
+        foreach ($goodWeData as $goodWePlant) {
+            $status = $this->mapGoodWeStatus($goodWePlant['data']['info']['status'] ?? '');
+            $plant = [
+                'id' => $goodWePlant['data']['info']['powerstation_id'] ?? '',
+                'name' => $goodWePlant['data']['info']['stationname'] ?? '',
+                'address' => $goodWePlant['data']['info']['address'] ?? '',
+                'capacity' => $goodWePlant['data']['info']['capacity'] ?? 0,
+                'status' => $status,
+                'type' => $goodWePlant['data']['info']['powerstation_type'] ?? '',
+                'latitude' => $goodWePlant['latitude'] ?? '',
+                'longitude' => $goodWePlant['longitude'] ?? '',
+                'organization' => $goodWePlant['data']['info']['org_name'] ?? 'GoodWe',
+                'current_power' => $goodWePlant['data']['kpi']['pac'] ?? 0, // Potencia actual en W
+                'total_energy' => $goodWePlant['data']['kpi']['total_power'] ?? 0, // Energía total generada en kWh
+                'daily_energy' => $goodWePlant['data']['kpi']['power'] ?? 0, // Energía generada hoy en kWh
+                'monthly_energy' => $goodWePlant['data']['kpi']['month_generation'] ?? 0, // Energía generada este mes en kWh
+                'installation_date' => null, // No disponible en GoodWe
+                'pto_date' => null, // No disponible en GoodWe
+                'notes' => null, // No disponible en GoodWe
+                'alert_quantity' => null, // No disponible en GoodWe
+                'highest_impact' => null, // No disponible en GoodWe
+                'primary_module' => null, // No disponible en GoodWe
+                'public_settings' => null // No disponible en GoodWe
+            ];
+    
+            $plants[] = $plant; // Agregar el planta de GoodWe al array $plants
+        }
+    
+        // Procesar datos de SolarEdge
+        foreach ($solarEdgeData as $solarEdgePlant) {
+            $addressParts = [
+                $solarEdgePlant['details']['location']['address'] ?? '',
+                $solarEdgePlant['details']['location']['city'] ?? '',
+                $solarEdgePlant['details']['location']['country'] ?? ''
+            ];
+            $address = implode(', ', array_filter($addressParts));
+    
+            $status = $this->mapSolarEdgeStatus($solarEdgePlant['details']['status'] ?? '');
+    
+            $plant = [
+                'id' => $solarEdgePlant['details']['id'] ?? '',
+                'name' => $solarEdgePlant['details']['name'] ?? '',
+                'address' => $address,
+                'capacity' => $solarEdgePlant['details']['peakPower'] ?? 0,
+                'status' => $status,
+                'type' => $solarEdgePlant['details']['type'] ?? '',
+                'latitude' => $solarEdgePlant['details']['location']['latitude'] ?? '',
+                'longitude' => $solarEdgePlant['details']['location']['longitude'] ?? '',
+                'organization' => 'SolarEdge',
+                'current_power' => null, // No disponible en SolarEdge
+                'total_energy' => null, // No disponible en SolarEdge
+                'daily_energy' => null, // No disponible en SolarEdge
+                'monthly_energy' => null, // No disponible en SolarEdge
+                'installation_date' => $solarEdgePlant['details']['installationDate'] ?? null,
+                'pto_date' => $solarEdgePlant['details']['ptoDate'] ?? null,
+                'notes' => $solarEdgePlant['details']['notes'] ?? null,
+                'alert_quantity' => $solarEdgePlant['details']['alertQuantity'] ?? null,
+                'highest_impact' => $solarEdgePlant['details']['highestImpact'] ?? null,
+                'primary_module' => $solarEdgePlant['details']['primaryModule'] ?? null,
+                'public_settings' => $solarEdgePlant['details']['publicSettings'] ?? null
+            ];
+    
+            $plants[] = $plant; // Agregar la planta de SolarEdge al array $plants
+        }
+    
+        return $plants;
+    }
+    
+    
+
     //Aquí va la lógica de las apis conversiones etc.. (Datos precisos de la planta)
     function unifyPlantData($goodWeData, $solarEdgeData): array {
         // Decodifica los datos JSON como arrays
