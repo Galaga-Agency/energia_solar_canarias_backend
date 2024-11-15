@@ -13,9 +13,12 @@ require_once "../controllers/GoodWeController.php";
 require_once "../services/ApiControladorService.php";
 require_once "../services/GoodWeService.php";
 require_once "../services/SolarEdgeService.php";
+require_once "../DBObjects/logsDB.php";
+require_once "../enums/Logs.php";
 
 $respuesta = new Respuesta;
 $authMiddleware = new Autenticacion();
+$logsDB = new LogsDB;
 
 // Definir el array de proveedores de manera global
 $proveedores = [
@@ -45,6 +48,24 @@ if (strpos($request, $baseDir) === 0) {
 switch ($method) {
     case 'GET':
         switch (true) {
+            case ($request === 'logs'):
+                //Verificamos que existe el usuario CREADOR del token y sino manejamos el error dentro de la funcion
+                if ($authMiddleware->verificarTokenUsuarioActivo()) {
+                    // Verificar si el usuario es administrador
+                    if ($authMiddleware->verificarAdmin()) {
+                        $clasesDB = new LogsDB;
+                        $clases = $logsDB->getLogs();
+                        $respuesta->success($clases);
+                        http_response_code($respuesta->code);
+                        echo json_encode($respuesta);
+                    } else {
+                        $respuesta->_403();
+                        $respuesta->message = 'No tienes permisos para hacer esta consulta';
+                        http_response_code($respuesta->code);
+                        echo json_encode($respuesta);
+                    }
+                }
+                break;
             case ($request === 'clases'):
                 //Verificamos que existe el usuario CREADOR del token y sino manejamos el error dentro de la funcion
                 if ($authMiddleware->verificarTokenUsuarioActivo()) {
@@ -123,6 +144,14 @@ switch ($method) {
                         http_response_code($respuesta->code);
                         echo json_encode($respuesta);
                     }
+                }
+                    break;
+            case ($request === 'usuario'):
+                //Verificamos que existe el usuario CREADOR del token y sino manejamos el error dentro de la funcion
+                if ($authMiddleware->verificarTokenUsuarioActivo()) {
+                    $idUser = $authMiddleware->obtenerIdUsuarioActivo();
+                    $usuarios = new UsuariosController;
+                    $usuarios->getUser($idUser);
                 }
                 break;
 
@@ -301,6 +330,14 @@ switch ($method) {
                 // Lógica para actualizar un producto específico por ID
                 echo json_encode(['message' => 'Producto actualizado con ID: ' . $productId]);
                 break;
+            case ($request === 'usuario'):
+                //Verificamos que existe el usuario CREADOR del token y sino manejamos el error dentro de la funcion
+                if ($authMiddleware->verificarTokenUsuarioActivo()) {
+                    $idUser = $authMiddleware->obtenerIdUsuarioActivo();
+                    $usuarios = new UsuariosController;
+                    $usuarios->actualizarUser($idUser);
+                    }
+                    break;
             case (preg_match('/^usuarios\/(\d+)$/', $request, $matches) ? true : false):
                 // Extraer el ID del usuario desde la URL
                 $id = $matches[1];
@@ -334,6 +371,14 @@ switch ($method) {
                 $productId = $matches[1];
                 // Lógica para eliminar un producto específico por ID
                 echo json_encode(['message' => 'Producto eliminado con ID: ' . $productId]);
+                break;
+            case ($request === 'usuario'):
+                //Verificamos que existe el usuario CREADOR del token y sino manejamos el error dentro de la funcion
+                if ($authMiddleware->verificarTokenUsuarioActivo()) {
+                    $idUser = $authMiddleware->obtenerIdUsuarioActivo();
+                    $usuarios = new UsuariosController;
+                    $usuarios->eliminarUser($idUser);
+                }
                 break;
 
             case (preg_match('/^usuarios\/(\d+)$/', $request, $matches) ? true : false):
