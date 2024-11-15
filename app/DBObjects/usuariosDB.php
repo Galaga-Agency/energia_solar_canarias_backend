@@ -306,7 +306,7 @@ class UsuariosDB {
         try {
             $conexion = new Conexion();
             $conn = $conexion->getConexion();
-            $query = "SELECT COUNT(usuario_id) as usuarios FROM usuarios WHERE email = ?;";
+            $query = "SELECT COUNT(usuario_id) as usuarios FROM usuarios WHERE email = ? AND eliminado = 0;";
     
             $stmt = $conn->prepare($query);
             $stmt->bind_param('s', $email);
@@ -390,6 +390,47 @@ class UsuariosDB {
     
                 // Retornar el estado en función de los campos 'activo' y 'eliminado'
                 if ($row['eliminado'] == 1 || $row['activo'] == 0) {
+                    return false;
+                }else{
+                    return true;
+                } 
+            }
+    
+            // Cerrar el statement y la conexión si no se encontró el usuario
+            $stmt->close();
+            $conn->close();
+            return null; // O retorna un valor que indique que el usuario no existe
+    
+        } catch (Exception $e) {
+            error_log("Error al verificar el estado del usuario: " . $e->getMessage());
+            return false;
+        }
+    }
+     /**
+     * Comprueba si el usuario esta eliminado
+     *  @param int $id a verificar
+     *  @return bool True en caso de que tenga un usuario, false en caso de que no tenga a ese usuario
+     */ 
+    public function usuarioEliminado($id) {
+        try {
+            $conexion = new Conexion();
+            $conn = $conexion->getConexion();
+            
+            // Consulta para verificar el estado del usuario
+            $query = "SELECT eliminado FROM usuarios WHERE usuario_id = ?";
+            
+            $stmt = $conn->prepare($query);
+            $stmt->bind_param('i', $id);
+            $stmt->execute();
+            $result = $stmt->get_result();
+    
+            // Verificar si se encontró un registro
+            if ($result && $row = $result->fetch_assoc()) {
+                $stmt->close();
+                $conn->close();
+    
+                // Retornar el estado en función del campo 'eliminado'
+                if ($row['eliminado'] == 1) {
                     return false;
                 }else{
                     return true;
@@ -510,6 +551,33 @@ public function actualizarUltimoLogin($usuarioId) {
         return false;
     }
 }
-
+/**
+     * Obtener id del usuario a través del email
+     * @return array|false Array con los usuarios o false en caso de error
+     */
+    public function getIdUserPorEmail($email) {
+        try {
+            $conexion = new Conexion();
+            $conn = $conexion->getConexion();
+            
+    
+            $query = "SELECT usuarios.usuario_id FROM usuarios WHERE usuarios.email = ?";
+            $stmt = $conn->prepare($query);
+            $stmt->bind_param('s', $email); // Bind de los parámetros para LIMIT y OFFSET
+            
+            $stmt->execute();
+            $result = $stmt->get_result();
+            
+            $idUsuario = $result->fetch_assoc(); // Obtiene una sola fila
+    
+            $stmt->close();
+            $conn->close();
+            return $idUsuario;
+    
+        } catch (Exception $e) {
+            error_log("Error al obtener usuarios: " . $e->getMessage());
+            return false;
+        }
+    }
 }
 ?>

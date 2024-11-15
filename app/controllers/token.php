@@ -2,6 +2,7 @@
 
 require_once "../models/valid_token.php";
 require_once "../utils/respuesta.php";
+require_once "../controllers/LogsController.php";
 
 
 class TokenController

@@ -7,8 +7,10 @@ require_once './../DBObjects/plantasAsociadasDB.php';
 class ApiControladorService {
     private $solarEdgeController;
     private $goodWeController;
+    private $logsController;
 
     public function __construct() {
+        $this->logsController = new LogsController();
         $this->solarEdgeController = new SolarEdgeController();
         $this->goodWeController = new GoodWeController();
     }
@@ -26,13 +28,16 @@ class ApiControladorService {
             $plants = $this->processPlants($goodWeData, $solarEdgeData);
             
             if($plants != null){
-            $respuesta->success($plants);
+                $this->logsController->registrarLog(Logs::INFO, "Se han encontrado las plantas");
+                $respuesta->success($plants);
             }else{
+                $this->logsController->registrarLog(Logs::INFO, "no se han encontrado plantas");
                 $respuesta->_400($plants);
                 $respuesta->message = "No se han encontrado plantas";
                 http_response_code(400);
             }
         }catch(Throwable $e){
+            $this->logsController->registrarLog(Logs::ERROR, "Error en el servidor de algun proveedor");
             $respuesta->_500();
             $respuesta->message = "Error en el servidor de algun proveedor";
             http_response_code(500);
@@ -51,13 +56,16 @@ class ApiControladorService {
             $plants = $this->processPlants($goodWeData, []);
             
             if($plants != null){
-            $respuesta->success($plants);
+                $this->logsController->registrarLog(Logs::INFO, "se han encontrado las plantas en GoodWe");
+                $respuesta->success($plants);
             }else{
+                $this->logsController->registrarLog(Logs::INFO, "No se han encontrado plantas en GoodWe");
                 $respuesta->_400($plants);
                 $respuesta->message = "No se han encontrado plantas";
                 http_response_code(400);
             }
         }catch(Throwable $e){
+            $this->logsController->registrarLog(Logs::ERROR, "Error en el servidor de GoodWe");
             $respuesta->_500();
             $respuesta->message = "Error en el servidor de algun proveedor";
             http_response_code(500);
@@ -76,13 +84,16 @@ class ApiControladorService {
             $plants = $this->processPlants([], $solarEdgeData);
             
             if($plants != null){
-            $respuesta->success($plants);
+                $this->logsController->registrarLog(Logs::INFO, "se han encontrado las plantas en SolarEdge");
+                $respuesta->success($plants);
             }else{
+                $this->logsController->registrarLog(Logs::INFO, "no se han encontrado las plantas en SolarEdge");
                 $respuesta->_400($plants);
                 $respuesta->message = "No se han encontrado plantas";
                 http_response_code(400);
             }
         }catch(Throwable $e){
+            $this->logsController->registrarLog(Logs::ERROR, "Error en el servidor de SolarEdge");
             $respuesta->_500();
             $respuesta->message = "Error en el servidor de algun proveedor";
             http_response_code(500);
@@ -179,11 +190,13 @@ class ApiControladorService {
             if($plants != null){
             $respuesta->success($plants);
             }else{
+                $this->logsController->registrarLog(Logs::INFO, "No se han encontrado plantas");
                 $respuesta->_400($plants);
                 $respuesta->message = "No se han encontrado plantas";
                 http_response_code(400);
             }
         }catch(Throwable $e){
+            $this->logsController->registrarLog(Logs::ERROR, "Error en el servidor de la api");
             $respuesta->_500();
             $respuesta->message = $e->getMessage();;
             http_response_code(500);
@@ -199,7 +212,7 @@ class ApiControladorService {
              // Verificar si el proveedor está en el array global de proveedores
             $plantasAsociadas = new PlantasAsociadasDB;
             if($plantasAsociadas->isPlantasAsociadasAlUsuario($usuarioId, $idPlanta, $proveedor)){
-                if($proveedor == "GoodWe"){
+                if($proveedor == $proveedores['GoodWe']){
                 // Obtener datos de GoodWe
                 $goodWeResponse = $this->goodWeController->getPlantDetails($idPlanta);
                 $goodWeData = json_decode($goodWeResponse, true);
@@ -207,7 +220,7 @@ class ApiControladorService {
                     $goodWeData = "";
                 }
                 
-                if($proveedor == "SolarEdge"){
+                if($proveedor == $proveedores['SolarEdge']){
                 // Obtener datos de SolarEdge
                 $solarEdgeResponse = $this->solarEdgeController->getSiteDetails($idPlanta);
                 $solarEdgeData = json_decode($solarEdgeResponse, true);
@@ -218,18 +231,22 @@ class ApiControladorService {
                 $plants = $this->unifyPlantData($goodWeData,$solarEdgeData);
             
                 if($plants != null){
+                    $this->logsController->registrarLog(Logs::INFO, "Se han solicitado las plantas del cliente");
                     $respuesta->success($plants);
                 }else{
+                    $this->logsController->registrarLog(Logs::INFO, "No se han encontrado plantas");
                     $respuesta->_400($plants);
                     $respuesta->message = "No se han encontrado plantas";
                     http_response_code(400);
                 }
             }else{
+                $this->logsController->registrarLog(Logs::INFO, "El id del usuario y id de la planta no coincide o no esta disponible para ese usuario");
                 $respuesta->_404();
                 $respuesta->message = "El id del usuario y id de la planta no coincide o no esta disponible para ese usuario";
                 http_response_code(404);
             }
         }catch(Throwable $e){
+            $this->logsController->registrarLog(Logs::ERROR, "error en el servidor de la API");
             $respuesta->_500();
             $respuesta->message = $e->getMessage();;
             http_response_code(500);
