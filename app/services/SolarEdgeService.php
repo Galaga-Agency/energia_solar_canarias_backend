@@ -11,6 +11,46 @@ class SolarEdgeService {
         $this->httpClient = new HttpClient();
     }
 
+    public function getPoweDashboard($siteId, $dia, $fechaHoy = null, $fechaFin = null, $periodDuration = null, $billingCycle = null) {
+        if($fechaFin == null){
+        // Obtener la fecha de hoy a las 23:59:59
+        $fechaFin = new DateTime('today 23:59:59');
+        }
+
+        // Convertirla a timestamp en milisegundos
+        $timestampMs = $fechaFin->getTimestamp() * 1000;
+        switch($dia){
+            case "DAY":
+                $url = $this->solarEdge->getUrl() . "solaredge-apigw/api/site/$siteId/powerDashboardChart?chartField=$dia&foldUp=true&activeTab=0&fieldId=$siteId&endDate=$timestampMs&perserveTabsData=true;";
+                break;
+            case "WEEK":
+                $url = $this->solarEdge->getUrl() . "solaredge-apigw/api/site/$siteId/powerDashboardChart?chartField=$dia&foldUp=true&activeTab=1&fieldId=$siteId&endDate=$timestampMs&perserveTabsData=true;";
+                break;
+            case "MONTH":
+                $url = $this->solarEdge->getUrl() . "solaredge-apigw/api/site/$siteId/powerDashboardChart?chartField=$dia&foldUp=true&activeTab=2&fieldId=$siteId&endDate=$timestampMs&perserveTabsData=true;";
+                break;
+            case "YEAR":
+                $url = $this->solarEdge->getUrl() . "solaredge-apigw/api/site/$siteId/powerDashboardChart?chartField=$dia&foldUp=true&activeTab=4&fieldId=$siteId&endDate=$timestampMs&perserveTabsData=true;";
+                break;
+            case "CUSTOM":
+                if($fechaFin != null && $fechaHoy != null && $periodDuration != null && $billingCycle != null){
+                $url = $this->solarEdge->getUrl() . "solaredge-apigw/api/site/$siteId/customEnergyDashboardChart?chartField=$dia&foldUp=true&timeUnit=MONTH&siteId=$siteId&billingCycle=$billingCycle&periodDuration=$periodDuration&startTime=$fechaHoy&endTime=$fechaFin";
+                }else{
+                    return "error en los datos obligatorios no pueden ser nulos";
+                }
+                break;
+            default:
+                return "error ";
+                break;
+            }
+        try {
+            $response = $this->httpClient->get($url);
+            return $response;
+        } catch (Exception $e) {
+            return ['error' => $e->getMessage()];
+        }
+    }
+
     public function getSiteDetails($siteId) {
         $url = $this->solarEdge->getUrl() . "site/$siteId/details?api_key=" . $this->solarEdge->getApiKey();
         try {
