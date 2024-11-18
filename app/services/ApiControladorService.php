@@ -46,6 +46,34 @@ class ApiControladorService {
         header('Content-Type: application/json');
         echo json_encode($respuesta);
     }
+    public function getGraficasGoodWe() {
+        $respuesta = new Respuesta;
+        try{
+            $data = $this->getChartByPlantCuerpo();
+
+            // Obtener datos de GoodWe
+            $goodWeResponse = $this->goodWeController->getChartByPlants($data);
+            $goodWeData = json_decode($goodWeResponse, true);
+            
+            if($goodWeData != null){
+                $this->logsController->registrarLog(Logs::INFO, "se han encontrado las plantas en GoodWe");
+                $respuesta->success($goodWeData);
+            }else{
+                $this->logsController->registrarLog(Logs::INFO, "No se han encontrado plantas en GoodWe");
+                $respuesta->_400($goodWeData);
+                $respuesta->message = "No se han encontrado plantas";
+                http_response_code(400);
+            }
+        }catch(Throwable $e){
+            $this->logsController->registrarLog(Logs::ERROR, "Error en el servidor de GoodWe");
+            $respuesta->_500();
+            $respuesta->message = "Error en el servidor de algun proveedor";
+            http_response_code(500);
+        }
+        // Devolver el resultado como JSON
+        header('Content-Type: application/json');
+        echo json_encode($respuesta);
+    }
     public function getAllPlantsGoodWe() {
         $respuesta = new Respuesta;
         try{
@@ -174,9 +202,11 @@ class ApiControladorService {
     }
     
     
-    public function getSiteDetail($id) {
+    public function getSiteDetail($id, $proveedor) {
         $respuesta = new Respuesta;
-        try{
+        try {
+            global $proveedores; // Acceder al array global dentro de la función
+    
             // Obtener datos de GoodWe
             $goodWeResponse = $this->goodWeController->getPlantDetails($id);
             $goodWeData = json_decode($goodWeResponse, true);
@@ -184,27 +214,43 @@ class ApiControladorService {
             // Obtener datos de SolarEdge
             $solarEdgeResponse = $this->solarEdgeController->getSiteDetails($id);
             $solarEdgeData = json_decode($solarEdgeResponse, true);
-
-            $plants = $this->unifyPlantData($goodWeData,$solarEdgeData);
-            
-            if($plants != null){
-            $respuesta->success($plants);
-            }else{
-                $this->logsController->registrarLog(Logs::INFO, "No se han encontrado plantas");
-                $respuesta->_400($plants);
-                $respuesta->message = "No se han encontrado plantas";
+    
+            // Validar proveedor y asignar datos correspondientes
+            if ($proveedor === $proveedores['GoodWe']) {
+                $plants = $goodWeData;
+            } elseif ($proveedor === $proveedores['SolarEdge']) {
+                $plants = $solarEdgeData;
+            } else {
+                // Proveedor inválido
+                $this->logsController->registrarLog(Logs::ERROR, "Proveedor no válido: $proveedor");
+                $respuesta->_400();
+                $respuesta->message = "Proveedor no válido.";
+                http_response_code(400);
+                echo json_encode($respuesta);
+                return;
+            }
+    
+            // Validar que los datos no sean null o vacíos
+            if (!empty($plants) && $plants !== null) {
+                $respuesta->success(json_decode($plants));
+            } else {
+                $this->logsController->registrarLog(Logs::INFO, "No se han encontrado plantas para el proveedor $proveedor con ID $id");
+                $respuesta->_400();
+                $respuesta->message = "No se han encontrado plantas.";
                 http_response_code(400);
             }
-        }catch(Throwable $e){
-            $this->logsController->registrarLog(Logs::ERROR, "Error en el servidor de la api");
+        } catch (Throwable $e) {
+            $this->logsController->registrarLog(Logs::ERROR, "Error en el servidor de la API: " . $e->getMessage());
             $respuesta->_500();
-            $respuesta->message = $e->getMessage();;
+            $respuesta->message = "Error interno del servidor: " . $e->getMessage();
             http_response_code(500);
         }
+    
         // Devolver el resultado como JSON
         header('Content-Type: application/json');
-        echo json_encode($respuesta, true);
+        echo json_encode($respuesta);
     }
+    
     public function getSiteDetailCliente($usuarioId, $idPlanta, $proveedor) {
         $respuesta = new Respuesta;
         try{
@@ -228,7 +274,12 @@ class ApiControladorService {
                     $solarEdgeData = "";
                 }
 
-                $plants = $this->unifyPlantData($goodWeData,$solarEdgeData);
+                if($proveedor == $proveedores['GoodWe']){
+                    $plants = $goodWeData;
+                }else if($proveedor == $proveedores['SolarEdge']){
+                    $plants = $solarEdgeData;
+                }
+
             
                 if($plants != null){
                     $this->logsController->registrarLog(Logs::INFO, "Se han solicitado las plantas del cliente");
@@ -418,181 +469,7 @@ class ApiControladorService {
     
         return $plants;
     }
-    
-    
 
-    //Aquí va la lógica de las apis conversiones etc.. (Datos precisos de la planta)
-    function unifyPlantData($goodWeData, $solarEdgeData): array {
-        // Decodifica los datos JSON como arrays
-        $solarEdgeData = json_decode($solarEdgeData, true);
-        $goodWeData = json_decode($goodWeData, true);
-    
-        // Comprobamos que la llamada realizada es a solarEdge
-        if (isset($solarEdgeData['details'])) {
-        $data = $solarEdgeData['details'];
-        $addressParts = [
-            $data['location']['address'] ?? '',
-            $data['location']['city'] ?? '',
-            $data['location']['country'] ?? ''
-        ];
-        $address = implode(', ', array_filter($addressParts));
-
-        $status = $this->mapSolarEdgeStatus($data['status']);
-    
-        // Construcción del array planta
-        $planta = [
-            'organization' => 'SolarEdge',
-            'id' => $data['id'] ?? '',
-            'name' => $data['name'] ?? '',
-            'accountId' => $data['accountId'] ?? '',
-            'status' => $status ?? '',
-            'peakPower' => $data['peakPower'] ?? '',
-            'lastUpdateTime' => $data['lastUpdateTime'] ?? '',
-            'installationDate' => $data['installationDate'] ?? '',
-            'ptoDate' => $data['ptoDate'] ?? '',
-            'notes' => $data['notes'] ?? '',
-            'type' => $data['type'] ?? '',
-            'location' => $address,
-            'batteryCapacity' => null,//SolarEdge no tiene este dato
-            'orgCode' => null,//SolarEdge no tiene este dato
-            "kpi" => [
-                'monthGeneration' => null,//SolarEdge no tiene este dato
-                'pac' => null,//SolarEdge no tiene este dato
-                'power' => null,//SolarEdge no tiene este dato
-                'totalPower' => null,//SolarEdge no tiene este dato
-                'dayIncome' => null,//SolarEdge no tiene este dato
-                'yieldRate' => null,//SolarEdge no tiene este dato
-                'currency' => null,//SolarEdge no tiene este dato
-            ],
-            'alertQuantity' => $data['alertQuantity'] ?? '',
-            'highestImpact' => $data['highestImpact'] ?? '',
-            "primaryModule" => [
-                "manufacturerName" => $data['primaryModule']['manufacturerName'] ?? '',
-                "modelName" => $data['primaryModule']['modelName'] ?? '',
-                "maximumPower" => $data['primaryModule']['maximumPower'] ?? '',
-                "temperatureCoef" => $data['primaryModule']['temperatureCoef'] ?? ''
-            ],
-            "isEvcharge" => null,//SolarEdge no tiene este dato
-            "isTigo" => null,//SolarEdge no tiene este dato
-            "isPowerflow" => null,//SolarEdge no tiene este dato
-            "isSec" => null,//SolarEdge no tiene este dato
-            "isGenset" => null,//SolarEdge no tiene este dato
-            "isMicroInverter" => null,//SolarEdge no tiene este dato
-            "hasLayout" => null,//SolarEdge no tiene este dato
-            "layout_id" => null,//SolarEdge no tiene este dato
-            "isMeter" => null,//SolarEdge no tiene este dato
-            "isEnvironmental" => null,//SolarEdge no tiene este dato
-            "powercontrol_status" => null,//SolarEdge no tiene este dato
-            "chartsTypesByPlant" => null //SolarEdge no tiene este dato
-        ];
-        // Estructura final
-        $array = [
-            $planta
-        ];
-        return $array;
-    //Comprobamos que exista un mensaje ezxitoso en la api de GoodWe
-    }else if (isset($goodWeData['msg']) && $goodWeData['msg'] == 'success') {
-        // Datos de GoodWe
-        $info = $goodWeData['data']['info'];
-        $kpi = $goodWeData['data']['kpi'];
-        $chartsTypesByPlant = $goodWeData['data']['chartsTypesByPlant'];
-        $data = $goodWeData['data'];
-
-        $status = $this->mapGoodWeStatus($info['status']);
-    
-        // Construcción del array planta
-        $planta = [
-            'organization' => 'GoodWe',
-            'id' => $info['powerstation_id'] ?? '',
-            'name' => $info['stationname'] ?? '',
-            'accountId' => null, // La API de GoodWe no tiene
-            'status' => $status ?? '',
-            'peakPower' => $info['capacity'] ?? '',
-            'lastUpdateTime' => $info['local_date'] ?? '',
-            'installationDate' => $info['create_time'] ?? '',
-            'ptoDate' => null, // La API de GoodWe no tiene
-            'notes' => null, // La API de GoodWe no tiene
-            'type' => $info['powerstation_type'] ?? '',
-            'location' => $info['address'] ?? '',
-            'batteryCapacity' => $info['battery_capacity'] ?? '',
-            'orgCode' => $info['org_code'] ?? '',
-            "kpi" => [
-                'monthGeneration' => $kpi['month_generation'] ?? '',
-                'pac' => $kpi['pac'] ?? '',
-                'power' => $kpi['power'] ?? '',
-                'totalPower' => $kpi['total_power'] ?? '',
-                'dayIncome' => $kpi['day_income'] ?? '',
-                'yieldRate' => $kpi['yield_rate'] ?? '',
-                'currency' => $kpi['currency'] ?? '',
-            ],
-            'alertQuantity' => null, // La API de GoodWe no tiene
-            'highestImpact' => null, // La API de GoodWe no tiene
-            "primaryModule" => [
-                "manufacturerName" => null, // La API de GoodWe no tiene
-                "modelName" => null, // La API de GoodWe no tiene
-                "maximumPower" => null, // La API de GoodWe no tiene
-                "temperatureCoef" => null // La API de GoodWe no tiene
-            ],
-            "isEvcharge" => $data['isEvcharge'] ?? false,
-            "isTigo" => $data['isTigo'] ?? false,
-            "isPowerflow" => $data['isPowerflow'] ?? false,
-            "isSec" => $data['isSec'] ?? false,
-            "isGenset" => $data['isGenset'] ?? false,
-            "isMicroInverter" => $data['isMicroInverter'] ?? false,
-            "hasLayout" => $data['hasLayout'] ?? false,
-            "layout_id" => $data['layout_id'] ?? '',
-            "isMeter" => $data['isMeter'] ?? false,
-            "isEnvironmental" => $data['isEnvironmental'] ?? false,
-            "powercontrol_status" => $data['powercontrol_status'] ?? 0,
-        ];
-    
-        // Construir la sección "chartsTypesByPlant" usando foreach para cada nivel de datos
-        $chartsArray = [];
-        foreach ($chartsTypesByPlant as $chart) {
-            $chartData = [
-                "date" => $chart['date'] ?? '',
-                "typeName" => $chart['typeName'] ?? '',
-                "chartIndices" => []
-            ];
-    
-            foreach ($chart['chartIndices'] as $index) {
-                $indexData = [
-                    "indexName" => $index['indexName'] ?? '',
-                    "indexLabel" => $index['indexLabel'] ?? '',
-                    "chartIndexId" => $index['chartIndexId'] ?? '',
-                    "dateRange" => []
-                ];
-    
-                foreach ($index['dateRange'] as $range) {
-                    $indexData['dateRange'][] = [
-                        "text" => $range['text'] ?? '',
-                        "value" => $range['value'] ?? '',
-                        "type" => $range['type'] ?? '',
-                        "now" => $range['now'] ?? '',
-                        "dateFormater" => $range['dateFormater'] ?? null
-                    ];
-                }
-    
-                $chartData['chartIndices'][] = $indexData;
-            }
-    
-            $chartsArray[] = $chartData;
-        }
-    
-        $planta['chartsTypesByPlant'] = $chartsArray;
-    
-        // Estructura final
-        $array = [
-            $planta
-        ];
-    
-        return $array;
-    }else{
-        // Estructura final
-        $array = [];
-    }
-        return $array;
-    }
   // Función para mapear el estado de GoodWe a una descripción legible
 private function mapGoodWeStatus($statusCode) {
     switch ($statusCode) {
@@ -620,4 +497,145 @@ private function mapSolarEdgeStatus($status) {
             return 'unknown';
     }
 }  
+public function getChartByPlantCuerpo(){
+    // Obtén los datos JSON del cuerpo de la solicitud POST
+    $json = file_get_contents('php://input');
+
+    // Decodifica el JSON en un array o un objeto PHP
+    $data = json_decode($json, true); // El segundo parámetro true convierte el JSON a un array asociativo
+
+    // Verifica si los datos fueron decodificados correctamente
+    if ($data === null) {
+        return null;
+    } 
+
+    // Verifica si las claves existen en el array
+    $id = isset($data['id']) ? $data['id'] : null;
+    $date = isset($data['date']) ? $data['date'] : null;
+    $range = isset($data['range']) ? $data['range'] : null;
+    $chartIndexId = isset($data['chartIndexId']) ? $data['chartIndexId'] : null;
+
+    // Si alguna de las claves no existe, retorna null
+    if ($id === null || $date === null || $range === null || $chartIndexId === null) {
+        return null;
+    }
+
+    switch ($chartIndexId) {
+        case "generacion de energia y ingresos":
+            switch ($range) {
+                case "dia":
+                    // Código para el rango "dia"
+                    $chartIndexId = "3";
+                    $range = 2;
+                    break;
+                case "mes":
+                    // Código para el rango "mes"
+                    $chartIndexId = "3";
+                    $range = "3";
+                    break;
+                case "año":
+                    // Código para el rango "año"
+                    $chartIndexId = "3";
+                    $range = "4";
+                    break;
+                default:
+                    // Código para el caso por defecto
+                    $chartIndexId = "3";
+                    $range = 2;
+                    break;
+            }
+            break;
+    
+        case "proporcion para uso personal":
+            switch ($range) {
+                case "dia":
+                    // Código para el rango "dia"
+                    $chartIndexId = "5";
+                    $range = 2;
+                    break;
+                case "mes":
+                    // Código para el rango "mes"
+                    $chartIndexId = "5";
+                    $range = "3";
+                    break;
+                case "año":
+                    // Código para el rango "año"
+                    $chartIndexId = "5";
+                    $range = "4";
+                    break;
+                default:
+                    // Código para el caso por defecto
+                    $chartIndexId = "5";
+                    $range = 2;
+                    break;
+            }
+            break;
+    
+        case "indice de contribucion":
+            switch ($range) {
+                case "dia":
+                    // Código para el rango "dia"
+                    $range = 2;
+                    $chartIndexId = "8";
+                    break;
+                case "mes":
+                    // Código para el rango "mes"
+                    $range = "3";
+                    $chartIndexId = "8";
+                    break;
+                case "año":
+                    // Código para el rango "año"
+                    $range = "4";
+                    $chartIndexId = "8";
+                    break;
+                default:
+                    // Código para el caso por defecto
+                    $chartIndexId = "8";
+                    $range = 2;
+                    break;
+            }
+            break;
+
+        case "estadisticas sobre energia":
+            switch ($range) {
+                case "dia":
+                    // Código para el rango "dia"
+                    $range = 2;
+                    $chartIndexId = "7";
+                    break;
+                case "mes":
+                    // Código para el rango "mes"
+                    $range = "3";
+                    $chartIndexId = "7";
+                    break;
+                case "año":
+                    // Código para el rango "año"
+                    $range = "4";
+                    $chartIndexId = "7";
+                    break;
+                default:
+                    // Código para el caso por defecto
+                    $chartIndexId = "7";
+                    $range = 2;
+                    break;
+                }
+                break;
+    
+        default:
+            // Código para el caso por defecto si $chartIndexId no coincide con ninguno de los anteriores
+            $chartIndexId = "3";
+            $range = 2;
+            break;
+    }
+
+    // Si todo está presente, puedes proceder con el uso de las variables
+    return [
+        'id' => $id,
+        'date' => $date,
+        'range' => $range,
+        'chartIndexId' => $chartIndexId,
+        'isDetailFull' => "",
+    ];
+}
+
 }

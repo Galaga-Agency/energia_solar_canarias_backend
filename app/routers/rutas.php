@@ -105,29 +105,22 @@ switch ($method) {
                 }
                 break;
             // Nuevo caso para obtener los detalles de una planta por ID
-            case (preg_match('/^plants\/details\/([\w-]+)$/', $request, $matches) ? true : false):
+            case (preg_match('/^plants\/details\/([\w-]+)$/', $request, $matches) && isset($_GET['proveedor']) ? true : false):
                 $powerStationId = $matches[1];
-                
+                $proveedor = $_GET['proveedor'];
                 // Verificamos que el usuario esté autenticado y sea administrador
                 if ($authMiddleware->verificarTokenUsuarioActivo()) {
                     if ($authMiddleware->verificarAdmin()) {
                         // Instanciar el controlador de plantas y obtener detalles
                         $solarEdgeController = new ApiControladorService();
-                        $solarEdgeController->getSiteDetail($powerStationId);
+                        $solarEdgeController->getSiteDetail($powerStationId, $proveedor);
 
                     } else {
-                         // El usuario nos tiene que mandar obligatoriamente el proveedor para que verifiquemos si tiene acceso a ese id
-                         if(isset($_GET['proveedor'])){
-                            $idUsuario = $authMiddleware->obtenerIdUsuarioActivo();
-                            $proveedor = $_GET['proveedor'];
-                            $solarEdgeController = new ApiControladorService();
-                            $solarEdgeController->getSiteDetailCliente($idUsuario,$powerStationId,$proveedor);
-                        }else{
-                            $respuesta->_403();
-                            $respuesta->message = 'Tienes que enviar el proveedor si eres cliente';
-                            http_response_code($respuesta->code);
-                            echo json_encode($respuesta);
-                        }
+                        // El usuario nos tiene que mandar obligatoriamente el proveedor para que verifiquemos si tiene acceso a ese id
+                        $idUsuario = $authMiddleware->obtenerIdUsuarioActivo();
+                        $proveedor = $_GET['proveedor'];
+                        $solarEdgeController = new ApiControladorService();
+                        $solarEdgeController->getSiteDetailCliente($idUsuario,$powerStationId,$proveedor);
                     }
                 }
                 break;
@@ -313,10 +306,39 @@ switch ($method) {
                     }
                 }
                 break;
+            // Nuevo caso para obtener las graficas de la planta
+            case (preg_match('/^plants\/graficas$/', $request, $matches) && isset($_GET['proveedor'])):
+                // Verificamos que el usuario esté autenticado y sea administrador
+                if ($authMiddleware->verificarTokenUsuarioActivo()) {
+                    if ($authMiddleware->verificarAdmin()) {
+                        // Instanciar el controlador de plantas y obtener detalles
+                        $apiController = new ApiControladorService();
+                        $proveedor = $_GET['proveedor'];
+                            switch($proveedor){
+                                case $proveedores['GoodWe']:
+                                    $apiController->getGraficasGoodWe();
+                                    break;
+                                case $proveedores['SolarEdge']:
+                                    break;  
+                                default:
+                                    $respuesta->_400();
+                                    $respuesta->message = 'Proveedor no encontrado';
+                                    http_response_code($respuesta->code);
+                                    echo json_encode($respuesta);
+                                    break;
+                            }
+
+                    } else {
+                         // El usuario nos tiene que mandar obligatoriamente el proveedor para que verifiquemos si tiene acceso a ese id
+                         $apiController = new ApiControladorService();
+                         $apiController->getGraficasGoodWe();
+                    }
+                }
+                break;
 
             default:
                 $respuesta->_400();
-                $respuesta->message = 'El End Point no existe en la API';
+                $respuesta->message = 'El End Point no existe en la API ' . $request;
                 http_response_code($respuesta->code);
                 echo json_encode($respuesta);
                 break;
