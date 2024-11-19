@@ -319,6 +319,7 @@ switch ($method) {
                                     $apiController->getGraficasGoodWe();
                                     break;
                                 case $proveedores['SolarEdge']:
+                                    $apiController->getGraficasSolarEdge();
                                     break;  
                                 default:
                                     $respuesta->_400();

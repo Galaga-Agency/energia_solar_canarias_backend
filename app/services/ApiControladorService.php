@@ -46,6 +46,45 @@ class ApiControladorService {
         header('Content-Type: application/json');
         echo json_encode($respuesta);
     }
+    public function getGraficasSolarEdge() {
+        $respuesta = new Respuesta;
+        try{
+
+            // Obtener datos de SolarEdge
+            $data = $this->getEnergyDashBoardCuerpo();
+            if($data != null){
+                $solarEdgeResponse = $this->solarEdgeController->getPowerDashboard($data['siteId'],$data['timeUnit'],$data['endTime'],$data['startTime']);
+            }else{
+                $this->logsController->registrarLog(Logs::INFO, "No se a realizado correctamente la peticion a la api faltan parametros o son de distinto nombre");
+                $respuesta->_400();
+                $respuesta->message = "No se a realizado correctamente la peticion a la api faltan parametros o son de distinto nombre";
+                http_response_code(400);
+                echo json_encode($respuesta);
+                return;
+            }
+            $solarEdgeData = json_decode($solarEdgeResponse);
+            
+            
+            if($solarEdgeData != null){
+                $this->logsController->registrarLog(Logs::INFO, "se han encontrado las gráficas de SolarEdge");
+                $respuesta->success($solarEdgeData);
+            }else{
+                $this->logsController->registrarLog(Logs::INFO, "no se han encontrado las gráficas de SolarEdge");
+                $respuesta->_400($solarEdgeData);
+                $respuesta->message = "No se han encontrado graficas de SolarEdge";
+                http_response_code(400);
+            }
+        }catch(Throwable $e){
+            $this->logsController->registrarLog(Logs::ERROR, "Error del proveedor de SolarEdge: "+$e->getMessage());
+            $respuesta->_500();
+            $respuesta->message = "Error en el servidor de algun proveedor";
+            http_response_code(500);
+        }
+        // Devolver el resultado como JSON
+        header('Content-Type: application/json');
+        echo json_encode($respuesta);
+    }
+    
     public function getGraficasGoodWe() {
         $respuesta = new Respuesta;
         try{
@@ -65,7 +104,7 @@ class ApiControladorService {
                 http_response_code(400);
             }
         }catch(Throwable $e){
-            $this->logsController->registrarLog(Logs::ERROR, "Error en el servidor de GoodWe");
+            $this->logsController->registrarLog(Logs::ERROR, $e->getMessage() . "Error en el servidor de GoodWe");
             $respuesta->_500();
             $respuesta->message = "Error en el servidor de algun proveedor";
             http_response_code(500);
@@ -93,7 +132,7 @@ class ApiControladorService {
                 http_response_code(400);
             }
         }catch(Throwable $e){
-            $this->logsController->registrarLog(Logs::ERROR, "Error en el servidor de GoodWe");
+            $this->logsController->registrarLog(Logs::ERROR, $e->getMessage() . "Error en el servidor de GoodWe");
             $respuesta->_500();
             $respuesta->message = "Error en el servidor de algun proveedor";
             http_response_code(500);
@@ -121,7 +160,7 @@ class ApiControladorService {
                 http_response_code(400);
             }
         }catch(Throwable $e){
-            $this->logsController->registrarLog(Logs::ERROR, "Error en el servidor de SolarEdge");
+            $this->logsController->registrarLog(Logs::ERROR, $e->getMessage() . "Error en el servidor de SolarEdge");
             $respuesta->_500();
             $respuesta->message = "Error en el servidor de algun proveedor";
             http_response_code(500);
@@ -137,6 +176,7 @@ class ApiControladorService {
             $plantasAsociadas = $plantasAsociadasDB->getPlantasAsociadasAlUsuario($idUsuario);
     
             if ($plantasAsociadas == false) {
+                $this->logsController->registrarLog(Logs::INFO, "No se encuentran plantas del cliente");
                 $respuesta->_404();
                 $respuesta->message = 'No se han encontrado plantas para este usuario';
                 http_response_code(404);
@@ -176,8 +216,10 @@ class ApiControladorService {
     
             $processedPlants = $this->processPlantsCliente($goodWeArray, $solarEdgeArray);
             $respuesta->success($processedPlants);
+            $this->logsController->registrarLog(Logs::INFO, "El usuario accede a sus plantas");
     
         } catch (Throwable $e) {
+            $this->logsController->registrarLog(Logs::ERROR, $e->getMessage() . "Error cogiendo las plantas del usuario");
             $respuesta->_500();
             $respuesta->message = "Error en el servidor de algún proveedor";
             http_response_code(500);
@@ -496,7 +538,8 @@ private function mapSolarEdgeStatus($status) {
         default:
             return 'unknown';
     }
-}  
+} 
+//acceso graficas de GoodWe 
 public function getChartByPlantCuerpo(){
     // Obtén los datos JSON del cuerpo de la solicitud POST
     $json = file_get_contents('php://input');
@@ -637,5 +680,34 @@ public function getChartByPlantCuerpo(){
         'isDetailFull' => "",
     ];
 }
+//acceso graficas custom de SolarEdge
+public function getEnergyDashBoardCuerpo(){
+    // Obtén los datos JSON del cuerpo de la solicitud POST
+    $json = file_get_contents('php://input');
 
+    // Decodifica el JSON en un array o un objeto PHP
+    $data = json_decode($json, true); // El segundo parámetro true convierte el JSON a un array asociativo
+
+    // Verifica si los datos fueron decodificados correctamente
+    if ($data === null) {
+        return null;
+    }
+
+    // Verifica si las claves existen en el array
+    $timeUnit = isset($data['dia']) ? $data['dia'] : null;
+    $fieldId = isset($data['id']) ? $data['id'] : null;
+    $startTime = isset($data['fechaInicio']) ? $data['fechaInicio'] : null;
+    $endTime = isset($data['fechaFin']) ? $data['fechaFin'] : null;
+    // Si alguna de las claves no existe, retorna null
+    if ($fieldId === null ||$timeUnit === null) {
+        return null;
+    }
+    // Si todo está presente, puedes proceder con el uso de las variables
+    return [
+        'timeUnit' => $timeUnit,
+        'siteId' => $fieldId,
+        'endTime' => isset($endTime) ? $endTime : null,
+        'startTime' => isset($startTime) ? $startTime : null
+    ];
+}
 }

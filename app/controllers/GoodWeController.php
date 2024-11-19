@@ -17,12 +17,25 @@ class GoodWeController {
      * @return string
      */
     public function getPlantDetails($powerStationId) {
-        $this->logsController->registrarLog(Logs::INFO, " accede a la api de GoodWe");
+        // Registrar el acceso en los logs
+        $this->logsController->registrarLog(Logs::INFO, "Accede a la API de GoodWe");
+    
         // Llama al servicio para obtener los detalles de la planta
         $result = $this->goodWeService->GetPlantDetailByPowerstationId($powerStationId);
-        // Configura el tipo de contenido de la respuesta como JSON
+    
+        // Asegurar que $result sea un arreglo o JSON válido
+        $decodedResult = json_decode($result, true);
+    
+        // Verificar si existe el nodo "info" con el campo "status"
+        if (isset($decodedResult['data']['info']['status'])) {
+            $decodedResult['data']['info']['status'] = $this->mapGoodWeStatus($decodedResult['data']['info']['status']);
+        }
+    
+        // Configurar el tipo de contenido de la respuesta como JSON
         header('Content-Type: application/json');
-        return json_encode($result);
+        $decodedResult = json_encode($decodedResult);
+        // Retornar el objeto modificado como JSON
+        return json_encode($decodedResult);
     }
     
     /**
@@ -53,4 +66,19 @@ class GoodWeController {
         header('Content-Type: application/json');
         return json_encode($result);
     }
+    // Función para mapear el estado de GoodWe a una descripción legible
+private function mapGoodWeStatus($statusCode) {
+    switch ($statusCode) {
+        case 2:
+            return 'error';
+        case 1:
+            return 'disconnected';
+        case 0:
+            return 'waiting';
+        case -1:
+            return 'working';
+        default:
+            return 'unknown';
+    }
+}
 }
