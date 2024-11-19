@@ -113,7 +113,7 @@ class ApiControladorService {
         header('Content-Type: application/json');
         echo json_encode($respuesta);
     }
-    public function getAllPlantsGoodWe() {
+    public function getAllPlantsGoodWe($page = 1, $pageSize=200) {
         $respuesta = new Respuesta;
         try{
             // Obtener datos de GoodWe

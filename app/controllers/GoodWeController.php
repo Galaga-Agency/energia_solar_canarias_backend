@@ -30,6 +30,9 @@ class GoodWeController {
         if (isset($decodedResult['data']['info']['status'])) {
             $decodedResult['data']['info']['status'] = $this->mapGoodWeStatus($decodedResult['data']['info']['status']);
         }
+
+        // Añadir el campo "organizacion" al resultado
+        $decodedResult['data']['organizacion'] = "goodwe";
     
         // Configurar el tipo de contenido de la respuesta como JSON
         header('Content-Type: application/json');
