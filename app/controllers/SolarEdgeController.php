@@ -31,6 +31,9 @@ class SolarEdgeController {
             $decodedResult['details']['status'] = $this->mapSolarEdgeStatus($decodedResult['details']['status']);
         }
 
+        // Añadir un nuevo campo "organizacion" al resultado
+        $decodedResult['details']['organizacion'] = "solaredge";
+
         // Configurar el tipo de contenido de la respuesta como JSON
         header('Content-Type: application/json');
         $decodedResult = json_encode($decodedResult);

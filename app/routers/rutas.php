@@ -175,6 +175,7 @@ switch ($method) {
                     switch($proveedor){
                         case $proveedores['GoodWe']:
                             if($admin){
+                                
                                 $apiControladorService->getAllPlantsGoodWe();
                             }else{
                                 $respuesta->_403();
