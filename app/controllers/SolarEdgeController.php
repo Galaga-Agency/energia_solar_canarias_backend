@@ -15,10 +15,41 @@ class SolarEdgeController {
         $this->logsController = new LogsController();
     }
 
-    //Método para obtener los detalles de una planta con id $siteId
+    // Método para obtener los detalles de una planta con id $siteId
     public function getSiteDetails($siteId) {
-        $this->logsController->registrarLog(Logs::INFO, " accede a la api de solarEdge 1 planta");
-        $data = $this->solarEdgeService->getSiteDetails($siteId);
+        // Registrar en logs el acceso a la API
+        $this->logsController->registrarLog(Logs::INFO, "Accede a la API de SolarEdge para obtener los detalles de una planta");
+
+        // Obtener los datos de la planta desde el servicio de SolarEdge
+        $result = $this->solarEdgeService->getSiteDetails($siteId);
+
+        // Decodificar el JSON recibido en un array asociativo
+        $decodedResult = json_decode($result, true);
+
+        // Mapear el estado de "status" si existe en "details"
+        if (isset($decodedResult['details']['status'])) {
+            $decodedResult['details']['status'] = $this->mapSolarEdgeStatus($decodedResult['details']['status']);
+        }
+
+        // Configurar el tipo de contenido de la respuesta como JSON
+        header('Content-Type: application/json');
+        $decodedResult = json_encode($decodedResult);
+
+        // Retornar el JSON modificado
+        return json_encode($decodedResult);
+    }
+
+    //Método para obtener la grafica
+    public function getPowerDashboardCustom($chartField, $foldUp, $timeUnit, $siteId, $billingCycle, $period, $periodDuration, $startTime, $endTime) {
+        $this->logsController->registrarLog(Logs::INFO, " accede a la api de solarEdge graficas personalizadas");
+        $data = $this->solarEdgeService->getPowerDashboardCustom($chartField, $foldUp, $timeUnit,$siteId, $billingCycle, $period, $periodDuration, $startTime, $endTime);
+        header('Content-Type: application/json');
+        return json_encode($data);
+    }
+    //Método para obtener la grafica
+    public function getPowerDashboard($siteId, $dia, $fechaFin,$fechaInicio) {
+        $this->logsController->registrarLog(Logs::INFO, " accede a la api de solarEdge graficas");
+        $data = $this->solarEdgeService->getPowerDashboard($siteId,$dia,$fechaFin,$fechaInicio);
         header('Content-Type: application/json');
         return json_encode($data);
     }
@@ -141,5 +172,16 @@ class SolarEdgeController {
         header('Content-Type: application/json');
         return json_encode($data);
     }
+    // Función para mapear el estado de SolarEdge a una descripción legible
+private function mapSolarEdgeStatus($status) {
+    switch ($status) {
+        case 'PendingCommunication':
+            return 'waiting';
+        case 'Active':
+            return 'working';
+        default:
+            return 'unknown';
+    }
+} 
 }
 ?>

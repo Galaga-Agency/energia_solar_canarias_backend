@@ -11,38 +11,60 @@ class SolarEdgeService {
         $this->httpClient = new HttpClient();
     }
 
-    public function getPoweDashboard($siteId, $dia, $fechaHoy = null, $fechaFin = null, $periodDuration = null, $billingCycle = null) {
-        if($fechaFin == null){
-        // Obtener la fecha de hoy a las 23:59:59
-        $fechaFin = new DateTime('today 23:59:59');
-        }
-
-        // Convertirla a timestamp en milisegundos
-        $timestampMs = $fechaFin->getTimestamp() * 1000;
-        switch($dia){
+    public function getPowerDashboard($siteId, $dia, $fechaFin = null, $fechaInicio = null) {
+        // Formato de fecha
+        $formato = 'Y-m-d';
+    
+        // Convertir fechas a DateTime si no son nulas
+        $fechaSinFormatearFin = $fechaFin ? new DateTime($fechaFin) : new DateTime('today 23:59:59');
+        $fechaSinFormatearInicio = $fechaInicio ? new DateTime($fechaInicio) : null;
+    
+        // Ajustar fechas según el valor de $dia
+        switch ($dia) {
             case "DAY":
-                $url = $this->solarEdge->getUrl() . "solaredge-apigw/api/site/$siteId/powerDashboardChart?chartField=$dia&foldUp=true&activeTab=0&fieldId=$siteId&endDate=$timestampMs&perserveTabsData=true;";
+                // Si no hay fecha de inicio, tomar ayer a las 23:59:59
+                $fechaSinFormatearInicio = $fechaSinFormatearInicio ?? new DateTime('yesterday 23:59:59');
                 break;
+    
             case "WEEK":
-                $url = $this->solarEdge->getUrl() . "solaredge-apigw/api/site/$siteId/powerDashboardChart?chartField=$dia&foldUp=true&activeTab=1&fieldId=$siteId&endDate=$timestampMs&perserveTabsData=true;";
+                // Si no hay fecha de inicio, tomar el inicio de la semana actual
+                $fechaSinFormatearInicio = $fechaSinFormatearInicio ?? new DateTime('monday this week 00:00:00');
                 break;
+    
             case "MONTH":
-                $url = $this->solarEdge->getUrl() . "solaredge-apigw/api/site/$siteId/powerDashboardChart?chartField=$dia&foldUp=true&activeTab=2&fieldId=$siteId&endDate=$timestampMs&perserveTabsData=true;";
+                // Si no hay fecha de inicio, tomar el inicio del mes actual
+                $fechaSinFormatearInicio = $fechaSinFormatearInicio ?? new DateTime('first day of this month 00:00:00');
                 break;
+    
             case "YEAR":
-                $url = $this->solarEdge->getUrl() . "solaredge-apigw/api/site/$siteId/powerDashboardChart?chartField=$dia&foldUp=true&activeTab=4&fieldId=$siteId&endDate=$timestampMs&perserveTabsData=true;";
+                // Si no hay fecha de inicio, tomar el inicio del año actual
+                $fechaSinFormatearInicio = $fechaSinFormatearInicio ?? new DateTime('first day of January 00:00:00');
                 break;
-            case "CUSTOM":
-                if($fechaFin != null && $fechaHoy != null && $periodDuration != null && $billingCycle != null){
-                $url = $this->solarEdge->getUrl() . "solaredge-apigw/api/site/$siteId/customEnergyDashboardChart?chartField=$dia&foldUp=true&timeUnit=MONTH&siteId=$siteId&billingCycle=$billingCycle&periodDuration=$periodDuration&startTime=$fechaHoy&endTime=$fechaFin";
-                }else{
-                    return "error en los datos obligatorios no pueden ser nulos";
-                }
-                break;
+    
             default:
-                return "error ";
-                break;
-            }
+                return "Error: día incorrecto";
+        }
+    
+        // Formatear las fechas
+        $fechaInicioFormateada = $fechaSinFormatearInicio->format($formato);
+        $fechaFinFormateada = $fechaSinFormatearFin->format($formato);
+    
+        // Construir la URL utilizando el formato definido
+        $url = $this->solarEdge->getUrl() . "site/$siteId/energy?timeUnit=$dia&startDate=$fechaInicioFormateada&endDate=$fechaFinFormateada&api_key=" . $this->solarEdge->getApiKey();
+    
+        // Realizar la solicitud
+        try {
+            $response = $this->httpClient->get($url);
+            return json_decode($response);
+        } catch (Exception $e) {
+            return ['error' => $e->getMessage()];
+        }
+    }
+    
+    public function getPowerDashboardCustom($chartField, $foldUp, $timeUnit, $siteId, $billingCycle, $period, $periodDuration, $startTime, $endTime) {
+        
+        $url = $this->solarEdge->getUrl() . "solaredge-apigw/api/site/1851069/customEnergyDashboardChart?chartField=$chartField&foldUp=$foldUp&timeUnit=$timeUnit&siteId=$siteId&billingCycle=$billingCycle&period=$period&periodDuration=$periodDuration&startTime=$startTime&endTime=$endTime";
+
         try {
             $response = $this->httpClient->get($url);
             return $response;
@@ -50,6 +72,7 @@ class SolarEdgeService {
             return ['error' => $e->getMessage()];
         }
     }
+
 
     public function getSiteDetails($siteId) {
         $url = $this->solarEdge->getUrl() . "site/$siteId/details?api_key=" . $this->solarEdge->getApiKey();
