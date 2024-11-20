@@ -47,10 +47,10 @@ class GoodWeController {
      * @param string $powerStationId ID de la planta de energía
      * @return string
      */
-    public function getAllPlants() {
+    public function getAllPlants($page = 1, $pageSize = 200) {
         $this->logsController->registrarLog(Logs::INFO, " accede a la api de GoodWe");
         // Llama al servicio para obtener los detalles de la planta
-        $result = $this->goodWeService->GetAllPlants();
+        $result = $this->goodWeService->GetAllPlants($page,$pageSize);
         // Configura el tipo de contenido de la respuesta como JSON
         header('Content-Type: application/json');
         return json_encode($result);

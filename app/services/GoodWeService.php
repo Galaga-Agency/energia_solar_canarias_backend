@@ -65,7 +65,7 @@ class GoodWeService {
         }
     }
     
-    public function GetAllPlants() {
+    public function GetAllPlants($page = 1, $pageSize = 200) {
         $url = $this->goodWe->getUrl() . "api/PowerStationMonitor/QueryPowerStationMonitor";
 
         // Token en formato JSON
@@ -88,8 +88,8 @@ class GoodWeService {
             "orderby" => "",
             "powerstation_type" => "",
             "powerstation_status" => "",
-            "page_index" => 1,
-            "page_size" => 100000,
+            "page_index" => $page,
+            "page_size" => $pageSize,
             "adcode" => "",
             "org_id" => "",
             "condition" => ""
