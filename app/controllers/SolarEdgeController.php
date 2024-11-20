@@ -32,7 +32,7 @@ class SolarEdgeController {
         }
 
         // Añadir un nuevo campo "organizacion" al resultado
-        $decodedResult['details']['organizacion'] = "solaredge";
+        $decodedResult['details']['organization'] = "solaredge";
 
         // Configurar el tipo de contenido de la respuesta como JSON
         header('Content-Type: application/json');
