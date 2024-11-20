@@ -32,7 +32,7 @@ class GoodWeController {
         }
 
         // Añadir el campo "organizacion" al resultado
-        $decodedResult['data']['organizacion'] = "goodwe";
+        $decodedResult['data']['organization'] = "goodwe";
     
         // Configurar el tipo de contenido de la respuesta como JSON
         header('Content-Type: application/json');
