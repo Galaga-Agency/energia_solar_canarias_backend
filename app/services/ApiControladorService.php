@@ -114,10 +114,10 @@ class ApiControladorService {
         echo json_encode($respuesta);
     }
     public function getAllPlantsGoodWe($page = 1, $pageSize=200) {
-        $respuesta = new Respuesta;
+        $respuesta = new Paginacion();
         try{
             // Obtener datos de GoodWe
-            $goodWeResponse = $this->goodWeController->getAllPlants();
+            $goodWeResponse = $this->goodWeController->getAllPlants($page,$pageSize);
             $goodWeData = json_decode($goodWeResponse, true);
 
             $plants = $this->processPlants($goodWeData, []);
@@ -125,6 +125,8 @@ class ApiControladorService {
             if($plants != null){
                 $this->logsController->registrarLog(Logs::INFO, "se han encontrado las plantas en GoodWe");
                 $respuesta->success($plants);
+                $respuesta->page = $page;
+                $respuesta->limit = $pageSize;
             }else{
                 $this->logsController->registrarLog(Logs::INFO, "No se han encontrado plantas en GoodWe");
                 $respuesta->_400($plants);
@@ -141,11 +143,11 @@ class ApiControladorService {
         header('Content-Type: application/json');
         echo json_encode($respuesta);
     }
-    public function getAllPlantsSolarEdge() {
-        $respuesta = new Respuesta;
+    public function getAllPlantsSolarEdge($page = 1, $pageSize=200) {
+        $respuesta = new Paginacion();
         try{
             // Obtener datos de SolarEdge
-            $solarEdgeResponse = $this->solarEdgeController->getAllPlants();
+            $solarEdgeResponse = $this->solarEdgeController->getAllPlants($page, $pageSize);
             $solarEdgeData = json_decode($solarEdgeResponse, true);
 
             $plants = $this->processPlants([], $solarEdgeData);
@@ -153,6 +155,8 @@ class ApiControladorService {
             if($plants != null){
                 $this->logsController->registrarLog(Logs::INFO, "se han encontrado las plantas en SolarEdge");
                 $respuesta->success($plants);
+                $respuesta->page = $page;
+                $respuesta->limit = $pageSize;
             }else{
                 $this->logsController->registrarLog(Logs::INFO, "no se han encontrado las plantas en SolarEdge");
                 $respuesta->_400($plants);

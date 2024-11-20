@@ -171,12 +171,13 @@ switch ($method) {
                     $admin = $authMiddleware->verificarAdmin();
                     if(isset($_GET['proveedor'])){
                         $apiControladorService = new ApiControladorService;
+                        $page = isset($_GET['page']) ? $_GET['page'] : 1;
+                        $pageSize = $_GET['pageSize'] ? $_GET['pageSize'] : 200;
                         $proveedor = $_GET['proveedor'];
                     switch($proveedor){
                         case $proveedores['GoodWe']:
                             if($admin){
-                                
-                                $apiControladorService->getAllPlantsGoodWe();
+                                $apiControladorService->getAllPlantsGoodWe($page,$pageSize);
                             }else{
                                 $respuesta->_403();
                                 $respuesta->message = 'No tienes permisos para hacer esta consulta';
@@ -186,7 +187,7 @@ switch ($method) {
                             break;
                         case $proveedores['SolarEdge']:
                             if($admin){
-                                $apiControladorService->getAllPlantsSolarEdge();
+                                $apiControladorService->getAllPlantsSolarEdge($page,$pageSize);
                             }else{
                                 $respuesta->_403();
                                 $respuesta->message = 'No tienes permisos para hacer esta consulta';

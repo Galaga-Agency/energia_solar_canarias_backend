@@ -83,9 +83,10 @@ class SolarEdgeService {
             return ['error' => $e->getMessage()];
         }
     }
+
     //Método que recoje todas las plantas
-    public function getAllPlants() {
-        $url = $this->solarEdge->getUrl() . "sites/list?api_key=" . $this->solarEdge->getApiKey();
+    public function getAllPlants($page = 1, $pageSize=200) {
+        $url = $this->solarEdge->getUrl() . "sites/list?size=$pageSize&startIndex=$page&api_key=" . $this->solarEdge->getApiKey();
         try {
             $response = $this->httpClient->get($url);
             return json_decode($response, true);
