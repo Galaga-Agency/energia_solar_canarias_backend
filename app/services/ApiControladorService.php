@@ -563,7 +563,7 @@ public function getChartByPlantCuerpo(){
     $chartIndexId = isset($data['chartIndexId']) ? $data['chartIndexId'] : null;
 
     // Si alguna de las claves no existe, retorna null
-    if ($id === null || $date === null || $range === null || $chartIndexId === null) {
+    if ($id === null || $date === null || $range === null && $chartIndexId != "potencia" || $chartIndexId === null) {
         return null;
     }
 
@@ -667,12 +667,47 @@ public function getChartByPlantCuerpo(){
                     break;
                 }
                 break;
+            case "potencia":
+                switch ($range) {
+                    case "dia":
+                        // Código para el rango "dia"
+                        $range = null;
+                        $full_script = false;
+                        $chartIndexId = null;
+                        break;
+                    case "mes":
+                            // Código para el rango "mes"
+                        $range = null;
+                        $full_script = false;
+                        $chartIndexId = "7";
+                        break;
+                    case "año":
+                        // Código para el rango "año"
+                        $range = null;
+                        $full_script = false;
+                        $chartIndexId = null;
+                        break;
+                    default:
+                            // Código para el caso por defecto
+                        $chartIndexId = null;
+                        $range = null;
+                        $full_script = false;
+                        break;
+                    }
+                    break;
     
         default:
             // Código para el caso por defecto si $chartIndexId no coincide con ninguno de los anteriores
             $chartIndexId = "3";
             $range = 2;
             break;
+    }
+    if(isset($full_script)){
+        return [
+            'id' => $id,
+            'date' => $date,
+            'full_script' => $full_script
+        ];
     }
 
     // Si todo está presente, puedes proceder con el uso de las variables
