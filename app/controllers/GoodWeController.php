@@ -40,20 +40,6 @@ class GoodWeController {
         // Retornar el objeto modificado como JSON
         return json_encode($decodedResult);
     }
-    /**
-     * Controlador para obtener los detalles de la planta por ID
-     *
-     * @param string $powerStationId ID de la planta de energía
-     * @return string
-     */
-    public function getWeatherStation($powerStationId) {
-        $this->logsController->registrarLog(Logs::INFO, " accede a la api de GoodWe");
-        // Llama al servicio para obtener los detalles de la planta
-        $result = $this->goodWeService->GetWeatherStation($powerStationId);
-        // Configura el tipo de contenido de la respuesta como JSON
-        header('Content-Type: application/json');
-        return json_encode($result);
-    }
     
     /**
      * Controlador para obtener los detalles de la planta por ID

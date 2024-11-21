@@ -15,6 +15,7 @@ require_once "../services/GoodWeService.php";
 require_once "../services/SolarEdgeService.php";
 require_once "../DBObjects/logsDB.php";
 require_once "../enums/Logs.php";
+require_once "../models/OpenMeteo.php";
 
 $respuesta = new Respuesta;
 $authMiddleware = new Autenticacion();
@@ -216,39 +217,6 @@ switch ($method) {
                     }
                 }
                 break;
-            // Nuevo caso para obtener las graficas del clima de la planta
-            case (preg_match('/^plant\/([a-zA-Z0-9\-]+)\/clima$/', $request, $matches) && isset($_GET['proveedor'])):
-                 // Capturar el ID de la planta desde la URL
-                $powerStationId = $matches[1];
-                
-                // Verificamos que el usuario esté autenticado y sea administrador
-                if ($authMiddleware->verificarTokenUsuarioActivo()) {
-                    if ($authMiddleware->verificarAdmin()) {
-                        // Instanciar el controlador de plantas y obtener detalles
-                        $apiController = new ApiControladorService();
-                        $proveedor = $_GET['proveedor'];
-                            switch($proveedor){
-                                case $proveedores['GoodWe']:
-                                    $apiController->getWeatherStation($powerStationId);
-                                    break;
-                                case $proveedores['SolarEdge']:
-                                    $apiController->getGraficasSolarEdge();
-                                    break;  
-                                default:
-                                    $respuesta->_400();
-                                    $respuesta->message = 'Proveedor no encontrado';
-                                    http_response_code($respuesta->code);
-                                    echo json_encode($respuesta);
-                                    break;
-                            }
-
-                    } else {
-                         // El usuario nos tiene que mandar obligatoriamente el proveedor para que verifiquemos si tiene acceso a ese id
-                         $apiController = new ApiControladorService();
-                         $apiController->getGraficasGoodWe();
-                    }
-                }
-                break;
              // Ruta para getSiteEnergy con siteId, startDate y endDate en la URL
              case (preg_match('/^plants\/(\d+)$/', $request, $matches) && isset($_GET['timeUnit']) && isset($_GET['startDate']) && isset($_GET['endDate'])):
                 $siteId = $matches[1];
@@ -324,6 +292,28 @@ switch ($method) {
                     }
                 }
                 break;
+            case ($request === 'clima'):
+                if ($authMiddleware->verificarTokenUsuarioActivo()) {
+                    // Decodificar el cuerpo JSON
+                    $input = json_decode(file_get_contents("php://input"), true);
+                     // Verificar si se proporcionó el campo 'name'
+                    if (empty($input['name'])) {
+                        $respuesta->_404();
+                        $respuesta->message = 'No se a encontrado el campo name en el json';
+                        http_response_code($respuesta->code);
+                        echo json_encode($respuesta);
+                        break;
+                    }
+                    $name = $input['name'];
+                    // Pasarle la ruta
+                    $openMeteo = new OpenMeteo;
+                    $resultado = $openMeteo->obtenerClima($name);
+
+                    //Enviar la respuesta en formato json
+                    echo $resultado;
+
+                }
+                    break;
             case ($request === 'usuarios/relacionar'  && isset($_GET['idplanta']) && isset($_GET['idusuario']) && isset($_GET['proveedor'])):
                 if ($authMiddleware->verificarTokenUsuarioActivo()) {
                     // Verificar si el usuario es administrador
