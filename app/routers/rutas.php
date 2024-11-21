@@ -216,6 +216,39 @@ switch ($method) {
                     }
                 }
                 break;
+            // Nuevo caso para obtener las graficas del clima de la planta
+            case (preg_match('/^plant\/([a-zA-Z0-9\-]+)\/clima$/', $request, $matches) && isset($_GET['proveedor'])):
+                 // Capturar el ID de la planta desde la URL
+                $powerStationId = $matches[1];
+                
+                // Verificamos que el usuario esté autenticado y sea administrador
+                if ($authMiddleware->verificarTokenUsuarioActivo()) {
+                    if ($authMiddleware->verificarAdmin()) {
+                        // Instanciar el controlador de plantas y obtener detalles
+                        $apiController = new ApiControladorService();
+                        $proveedor = $_GET['proveedor'];
+                            switch($proveedor){
+                                case $proveedores['GoodWe']:
+                                    $apiController->getWeatherStation($powerStationId);
+                                    break;
+                                case $proveedores['SolarEdge']:
+                                    $apiController->getGraficasSolarEdge();
+                                    break;  
+                                default:
+                                    $respuesta->_400();
+                                    $respuesta->message = 'Proveedor no encontrado';
+                                    http_response_code($respuesta->code);
+                                    echo json_encode($respuesta);
+                                    break;
+                            }
+
+                    } else {
+                         // El usuario nos tiene que mandar obligatoriamente el proveedor para que verifiquemos si tiene acceso a ese id
+                         $apiController = new ApiControladorService();
+                         $apiController->getGraficasGoodWe();
+                    }
+                }
+                break;
              // Ruta para getSiteEnergy con siteId, startDate y endDate en la URL
              case (preg_match('/^plants\/(\d+)$/', $request, $matches) && isset($_GET['timeUnit']) && isset($_GET['startDate']) && isset($_GET['endDate'])):
                 $siteId = $matches[1];
