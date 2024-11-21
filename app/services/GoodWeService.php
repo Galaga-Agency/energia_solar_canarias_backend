@@ -33,28 +33,30 @@ class GoodWeService {
             $response = $this->httpClient->post($url, $headers, json_encode($powerStationId));
             $decodedResponse = json_decode($response, true);
 
-            // Verificar si la respuesta indica que la autorización ha caducado
-            if (isset($decodedResponse['code']) && $decodedResponse['code'] === 100002) {
-                // Realizar login para obtener nuevos datos de autorización
-                $newTokenData = $this->crossLogin();
+            while($decodedResponse['code'] == 100002){
+                // Verificar si la respuesta indica que la autorización ha caducado
+                if (isset($decodedResponse['code']) && $decodedResponse['code'] === 100002) {
+                    // Realizar login para obtener nuevos datos de autorización
+                    $newTokenData = $this->crossLogin();
 
-                if (isset($newTokenData['uid'])) {
-                    // Actualizar los datos del token
-                    $this->goodWe->setUid($newTokenData['uid']);
-                    $this->goodWe->setTimestamp($newTokenData['timestamp']);
-                    $this->goodWe->setToken($newTokenData['token']);
+                    if (isset($newTokenData['uid'])) {
+                        // Actualizar los datos del token
+                        $this->goodWe->setUid($newTokenData['uid']);
+                        $this->goodWe->setTimestamp($newTokenData['timestamp']);
+                        $this->goodWe->setToken($newTokenData['token']);
 
-                    // Reintentar la solicitud con los nuevos datos
-                    $tokenData['uid'] = $newTokenData['uid'];
-                    $tokenData['timestamp'] = $newTokenData['timestamp'];
-                    $tokenData['token'] = $newTokenData['token'];
-                    $headers[1] = 'Token: ' . json_encode($tokenData);
+                        // Reintentar la solicitud con los nuevos datos
+                        $tokenData['uid'] = $newTokenData['uid'];
+                        $tokenData['timestamp'] = $newTokenData['timestamp'];
+                        $tokenData['token'] = $newTokenData['token'];
+                        $headers[1] = 'Token: ' . json_encode($tokenData);
 
-                    // Segunda solicitud con el nuevo token
-                    $response = $this->httpClient->post($url, $headers, json_encode($powerStationId));
-                    $decodedResponse = json_decode($response, true);
-                } else {
-                    throw new Exception("No se pudo obtener el nuevo token de autorización.");
+                        // Segunda solicitud con el nuevo token
+                        $response = $this->httpClient->post($url, $headers, json_encode($powerStationId));
+                        $decodedResponse = json_decode($response, true);
+                    } else {
+                        throw new Exception("No se pudo obtener el nuevo token de autorización.");
+                    }
                 }
             }
 
