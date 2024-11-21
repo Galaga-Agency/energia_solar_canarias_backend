@@ -77,101 +77,10 @@ class SolarEdgeController {
         header('Content-Type: application/json');
         return json_encode($data);
     }
-    // Método para obtener los datos de energía diaria
-    public function getDailyEnergy($siteId, $startDate, $endDate) {
-        $this->logsController->registrarLog(Logs::INFO, " accede a la api de solarEdge");
-        $data = $this->solarEdgeService->getDailyEnergy($siteId, $startDate, $endDate);
-        header('Content-Type: application/json');
-        return json_encode($data);
-    }
-    // Método para obtener los datos de energía diaria para un mes completo
-    public function getMonthlyDailyEnergy($siteId, $startDate, $endDate) {
-        $this->logsController->registrarLog(Logs::INFO, " accede a la api de solarEdge");
-        $data = $this->solarEdgeService->getMonthlyDailyEnergy($siteId, $startDate, $endDate);
-        header('Content-Type: application/json');
-        return json_encode($data);
-    }
     // Método para obtener los datos de energía anual
     public function getYearlyEnergy($siteId, $startDate, $endDate) {
         $this->logsController->registrarLog(Logs::INFO, " accede a la api de solarEdge");
         $data = $this->solarEdgeService->getYearlyEnergy($siteId, $startDate, $endDate);
-        header('Content-Type: application/json');
-        return json_encode($data);
-    }
-    // Método para obtener los beneficios ambientales
-    public function getEnvironmentalBenefits($siteId, $systemUnits) {
-        $this->logsController->registrarLog(Logs::INFO, " accede a la api de solarEdge");
-        $data = $this->solarEdgeService->getEnvironmentalBenefits($siteId, $systemUnits);
-        header('Content-Type: application/json');
-        return json_encode($data);
-    }
-    // Método para obtener los beneficios ambientales en unidades métricas
-    public function getEnvironmentalBenefitsMetrics($siteId) {
-        $this->logsController->registrarLog(Logs::INFO, " accede a la api de solarEdge");
-        $data = $this->solarEdgeService->getEnvironmentalBenefitsMetrics($siteId);
-        header('Content-Type: application/json');
-        return json_encode($data);
-    }
-    // Método para obtener los detalles de energía del consumo mensual
-    public function getEnergyDetailsConsumption($siteId, $startTime, $endTime) {
-        $this->logsController->registrarLog(Logs::INFO, " accede a la api de solarEdge");
-        $data = $this->solarEdgeService->getEnergyDetailsConsumption($siteId, $startTime, $endTime);
-        header('Content-Type: application/json');
-        return json_encode($data);
-    }
-     // Método para obtener los detalles de energía del consumo anual
-     public function getEnergyDetailsConsumptionYear($siteId, $startTime, $endTime) {
-        $this->logsController->registrarLog(Logs::INFO, " accede a la api de solarEdge");
-        $data = $this->solarEdgeService->getEnergyDetailsConsumptionYear($siteId, $startTime, $endTime);
-        header('Content-Type: application/json');
-        return json_encode($data);
-    }
-     // Método para obtener los detalles de energía del consumo diario
-     public function getEnergyDetailsConsumptionDay($siteId, $startTime, $endTime) {
-        $this->logsController->registrarLog(Logs::INFO, " accede a la api de solarEdge");
-        $data = $this->solarEdgeService->getEnergyDetailsConsumptionDay($siteId, $startTime, $endTime);
-        header('Content-Type: application/json');
-        return json_encode($data);
-    }
-    // Método para obtener los detalles de potencia del consumo
-    public function getPowerDetailsConsumption($siteId, $startTime, $endTime) {
-        $this->logsController->registrarLog(Logs::INFO, " accede a la api de solarEdge");
-        $data = $this->solarEdgeService->getPowerDetailsConsumption($siteId, $startTime, $endTime);
-        header('Content-Type: application/json');
-        return json_encode($data);
-    }
-    // Método para obtener los datos de almacenamiento
-    public function getStorageData($siteId, $startTime, $endTime) {
-        $this->logsController->registrarLog(Logs::INFO, " accede a la api de solarEdge");
-        $data = $this->solarEdgeService->getStorageData($siteId, $startTime, $endTime);
-        header('Content-Type: application/json');
-        return json_encode($data);
-    }
-    // Método para obtener el flujo de energía actual
-    public function getCurrentPowerFlow($siteId) {
-        $this->logsController->registrarLog(Logs::INFO, " accede a la api de solarEdge");
-        $data = $this->solarEdgeService->getCurrentPowerFlow($siteId);
-        header('Content-Type: application/json');
-        return json_encode($data);
-    }
-    // Método para obtener los datos de sensores
-    public function getSensorsData($siteId, $startDate, $endDate) {
-        $this->logsController->registrarLog(Logs::INFO, " accede a la api de solarEdge");
-        $data = $this->solarEdgeService->getSensorsData($siteId, $startDate, $endDate);
-        header('Content-Type: application/json');
-        return json_encode($data);
-    }
-    // Método para obtener los datos de sensores con un rango de fechas extendido
-    public function getSensorsDataExtended($siteId, $startDate, $endDate) {
-        $this->logsController->registrarLog(Logs::INFO, " accede a la api de solarEdge");
-        $data = $this->solarEdgeService->getSensorsDataExtended($siteId, $startDate, $endDate);
-        header('Content-Type: application/json');
-        return json_encode($data);
-    }
-    // Método para obtener los datos de sensores con un rango de fechas desde el 1 hasta el 30 de octubre
-    public function getSensorsDataForMonth($siteId, $startDate, $endDate) {
-        $this->logsController->registrarLog(Logs::INFO, " accede a la api de solarEdge");
-        $data = $this->solarEdgeService->getSensorsDataForMonth($siteId, $startDate, $endDate);
         header('Content-Type: application/json');
         return json_encode($data);
     }

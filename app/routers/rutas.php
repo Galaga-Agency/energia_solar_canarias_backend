@@ -172,7 +172,7 @@ switch ($method) {
                     if(isset($_GET['proveedor'])){
                         $apiControladorService = new ApiControladorService;
                         $page = isset($_GET['page']) ? $_GET['page'] : 1;
-                        $pageSize = $_GET['pageSize'] ? $_GET['pageSize'] : 200;
+                        $pageSize = isset($_GET['pageSize']) ? $_GET['pageSize'] : 200;
                         $proveedor = $_GET['proveedor'];
                     switch($proveedor){
                         case $proveedores['GoodWe']:
