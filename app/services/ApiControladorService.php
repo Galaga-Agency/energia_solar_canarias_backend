@@ -310,20 +310,24 @@ class ApiControladorService
         try {
             global $proveedores; // Acceder al array global dentro de la función
 
-            // Obtener datos de GoodWe
-            $goodWeResponse = $this->goodWeController->getPlantDetails($id);
-            $goodWeData = json_decode($goodWeResponse, true);
-
-            // Obtener datos de SolarEdge
-            $solarEdgeResponse = $this->solarEdgeController->getSiteDetails($id);
-            $solarEdgeData = json_decode($solarEdgeResponse, true);
 
             // Validar proveedor y asignar datos correspondientes
             if ($proveedor === $proveedores['GoodWe']) {
+                // Obtener datos de GoodWe
+                $goodWeResponse = $this->goodWeController->getPlantDetails($id);
+                $goodWeData = json_decode($goodWeResponse, true);
                 $plants = $goodWeData;
             } elseif ($proveedor === $proveedores['SolarEdge']) {
+                // Obtener datos de SolarEdge
+                $solarEdgeResponse = $this->solarEdgeController->getSiteDetails($id);
+                $solarEdgeData = json_decode($solarEdgeResponse, true);
                 $plants = $solarEdgeData;
-            } else {
+            } elseif ($proveedor === $proveedores['VictronEnergy']) {
+                // Obtener datos de VictronEnergy
+                $victronEnergyResponse = $this->victronEnergyController->getSiteDetails($id);
+                $victronEnergyData = json_decode($victronEnergyResponse, true);
+                $plants = $victronEnergyData;
+            }else {
                 // Proveedor inválido
                 $this->logsController->registrarLog(Logs::ERROR, "Proveedor no válido: $proveedor");
                 $respuesta->_400();
