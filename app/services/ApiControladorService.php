@@ -188,6 +188,37 @@ class ApiControladorService
         header('Content-Type: application/json');
         echo json_encode($respuesta);
     }
+    public function getAllPlantsVictronEnergy($page = 1, $pageSize = 200)
+    {
+        $respuesta = new Paginacion();
+        try {
+            // Obtener datos de SolarEdge
+            $victronEnergyResponse = $this->victronEnergyController->getAllPlants();
+            $victronEnergyData = json_decode($victronEnergyResponse, true);
+
+            $plants = $this->processPlants([], [], $victronEnergyData);
+
+            if ($plants != null) {
+                $this->logsController->registrarLog(Logs::INFO, "se han encontrado las plantas en SolarEdge");
+                $respuesta->success($plants);
+                $respuesta->page = $page;
+                $respuesta->limit = $pageSize;
+            } else {
+                $this->logsController->registrarLog(Logs::INFO, "no se han encontrado las plantas en SolarEdge");
+                $respuesta->_400($plants);
+                $respuesta->message = "No se han encontrado plantas";
+                http_response_code(400);
+            }
+        } catch (Throwable $e) {
+            $this->logsController->registrarLog(Logs::ERROR, $e->getMessage() . "Error en el servidor de SolarEdge");
+            $respuesta->_500();
+            $respuesta->message = "Error en el servidor de algun proveedor";
+            http_response_code(500);
+        }
+        // Devolver el resultado como JSON
+        header('Content-Type: application/json');
+        echo json_encode($respuesta);
+    }
     public function getAllPlantsCliente($idUsuario)
     {
         $respuesta = new Respuesta;

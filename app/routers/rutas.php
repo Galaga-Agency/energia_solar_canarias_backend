@@ -199,7 +199,7 @@ switch ($method) {
                             break;
                         case $proveedores['VictronEnergy']:
                             if($admin){
-                                $apiControladorService->getAllPlantsSolarEdge();
+                                $apiControladorService->getAllPlantsVictronEnergy();
                             }else{
                                 $respuesta->_403();
                                 $respuesta->message = 'No tienes permisos para hacer esta consulta';
