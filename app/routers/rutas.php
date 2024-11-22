@@ -197,6 +197,16 @@ switch ($method) {
                                 echo json_encode($respuesta);
                             }
                             break;
+                        case $proveedores['VictronEnergy']:
+                            if($admin){
+                                $apiControladorService->getAllPlantsSolarEdge();
+                            }else{
+                                $respuesta->_403();
+                                $respuesta->message = 'No tienes permisos para hacer esta consulta';
+                                http_response_code($respuesta->code);
+                                echo json_encode($respuesta);
+                            }
+                            break;
                         default:
                             $respuesta->_404();
                             $respuesta->message = 'No se ha encontrado el proveedor';
@@ -208,12 +218,12 @@ switch ($method) {
                     }else{
                     // Verificar si el usuario es administrador
                     if ($admin) {
-                        $solarEdgeController = new ApiControladorService();
-                        $solarEdgeController->getAllPlants();
+                        $apiControladorService = new ApiControladorService();
+                        $apiControladorService->getAllPlants();
                     } else {
                         $idUsuario = $authMiddleware->obtenerIdUsuarioActivo();
-                        $solarEdgeController = new ApiControladorService();
-                        $solarEdgeController->getAllPlantsCliente($idUsuario);
+                        $apiControladorService = new ApiControladorService();
+                        $apiControladorService->getAllPlantsCliente($idUsuario);
                     }
                     }
                 }
