@@ -25,6 +25,7 @@ $logsDB = new LogsDB;
 $proveedores = [
     'GoodWe' => 'goodwe',
     'SolarEdge' => 'solaredge',
+    'VictronEnergy' => 'victronenergy'
     // Añadir más proveedores según sea necesario
 ];
 
