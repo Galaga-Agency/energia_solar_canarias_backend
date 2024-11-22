@@ -3,13 +3,15 @@ class VictronEnergy{
     private $url;
     private $api_key;
     private $id_access_token;
+    private $id_installation;
 
     //definimos el constructor de la clase
     public function __construct()
     {
-        $this->url = 'https://monitoringapi.solaredge.com/';
-        $this->api_key = '***REMOVED***';
+        $this->url = 'https://vrmapi.victronenergy.com/v2/';
+        $this->api_key = 'Token ***REMOVED***';
         $this->id_access_token = 0;
+        $this->id_installation = 58178;
     }
 
     //definimos el getter y setter
@@ -30,6 +32,12 @@ class VictronEnergy{
     }
     public function setIdAccessToken($id_access_token){
         $this->id_access_token = $id_access_token;
+    }
+    public function getIdInstallation(){
+        return $this->id_installation;
+    }
+    public function setIdInstallation($id_installation){
+        $this->id_installation = $id_installation;
     }
     //Documentacion API https://vrm-api-docs.victronenergy.com/#/
 }
