@@ -16,8 +16,8 @@ class VictronEnergyService {
     }
 
     //recoger el grafico de las plantas
-    public function getGraficoDetails($siteId,$timeStart,$timeEnd,$type) {
-        $url = $this->victronEnergy->getUrl() . "installations/$siteId/stats?end=$timeEnd&interval=hours&start=$timeStart&type=$type";
+    public function getGraficoDetails($siteId,$timeStart,$timeEnd,$type,$interval) {
+        $url = $this->victronEnergy->getUrl() . "installations/$siteId/stats?end=$timeEnd&interval=hours&start=$timeStart&type=$type&interval=$interval";
         try {
             $response = $this->httpClient->get($url, $this->header);
             return json_decode($response);

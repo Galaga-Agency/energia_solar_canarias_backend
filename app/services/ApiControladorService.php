@@ -784,7 +784,6 @@ class ApiControladorService
                 return 'unknown';
         }
     }
-
     /**
      * Estas funciones se utilizan para mapear las gráficas
      */
@@ -805,37 +804,21 @@ class ApiControladorService
         // Verifica si las claves existen en el array
         $id = isset($data['id']) ? $data['id'] : null;
         $tipo = isset($data['type']) ? $data['type'] : null;
+        $interval = isset($data['interval']) ? $data['interval'] : null;
         $fechaInicio = isset($data['fechaInicio']) ? strtotime($data['fechaInicio']) : strtotime($data['fechaInicio']);
         $fechaFin = isset($data['fechaFin']) ? strtotime($data['fechaFin']) : strtotime($data['fechaFin']);
 
         // Si alguna de las claves no existe, retorna null
-        if ($id === null || $tipo === null || $fechaInicio === null || $fechaFin === null) {
+        if ($id === null || $tipo === null || $fechaInicio === null || $fechaFin === null || $interval === null) {
             return null;
         }
-        switch ($data['type']) {
-            case "resumen_del_sistema":
-                $type = "live_feed";
-                break;
-            case "consumo":
-                $type = "consumption";
-                break;
-            case "solar":
-                $type = "solar_yield";
-                break;
-            case "red":
-                $type = "grid";
-                break;
-            default:
-                $type = "live_feed";//Valor por defecto
-            break;
-        }
-
         // Si todo está presente, puedes proceder con el uso de las variables
         return [
             'id' => $id,
             'fechaInicio' => $fechaInicio,
             'fechaFin' => $fechaFin,
-            'type' => $type
+            'interval' => $interval,
+            'type' => $tipo
         ];
     }
     //acceso graficas de GoodWe 
