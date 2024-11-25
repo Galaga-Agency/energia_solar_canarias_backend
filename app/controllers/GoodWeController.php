@@ -16,6 +16,24 @@ class GoodWeController {
      * @param string $powerStationId ID de la planta de energía
      * @return string
      */
+    public function getPlantPowerRealtime($powerStationId) {
+        // Registrar el acceso en los logs
+        $this->logsController->registrarLog(Logs::INFO, "Accede a la API de GoodWe Realtime");
+    
+        // Llama al servicio para obtener los detalles de la planta
+        $result = $this->goodWeService->getPlantPowerRealtime($powerStationId);
+    
+        // Configurar el tipo de contenido de la respuesta como JSON
+        header('Content-Type: application/json');
+        return json_encode($result);;
+    }
+
+    /**
+     * Controlador para obtener los detalles de la planta por ID
+     *
+     * @param string $powerStationId ID de la planta de energía
+     * @return string
+     */
     public function getPlantDetails($powerStationId) {
         // Registrar el acceso en los logs
         $this->logsController->registrarLog(Logs::INFO, "Accede a la API de GoodWe");

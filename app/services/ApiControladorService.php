@@ -126,6 +126,33 @@ class ApiControladorService
         header('Content-Type: application/json');
         echo json_encode($respuesta);
     }
+    public function getPlantPowerRealtime($powerStationId)
+    {
+        $respuesta = new Respuesta;
+        try {
+            // Obtener datos de GoodWe
+            $goodWeResponse = $this->goodWeController->getPlantPowerRealtime($powerStationId);
+            $goodWeData = json_decode($goodWeResponse, true);
+
+            if ($goodWeData != null) {
+                $this->logsController->registrarLog(Logs::INFO, "se han encontrado las plantas en GoodWe");
+                $respuesta->success($goodWeData);
+            } else {
+                $this->logsController->registrarLog(Logs::INFO, "No se han encontrado plantas en GoodWe");
+                $respuesta->_400($goodWeData);
+                $respuesta->message = "No se han encontrado plantas";
+                http_response_code(400);
+            }
+        } catch (Throwable $e) {
+            $this->logsController->registrarLog(Logs::ERROR, $e->getMessage() . "Error en el servidor de GoodWe");
+            $respuesta->_500();
+            $respuesta->message = "Error en el servidor de algun proveedor";
+            http_response_code(500);
+        }
+        // Devolver el resultado como JSON
+        header('Content-Type: application/json');
+        echo json_encode($respuesta);
+    }
     public function getAllPlantsGoodWe($page = 1, $pageSize = 200)
     {
         $respuesta = new Paginacion();
