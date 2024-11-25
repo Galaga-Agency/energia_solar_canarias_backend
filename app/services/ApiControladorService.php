@@ -592,19 +592,19 @@ class ApiControladorService
         foreach ($goodWeData as $goodWePlant) {
             $status = $this->mapGoodWeStatus($goodWePlant['data']['powercontrol_status'] ?? '');
             $plant = [
-                'id' => $goodWePlant['data']['info']['powerstation_id'] ?? '',
-                'name' => $goodWePlant['data']['info']['stationname'] ?? '',
-                'address' => $goodWePlant['data']['info']['address'] ?? '',
-                'capacity' => $goodWePlant['data']['info']['capacity'] ?? 0,
+                'id' => $goodWePlant['data']['info']['powerstation_id'] ?? null,
+                'name' => $goodWePlant['data']['info']['stationname'] ?? null,
+                'address' => $goodWePlant['data']['info']['address'] ?? null,
+                'capacity' => $goodWePlant['data']['info']['capacity'] ?? null,
                 'status' => $status,
-                'type' => $goodWePlant['data']['info']['powerstation_type'] ?? '',
-                'latitude' => $goodWePlant['latitude'] ?? '',
-                'longitude' => $goodWePlant['longitude'] ?? '',
+                'type' => $goodWePlant['data']['info']['powerstation_type'] ?? null,
+                'latitude' => $goodWePlant['latitude'] ?? null,
+                'longitude' => $goodWePlant['longitude'] ?? null,
                 'organization' => $goodWePlant['data']['info']['org_name'] ?? 'GoodWe',
-                'current_power' => $goodWePlant['data']['kpi']['pac'] ?? 0, // Potencia actual en W
-                'total_energy' => $goodWePlant['data']['kpi']['total_power'] ?? 0, // Energía total generada en kWh
-                'daily_energy' => $goodWePlant['data']['kpi']['power'] ?? 0, // Energía generada hoy en kWh
-                'monthly_energy' => $goodWePlant['data']['kpi']['month_generation'] ?? 0, // Energía generada este mes en kWh
+                'current_power' => $goodWePlant['data']['kpi']['pac'] ?? null, // Potencia actual en W
+                'total_energy' => $goodWePlant['data']['kpi']['total_power'] ?? null, // Energía total generada en kWh
+                'daily_energy' => $goodWePlant['data']['kpi']['power'] ?? null, // Energía generada hoy en kWh
+                'monthly_energy' => $goodWePlant['data']['kpi']['month_generation'] ?? null, // Energía generada este mes en kWh
                 'installation_date' => null, // No disponible en GoodWe
                 'pto_date' => null, // No disponible en GoodWe
                 'notes' => null, // No disponible en GoodWe
@@ -629,14 +629,14 @@ class ApiControladorService
             $status = $this->mapSolarEdgeStatus($solarEdgePlant['details']['status'] ?? '');
 
             $plant = [
-                'id' => $solarEdgePlant['details']['id'] ?? '',
-                'name' => $solarEdgePlant['details']['name'] ?? '',
+                'id' => $solarEdgePlant['details']['id'] ?? null,
+                'name' => $solarEdgePlant['details']['name'] ?? null,
                 'address' => $address,
-                'capacity' => $solarEdgePlant['details']['peakPower'] ?? 0,
+                'capacity' => $solarEdgePlant['details']['peakPower'] ?? null,
                 'status' => $status,
-                'type' => $solarEdgePlant['details']['type'] ?? '',
-                'latitude' => $solarEdgePlant['details']['location']['latitude'] ?? '',
-                'longitude' => $solarEdgePlant['details']['location']['longitude'] ?? '',
+                'type' => $solarEdgePlant['details']['type'] ?? null,
+                'latitude' => $solarEdgePlant['details']['location']['latitude'] ?? null,
+                'longitude' => $solarEdgePlant['details']['location']['longitude'] ?? null,
                 'organization' => 'SolarEdge',
                 'current_power' => null, // No disponible en SolarEdge
                 'total_energy' => null, // No disponible en SolarEdge
@@ -666,12 +666,12 @@ class ApiControladorService
                     $longitud = null;
                 }
                 $plants[] = [
-                    'id' => $plant['idSite'] ?? '', //Existe el campo siempre
-                    'name' => $plant['name'] ?? '', //Existe el campo siempre
+                    'id' => $plant['idSite'] ?? null, //Existe el campo siempre
+                    'name' => $plant['name'] ?? null, //Existe el campo siempre
                     'address' => $plant['geofence'] ?? null, //A veces no existe el campo
-                    'capacity' => $plant['pvMax'] ?? 0, //tien pvMax ¿? posible capacity segun chatgpt
+                    'capacity' => $plant['pvMax'] ?? null, //tien pvMax ¿? posible capacity segun chatgpt
                     'status' => null, //No tiene estatus como mucho te muestra si la bateria carga o no
-                    'type' => $plant['powerstation_type'] ?? '',
+                    'type' => $plant['powerstation_type'] ?? null,
                     'latitude' => $latitud, //si existe se pone depende del campo geofence que en muchos casos es null
                     'longitude' => $longitud, //si existe se pone depende del campo geofence que en muchos casos es null
                     'organization' => 'victronenergy', //Existe el campo siempre
@@ -682,7 +682,7 @@ class ApiControladorService
                     'installation_date' => null, // No disponible en victronEnergyData
                     'pto_date' => null, // No disponible en victronEnergyData
                     'notes' => null, // No disponible en victronEnergyData
-                    'alert_quantity' => $plant['alarmMonitoring'], // Posible adaptacion segun chatGpt es lo mismo
+                    'alert_quantity' => $plant['alarmMonitoring'] ?? null, // Posible adaptacion segun chatGpt es lo mismo
                     'highest_impact' => null, // No disponible en victronEnergyData
                     'primary_module' => null, // No disponible en victronEnergyData
                     'public_settings' => null // No disponible en victronEnergyData
