@@ -102,4 +102,5 @@ private function mapGoodWeStatus($statusCode) {
             return 'unknown';
     }
 }
+//powercontrol_status
 }
