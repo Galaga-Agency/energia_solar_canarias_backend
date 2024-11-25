@@ -21,7 +21,7 @@ class VictronEnergyController
     public function getGraficoDetails($data)
     {
         $this->logsController->registrarLog(Logs::INFO, " accede a la api de VictronEnergy a un gráfico de tipo " . $data['type']);
-        $data = $this->victronEnergyService->getGraficoDetails($data['id'], $data['fechaInicio'], $data['fechaFin'], $data['type']);
+        $data = $this->victronEnergyService->getGraficoDetails($data['id'], $data['fechaInicio'], $data['fechaFin'], $data['type'],$data['interval']);
         header('Content-Type: application/json');
         return json_encode($data);
     }
