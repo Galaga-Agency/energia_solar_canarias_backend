@@ -15,6 +15,13 @@ class SolarEdgeController {
         $this->logsController = new LogsController();
     }
 
+    public function getPlantPowerRealtime($powerStationId){
+        $this->logsController->registrarLog(Logs::INFO, " accede a la api de solarEdge power en tiempo real");
+        $data = $this->solarEdgeService->getPlantPowerRealtime($powerStationId);
+        header('Content-Type: application/json');
+        return json_encode($data);
+    }
+
     // Método para obtener los detalles de una planta con id $siteId
     public function getSiteDetails($siteId) {
         // Registrar en logs el acceso a la API

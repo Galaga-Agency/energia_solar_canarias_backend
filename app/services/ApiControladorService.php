@@ -97,6 +97,36 @@ class ApiControladorService
         echo json_encode($respuesta);
     }
 
+    public function getPlantPowerRealtimeSolarEdge($powerStationId)
+    {
+        $respuesta = new Respuesta;
+        try {
+
+            $solarEdgeResponse = $this->solarEdgeController->getPlantPowerRealtime($powerStationId);
+
+            $solarEdgeData = json_decode($solarEdgeResponse);
+
+
+            if ($solarEdgeData != null) {
+                $this->logsController->registrarLog(Logs::INFO, "se han encontrado las gráficas de SolarEdge");
+                $respuesta->success($solarEdgeData);
+            } else {
+                $this->logsController->registrarLog(Logs::INFO, "no se han encontrado las gráficas de SolarEdge");
+                $respuesta->_400($solarEdgeData);
+                $respuesta->message = "No se han encontrado graficas de SolarEdge";
+                http_response_code(400);
+            }
+        } catch (Throwable $e) {
+            $this->logsController->registrarLog(Logs::ERROR, "Error del proveedor de SolarEdge: " + $e->getMessage());
+            $respuesta->_500();
+            $respuesta->message = "Error en el servidor de algun proveedor";
+            http_response_code(500);
+        }
+        // Devolver el resultado como JSON
+        header('Content-Type: application/json');
+        echo json_encode($respuesta);
+    }
+
     public function getGraficasGoodWe()
     {
         $respuesta = new Respuesta;
@@ -126,7 +156,7 @@ class ApiControladorService
         header('Content-Type: application/json');
         echo json_encode($respuesta);
     }
-    public function getPlantPowerRealtime($powerStationId)
+    public function getPlantPowerRealtimeGoodwe($powerStationId)
     {
         $respuesta = new Respuesta;
         try {

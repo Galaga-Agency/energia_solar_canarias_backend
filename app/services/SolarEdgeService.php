@@ -10,7 +10,19 @@ class SolarEdgeService {
         $this->solarEdge = new SolarEdge();
         $this->httpClient = new HttpClient();
     }
+    
+    //Método que devuelve la potencia de las plantas que esten en funcionamiento
+    public function getPlantPowerRealtime($siteId){
+        $url = $this->solarEdge->getUrl() . "site/$siteId/currentPowerFlow?api_key=" . $this->solarEdge->getApiKey();
+        try {
+            $response = $this->httpClient->get($url);
+            return json_decode($response);
+        } catch (Exception $e) {
+            return ['error' => $e->getMessage()];
+        }
+    }
 
+    //Recoge la grafica de la planta
     public function getPowerDashboard($siteId, $dia, $fechaFin = null, $fechaInicio = null) {
         // Formato de fecha
         $formato = 'Y-m-d';
@@ -61,6 +73,7 @@ class SolarEdgeService {
         }
     }
     
+    //Recoge la grafica 'Custom' de la planta
     public function getPowerDashboardCustom($chartField, $foldUp, $timeUnit, $siteId, $billingCycle, $period, $periodDuration, $startTime, $endTime) {
         
         $url = $this->solarEdge->getUrl() . "solaredge-apigw/api/site/$siteId/customEnergyDashboardChart?chartField=$chartField&foldUp=$foldUp&timeUnit=$timeUnit&siteId=$siteId&billingCycle=$billingCycle&period=$period&periodDuration=$periodDuration&startTime=$startTime&endTime=$endTime";
@@ -73,7 +86,7 @@ class SolarEdgeService {
         }
     }
 
-
+    //Recoge los detalles de la planta
     public function getSiteDetails($siteId) {
         $url = $this->solarEdge->getUrl() . "site/$siteId/details?api_key=" . $this->solarEdge->getApiKey();
         try {
@@ -94,6 +107,7 @@ class SolarEdgeService {
             return ['error' => $e->getMessage()];
         }
     }
+
      // Método para obtener los datos de energía del sitio en un rango de fechas
      public function getSiteEnergy($siteId, $startDate, $endDate) {
         $url = $this->solarEdge->getUrl() . "site/$siteId/energy";
