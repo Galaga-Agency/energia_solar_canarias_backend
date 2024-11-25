@@ -48,6 +48,9 @@ class GoodWeController {
         if (isset($decodedResult['data']['powercontrol_status'])) {
             $decodedResult['data']['powercontrol_status'] = $this->mapGoodWeStatus($decodedResult['data']['powercontrol_status']);
         }
+        if (isset($decodedResult['data']['info']['status'])) {
+            $decodedResult['data']['info']['status'] = $this->mapGoodWeStatus($decodedResult['data']['info']['status']);
+        }
 
         // Añadir el campo "organizacion" al resultado
         $decodedResult['data']['organization'] = "goodwe";
