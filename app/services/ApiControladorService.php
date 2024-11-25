@@ -694,17 +694,16 @@ class ApiControladorService
     }
 
     // Función para mapear el estado de GoodWe a una descripción legible
-    private function mapGoodWeStatus($statusCode)
-    {
+    private function mapGoodWeStatus($statusCode) {
         switch ($statusCode) {
             case 2:
                 return 'error';
             case 1:
-                return 'disconnected';
+                return 'working';
             case 0:
                 return 'waiting';
             case -1:
-                return 'working';
+                return 'disconnected';
             default:
                 return 'unknown';
         }
