@@ -115,9 +115,11 @@ switch ($method) {
                     switch ($proveedor) {
                         case $proveedores['GoodWe']:
                             $goodWe = new ApiControladorService;
-                            $goodWe->getPlantPowerRealtime($powerStationId);
+                            $goodWe->getPlantPowerRealtimeGoodwe($powerStationId);
                             break;
                         case $proveedores['SolarEdge']:
+                            $solarEdge = new ApiControladorService;
+                            $solarEdge->getPlantPowerRealtimeSolarEdge($powerStationId);
                             break;
                         case $proveedores['VictronEnergy']:
                             break;
