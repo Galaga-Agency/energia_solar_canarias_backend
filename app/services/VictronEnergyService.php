@@ -15,7 +15,7 @@ class VictronEnergyService {
         ];
     }
 
-    //recoger el grafico de las plantas
+    //recoger el grafico de las plantas / parece que tambien funciona para recoger en tiempo real los valores
     public function getGraficoDetails($siteId,$timeStart,$timeEnd,$type,$interval) {
         $url = $this->victronEnergy->getUrl() . "installations/$siteId/stats?end=$timeEnd&interval=hours&start=$timeStart&type=$type&interval=$interval";
         try {
