@@ -11,6 +11,7 @@ class GoodWeService {
         $this->httpClient = new HttpClient();
     }
 
+    //Llamada en tiempo real a la energia que genera la planta, en postman corresponde con la llamada POST GetPowerFlow
     public function getPlantPowerRealtime($powerStationId) {
         $url = $this->goodWe->getUrl() . "api/v2/PowerStation/GetPowerflow";
 
@@ -72,6 +73,7 @@ class GoodWeService {
         }
     }
 
+    //Llamada que se hace para construir el grafico de la planta en postman corresponde con la llamada POST GetPlantPowerChart
     public function GetChartByPlant($data) {
         $url = $this->goodWe->getUrl() . "api/v2/Charts/GetChartByPlant";
 
@@ -129,6 +131,7 @@ class GoodWeService {
         }
     }
     
+    //LLamada a todas las plantas en postman corresponde a la llamada POST Todas plantas
     public function GetAllPlants($page = 1, $pageSize = 200) {
         $url = $this->goodWe->getUrl() . "api/PowerStationMonitor/QueryPowerStationMonitor";
 
@@ -198,6 +201,7 @@ class GoodWeService {
         }
     }
 
+    //LLamada a los detalles e la planta en postman corresponde con la llamada POST GetPlantDetailByPowerstation
     public function GetPlantDetailByPowerstationId($powerStationId) {
         $url = $this->goodWe->getUrl() . "api/v3/PowerStation/GetPlantDetailByPowerstationId";
     
@@ -258,6 +262,7 @@ class GoodWeService {
         }
     }
 
+    //LoginUser en postman corresponde con la llamada POST LoginUser
     public function crossLogin() {
         $url = $this->goodWe->getUrl() . "api/v1/Common/CrossLogin";
 
