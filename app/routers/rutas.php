@@ -106,7 +106,25 @@ switch ($method) {
                     }
                 }
                 break;
-            // Nuevo caso para obtener los detalles de una planta por ID
+                // Nuevo caso para obtener los detalles de una planta por ID
+            case (preg_match('/^plant\/power\/realtime\/([\w-]+)$/', $request, $matches) && isset($_GET['proveedor']) ? true : false):
+                $powerStationId = $matches[1];
+                $proveedor = $_GET['proveedor'];
+                // Verificamos que el usuario esté autenticado y sea administrador
+                if ($authMiddleware->verificarTokenUsuarioActivo()) {
+                    switch ($proveedor) {
+                        case $proveedores['GoodWe']:
+                            $goodWe = new ApiControladorService;
+                            $goodWe->getPlantPowerRealtime($powerStationId);
+                            break;
+                        case $proveedores['SolarEdge']:
+                            break;
+                        case $proveedores['VictronEnergy']:
+                            break;
+                    }
+                }
+                break;
+                // Nuevo caso para obtener los detalles de una planta por ID
             case (preg_match('/^plants\/details\/([\w-]+)$/', $request, $matches) && isset($_GET['proveedor']) ? true : false):
                 $powerStationId = $matches[1];
                 $proveedor = $_GET['proveedor'];
@@ -116,13 +134,12 @@ switch ($method) {
                         // Instanciar el controlador de plantas y obtener detalles
                         $solarEdgeController = new ApiControladorService();
                         $solarEdgeController->getSiteDetail($powerStationId, $proveedor);
-
                     } else {
                         // El usuario nos tiene que mandar obligatoriamente el proveedor para que verifiquemos si tiene acceso a ese id
                         $idUsuario = $authMiddleware->obtenerIdUsuarioActivo();
                         $proveedor = $_GET['proveedor'];
                         $solarEdgeController = new ApiControladorService();
-                        $solarEdgeController->getSiteDetailCliente($idUsuario,$powerStationId,$proveedor);
+                        $solarEdgeController->getSiteDetailCliente($idUsuario, $powerStationId, $proveedor);
                     }
                 }
                 break;
@@ -140,7 +157,7 @@ switch ($method) {
                         echo json_encode($respuesta);
                     }
                 }
-                    break;
+                break;
             case ($request === 'usuario'):
                 //Verificamos que existe el usuario CREADOR del token y sino manejamos el error dentro de la funcion
                 if ($authMiddleware->verificarTokenUsuarioActivo()) {
@@ -166,72 +183,71 @@ switch ($method) {
                     }
                 }
                 break;
-            //Devuelve una lista de todas las plantas (Admin)
+                //Devuelve una lista de todas las plantas (Admin)
             case ($request === 'plants'):
                 //Verificamos que existe el usuario CREADOR del token y sino manejamos el error dentro de la funcion
                 if ($authMiddleware->verificarTokenUsuarioActivo()) {
                     $admin = $authMiddleware->verificarAdmin();
-                    if(isset($_GET['proveedor'])){
+                    if (isset($_GET['proveedor'])) {
                         $apiControladorService = new ApiControladorService;
                         $page = isset($_GET['page']) ? $_GET['page'] : 1;
                         $pageSize = isset($_GET['pageSize']) ? $_GET['pageSize'] : 200;
                         $proveedor = $_GET['proveedor'];
-                    switch($proveedor){
-                        case $proveedores['GoodWe']:
-                            if($admin){
-                                $apiControladorService->getAllPlantsGoodWe($page,$pageSize);
-                            }else{
-                                $respuesta->_403();
-                                $respuesta->message = 'No tienes permisos para hacer esta consulta';
+                        switch ($proveedor) {
+                            case $proveedores['GoodWe']:
+                                if ($admin) {
+                                    $apiControladorService->getAllPlantsGoodWe($page, $pageSize);
+                                } else {
+                                    $respuesta->_403();
+                                    $respuesta->message = 'No tienes permisos para hacer esta consulta';
+                                    http_response_code($respuesta->code);
+                                    echo json_encode($respuesta);
+                                }
+                                break;
+                            case $proveedores['SolarEdge']:
+                                if ($admin) {
+                                    $apiControladorService->getAllPlantsSolarEdge($page, $pageSize);
+                                } else {
+                                    $respuesta->_403();
+                                    $respuesta->message = 'No tienes permisos para hacer esta consulta';
+                                    http_response_code($respuesta->code);
+                                    echo json_encode($respuesta);
+                                }
+                                break;
+                            case $proveedores['VictronEnergy']:
+                                if ($admin) {
+                                    $apiControladorService->getAllPlantsVictronEnergy();
+                                } else {
+                                    $respuesta->_403();
+                                    $respuesta->message = 'No tienes permisos para hacer esta consulta';
+                                    http_response_code($respuesta->code);
+                                    echo json_encode($respuesta);
+                                }
+                                break;
+                            default:
+                                $respuesta->_404();
+                                $respuesta->message = 'No se ha encontrado el proveedor';
                                 http_response_code($respuesta->code);
                                 echo json_encode($respuesta);
-                            }
-                            break;
-                        case $proveedores['SolarEdge']:
-                            if($admin){
-                                $apiControladorService->getAllPlantsSolarEdge($page,$pageSize);
-                            }else{
-                                $respuesta->_403();
-                                $respuesta->message = 'No tienes permisos para hacer esta consulta';
-                                http_response_code($respuesta->code);
-                                echo json_encode($respuesta);
-                            }
-                            break;
-                        case $proveedores['VictronEnergy']:
-                            if($admin){
-                                $apiControladorService->getAllPlantsVictronEnergy();
-                            }else{
-                                $respuesta->_403();
-                                $respuesta->message = 'No tienes permisos para hacer esta consulta';
-                                http_response_code($respuesta->code);
-                                echo json_encode($respuesta);
-                            }
-                            break;
-                        default:
-                            $respuesta->_404();
-                            $respuesta->message = 'No se ha encontrado el proveedor';
-                            http_response_code($respuesta->code);
-                            echo json_encode($respuesta);
-                            break;
-                    }
-                    
-                    }else{
-                    // Verificar si el usuario es administrador
-                    if ($admin) {
-                        $apiControladorService = new ApiControladorService();
-                        $apiControladorService->getAllPlants();
+                                break;
+                        }
                     } else {
-                        $idUsuario = $authMiddleware->obtenerIdUsuarioActivo();
-                        $apiControladorService = new ApiControladorService();
-                        $apiControladorService->getAllPlantsCliente($idUsuario);
-                    }
+                        // Verificar si el usuario es administrador
+                        if ($admin) {
+                            $apiControladorService = new ApiControladorService();
+                            $apiControladorService->getAllPlants();
+                        } else {
+                            $idUsuario = $authMiddleware->obtenerIdUsuarioActivo();
+                            $apiControladorService = new ApiControladorService();
+                            $apiControladorService->getAllPlantsCliente($idUsuario);
+                        }
                     }
                 }
                 break;
-             // Ruta para getSiteEnergy con siteId, startDate y endDate en la URL
-             case (preg_match('/^plants\/(\d+)$/', $request, $matches) && isset($_GET['timeUnit']) && isset($_GET['startDate']) && isset($_GET['endDate'])):
+                // Ruta para getSiteEnergy con siteId, startDate y endDate en la URL
+            case (preg_match('/^plants\/(\d+)$/', $request, $matches) && isset($_GET['timeUnit']) && isset($_GET['startDate']) && isset($_GET['endDate'])):
                 $siteId = $matches[1];
-                
+
                 // Obtener startDate y endDate desde la query string
                 $startDate = $_GET['startDate'];
                 $endDate = $_GET['endDate'];
@@ -239,7 +255,7 @@ switch ($method) {
 
                 // Verificar que el usuario esté autenticado y sea administrador
                 if ($authMiddleware->verificarTokenUsuarioActivo() && $authMiddleware->verificarAdmin()) {
-                    switch($timeUnit){
+                    switch ($timeUnit) {
                         case 'DAY':
                             $solarEdgeService = new ApiControladorService();
                             $solarEdgeService->getSiteEnergy($siteId, $startDate, $endDate);
@@ -252,12 +268,12 @@ switch ($method) {
                             $solarEdgeService = new ApiControladorService();
                             $solarEdgeService->getYearlyEnergy($siteId, $startDate, $endDate);
                             break;
-                    default:
-                        $respuesta->_400();
-                        $respuesta->message = 'El endpoint timeUnit no es valido asegurese de pasar parametros validos como YEAR, DAY o QUARTER_OF_AN_HOUR revisa la documentación para mas información';
-                        http_response_code($respuesta->code);
-                        echo json_encode($respuesta);
-                    break;  
+                        default:
+                            $respuesta->_400();
+                            $respuesta->message = 'El endpoint timeUnit no es valido asegurese de pasar parametros validos como YEAR, DAY o QUARTER_OF_AN_HOUR revisa la documentación para mas información';
+                            http_response_code($respuesta->code);
+                            echo json_encode($respuesta);
+                            break;
                     }
                 } else {
                     $respuesta->_403();
@@ -307,7 +323,7 @@ switch ($method) {
                 if ($authMiddleware->verificarTokenUsuarioActivo()) {
                     // Decodificar el cuerpo JSON
                     $input = json_decode(file_get_contents("php://input"), true);
-                     // Verificar si se proporcionó el campo 'name'
+                    // Verificar si se proporcionó el campo 'name'
                     if (empty($input['name'])) {
                         $respuesta->_404();
                         $respuesta->message = 'No se a encontrado el campo name en el json';
@@ -322,9 +338,8 @@ switch ($method) {
 
                     //Enviar la respuesta en formato json
                     echo $resultado;
-
                 }
-                    break;
+                break;
             case ($request === 'usuarios/relacionar'  && isset($_GET['idplanta']) && isset($_GET['idusuario']) && isset($_GET['proveedor'])):
                 if ($authMiddleware->verificarTokenUsuarioActivo()) {
                     // Verificar si el usuario es administrador
@@ -342,7 +357,7 @@ switch ($method) {
                     }
                 }
                 break;
-            // Nuevo caso para obtener las graficas de la planta
+                // Nuevo caso para obtener las graficas de la planta
             case (preg_match('/^plants\/graficas$/', $request, $matches) && isset($_GET['proveedor'])):
                 // Verificamos que el usuario esté autenticado y sea administrador
                 if ($authMiddleware->verificarTokenUsuarioActivo()) {
@@ -350,25 +365,24 @@ switch ($method) {
                         // Instanciar el controlador de plantas y obtener detalles
                         $apiController = new ApiControladorService();
                         $proveedor = $_GET['proveedor'];
-                            switch($proveedor){
-                                case $proveedores['GoodWe']:
-                                    $apiController->getGraficasGoodWe();
-                                    break;
-                                case $proveedores['SolarEdge']:
-                                    $apiController->getGraficasSolarEdge();
-                                    break;  
-                                default:
-                                    $respuesta->_400();
-                                    $respuesta->message = 'Proveedor no encontrado';
-                                    http_response_code($respuesta->code);
-                                    echo json_encode($respuesta);
-                                    break;
-                            }
-
+                        switch ($proveedor) {
+                            case $proveedores['GoodWe']:
+                                $apiController->getGraficasGoodWe();
+                                break;
+                            case $proveedores['SolarEdge']:
+                                $apiController->getGraficasSolarEdge();
+                                break;
+                            default:
+                                $respuesta->_400();
+                                $respuesta->message = 'Proveedor no encontrado';
+                                http_response_code($respuesta->code);
+                                echo json_encode($respuesta);
+                                break;
+                        }
                     } else {
-                         // El usuario nos tiene que mandar obligatoriamente el proveedor para que verifiquemos si tiene acceso a ese id
-                         $apiController = new ApiControladorService();
-                         $apiController->getGraficasGoodWe();
+                        // El usuario nos tiene que mandar obligatoriamente el proveedor para que verifiquemos si tiene acceso a ese id
+                        $apiController = new ApiControladorService();
+                        $apiController->getGraficasGoodWe();
                     }
                 }
                 break;
@@ -395,8 +409,8 @@ switch ($method) {
                     $idUser = $authMiddleware->obtenerIdUsuarioActivo();
                     $usuarios = new UsuariosController;
                     $usuarios->actualizarUser($idUser);
-                    }
-                    break;
+                }
+                break;
             case (preg_match('/^usuarios\/(\d+)$/', $request, $matches) ? true : false):
                 // Extraer el ID del usuario desde la URL
                 $id = $matches[1];
