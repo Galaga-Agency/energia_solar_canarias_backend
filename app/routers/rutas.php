@@ -246,50 +246,6 @@ switch ($method) {
                     }
                 }
                 break;
-                // Ruta para getSiteEnergy con siteId, startDate y endDate en la URL
-            case (preg_match('/^plants\/(\d+)$/', $request, $matches) && isset($_GET['timeUnit']) && isset($_GET['startDate']) && isset($_GET['endDate'])):
-                $siteId = $matches[1];
-
-                // Obtener startDate y endDate desde la query string
-                $startDate = $_GET['startDate'];
-                $endDate = $_GET['endDate'];
-                $timeUnit = $_GET['timeUnit'];
-
-                // Verificar que el usuario esté autenticado y sea administrador
-                if ($authMiddleware->verificarTokenUsuarioActivo() && $authMiddleware->verificarAdmin()) {
-                    switch ($timeUnit) {
-                        case 'DAY':
-                            $solarEdgeService = new ApiControladorService();
-                            $solarEdgeService->getSiteEnergy($siteId, $startDate, $endDate);
-                            break;
-                        case 'QUARTER_OF_AN_HOUR':
-                            $solarEdgeService = new ApiControladorService();
-                            $solarEdgeService->getQuarterHourlyEnergy($siteId, $startDate, $endDate);
-                            break;
-                        case 'YEAR':
-                            $solarEdgeService = new ApiControladorService();
-                            $solarEdgeService->getYearlyEnergy($siteId, $startDate, $endDate);
-                            break;
-                        default:
-                            $respuesta->_400();
-                            $respuesta->message = 'El endpoint timeUnit no es valido asegurese de pasar parametros validos como YEAR, DAY o QUARTER_OF_AN_HOUR revisa la documentación para mas información';
-                            http_response_code($respuesta->code);
-                            echo json_encode($respuesta);
-                            break;
-                    }
-                } else {
-                    $respuesta->_403();
-                    $respuesta->message = 'No tienes permisos para hacer esta consulta';
-                    http_response_code($respuesta->code);
-                    echo json_encode($respuesta);
-                }
-                break;
-            default:
-                $respuesta->_400();
-                $respuesta->message = 'El End Point no existe en la API';
-                http_response_code($respuesta->code);
-                echo json_encode($respuesta);
-                break;
         }
         break;
 
@@ -373,6 +329,9 @@ switch ($method) {
                                 break;
                             case $proveedores['SolarEdge']:
                                 $apiController->getGraficasSolarEdge();
+                                break;
+                            case $proveedores['VictronEnergy']:
+                                $apiController->getGraficasVictronEnergy();
                                 break;
                             default:
                                 $respuesta->_400();

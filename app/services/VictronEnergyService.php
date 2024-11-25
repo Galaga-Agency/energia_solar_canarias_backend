@@ -15,7 +15,18 @@ class VictronEnergyService {
         ];
     }
 
+    //recoger el grafico de las plantas
+    public function getGraficoDetails($siteId,$timeStart,$timeEnd,$type) {
+        $url = $this->victronEnergy->getUrl() . "installations/$siteId/stats?end=$timeEnd&interval=hours&start=$timeStart&type=$type";
+        try {
+            $response = $this->httpClient->get($url, $this->header);
+            return json_decode($response);
+        } catch (Exception $e) {
+            return ['error' => $e->getMessage()];
+        }
+    }
 
+    //Recoger datos detallados de la planta
     public function getSiteDetails($siteId) {
         $url = $this->victronEnergy->getUrl() . "users/". $this->victronEnergy->getIdInstallation() ."/installations?idSite=$siteId&extended=1";
         try {

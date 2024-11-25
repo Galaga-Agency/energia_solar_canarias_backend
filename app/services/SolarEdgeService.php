@@ -107,44 +107,6 @@ class SolarEdgeService {
             return ['error' => $e->getMessage()];
         }
     }
-
-     // Método para obtener los datos de energía del sitio en un rango de fechas
-     public function getSiteEnergy($siteId, $startDate, $endDate) {
-        $url = $this->solarEdge->getUrl() . "site/$siteId/energy";
-        $url .= "?timeUnit=DAY&startDate=$startDate&endDate=$endDate&api_key=" . $this->solarEdge->getApiKey();
-
-        try {
-            $response = $this->httpClient->get($url);
-            return json_decode($response, true);
-        } catch (Exception $e) {
-            return ['error' => $e->getMessage()];
-        }
-    }
-
-     // Método para obtener los datos de energía en intervalos de cuarto de hora
-     public function getQuarterHourlyEnergy($siteId, $startDate, $endDate) {
-        $url = $this->solarEdge->getUrl() . "site/$siteId/energy";
-        $url .= "?timeUnit=QUARTER_OF_AN_HOUR&startDate=$startDate&endDate=$endDate&api_key=" . $this->solarEdge->getApiKey();
-
-        try {
-            $response = $this->httpClient->get($url);
-            return json_decode($response, true);
-        } catch (Exception $e) {
-            return ['error' => $e->getMessage()];
-        }
-    }
-    // Método para obtener los datos de energía anual
-    public function getYearlyEnergy($siteId, $startDate, $endDate) {
-        $url = $this->solarEdge->getUrl() . "site/$siteId/energy";
-        $url .= "?timeUnit=YEAR&startDate=$startDate&endDate=$endDate&api_key=" . $this->solarEdge->getApiKey();
-
-        try {
-            $response = $this->httpClient->get($url);
-            return json_decode($response, true);
-        } catch (Exception $e) {
-            return ['error' => $e->getMessage()];
-        }
-    }
     // Método para obtener los datos de sensores con un rango de fechas extendido
     public function getSensorsDataExtended($siteId, $startDate, $endDate) {
         $url = $this->solarEdge->getUrl() . "site/$siteId/sensors";
