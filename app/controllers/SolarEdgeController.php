@@ -70,27 +70,6 @@ class SolarEdgeController {
         header('Content-Type: application/json');
         return json_encode($data);
     }
-    // Método para obtener los datos de energía del sitio
-    public function getSiteEnergy($siteId, $startDate, $endDate) {
-        $this->logsController->registrarLog(Logs::INFO, " accede a la api de solarEdge");
-        $data = $this->solarEdgeService->getSiteEnergy($siteId, $startDate, $endDate);
-        header('Content-Type: application/json');
-        return json_encode($data);
-    }
-    // Método para obtener los datos de energía en intervalos de cuarto de hora
-    public function getQuarterHourlyEnergy($siteId, $startDate, $endDate) {
-        $this->logsController->registrarLog(Logs::INFO, " accede a la api de solarEdge");
-        $data = $this->solarEdgeService->getQuarterHourlyEnergy($siteId, $startDate, $endDate);
-        header('Content-Type: application/json');
-        return json_encode($data);
-    }
-    // Método para obtener los datos de energía anual
-    public function getYearlyEnergy($siteId, $startDate, $endDate) {
-        $this->logsController->registrarLog(Logs::INFO, " accede a la api de solarEdge");
-        $data = $this->solarEdgeService->getYearlyEnergy($siteId, $startDate, $endDate);
-        header('Content-Type: application/json');
-        return json_encode($data);
-    }
     // Función para mapear el estado de SolarEdge a una descripción legible
 private function mapSolarEdgeStatus($status) {
     switch ($status) {

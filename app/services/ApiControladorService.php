@@ -19,6 +19,11 @@ class ApiControladorService
         $this->victronEnergyController = new VictronEnergyController;
         $this->goodWeController = new GoodWeController();
     }
+    /**
+     * 
+     * Estas funcion son genericas para todos los proveedores
+     * 
+     */
     public function getAllPlants()
     {
         $respuesta = new Respuesta;
@@ -57,6 +62,11 @@ class ApiControladorService
         header('Content-Type: application/json');
         echo json_encode($respuesta);
     }
+    /**
+     * 
+     * Estas funciones se utilizan para obtener los datos de las gráficas de todos los proveedores
+     * 
+     */
     public function getGraficasSolarEdge()
     {
         $respuesta = new Respuesta;
@@ -96,37 +106,6 @@ class ApiControladorService
         header('Content-Type: application/json');
         echo json_encode($respuesta);
     }
-
-    public function getPlantPowerRealtimeSolarEdge($powerStationId)
-    {
-        $respuesta = new Respuesta;
-        try {
-
-            $solarEdgeResponse = $this->solarEdgeController->getPlantPowerRealtime($powerStationId);
-
-            $solarEdgeData = json_decode($solarEdgeResponse);
-
-
-            if ($solarEdgeData != null) {
-                $this->logsController->registrarLog(Logs::INFO, "se han encontrado las gráficas de SolarEdge");
-                $respuesta->success($solarEdgeData);
-            } else {
-                $this->logsController->registrarLog(Logs::INFO, "no se han encontrado las gráficas de SolarEdge");
-                $respuesta->_400($solarEdgeData);
-                $respuesta->message = "No se han encontrado graficas de SolarEdge";
-                http_response_code(400);
-            }
-        } catch (Throwable $e) {
-            $this->logsController->registrarLog(Logs::ERROR, "Error del proveedor de SolarEdge: " + $e->getMessage());
-            $respuesta->_500();
-            $respuesta->message = "Error en el servidor de algun proveedor";
-            http_response_code(500);
-        }
-        // Devolver el resultado como JSON
-        header('Content-Type: application/json');
-        echo json_encode($respuesta);
-    }
-
     public function getGraficasGoodWe()
     {
         $respuesta = new Respuesta;
@@ -148,6 +127,78 @@ class ApiControladorService
             }
         } catch (Throwable $e) {
             $this->logsController->registrarLog(Logs::ERROR, $e->getMessage() . "Error en el servidor de GoodWe");
+            $respuesta->_500();
+            $respuesta->message = "Error en el servidor de algun proveedor";
+            http_response_code(500);
+        }
+        // Devolver el resultado como JSON
+        header('Content-Type: application/json');
+        echo json_encode($respuesta);
+    }
+    public function getGraficasVictronEnergy()
+    {
+        $respuesta = new Respuesta;
+        try {
+            $data = $this->getCuerpoGraficaVictronEnergy();
+
+            // Obtener datos de GoodWe
+            if($data != null){
+                $victronEnergyResponse = $this->victronEnergyController->getGraficoDetails($data);
+                $victronEnergyData = json_decode($victronEnergyResponse, true);
+            }else{
+                $this->logsController->registrarLog(Logs::INFO, "No se han pasado los parametros correctos en VictronEnergy");
+                $respuesta->_400();
+                $respuesta->message = "revisa los parametros";
+                http_response_code(400);
+                echo json_encode($respuesta);
+                return;
+            }
+
+            if ($victronEnergyData != null) {
+                $this->logsController->registrarLog(Logs::INFO, "se han encontrado las plantas en VictronEnergy");
+                $respuesta->success($victronEnergyData);
+            } else {
+                $this->logsController->registrarLog(Logs::INFO, "No se han encontrado plantas en VictronEnergy");
+                $respuesta->_400($victronEnergyData);
+                $respuesta->message = "No se han encontrado plantas";
+                http_response_code(400);
+            }
+        } catch (Throwable $e) {
+            $this->logsController->registrarLog(Logs::ERROR, $e->getMessage() . "Error en el servidor de VictronEnergy");
+            $respuesta->_500();
+            $respuesta->message = "Error en el servidor de algun proveedor";
+            http_response_code(500);
+        }
+        // Devolver el resultado como JSON
+        header('Content-Type: application/json');
+        echo json_encode($respuesta);
+    }
+    /**
+     * 
+     * Estas funciones se utilizan para obtener los datos en tiempo real de todos los proveedores
+     * 
+     */
+    public function getPlantPowerRealtimeSolarEdge($powerStationId)
+    {
+        $respuesta = new Respuesta;
+        try {
+
+            $solarEdgeResponse = $this->solarEdgeController->getPlantPowerRealtime($powerStationId);
+
+            $solarEdgeData = json_decode($solarEdgeResponse);
+
+
+            if ($solarEdgeData != null) {
+                $this->logsController->registrarLog(Logs::INFO, "se han encontrado las gráficas de SolarEdge");
+                $respuesta->success($solarEdgeData);
+            } else {
+                $this->logsController->registrarLog(Logs::INFO, "no se han encontrado las gráficas de SolarEdge");
+                $respuesta->_400($solarEdgeData);
+                $respuesta->message = "No se han encontrado graficas de SolarEdge";
+                http_response_code(400);
+            }
+        } catch (Throwable $e) {
+            $this->logsController->registrarLog(Logs::ERROR, "Error del proveedor de SolarEdge: " + $e->getMessage());
             $respuesta->_500();
             $respuesta->message = "Error en el servidor de algun proveedor";
             http_response_code(500);
@@ -183,6 +234,11 @@ class ApiControladorService
         header('Content-Type: application/json');
         echo json_encode($respuesta);
     }
+    /**
+     * 
+     * Estas funciones se utilizan para obtener los datos de Todas las plantas de cada proveedor
+     * 
+     */
     public function getAllPlantsGoodWe($page = 1, $pageSize = 200)
     {
         $respuesta = new Paginacion();
@@ -344,23 +400,11 @@ class ApiControladorService
         header('Content-Type: application/json');
         echo json_encode($respuesta);
     }
-
-
     /**
-     * Función privada para decodificar respuestas JSON con posible doble codificación
+     * 
+     * Estas funciones recogen los detalles de la planta
+     * 
      */
-    private function decodeJsonResponse($response)
-    {
-        $decodedData = json_decode($response, true);
-
-        if (is_string($decodedData)) {
-            $decodedData = json_decode($decodedData, true);
-        }
-
-        return $decodedData;
-    }
-
-
     public function getSiteDetail($id, $proveedor)
     {
         $respuesta = new Respuesta;
@@ -414,7 +458,6 @@ class ApiControladorService
         header('Content-Type: application/json');
         echo json_encode($respuesta);
     }
-
     public function getSiteDetailCliente($usuarioId, $idPlanta, $proveedor)
     {
         $respuesta = new Respuesta;
@@ -471,23 +514,11 @@ class ApiControladorService
         header('Content-Type: application/json');
         echo json_encode($respuesta, true);
     }
-
-
-    public function getSiteEnergy($siteId, $startDate, $endDate)
-    {
-        $plantsSolarEdge = $this->solarEdgeController->getSiteEnergy($siteId, $startDate, $endDate);
-        echo $plantsSolarEdge;
-    }
-    public function getQuarterHourlyEnergy($siteId, $startDate, $endDate)
-    {
-        $plantsSolarEdge = $this->solarEdgeController->getQuarterHourlyEnergy($siteId, $startDate, $endDate);
-        echo $plantsSolarEdge;
-    }
-    public function getYearlyEnergy($siteId, $startDate, $endDate)
-    {
-        $plantsSolarEdge = $this->solarEdgeController->getYearlyEnergy($siteId, $startDate, $endDate);
-        echo $plantsSolarEdge;
-    }
+    /**
+     * 
+     * Estas funciones se utilizan para procesar las plantas todas con el mismo formato de salida 'mapear el array'
+     * 
+     */
     //Aquí va la lógica de las apis conversiones etc.. (Lista plantas Admin)
     public function processPlants(array $goodWeData, array $solarEdgeData, array $victronEnergyData): array
     {
@@ -722,7 +753,9 @@ class ApiControladorService
 
         return $plants;
     }
-
+    /**
+     * Estas funciones se utilizan para mapear el codigo de status
+     */
     // Función para mapear el estado de GoodWe a una descripción legible
     private function mapGoodWeStatus($statusCode) {
         switch ($statusCode) {
@@ -750,6 +783,60 @@ class ApiControladorService
             default:
                 return 'unknown';
         }
+    }
+
+    /**
+     * Estas funciones se utilizan para mapear las gráficas
+     */
+    //acceso graficas de Victron Energy 
+    public function getCuerpoGraficaVictronEnergy()
+    {
+        // Obtén los datos JSON del cuerpo de la solicitud POST
+        $json = file_get_contents('php://input');
+
+        // Decodifica el JSON en un array o un objeto PHP
+        $data = json_decode($json, true); // El segundo parámetro true convierte el JSON a un array asociativo
+
+        // Verifica si los datos fueron decodificados correctamente
+        if ($data === null) {
+            return null;
+        }
+
+        // Verifica si las claves existen en el array
+        $id = isset($data['id']) ? $data['id'] : null;
+        $tipo = isset($data['type']) ? $data['type'] : null;
+        $fechaInicio = isset($data['fechaInicio']) ? strtotime($data['fechaInicio']) : strtotime($data['fechaInicio']);
+        $fechaFin = isset($data['fechaFin']) ? strtotime($data['fechaFin']) : strtotime($data['fechaFin']);
+
+        // Si alguna de las claves no existe, retorna null
+        if ($id === null || $tipo === null || $fechaInicio === null || $fechaFin === null) {
+            return null;
+        }
+        switch ($data['type']) {
+            case "resumen_del_sistema":
+                $type = "live_feed";
+                break;
+            case "consumo":
+                $type = "consumption";
+                break;
+            case "solar":
+                $type = "solar_yield";
+                break;
+            case "red":
+                $type = "grid";
+                break;
+            default:
+                $type = "live_feed";//Valor por defecto
+            break;
+        }
+
+        // Si todo está presente, puedes proceder con el uso de las variables
+        return [
+            'id' => $id,
+            'fechaInicio' => $fechaInicio,
+            'fechaFin' => $fechaFin,
+            'type' => $type
+        ];
     }
     //acceso graficas de GoodWe 
     public function getChartByPlantCuerpo()
@@ -958,5 +1045,18 @@ class ApiControladorService
             'endTime' => isset($endTime) ? $endTime : null,
             'startTime' => isset($startTime) ? $startTime : null
         ];
+    }
+    /**
+     * Función privada para decodificar respuestas JSON con posible doble codificación
+     */
+    private function decodeJsonResponse($response)
+    {
+        $decodedData = json_decode($response, true);
+
+        if (is_string($decodedData)) {
+            $decodedData = json_decode($decodedData, true);
+        }
+
+        return $decodedData;
     }
 }
