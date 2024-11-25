@@ -45,8 +45,8 @@ class GoodWeController {
         $decodedResult = json_decode($result, true);
     
         // Verificar si existe el nodo "info" con el campo "status"
-        if (isset($decodedResult['data']['info']['status'])) {
-            $decodedResult['data']['info']['status'] = $this->mapGoodWeStatus($decodedResult['data']['info']['status']);
+        if (isset($decodedResult['data']['powercontrol_status'])) {
+            $decodedResult['data']['powercontrol_status'] = $this->mapGoodWeStatus($decodedResult['data']['powercontrol_status']);
         }
 
         // Añadir el campo "organizacion" al resultado
