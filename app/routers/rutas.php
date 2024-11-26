@@ -304,9 +304,9 @@ switch ($method) {
                     if ($authMiddleware->verificarAdmin()) {
                         $idPlanta = $_GET['idplanta'];
                         $idUsuario = $_GET['idusuario'];
-                        $proveedor = $_GET['proveedor'];
+                        $idProveedor = $_GET['proveedor'];
                         $usuarios = new UsuariosController;
-                        $usuarios->relacionarUsers($idUsuario, $idPlanta, $proveedor);
+                        $usuarios->relacionarUsers($idUsuario, $idPlanta, $idProveedor);
                     } else {
                         $respuesta->_403();
                         $respuesta->message = 'No tienes permisos para hacer esta consulta';

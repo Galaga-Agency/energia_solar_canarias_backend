@@ -15,19 +15,19 @@ class UsuariosDB {
     * @param string $proveedor El nombre del proveedor
     * @return bool true en caso de éxito o false en caso de error
     */
-    public function relacionarUsers($idPlanta, $idUsuario, $proveedor) {
+    public function relacionarUsers($idPlanta, $idUsuario, $idProveedor) {
         try {
             $conexion = new Conexion();
             $conn = $conexion->getConexion();
 
-            $query = "INSERT INTO plantas_asociadas(usuario_id, planta_id, nombre_proveedor) VALUES (?, ?, ?)";
+            $query = "INSERT INTO plantas_asociadas(usuario_id, planta_id, proveedor_id) VALUES (?, ?, ?)";
             $stmt = $conn->prepare($query);
             if (!$stmt) {
                 throw new Exception("Error en la preparación de la consulta: " . $conn->error);
             }
         
             // Vincula los parámetros: 'i' para enteros (usuario y planta) y 's' para string (proveedor)
-            $stmt->bind_param('iis', $idUsuario, $idPlanta, $proveedor);
+            $stmt->bind_param('iii', $idUsuario, $idPlanta, $proveedor);
         
             // Ejecuta la consulta
             if (!$stmt->execute()) {
@@ -487,16 +487,16 @@ class UsuariosDB {
      *  @param string $clase verifica que la clase existe
      *  @return bool True en caso de que la clase exista, false en caso de que la clase no exista
      */ 
-    public function comprobarUsuarioAsociadoPlanta($usuarioId,$plantaId,$proveedor) {
+    public function comprobarUsuarioAsociadoPlanta($usuarioId,$plantaId,$idProveedor) {
         try {
             $conexion = new Conexion();
             $conn = $conexion->getConexion();
     
             // Consulta para verificar si la clase existe
-            $query = "SELECT * FROM plantas_asociadas where planta_id = ? && usuario_id = ? && nombre_proveedor = ?";
+            $query = "SELECT * FROM plantas_asociadas where planta_id = ? && usuario_id = ? && idProveedor = ?";
     
             $stmt = $conn->prepare($query);
-            $stmt->bind_param('sis', $plantaId,$usuarioId,$proveedor); // Cambiamos a 's' para string 'i' para int
+            $stmt->bind_param('sii', $plantaId,$usuarioId,$idProveedor); // Cambiamos a 's' para string 'i' para int
             $stmt->execute();
             $result = $stmt->get_result();
     
