@@ -14,7 +14,7 @@ class UsuariosController
         $this->usuarios = new Usuarios;
     }
 
-    public function relacionarUsers($idUsuario, $idPlanta, $proveedor){
+    public function relacionarUsers($idUsuario, $idPlanta, $idProveedor){
          // Crear una instancia del controlador de logs
          $logsController = new LogsController();
          // Instanciar el objeto de acceso a la base de datos
@@ -38,7 +38,7 @@ class UsuariosController
             echo json_encode($respuesta);
             return;
         }
-        if ($usuariosDB->comprobarUsuarioAsociadoPlanta($idUsuario, $idPlanta, $proveedor)) {
+        if ($usuariosDB->comprobarUsuarioAsociadoPlanta($idUsuario, $idPlanta, $idProveedor)) {
             $logsController->registrarLog(Logs::WARNING, "El usuario que se intenta relacionar ya esta relacionado con esa misma planta");
             $respuesta = new Respuesta();
             $respuesta->_400();
@@ -47,7 +47,7 @@ class UsuariosController
             echo json_encode($respuesta);
             return;
         }
-         $usuario = $usuariosDB->relacionarUsers($idPlanta, $idUsuario, $proveedor);
+         $usuario = $usuariosDB->relacionarUsers($idPlanta, $idUsuario, $idProveedor);
          if($usuario != false){
              $logsController->registrarLog(Logs::POST, "El usuario se a relacionado con la planta correctamente");
              $respuesta = new Respuesta();
