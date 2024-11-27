@@ -112,12 +112,37 @@ class Conexion
         $this->conexion = $conexion;
     }
 
+    //crear jwt 180 dias
     static public function jwt($id, $email)
     {
         $time = time(); // Devuelve la fecha Unix actual
         $token = array(
             "iat" => $time, // Tiempo en que inicia el token
             "exp" => $time + (60 * 60 * 24 * 180), // Tiempo en el que expira el token (180 días)
+            "data" => [
+                "id" => $id,
+                "email" => $email
+            ]
+        );
+
+        $jwt = JWT::encode($token, self::$secret_key, self::$algorithm);
+
+        return $jwt;
+        //echo '<pre>'; print_r($jwt); echo '</pre>'; // Sirve para saber que nos devuelve el token
+    }
+
+    static public function jwtPermanente($id, $email)
+    {
+        $time = time(); // Devuelve la fecha Unix actual
+
+        // Crear un "JWT ID" único para identificar este token
+        $jti = uniqid(); // Genera un ID único para el JWT
+
+        // Crear el payload del JWT
+        $token = array(
+            "iat" => $time,  // Tiempo de emisión
+            "exp" => null,    // Expiración en null para hacerlo "permanente"
+            "jti" => $jti,    // El ID único para este token se utilizará para validar el token si lo dan / damos de baja en la base de datos
             "data" => [
                 "id" => $id,
                 "email" => $email
