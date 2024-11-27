@@ -1,5 +1,6 @@
 <?php
-
+// Mostrar errores en pantalla
+//ini_set('display_errors', 1); // Activar la visualización de errores
 require_once "../../config/configApi.php";
 require_once "../middlewares/autenticacion.php";
 require_once "../controllers/usuarios.php";
@@ -18,7 +19,7 @@ require_once "../enums/Logs.php";
 require_once "../models/OpenMeteo.php";
 
 $respuesta = new Respuesta;
-$authMiddleware = new Autenticacion();
+$authMiddleware = new Autenticacion;
 $logsDB = new LogsDB;
 
 // Definir el array de proveedores de manera global
@@ -46,6 +47,17 @@ if (strpos($request, $baseDir) === 0) {
     $request = substr($request, strlen($baseDir));
     $request = trim($request, '/'); // Elimina cualquier barra adicional al inicio o final
 }
+
+$conexion = new Conexion;
+$conn = $conexion->getConexion();
+if ($conn == null) {
+    $respuesta = new Respuesta;
+    $respuesta->_500();
+    $respuesta->message = 'El servidor no se a podido conectar exitosamente';
+    json_encode($respuesta);
+    return;
+}
+
 // Rutas y endpoints
 switch ($method) {
     case 'GET':
@@ -262,7 +274,19 @@ switch ($method) {
                 $tokenController = new TokenController($postBody);
                 $tokenController->validarToken();
                 break;
-
+            case ($request === 'usuario/bearerToken'):
+                if ($authMiddleware->verificarTokenUsuarioActivo()) {
+                    // Verificar si el usuario es administrador
+                    if ($authMiddleware->verificarAdmin()) {
+                        
+                    } else {
+                        $respuesta->_403();
+                        $respuesta->message = 'No tienes permisos para hacer esta consulta';
+                        http_response_code($respuesta->code);
+                        echo json_encode($respuesta);
+                    }
+                }
+                break;
             case ($request === 'usuarios'):
                 if ($authMiddleware->verificarTokenUsuarioActivo()) {
                     // Verificar si el usuario es administrador

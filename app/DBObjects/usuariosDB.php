@@ -374,7 +374,7 @@ class UsuariosDB {
         try {
             $conexion = new Conexion();
             $conn = $conexion->getConexion();
-            
+
             // Consulta para verificar el estado del usuario
             $query = "SELECT activo, eliminado FROM usuarios WHERE usuario_id = ?";
             

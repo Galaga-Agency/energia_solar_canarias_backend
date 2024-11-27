@@ -86,7 +86,13 @@
       "descripcion": "La solicitud POST /usuarios/relacionar permite asociar una planta específica a un usuario en el sistema. (solo para administradores)",
       "idplanta":"(requerido): ID único de la planta que se va a asociar.",
       "idusuario":"(requerido): ID único del usuario al que se asociará la planta.",
-      "proveedor":"(requerido): Nombre del proveedor de la planta."
+      "proveedor":"(requerido): ID único del proveedor de la planta."
+    },
+    "bearer_token": {
+      "titulo_login": "POST /usuario/bearerToken",
+      "descripcion": "Este endpoint proporciona al usuario un token que no caduca o que caduca cuando el usuario quiera esto se utiliza para dar al usuario una posible implementación de nuestra api en su propio código",
+      "nombre_usuario":"(requerido): nombre del usuario",
+      "password_usuario":"(requerido): contraseña del usuario"
     }  
   },
   "en": {
@@ -176,7 +182,13 @@
       "descripcion": "The POST /usuarios/relacionar request allows associating a specific plant with a user in the system. (administrators only)",
       "idplanta":"(required): Unique ID of the plant to be associated.",
       "idusuario":"(required): Unique ID of the user with whom the plant will be associated.",
-      "proveedor":"(required): Name of the plant provider."
-    }
+      "proveedor":"(required): Unique ID of the plant provider."
+    },
+    "bearer_token": {
+      "titulo_login": "POST /usuario/bearerToken",
+      "descripcion": "Este endpoint proporciona al usuario un token que no caduca o que caduca cuando el usuario quiera esto se utiliza para dar al usuario una posible implementación de nuestra api en su propio código",
+      "nombre_usuario":"(requerido): nombre del usuario",
+      "password_usuario":"(requerido): contraseña del usuario"
+    }  
   }
 }

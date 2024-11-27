@@ -47,7 +47,7 @@ class LoginController
                 $tokenUser = $token->getLastTokenUser($this->dataUsuario['id']);
                 $this->dataUsuario['tokenLogin'] = $tokenUser['token_login'];
                 $this->dataUsuario['timeTokenLogin'] = $tokenUser['time_token_login'];
-                $responseCorreo = $this->correo->login($this->dataUsuario, $this->idiomaUsuario, $this->token->value);
+                $responseCorreo = $this->correo->login($this->dataUsuario, $this->token->value, $this->idiomaUsuario,);
                 http_response_code($responseCorreo->code);
                 echo json_encode($responseCorreo);
             } else {
