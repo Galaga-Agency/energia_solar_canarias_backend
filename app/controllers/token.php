@@ -9,7 +9,6 @@ class TokenController
 {
     private $datos;
     private $token;
-    private $dataUsuario;
     private $id;
     private $validToken;
     public $respuesta;
