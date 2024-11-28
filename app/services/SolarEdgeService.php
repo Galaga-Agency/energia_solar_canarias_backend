@@ -33,6 +33,10 @@ class SolarEdgeService {
     
         // Ajustar fechas según el valor de $dia
         switch ($dia) {
+            case "QUARTER_OF_AN_HOUR":
+                // Si no hay fecha de inicio, tomar ayer a las 23:59:59
+                $fechaSinFormatearInicio = $fechaSinFormatearInicio ?? new DateTime('today');
+                break;
             case "DAY":
                 // Si no hay fecha de inicio, tomar ayer a las 23:59:59
                 $fechaSinFormatearInicio = $fechaSinFormatearInicio ?? new DateTime('yesterday 23:59:59');
@@ -72,6 +76,20 @@ class SolarEdgeService {
             return ['error' => $e->getMessage()];
         }
     }
+
+        //Recoge la grafica de la planta
+        public function getPowerConsumption($siteId, $dia, $fechaInicioFormateada = null, $fechaFinFormateada = null) {
+            // Construir la URL utilizando el formato definido
+            $url = $this->solarEdge->getUrl() . "site/$siteId/currentPowerFlow?timeUnit=$dia&startDate=$fechaInicioFormateada&endDate=$fechaFinFormateada&api_key=" . $this->solarEdge->getApiKey();
+        
+            // Realizar la solicitud
+            try {
+                $response = $this->httpClient->get($url);
+                return json_decode($response);
+            } catch (Exception $e) {
+                return ['error' => $e->getMessage()];
+            }
+        }
     
     //Recoge la grafica 'Custom' de la planta
     public function getPowerDashboardCustom($chartField, $foldUp, $timeUnit, $siteId, $billingCycle, $period, $periodDuration, $startTime, $endTime) {
