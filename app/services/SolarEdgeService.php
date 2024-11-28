@@ -14,6 +14,18 @@ class SolarEdgeService
     }
 
     //Método que devuelve la potencia de las plantas que esten en funcionamiento
+    public function getPlantPowerBenefits($siteId)
+    {
+        $url = $this->solarEdge->getUrl() . "site/$siteId/envBenefits?systemUnits=Metrics&api_key=" . $this->solarEdge->getApiKey();
+        try {
+            $response = $this->httpClient->get($url);
+            return json_decode($response);
+        } catch (Exception $e) {
+            return ['error' => $e->getMessage()];
+        }
+    }
+
+    //Método que devuelve la potencia de las plantas que esten en funcionamiento
     public function getPlantPowerRealtime($siteId)
     {
         $url = $this->solarEdge->getUrl() . "site/$siteId/currentPowerFlow?api_key=" . $this->solarEdge->getApiKey();
