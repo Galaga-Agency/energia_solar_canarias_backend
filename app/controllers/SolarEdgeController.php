@@ -63,58 +63,54 @@ class SolarEdgeController
     }
     //Método para obtener la grafica
     public function getPowerDashboard($siteId, $dia, $fechaFin, $fechaInicio)
-    {
+{
+    try {
         $this->logsController->registrarLog(Logs::INFO, "Accede a la API de SolarEdge para gráficas");
 
         // Obtenemos los datos de las dos fuentes
         $data1 = $this->solarEdgeService->getPowerDashboard($siteId, $dia, $fechaFin, $fechaInicio);
         $data2 = $this->solarEdgeService->getPowerConsumption($siteId, $dia, $fechaFin, $fechaInicio);
+        $data3 = $this->solarEdgeService->getPowerBattery($siteId, $dia, $fechaFin, $fechaInicio);
+        $data4 = $this->solarEdgeService->getPowerExport($siteId, $dia, $fechaFin, $fechaInicio);
+        $data5 = $this->solarEdgeService->getPowerImport($siteId, $dia, $fechaFin, $fechaInicio);
+        $data6 = $this->solarEdgeService->getPowerSelfConsumption($siteId, $dia, $fechaFin, $fechaInicio);
 
         // Convertimos los objetos stdClass a arrays
-        $data1 = json_decode(json_encode($data1), true);
-        $data2 = json_decode(json_encode($data2), true);
+        $solarProduction = isset($data1) ? json_decode(json_encode($data1), true) : [];
+        $consumption = isset($data2) ? json_decode(json_encode($data2), true) : [];
+        $battery = isset($data3) ? json_decode(json_encode($data3), true) : [];
+        $export = isset($data4) ? json_decode(json_encode($data4), true) : [];
+        $import = isset($data5) ? json_decode(json_encode($data5), true) : [];
+        $selfConsumption = isset($data6) ? json_decode(json_encode($data6), true) : [];
 
-        // Validamos las claves en ambos datasets
-        $values1 = isset($data1['energy']['values']) ? $data1['energy']['values'] : [];
-        $meters = isset($data2['energyDetails']['meters']) ? $data2['energyDetails']['meters'] : [];
+        // Validamos las claves específicas
+        $solarProductionValues = $solarProduction['energy']['values'] ?? [];
+        $consumptionMeters = $consumption['energyDetails']['meters'][0]['values'] ?? [];
+        $batteryValues = $battery['storageData']['batteries'] ?? [];
+        $exportValues = $export['energyDetails']['meters'][0]['values'] ?? [];
+        $importValues = $import['energyDetails']['meters'][0]['values'] ?? [];
+        $selfConsumptionValues = $selfConsumption['energyDetails']['meters'][0]['values'] ?? [];
 
-        // Extraemos los valores de consumo del segundo dataset
-        $values2 = [];
-        foreach ($meters as $meter) {
-            if ($meter['type'] === 'Consumption') {
-                $values2 = $meter['values'];
-                break;
-            }
-        }
+        // Construimos la salida separando cada conjunto de datos
+        $result = [
+            'consumption' => $consumptionMeters,
+            'solarProduction' => $solarProductionValues,
+            'storagePower' => $batteryValues,
+            'export' => $exportValues,
+            'import' => $importValues,
+            'selfConsumption' => $selfConsumptionValues
+        ];
 
-        // Fusionamos los datos por fecha
-        $mergedData = [];
-
-        foreach ($values1 as $value1) {
-            // Fecha del primer dataset
-            $date = $value1['date'];
-
-            // Buscamos valores correspondientes en el segundo dataset
-            $consumption = array_filter($values2, function ($item) use ($date) {
-                return $item['date'] === $date;
-            });
-
-            // Tomamos el primer valor encontrado o asignamos null
-            $consumption = reset($consumption);
-
-            // Fusionamos los datos
-            $mergedData[] = [
-                'date' => $date,
-                'generated' => $value1['value'] ?? 0,
-                'consumed' => $consumption['value'] ?? 0,
-                'net' => ($value1['value'] ?? 0) - ($consumption['value'] ?? 0),
-            ];
-        }
-
-        // Enviamos los datos fusionados como JSON
+        // Enviamos los datos como JSON
         header('Content-Type: application/json');
-        return json_encode(['energy' => $mergedData], JSON_PRETTY_PRINT);
+        return json_encode($result, JSON_PRETTY_PRINT);
+
+    } catch (Exception $e) {
+        $this->logsController->registrarLog(Logs::ERROR, "Error al obtener datos de SolarEdge: " . $e->getMessage());
+        return json_encode(['error' => 'No se pudieron obtener los datos'], JSON_PRETTY_PRINT);
     }
+}
+
 
 
     //Método para obtener los datos de todas las plantas
