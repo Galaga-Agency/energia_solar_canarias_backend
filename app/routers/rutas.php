@@ -62,14 +62,46 @@ if ($conn == null) {
 switch ($method) {
     case 'GET':
         switch (true) {
+            case (preg_match('/^plant\/benefits\/([\w-]+)$/', $request, $matches) && isset($_GET['proveedor']) ? true : false):
+                $powerStationId = $matches[1];
+                //Verificamos que existe el usuario CREADOR del token y sino manejamos el error dentro de la funcion
+                if ($authMiddleware->verificarTokenUsuarioActivo()) {
+                    if (isset($_GET['proveedor'])) {
+                        $apiControladorService = new ApiControladorService;
+                        $proveedor = $_GET['proveedor'];
+                        switch ($proveedor) {
+                            case $proveedores['GoodWe']:
+                                $respuesta->_404();
+                                $respuesta->message = 'No hay beneficios en la planta de GoodWe';
+                                http_response_code($respuesta->code);
+                                echo json_encode($respuesta);
+                                break;
+                            case $proveedores['SolarEdge']:
+                                $apiControladorService->getBenefitsSolarEdge($powerStationId);
+                                break;
+                            case $proveedores['VictronEnergy']:
+                                $respuesta->_404();
+                                $respuesta->message = 'No hay beneficios en la planta de VictronEnergy';
+                                http_response_code($respuesta->code);
+                                echo json_encode($respuesta);
+                                break;
+                            default:
+                                $respuesta->_404();
+                                $respuesta->message = 'El proveedor no es valido';
+                                http_response_code($respuesta->code);
+                                echo json_encode($respuesta);
+                                break;
+                        }
+                    }
+                }
+                break;
             case ($request === 'logs'):
                 //Verificamos que existe el usuario CREADOR del token y sino manejamos el error dentro de la funcion
                 if ($authMiddleware->verificarTokenUsuarioActivo()) {
                     // Verificar si el usuario es administrador
                     if ($authMiddleware->verificarAdmin()) {
-                        $clasesDB = new LogsDB;
-                        $clases = $logsDB->getLogs();
-                        $respuesta->success($clases);
+                        $logs = $logsDB->getLogs();
+                        $respuesta->success($logs);
                         http_response_code($respuesta->code);
                         echo json_encode($respuesta);
                     } else {
@@ -278,7 +310,6 @@ switch ($method) {
                 if ($authMiddleware->verificarTokenUsuarioActivo()) {
                     // Verificar si el usuario es administrador
                     if ($authMiddleware->verificarAdmin()) {
-                        
                     } else {
                         $respuesta->_403();
                         $respuesta->message = 'No tienes permisos para hacer esta consulta';
