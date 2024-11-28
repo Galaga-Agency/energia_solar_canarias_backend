@@ -1,17 +1,29 @@
 <?php
+
+require_once './../controllers/ProveedoresController.php';
+
 class VictronEnergy{
     private $url;
     private $api_key;
     private $id_access_token;
     private $id_installation;
+    private $proveedoresController;
 
     //definimos el constructor de la clase
     public function __construct()
     {
         $this->url = 'https://vrmapi.victronenergy.com/v2/';
-        $this->api_key = 'Token ***REMOVED***';
         $this->id_access_token = 0;
         $this->id_installation = 58178;
+
+        // Inicializar el controlador de proveedores
+        $this->proveedoresController = new ProveedoresController();
+
+        //contiene un diccionario con tokenAuth y con tokenRenovation si estos estan en la bbdd
+        $arrayToken = $this->proveedoresController->getTokenProveedor('VictronEnergy');
+
+        // Obtener el token desde la base de datos y asignarlo a api_key
+        $this->api_key = $arrayToken['tokenAuth'];
     }
 
     //definimos el getter y setter

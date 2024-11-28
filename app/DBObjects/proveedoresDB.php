@@ -59,7 +59,7 @@ class ProveedoresDB {
             $conexion = new Conexion();
             $conn = $conexion->getConexion();
     
-            $query = "SELECT bearertoken.tokenAuth as token, bearertoken.tokenRenovation as tokenRenovation from proveedores inner join bearertoken on proveedores.token_id = bearertoken.id where proveedores.nombre = ?;";
+            $query = "SELECT tokenAuth, tokenRenovation from proveedores inner join bearertoken on proveedores.token_id = bearertoken.id where proveedores.nombre = ?;";
             $stmt = $conn->prepare($query);
             $stmt->bind_param("s", $nombreProveedor);
             if (!$stmt) {
