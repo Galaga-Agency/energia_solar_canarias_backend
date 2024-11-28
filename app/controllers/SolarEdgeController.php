@@ -6,16 +6,19 @@ require_once '../services/SolarEdgeService.php';
  * @param $endDate = la fecha de fin
  * @return json_encode con los datos que saca desde el servicio
  */
-class SolarEdgeController {
+class SolarEdgeController
+{
     private $solarEdgeService;
     private $logsController;
 
-    public function __construct() {
+    public function __construct()
+    {
         $this->solarEdgeService = new SolarEdgeService();
         $this->logsController = new LogsController();
     }
 
-    public function getPlantPowerRealtime($powerStationId){
+    public function getPlantPowerRealtime($powerStationId)
+    {
         $this->logsController->registrarLog(Logs::INFO, " accede a la api de solarEdge power en tiempo real");
         $data = $this->solarEdgeService->getPlantPowerRealtime($powerStationId);
         header('Content-Type: application/json');
@@ -23,7 +26,8 @@ class SolarEdgeController {
     }
 
     // Método para obtener los detalles de una planta con id $siteId
-    public function getSiteDetails($siteId) {
+    public function getSiteDetails($siteId)
+    {
         // Registrar en logs el acceso a la API
         $this->logsController->registrarLog(Logs::INFO, "Accede a la API de SolarEdge para obtener los detalles de una planta");
 
@@ -50,36 +54,87 @@ class SolarEdgeController {
     }
 
     //Método para obtener la grafica
-    public function getPowerDashboardCustom($chartField, $foldUp, $timeUnit, $siteId, $billingCycle, $period, $periodDuration, $startTime, $endTime) {
+    public function getPowerDashboardCustom($chartField, $foldUp, $timeUnit, $siteId, $billingCycle, $period, $periodDuration, $startTime, $endTime)
+    {
         $this->logsController->registrarLog(Logs::INFO, " accede a la api de solarEdge graficas personalizadas");
-        $data = $this->solarEdgeService->getPowerDashboardCustom($chartField, $foldUp, $timeUnit,$siteId, $billingCycle, $period, $periodDuration, $startTime, $endTime);
+        $data = $this->solarEdgeService->getPowerDashboardCustom($chartField, $foldUp, $timeUnit, $siteId, $billingCycle, $period, $periodDuration, $startTime, $endTime);
         header('Content-Type: application/json');
         return json_encode($data);
     }
     //Método para obtener la grafica
-    public function getPowerDashboard($siteId, $dia, $fechaFin,$fechaInicio) {
-        $this->logsController->registrarLog(Logs::INFO, " accede a la api de solarEdge graficas");
-        $data = $this->solarEdgeService->getPowerDashboard($siteId,$dia,$fechaFin,$fechaInicio);
+    public function getPowerDashboard($siteId, $dia, $fechaFin, $fechaInicio)
+    {
+        $this->logsController->registrarLog(Logs::INFO, "Accede a la API de SolarEdge para gráficas");
+
+        // Obtenemos los datos de las dos fuentes
+        $data1 = $this->solarEdgeService->getPowerDashboard($siteId, $dia, $fechaFin, $fechaInicio);
+        $data2 = $this->solarEdgeService->getPowerConsumption($siteId, $dia, $fechaFin, $fechaInicio);
+
+        // Convertimos los objetos stdClass a arrays
+        $data1 = json_decode(json_encode($data1), true);
+        $data2 = json_decode(json_encode($data2), true);
+
+        // Validamos las claves en ambos datasets
+        $values1 = isset($data1['energy']['values']) ? $data1['energy']['values'] : [];
+        $meters = isset($data2['energyDetails']['meters']) ? $data2['energyDetails']['meters'] : [];
+
+        // Extraemos los valores de consumo del segundo dataset
+        $values2 = [];
+        foreach ($meters as $meter) {
+            if ($meter['type'] === 'Consumption') {
+                $values2 = $meter['values'];
+                break;
+            }
+        }
+
+        // Fusionamos los datos por fecha
+        $mergedData = [];
+
+        foreach ($values1 as $value1) {
+            // Fecha del primer dataset
+            $date = $value1['date'];
+
+            // Buscamos valores correspondientes en el segundo dataset
+            $consumption = array_filter($values2, function ($item) use ($date) {
+                return $item['date'] === $date;
+            });
+
+            // Tomamos el primer valor encontrado o asignamos null
+            $consumption = reset($consumption);
+
+            // Fusionamos los datos
+            $mergedData[] = [
+                'date' => $date,
+                'generated' => $value1['value'] ?? 0,
+                'consumed' => $consumption['value'] ?? 0,
+                'net' => ($value1['value'] ?? 0) - ($consumption['value'] ?? 0),
+            ];
+        }
+
+        // Enviamos los datos fusionados como JSON
         header('Content-Type: application/json');
-        return json_encode($data);
+        return json_encode(['energy' => $mergedData], JSON_PRETTY_PRINT);
     }
+
+
     //Método para obtener los datos de todas las plantas
-    public function getAllPlants($page = 1, $pageSize=200) {
+    public function getAllPlants($page = 1, $pageSize = 200)
+    {
         $this->logsController->registrarLog(Logs::INFO, " accede a la api de solarEdge todas las plantas");
         $data = $this->solarEdgeService->getAllPlants($page, $pageSize);
         header('Content-Type: application/json');
         return json_encode($data);
     }
     // Función para mapear el estado de SolarEdge a una descripción legible
-private function mapSolarEdgeStatus($status) {
-    switch ($status) {
-        case 'PendingCommunication':
-            return 'waiting';
-        case 'Active':
-            return 'working';
-        default:
-            return 'unknown';
+    private function mapSolarEdgeStatus($status)
+    {
+        switch ($status) {
+            case 'PendingCommunication':
+                return 'waiting';
+            case 'Active':
+                return 'working';
+            default:
+                return 'unknown';
+        }
     }
-} 
 }
-?>
