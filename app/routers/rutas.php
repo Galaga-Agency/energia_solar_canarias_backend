@@ -65,7 +65,7 @@ switch ($method) {
             case (preg_match('/^plant\/benefits\/([\w-]+)$/', $request, $matches) && isset($_GET['proveedor']) ? true : false):
                 $powerStationId = $matches[1];
                 //Verificamos que existe el usuario CREADOR del token y sino manejamos el error dentro de la funcion
-                if ($authMiddleware->verificarTokenUsuarioActivo()) {
+                if ($authMiddleware->verificarTokenUsuarioActivo() != false) {
                     if (isset($_GET['proveedor'])) {
                         $apiControladorService = new ApiControladorService;
                         $proveedor = $_GET['proveedor'];
@@ -93,28 +93,71 @@ switch ($method) {
                                 break;
                         }
                     }
+                }else{
+                    $respuesta->_403();
+                    $respuesta->message = 'El token no se puede authentificar con exito';
+                    http_response_code($respuesta->code);
+                    echo json_encode($respuesta);
                 }
                 break;
-            case ($request === 'logs'):
+
+            case (preg_match('/^usuario\/bearerToken/', $request, $matches) ? true : false):
                 //Verificamos que existe el usuario CREADOR del token y sino manejamos el error dentro de la funcion
-                if ($authMiddleware->verificarTokenUsuarioActivo()) {
-                    // Verificar si el usuario es administrador
-                    if ($authMiddleware->verificarAdmin()) {
-                        $logs = $logsDB->getLogs();
-                        $respuesta->success($logs);
-                        http_response_code($respuesta->code);
-                        echo json_encode($respuesta);
-                    } else {
+                $headers = getallheaders();
+                if (isset($headers['Authorization']) && preg_match('/Bearer\s(\S+)/', $headers['Authorization'], $matches)) {
+                    if ($authMiddleware->verificarTokenUsuarioActivo() != false) {
+                        // Verificar si el usuario es administrador
+                        if ($authMiddleware->verificarAdmin()) {
+                            $authMiddleware->upsertApiAcceso();
+                        } else {
+                            $respuesta->_403();
+                            $respuesta->message = 'No tienes permisos para hacer esta consulta';
+                            http_response_code($respuesta->code);
+                            echo json_encode($respuesta);
+                        }
+                    }else{
                         $respuesta->_403();
-                        $respuesta->message = 'No tienes permisos para hacer esta consulta';
+                        $respuesta->message = 'El token no se puede authentificar con exito';
                         http_response_code($respuesta->code);
                         echo json_encode($respuesta);
                     }
+                } else {
+                    $respuesta->_403();
+                    $respuesta->message = 'Solo se puede solicitar un Token permanente mediante Bearer Token';
+                    http_response_code($respuesta->code);
+                    echo json_encode($respuesta);
+                }
+                break;
+            case ($request === 'logs'):
+                try {
+                    //Verificamos que existe el usuario CREADOR del token y sino manejamos el error dentro de la funcion
+                    if ($authMiddleware->verificarTokenUsuarioActivo() != false) {
+                        if ($authMiddleware->verificarAdmin()) {
+                            $logs = $logsDB->getLogs();
+                            $respuesta->success($logs);
+                            http_response_code($respuesta->code);
+                            echo json_encode($respuesta);
+                        } else {
+                            $respuesta->_403();
+                            $respuesta->message = 'No tienes permisos para hacer esta consulta';
+                            http_response_code($respuesta->code);
+                            echo json_encode($respuesta);
+                        }
+                    }else{
+                        $respuesta->_403();
+                        $respuesta->message = 'El token no se puede authentificar con exito';
+                        http_response_code($respuesta->code);
+                        echo json_encode($respuesta);
+                    }
+                } catch (Exception $e) {
+                    $respuesta->_500($e->getMessage());
+                    http_response_code($respuesta->code);
+                    echo json_encode($respuesta);
                 }
                 break;
             case ($request === 'clases'):
                 //Verificamos que existe el usuario CREADOR del token y sino manejamos el error dentro de la funcion
-                if ($authMiddleware->verificarTokenUsuarioActivo()) {
+                if ($authMiddleware->verificarTokenUsuarioActivo()!= false) {
                     // Verificar si el usuario es administrador
                     if ($authMiddleware->verificarAdmin()) {
                         $clasesDB = new ClasesDB;
@@ -128,11 +171,16 @@ switch ($method) {
                         http_response_code($respuesta->code);
                         echo json_encode($respuesta);
                     }
+                }else{
+                    $respuesta->_403();
+                    $respuesta->message = 'El token no se puede authentificar con exito';
+                    http_response_code($respuesta->code);
+                    echo json_encode($respuesta);
                 }
                 break;
             case ($request === 'proveedores'):
                 //Verificamos que existe el usuario CREADOR del token y sino manejamos el error dentro de la funcion
-                if ($authMiddleware->verificarTokenUsuarioActivo()) {
+                if ($authMiddleware->verificarTokenUsuarioActivo()!= false) {
                     // Verificar si el usuario es administrador
                     if ($authMiddleware->verificarAdmin()) {
                         $arrayProveedores = [];
@@ -148,6 +196,11 @@ switch ($method) {
                         http_response_code($respuesta->code);
                         echo json_encode($respuesta);
                     }
+                }else{
+                    $respuesta->_403();
+                    $respuesta->message = 'El token no se puede authentificar con exito';
+                    http_response_code($respuesta->code);
+                    echo json_encode($respuesta);
                 }
                 break;
                 // Nuevo caso para obtener los detalles de una planta por ID
@@ -155,7 +208,7 @@ switch ($method) {
                 $powerStationId = $matches[1];
                 $proveedor = $_GET['proveedor'];
                 // Verificamos que el usuario esté autenticado y sea administrador
-                if ($authMiddleware->verificarTokenUsuarioActivo()) {
+                if ($authMiddleware->verificarTokenUsuarioActivo()!= false) {
                     switch ($proveedor) {
                         case $proveedores['GoodWe']:
                             $goodWe = new ApiControladorService;
@@ -168,6 +221,11 @@ switch ($method) {
                         case $proveedores['VictronEnergy']:
                             break;
                     }
+                }else{
+                    $respuesta->_403();
+                    $respuesta->message = 'El token no se puede authentificar con exito';
+                    http_response_code($respuesta->code);
+                    echo json_encode($respuesta);
                 }
                 break;
                 // Nuevo caso para obtener los detalles de una planta por ID
@@ -175,7 +233,7 @@ switch ($method) {
                 $powerStationId = $matches[1];
                 $proveedor = $_GET['proveedor'];
                 // Verificamos que el usuario esté autenticado y sea administrador
-                if ($authMiddleware->verificarTokenUsuarioActivo()) {
+                if ($authMiddleware->verificarTokenUsuarioActivo()!=false) {
                     if ($authMiddleware->verificarAdmin()) {
                         // Instanciar el controlador de plantas y obtener detalles
                         $solarEdgeController = new ApiControladorService();
@@ -187,11 +245,16 @@ switch ($method) {
                         $solarEdgeController = new ApiControladorService();
                         $solarEdgeController->getSiteDetailCliente($idUsuario, $powerStationId, $proveedor);
                     }
+                }else{
+                    $respuesta->_403();
+                    $respuesta->message = 'El token no se puede authentificar con exito';
+                    http_response_code($respuesta->code);
+                    echo json_encode($respuesta);
                 }
                 break;
             case ($request === 'usuarios'):
                 //Verificamos que existe el usuario CREADOR del token y sino manejamos el error dentro de la funcion
-                if ($authMiddleware->verificarTokenUsuarioActivo()) {
+                if ($authMiddleware->verificarTokenUsuarioActivo()!=false) {
                     // Verificar si el usuario es administrador
                     if ($authMiddleware->verificarAdmin()) {
                         $usuarios = new UsuariosController;
@@ -202,21 +265,31 @@ switch ($method) {
                         http_response_code($respuesta->code);
                         echo json_encode($respuesta);
                     }
+                }else{
+                    $respuesta->_403();
+                    $respuesta->message = 'El token no se puede authentificar con exito';
+                    http_response_code($respuesta->code);
+                    echo json_encode($respuesta);
                 }
                 break;
             case ($request === 'usuario'):
                 //Verificamos que existe el usuario CREADOR del token y sino manejamos el error dentro de la funcion
-                if ($authMiddleware->verificarTokenUsuarioActivo()) {
+                if ($authMiddleware->verificarTokenUsuarioActivo()!=false) {
                     $idUser = $authMiddleware->obtenerIdUsuarioActivo();
                     $usuarios = new UsuariosController;
                     $usuarios->getUser($idUser);
+                }else{
+                    $respuesta->_403();
+                    $respuesta->message = 'El token no se puede authentificar con exito';
+                    http_response_code($respuesta->code);
+                    echo json_encode($respuesta);
                 }
                 break;
 
             case (preg_match('/^usuarios\/(\d+)$/', $request, $matches)):
                 $id = $matches[1];
                 //Verificamos que existe el usuario CREADOR del token y sino manejamos el error dentro de la funcion
-                if ($authMiddleware->verificarTokenUsuarioActivo()) {
+                if ($authMiddleware->verificarTokenUsuarioActivo()!=false) {
                     // Verificar si el usuario es administrador
                     if ($authMiddleware->verificarAdmin()) {
                         $usuarios = new UsuariosController;
@@ -227,12 +300,17 @@ switch ($method) {
                         http_response_code($respuesta->code);
                         echo json_encode($respuesta);
                     }
+                }else{
+                    $respuesta->_403();
+                    $respuesta->message = 'El token no se puede authentificar con exito';
+                    http_response_code($respuesta->code);
+                    echo json_encode($respuesta);
                 }
                 break;
                 //Devuelve una lista de todas las plantas (Admin)
             case ($request === 'plants'):
                 //Verificamos que existe el usuario CREADOR del token y sino manejamos el error dentro de la funcion
-                if ($authMiddleware->verificarTokenUsuarioActivo()) {
+                if ($authMiddleware->verificarTokenUsuarioActivo()!=false) {
                     $admin = $authMiddleware->verificarAdmin();
                     if (isset($_GET['proveedor'])) {
                         $apiControladorService = new ApiControladorService;
@@ -288,6 +366,11 @@ switch ($method) {
                             $apiControladorService->getAllPlantsCliente($idUsuario);
                         }
                     }
+                }else{
+                    $respuesta->_403();
+                    $respuesta->message = 'El token no se puede authentificar con exito';
+                    http_response_code($respuesta->code);
+                    echo json_encode($respuesta);
                 }
                 break;
         }
@@ -306,20 +389,8 @@ switch ($method) {
                 $tokenController = new TokenController($postBody);
                 $tokenController->validarToken();
                 break;
-            case ($request === 'usuario/bearerToken'):
-                if ($authMiddleware->verificarTokenUsuarioActivo()) {
-                    // Verificar si el usuario es administrador
-                    if ($authMiddleware->verificarAdmin()) {
-                    } else {
-                        $respuesta->_403();
-                        $respuesta->message = 'No tienes permisos para hacer esta consulta';
-                        http_response_code($respuesta->code);
-                        echo json_encode($respuesta);
-                    }
-                }
-                break;
             case ($request === 'usuarios'):
-                if ($authMiddleware->verificarTokenUsuarioActivo()) {
+                if ($authMiddleware->verificarTokenUsuarioActivo()!=false) {
                     // Verificar si el usuario es administrador
                     if ($authMiddleware->verificarAdmin()) {
                         $usuarios = new UsuariosController;
@@ -330,10 +401,15 @@ switch ($method) {
                         http_response_code($respuesta->code);
                         echo json_encode($respuesta);
                     }
+                }else{
+                    $respuesta->_403();
+                    $respuesta->message = 'El token no se puede authentificar con exito';
+                    http_response_code($respuesta->code);
+                    echo json_encode($respuesta);
                 }
                 break;
             case ($request === 'clima'):
-                if ($authMiddleware->verificarTokenUsuarioActivo()) {
+                if ($authMiddleware->verificarTokenUsuarioActivo()!=false) {
                     // Decodificar el cuerpo JSON
                     $input = json_decode(file_get_contents("php://input"), true);
                     // Verificar si se proporcionó el campo 'name'
@@ -351,10 +427,15 @@ switch ($method) {
 
                     //Enviar la respuesta en formato json
                     echo $resultado;
+                }else{
+                    $respuesta->_403();
+                    $respuesta->message = 'El token no se puede authentificar con exito';
+                    http_response_code($respuesta->code);
+                    echo json_encode($respuesta);
                 }
                 break;
             case ($request === 'usuarios/relacionar'  && isset($_GET['idplanta']) && isset($_GET['idusuario']) && isset($_GET['proveedor'])):
-                if ($authMiddleware->verificarTokenUsuarioActivo()) {
+                if ($authMiddleware->verificarTokenUsuarioActivo()!=false) {
                     // Verificar si el usuario es administrador
                     if ($authMiddleware->verificarAdmin()) {
                         $idPlanta = $_GET['idplanta'];
@@ -368,12 +449,17 @@ switch ($method) {
                         http_response_code($respuesta->code);
                         echo json_encode($respuesta);
                     }
+                }else{
+                    $respuesta->_403();
+                    $respuesta->message = 'El token no se puede authentificar con exito';
+                    http_response_code($respuesta->code);
+                    echo json_encode($respuesta);
                 }
                 break;
                 // Nuevo caso para obtener las graficas de la planta
             case (preg_match('/^plants\/graficas$/', $request, $matches) && isset($_GET['proveedor'])):
                 // Verificamos que el usuario esté autenticado y sea administrador
-                if ($authMiddleware->verificarTokenUsuarioActivo()) {
+                if ($authMiddleware->verificarTokenUsuarioActivo()!=false) {
                     if ($authMiddleware->verificarAdmin()) {
                         // Instanciar el controlador de plantas y obtener detalles
                         $apiController = new ApiControladorService();
@@ -400,6 +486,11 @@ switch ($method) {
                         $apiController = new ApiControladorService();
                         $apiController->getGraficasGoodWe();
                     }
+                }else{
+                    $respuesta->_403();
+                    $respuesta->message = 'El token no se puede authentificar con exito';
+                    http_response_code($respuesta->code);
+                    echo json_encode($respuesta);
                 }
                 break;
 
@@ -414,17 +505,17 @@ switch ($method) {
 
     case 'PUT':
         switch (true) {
-            case (preg_match('/^products\/(\d+)$/', $request, $matches)):
-                $productId = $matches[1];
-                // Lógica para actualizar un producto específico por ID
-                echo json_encode(['message' => 'Producto actualizado con ID: ' . $productId]);
-                break;
             case ($request === 'usuario'):
                 //Verificamos que existe el usuario CREADOR del token y sino manejamos el error dentro de la funcion
-                if ($authMiddleware->verificarTokenUsuarioActivo()) {
+                if ($authMiddleware->verificarTokenUsuarioActivo()!=false) {
                     $idUser = $authMiddleware->obtenerIdUsuarioActivo();
                     $usuarios = new UsuariosController;
                     $usuarios->actualizarUser($idUser);
+                }else{
+                    $respuesta->_403();
+                    $respuesta->message = 'El token no se puede authentificar con exito';
+                    http_response_code($respuesta->code);
+                    echo json_encode($respuesta);
                 }
                 break;
             case (preg_match('/^usuarios\/(\d+)$/', $request, $matches) ? true : false):
@@ -442,6 +533,11 @@ switch ($method) {
                         http_response_code($respuesta->code);
                         echo json_encode($respuesta);
                     }
+                }else{
+                    $respuesta->_403();
+                    $respuesta->message = 'El token no se puede authentificar con exito';
+                    http_response_code($respuesta->code);
+                    echo json_encode($respuesta);
                 }
                 break;
 
@@ -456,17 +552,17 @@ switch ($method) {
 
     case 'DELETE':
         switch (true) {
-            case (preg_match('/^products\/(\d+)$/', $request, $matches)):
-                $productId = $matches[1];
-                // Lógica para eliminar un producto específico por ID
-                echo json_encode(['message' => 'Producto eliminado con ID: ' . $productId]);
-                break;
             case ($request === 'usuario'):
                 //Verificamos que existe el usuario CREADOR del token y sino manejamos el error dentro de la funcion
-                if ($authMiddleware->verificarTokenUsuarioActivo()) {
+                if ($authMiddleware->verificarTokenUsuarioActivo()!=false) {
                     $idUser = $authMiddleware->obtenerIdUsuarioActivo();
                     $usuarios = new UsuariosController;
                     $usuarios->eliminarUser($idUser);
+                }else{
+                    $respuesta->_403();
+                    $respuesta->message = 'El token no se puede authentificar con exito';
+                    http_response_code($respuesta->code);
+                    echo json_encode($respuesta);
                 }
                 break;
 
@@ -474,7 +570,7 @@ switch ($method) {
                 // Extraer el ID del usuario desde la URL
                 $id = $matches[1];
                 //Verificamos que existe el usuario CREADOR del token y sino manejamos el error dentro de la funcion
-                if ($authMiddleware->verificarTokenUsuarioActivo()) {
+                if ($authMiddleware->verificarTokenUsuarioActivo()!=false) {
                     // Verificar si el usuario es administrador
                     if ($authMiddleware->verificarAdmin()) {
                         $usuarios = new UsuariosController;
@@ -485,6 +581,11 @@ switch ($method) {
                         http_response_code($respuesta->code);
                         echo json_encode($respuesta);
                     }
+                }else{
+                    $respuesta->_403();
+                    $respuesta->message = 'El token no se puede authentificar con exito';
+                    http_response_code($respuesta->code);
+                    echo json_encode($respuesta);
                 }
                 break;
 
