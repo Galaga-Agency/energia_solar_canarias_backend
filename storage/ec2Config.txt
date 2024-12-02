@@ -233,6 +233,9 @@ apache ALL=(ALL) NOPASSWD: /usr/bin/git
 
     http://ec2-51-92-121-143.eu-south-2.compute.amazonaws.com/esc-backend/webhookgithub.php
 
+    ENTRAR COMO USUARIO APACHE
+    sudo su -s /bin/bash apache
+
 CONFLICTOS (DESCARTAR)
     git checkout -- webhookgithub.php
     git pull
