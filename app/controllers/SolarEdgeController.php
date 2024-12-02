@@ -39,6 +39,13 @@ class SolarEdgeController
         // Registrar en logs el acceso a la API
         $this->logsController->registrarLog(Logs::INFO, "Accede a la API de SolarEdge para obtener los detalles de una planta");
 
+        //obtener los datos de la batería
+        $data = $this->solarEdgeService->getCurrentPowerFlow($siteId);
+
+        $battery = isset($data) ? json_decode(json_encode($data), true) : [];
+
+        $batteryValues = $battery['siteCurrentPowerFlow'] ?? [];
+
         // Obtener los datos de la planta desde el servicio de SolarEdge
         $result = $this->solarEdgeService->getSiteDetails($siteId);
 
@@ -52,6 +59,9 @@ class SolarEdgeController
 
         // Añadir un nuevo campo "organizacion" al resultado
         $decodedResult['details']['organization'] = "solaredge";
+
+        // Añadir un nuevo campo "battery" al resultado
+        $decodedResult['details']['siteCurrentPowerFlow'] = $batteryValues;
 
         // Configurar el tipo de contenido de la respuesta como JSON
         header('Content-Type: application/json');
