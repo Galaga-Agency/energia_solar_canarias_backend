@@ -82,6 +82,7 @@ class SolarEdgeController
         $data4 = $this->solarEdgeService->getPowerExport($siteId, $dia, $fechaFin, $fechaInicio);
         $data5 = $this->solarEdgeService->getPowerImport($siteId, $dia, $fechaFin, $fechaInicio);
         $data6 = $this->solarEdgeService->getPowerSelfConsumption($siteId, $dia, $fechaFin, $fechaInicio);
+        $data7 = $this->solarEdgeService->getPlantGastosEnergeticos($siteId);
 
         // Convertimos los objetos stdClass a arrays
         $solarProduction = isset($data1) ? json_decode(json_encode($data1), true) : [];
@@ -90,6 +91,7 @@ class SolarEdgeController
         $export = isset($data4) ? json_decode(json_encode($data4), true) : [];
         $import = isset($data5) ? json_decode(json_encode($data5), true) : [];
         $selfConsumption = isset($data6) ? json_decode(json_encode($data6), true) : [];
+        $overview = isset($data7) ? json_decode(json_encode($data7), true) : [];
 
         // Validamos las claves específicas
         $solarProductionValues = $solarProduction['energy']['values'] ?? [];
@@ -98,6 +100,7 @@ class SolarEdgeController
         $exportValues = $export['energyDetails']['meters'][0]['values'] ?? [];
         $importValues = $import['energyDetails']['meters'][0]['values'] ?? [];
         $selfConsumptionValues = $selfConsumption['energyDetails']['meters'][0]['values'] ?? [];
+        $overviewValues = $overview['overview'] ?? [];
 
         // Construimos la salida separando cada conjunto de datos
         $result = [
@@ -106,7 +109,8 @@ class SolarEdgeController
             'storagePower' => $batteryValues,
             'export' => $exportValues,
             'import' => $importValues,
-            'selfConsumption' => $selfConsumptionValues
+            'selfConsumption' => $selfConsumptionValues,
+            'overview' => $overviewValues
         ];
 
         // Enviamos los datos como JSON
