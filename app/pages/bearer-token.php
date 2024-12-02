@@ -16,7 +16,8 @@
 {
   "status": true,
   "code": 200,
-  "message": "200 - Usuario eliminado con éxito"
+  "token": tokenIdentificativo,
+  "message": "200 - Token asignado correctamente"
 }
       </pre>
     </div>

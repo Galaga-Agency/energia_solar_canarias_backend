@@ -36,6 +36,7 @@ class LogsController {
     
             // Formatear el mensaje del log
             $formattedMessage = Logs::logMessage($level, $message, $userId);
+
     
             // Registrar el log en la base de datos
             return $this->logsDB->postLogs($userId, $level, $formattedMessage);
@@ -44,5 +45,4 @@ class LogsController {
             return false;
         }
     }
-    
 }
