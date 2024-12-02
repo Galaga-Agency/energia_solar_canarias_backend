@@ -123,7 +123,17 @@ class SolarEdgeController
     }
 }
 
-
+    public function overviewSolarEdge($siteId){
+        try {
+            $this->logsController->registrarLog(Logs::INFO, " accede a la api de solarEdge overview");
+            $data = $this->solarEdgeService->getPlantGastosEnergeticos($siteId);
+            header('Content-Type: application/json');
+            return json_encode($data);
+        } catch (\Throwable $e) {
+            $this->logsController->registrarLog(Logs::ERROR, "Error al obtener datos de SolarEdge: " . $e->getMessage());
+            return json_encode(['error' => 'No se pudieron obtener los datos'], JSON_PRETTY_PRINT);
+        }
+    }
 
     //Método para obtener los datos de todas las plantas
     public function getAllPlants($page = 1, $pageSize = 200)
