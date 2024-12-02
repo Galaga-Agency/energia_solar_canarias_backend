@@ -64,7 +64,41 @@ class ApiControladorService
     }
     /**
      * 
-     * Estas funciomes se utilizan para obtener los beneficios de las plantas de todos los proveedores que lo permitan
+     * Estas funcion son genericas para genericas para SolarEdge
+     * 
+     */
+    public function overviewSolarEdge($siteId)
+    {
+        $respuesta = new Respuesta;
+        try {
+
+            $solarEdgeResponse = $this->solarEdgeController->overviewSolarEdge($siteId);
+            
+            $solarEdgeData = json_decode($solarEdgeResponse);
+
+
+            if ($solarEdgeData != null) {
+                $this->logsController->registrarLog(Logs::INFO, "se han encontrado los beneficios de SolarEdge");
+                $respuesta->success($solarEdgeData);
+            } else {
+                $this->logsController->registrarLog(Logs::INFO, "no se han encontrado los beneficios de SolarEdge");
+                $respuesta->_400($solarEdgeData);
+                $respuesta->message = "No se han encontrado Beneficios o la peticion es nula";
+                http_response_code(400);
+            }
+        } catch (Throwable $e) {
+            $this->logsController->registrarLog(Logs::ERROR, "Error del proveedor de SolarEdge: " + $e->getMessage());
+            $respuesta->_500();
+            $respuesta->message = "Error en el servidor de algun proveedor";
+            http_response_code(500);
+        }
+        // Devolver el resultado como JSON
+        header('Content-Type: application/json');
+        echo json_encode($respuesta);
+    }
+    /**
+     * 
+     * Estas funciones se utilizan para obtener los beneficios de las plantas de todos los proveedores que lo permitan
      * 
      */
     public function getBenefitsSolarEdge($powerStationId)
