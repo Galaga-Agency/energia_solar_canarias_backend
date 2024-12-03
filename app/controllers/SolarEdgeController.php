@@ -81,59 +81,129 @@ class SolarEdgeController
     }
     //Método para obtener la grafica
     public function getPowerDashboard($siteId, $dia, $fechaFin, $fechaInicio)
-{
-    try {
-        $this->logsController->registrarLog(Logs::INFO, "Accede a la API de SolarEdge para gráficas");
+    {
+        try {
+            $this->logsController->registrarLog(Logs::INFO, "Accede a la API de SolarEdge para gráficas");
 
-        // Obtenemos los datos de las dos fuentes
-        $data1 = $this->solarEdgeService->getPowerDashboard($siteId, $dia, $fechaFin, $fechaInicio);
-        $data2 = $this->solarEdgeService->getPowerConsumption($siteId, $dia, $fechaFin, $fechaInicio);
-        $data3 = $this->solarEdgeService->getPowerBattery($siteId, $dia, $fechaFin, $fechaInicio);
-        $data4 = $this->solarEdgeService->getPowerExport($siteId, $dia, $fechaFin, $fechaInicio);
-        $data5 = $this->solarEdgeService->getPowerImport($siteId, $dia, $fechaFin, $fechaInicio);
-        $data6 = $this->solarEdgeService->getPowerSelfConsumption($siteId, $dia, $fechaFin, $fechaInicio);
-        $data7 = $this->solarEdgeService->getPlantGastosEnergeticos($siteId);
+            // Obtenemos los datos de las dos fuentes
+            $data1 = $this->solarEdgeService->getPowerDashboard($siteId, $dia, $fechaFin, $fechaInicio);
+            $data2 = $this->solarEdgeService->getPowerConsumption($siteId, $dia, $fechaFin, $fechaInicio);
+            $data3 = $this->solarEdgeService->getPowerBattery($siteId, $dia, $fechaFin, $fechaInicio);
+            $data4 = $this->solarEdgeService->getPowerExport($siteId, $dia, $fechaFin, $fechaInicio);
+            $data5 = $this->solarEdgeService->getPowerImport($siteId, $dia, $fechaFin, $fechaInicio);
+            $data6 = $this->solarEdgeService->getPowerSelfConsumption($siteId, $dia, $fechaFin, $fechaInicio);
+            $data7 = $this->solarEdgeService->getPlantGastosEnergeticos($siteId);
 
-        // Convertimos los objetos stdClass a arrays
-        $solarProduction = isset($data1) ? json_decode(json_encode($data1), true) : [];
-        $consumption = isset($data2) ? json_decode(json_encode($data2), true) : [];
-        $battery = isset($data3) ? json_decode(json_encode($data3), true) : [];
-        $export = isset($data4) ? json_decode(json_encode($data4), true) : [];
-        $import = isset($data5) ? json_decode(json_encode($data5), true) : [];
-        $selfConsumption = isset($data6) ? json_decode(json_encode($data6), true) : [];
-        $overview = isset($data7) ? json_decode(json_encode($data7), true) : [];
+            // Convertimos los objetos stdClass a arrays
+            $solarProduction = isset($data1) ? json_decode(json_encode($data1), true) : [];
+            $consumption = isset($data2) ? json_decode(json_encode($data2), true) : [];
+            $battery = isset($data3) ? json_decode(json_encode($data3), true) : [];
+            $export = isset($data4) ? json_decode(json_encode($data4), true) : [];
+            $import = isset($data5) ? json_decode(json_encode($data5), true) : [];
+            $selfConsumption = isset($data6) ? json_decode(json_encode($data6), true) : [];
+            $overview = isset($data7) ? json_decode(json_encode($data7), true) : [];
 
-        // Validamos las claves específicas
-        $solarProductionValues = $solarProduction['energy']['values'] ?? [];
-        $consumptionMeters = $consumption['energyDetails']['meters'][0]['values'] ?? [];
-        $batteryValues = $battery['storageData']['batteries'] ?? [];
-        $exportValues = $export['energyDetails']['meters'][0]['values'] ?? [];
-        $importValues = $import['energyDetails']['meters'][0]['values'] ?? [];
-        $selfConsumptionValues = $selfConsumption['energyDetails']['meters'][0]['values'] ?? [];
-        $overviewValues = $overview['overview'] ?? [];
+            // Validamos las claves específicas
+            $solarProductionValues = $solarProduction['energy']['values'] ?? [];
+            $consumptionMeters = $consumption['energyDetails']['meters'][0]['values'] ?? [];
+            $batteryValues = $battery['storageData']['batteries'] ?? [];
+            $exportValues = $export['energyDetails']['meters'][0]['values'] ?? [];
+            $importValues = $import['energyDetails']['meters'][0]['values'] ?? [];
+            $selfConsumptionValues = $selfConsumption['energyDetails']['meters'][0]['values'] ?? [];
+            $overviewValues = $overview['overview'] ?? [];
 
-        // Construimos la salida separando cada conjunto de datos
-        $result = [
-            'consumption' => $consumptionMeters,
-            'solarProduction' => $solarProductionValues,
-            'storagePower' => $batteryValues,
-            'export' => $exportValues,
-            'import' => $importValues,
-            'selfConsumption' => $selfConsumptionValues,
-            'overview' => $overviewValues
-        ];
+            // Inicializar las sumas
+            $totalSolarProduction = 0;
+            $totalConsumption = 0;
+            $totalBatteryValues = 0;
+            $totalExport = 0;
+            $totalImport = 0;
+            $totalSelfConsumption = 0;
 
-        // Enviamos los datos como JSON
-        header('Content-Type: application/json');
-        return json_encode($result, JSON_PRETTY_PRINT);
+            // Sumar valores de producción solar
+            if (!empty($solarProductionValues)) {
+                foreach ($solarProductionValues as $value) {
+                    if(isset($value['value'])){
+                    $totalSolarProduction += $value['value'];
+                    }
+                }
+            }
 
-    } catch (Exception $e) {
-        $this->logsController->registrarLog(Logs::ERROR, "Error al obtener datos de SolarEdge: " . $e->getMessage());
-        return json_encode(['error' => 'No se pudieron obtener los datos'], JSON_PRETTY_PRINT);
+            // Sumar valores de consumo
+            if (!empty($consumptionMeters)) {
+                foreach ($consumptionMeters as $value) {
+                    if(isset($value['value'])){
+                    $totalConsumption += $value['value'];
+                    }
+                }
+            }
+
+            // Sumar valores de batería
+            if (!empty($batteryValues)) {
+                foreach ($batteryValues as $battery) {
+                    if (!empty($battery['telemetries'])) {
+                        foreach ($battery['telemetries'] as $telemetry) {
+                            $totalBatteryValues += $telemetry['power'];
+                        }
+                    }
+                }
+            }
+
+            // Sumar valores de exportación
+            if (!empty($exportValues)) {
+                foreach ($exportValues as $value) {
+                    if(isset($value['value'])){
+                    $totalExport += $value['value'];
+                    }
+                }
+            }
+
+            // Sumar valores de importación
+            if (!empty($importValues)) {
+                foreach ($importValues as $value) {
+                    if(isset($value['value'])){
+                    $totalImport += $value['value'];
+                    }
+                }
+            }
+
+            // Sumar valores de autoconsumo
+            if (!empty($selfConsumptionValues)) {
+                foreach ($selfConsumptionValues as $value) {
+                    if(isset($value['value'])){
+                    $totalSelfConsumption += $value['value'];
+                    }
+                }
+            }
+
+            // Construimos la salida separando cada conjunto de datos
+            $result = [
+                'consumption' => $consumptionMeters,
+                'totalConsumption' => $totalConsumption,
+                'solarProduction' => $solarProductionValues,
+                'totalProduction' => $totalSolarProduction,
+                'storagePower' => $batteryValues,
+                'storagePowerTotal' => $totalBatteryValues,
+                'export' => $exportValues,
+                'totalExport' => $totalExport,
+                'import' => $importValues,
+                'totalImport' => $totalImport,
+                'selfConsumption' => $selfConsumptionValues,
+                'totalSelfConsumption' => $totalSelfConsumption,
+                'overview' => $overviewValues
+            ];
+
+            // Enviamos los datos como JSON
+            header('Content-Type: application/json');
+            return json_encode($result, JSON_PRETTY_PRINT);
+        } catch (Exception $e) {
+            $this->logsController->registrarLog(Logs::ERROR, "Error al obtener datos de SolarEdge: " . $e->getMessage());
+            return json_encode(['error' => 'No se pudieron obtener los datos'], JSON_PRETTY_PRINT);
+        }
     }
-}
 
-    public function overviewSolarEdge($siteId){
+    public function overviewSolarEdge($siteId)
+    {
         try {
             $this->logsController->registrarLog(Logs::INFO, " accede a la api de solarEdge overview");
             $data = $this->solarEdgeService->getPlantGastosEnergeticos($siteId);
