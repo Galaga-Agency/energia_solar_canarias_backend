@@ -176,6 +176,12 @@ class SolarEdgeController
                 }
             }
 
+            $porcentajeImport= $totalImport / ($totalSelfConsumption + $totalImport) * 100;
+            $porcentajeExport= $totalExport / ($totalSelfConsumption + $totalExport) * 100;
+            $porcentajeSelfConsumptionImport = $totalSelfConsumption / ($totalSelfConsumption + $totalImport) * 100;
+            $porcentajeSelfConsumptionExport = $totalSelfConsumption / ($totalSelfConsumption + $totalExport) * 100;
+
+
             // Construimos la salida separando cada conjunto de datos
             $result = [
                 'consumption' => $consumptionMeters,
@@ -186,10 +192,14 @@ class SolarEdgeController
                 'storagePowerTotal' => $totalBatteryValues,
                 'export' => $exportValues,
                 'totalExport' => $totalExport,
+                'porcentajeExport' => $porcentajeExport,
                 'import' => $importValues,
                 'totalImport' => $totalImport,
+                'porcentajeImport' => $porcentajeImport,
                 'selfConsumption' => $selfConsumptionValues,
                 'totalSelfConsumption' => $totalSelfConsumption,
+                'porcentajeSelfConsumptionImport' =>$porcentajeSelfConsumptionImport,
+                'porcentajeSelfConsumptionExport' =>$porcentajeSelfConsumptionExport,
                 'overview' => $overviewValues
             ];
 
