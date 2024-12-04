@@ -11,34 +11,36 @@
             <h2 class="text-xl font-semibold <?php echo $theme === 'dark' ? 'text-gray-400' : 'text-gray-800'; ?> mb-2">
                 <?php echo translate('login.cuerpo_solicitud'); ?>
             </h2>
-            <pre class="<?php echo $theme === 'dark' ? 'bg-gray-900 text-gray-300' : 'bg-gray-100 text-gray-900'; ?> rounded-lg p-4 text-sm overflow-auto">
+            <pre class="<?php echo $theme === 'dark' ? 'bg-gray-900 text-gray-300' : 'bg-gray-100 text-gray-900'; ?> rounded-lg p-4 text-sm overflow-auto font-mono">
 {
-  "email": "ejemplo@galagaagency.com",
-  "password": "contraseña",
-  "idiomaUsuario": "es"
+    <span class="text-blue-500">"email"</span>: <span class="text-green-500">"ejemplo@galagaagency.com"</span>,
+    <span class="text-blue-500">"password"</span>: <span class="text-green-500">"contraseña"</span>,
+    <span class="text-blue-500">"idiomaUsuario"</span>: <span class="text-green-500">"es"</span>
 }
-            </pre>
+</pre>
+
             <h2 class="text-xl font-semibold <?php echo $theme === 'dark' ? 'text-gray-400' : 'text-gray-800'; ?> mb-2">
                 <?php echo translate('login.respuesta_ejemplo'); ?>
             </h2>
-            <pre class="<?php echo $theme === 'dark' ? 'bg-gray-900 text-gray-300' : 'bg-gray-100 text-gray-900'; ?> rounded-lg p-4 text-sm overflow-auto">
+            <pre class="<?php echo $theme === 'dark' ? 'bg-gray-900 text-gray-300' : 'bg-gray-100 text-gray-900'; ?> rounded-lg p-4 text-sm overflow-auto font-mono">
 {
-  "status": "success",
-  "code": 200,
-  "message": "Successful login, the token to continue has been sent to your email with a validity of 5 minutes",
-  "data": {
-    "id": 2,
-    "email": "ejemplo@galagaagency.com",
-    "clase": "cliente",
-    "movil": "645521246",
-    "nombre": "ejemplo",
-    "apellido": "1",
-    "imagen": "ejemplo.jpg",
-    "idiomaUsuario": "es"
+  <span class="text-blue-500">"status"</span>: <span class="text-green-500">"success"</span>,
+  <span class="text-blue-500">"code"</span>: <span class="text-yellow-500">200</span>,
+  <span class="text-blue-500">"message"</span>: <span class="text-green-500">"Successful login, the token to continue has been sent to your email with a validity of 5 minutes"</span>,
+  <span class="text-blue-500">"data"</span>: {
+    <span class="text-blue-500">"id"</span>: <span class="text-yellow-500">2</span>,
+    <span class="text-blue-500">"email"</span>: <span class="text-green-500">"ejemplo@galagaagency.com"</span>,
+    <span class="text-blue-500">"clase"</span>: <span class="text-green-500">"cliente"</span>,
+    <span class="text-blue-500">"movil"</span>: <span class="text-green-500">"645521246"</span>,
+    <span class="text-blue-500">"nombre"</span>: <span class="text-green-500">"ejemplo"</span>,
+    <span class="text-blue-500">"apellido"</span>: <span class="text-green-500">"1"</span>,
+    <span class="text-blue-500">"imagen"</span>: <span class="text-green-500">"ejemplo.jpg"</span>,
+    <span class="text-blue-500">"idiomaUsuario"</span>: <span class="text-green-500">"es"</span>
   },
-  "pagination": null
+  <span class="text-blue-500">"pagination"</span>: <span class="text-yellow-500">null</span>
 }
-            </pre>
+</pre>
+
         </div>
 
         <!-- Componente de Código Copiable para el Login -->
@@ -56,8 +58,7 @@ curl -X POST "https://app-energiasolarcanarias-backend.com/login" \
                 </pre>
                 <button
                     class="absolute top-2 right-2 <?php echo $theme === 'dark' ? 'bg-blue-400 hover:bg-blue-500' : 'bg-blue-600 hover:bg-blue-700'; ?> text-white px-3 py-1 rounded transition"
-                    onclick="copiarCodigoLogin()"
-                >
+                    onclick="copiarCodigoLogin()">
                     Copiar
                 </button>
             </div>
@@ -76,33 +77,35 @@ curl -X POST "https://app-energiasolarcanarias-backend.com/login" \
             <h2 class="text-xl font-semibold <?php echo $theme === 'dark' ? 'text-gray-400' : 'text-gray-800'; ?> mb-2">
                 <?php echo translate('login.cuerpo_solicitud'); ?>
             </h2>
-            <pre class="<?php echo $theme === 'dark' ? 'bg-gray-900 text-gray-300' : 'bg-gray-100 text-gray-900'; ?> rounded-lg p-4 text-sm overflow-auto">
+            <pre class="<?php echo $theme === 'dark' ? 'bg-gray-900 text-gray-300' : 'bg-gray-100 text-gray-900'; ?> rounded-lg p-4 text-sm overflow-auto font-mono">
 {
-  "id": 1,
-  "token": "1234"
+    <span class="text-blue-500">"id"</span>: <span class="text-yellow-500">1</span>,
+    <span class="text-blue-500">"token"</span>: <span class="text-green-500">"1234"</span>
 }
             </pre>
+
             <h2 class="text-xl font-semibold <?php echo $theme === 'dark' ? 'text-gray-400' : 'text-gray-800'; ?> mb-2">
                 <?php echo translate('login.respuesta_ejemplo'); ?>
             </h2>
-            <pre class="<?php echo $theme === 'dark' ? 'bg-gray-900 text-gray-300' : 'bg-gray-100 text-gray-900'; ?> rounded-lg p-4 text-sm overflow-auto">
+            <pre class="<?php echo $theme === 'dark' ? 'bg-gray-900 text-gray-300' : 'bg-gray-100 text-gray-900'; ?> rounded-lg p-4 text-sm overflow-auto font-mono">
 {
-  "status": "success",
-  "code": 200,
-  "message": "El token aún es válido para el usuario enviado",
-  "data": {
-    "id": 1,
-    "email": "ejemplo@galagaagency.com",
-    "clase": "admin",
-    "movil": "645521246",
-    "nombre": "ejemplo",
-    "apellido": "1",
-    "imagen": "ejemplo.jpg",
-    "tokenIdentificador": "token_identificativo"
-  },
-  "pagination": null
+    <span class="text-blue-500">"status"</span>: <span class="text-green-500">"success"</span>,
+    <span class="text-blue-500">"code"</span>: <span class="text-yellow-500">200</span>,
+    <span class="text-blue-500">"message"</span>: <span class="text-green-500">"El token aún es válido para el usuario enviado"</span>,
+    <span class="text-blue-500">"data"</span>: {
+        <span class="text-blue-500">"id"</span>: <span class="text-yellow-500">1</span>,
+        <span class="text-blue-500">"email"</span>: <span class="text-green-500">"ejemplo@galagaagency.com"</span>,
+        <span class="text-blue-500">"clase"</span>: <span class="text-green-500">"admin"</span>,
+        <span class="text-blue-500">"movil"</span>: <span class="text-green-500">"645521246"</span>,
+        <span class="text-blue-500">"nombre"</span>: <span class="text-green-500">"ejemplo"</span>,
+        <span class="text-blue-500">"apellido"</span>: <span class="text-green-500">"1"</span>,
+        <span class="text-blue-500">"imagen"</span>: <span class="text-green-500">"ejemplo.jpg"</span>,
+        <span class="text-blue-500">"tokenIdentificador"</span>: <span class="text-green-500">"token_identificativo"</span>
+    },
+    <span class="text-blue-500">"pagination"</span>: <span class="text-yellow-500">null</span>
 }
-            </pre>
+</pre>
+
         </div>
 
         <!-- Componente de Código Copiable para la Validación del Token -->
@@ -119,8 +122,7 @@ curl -X POST "https://app-energiasolarcanarias-backend.com/token" \
                 </pre>
                 <button
                     class="absolute top-2 right-2 <?php echo $theme === 'dark' ? 'bg-blue-400 hover:bg-blue-500' : 'bg-blue-600 hover:bg-blue-700'; ?> text-white px-3 py-1 rounded transition"
-                    onclick="copiarCodigoToken()"
-                >
+                    onclick="copiarCodigoToken()">
                     Copiar
                 </button>
             </div>
