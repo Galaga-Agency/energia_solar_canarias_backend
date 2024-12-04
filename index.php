@@ -120,6 +120,30 @@ $page = $_GET['page'] ?? 'inicio';
         </ul>
       </li>
       <li>
+        <button onclick="toggleSubmenu('proveedorSubmenu')" class="w-full text-left px-4 py-2 <?php echo $theme === 'dark' ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-blue-100'; ?> rounded focus:outline-none">
+          <?php echo translate('menu.proveedor') ?>
+        </button>
+        <ul id="proveedorSubmenu" class="ml-4 mt-2 space-y-1 hidden">
+          <li><a href="?page=get-proveedores" class="block px-4 py-2 <?php echo $theme === 'dark' ? 'text-gray-300 hover:bg-gray-600' : 'text-gray-600 hover:bg-blue-50'; ?> rounded"><?php echo translate('menu.proveedor_get') ?></a></li>
+        </ul>
+      </li>
+      <li>
+        <button onclick="toggleSubmenu('claseSubmenu')" class="w-full text-left px-4 py-2 <?php echo $theme === 'dark' ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-blue-100'; ?> rounded focus:outline-none">
+          <?php echo translate('menu.clases') ?>
+        </button>
+        <ul id="claseSubmenu" class="ml-4 mt-2 space-y-1 hidden">
+        <li><a href="?page=get-clases" class="block px-4 py-2 <?php echo $theme === 'dark' ? 'text-gray-300 hover:bg-gray-600' : 'text-gray-600 hover:bg-blue-50'; ?> rounded"><?php echo translate('menu.clases_get') ?></a></li>
+        </ul>
+      </li>
+      <li>
+        <button onclick="toggleSubmenu('logSubmenu')" class="w-full text-left px-4 py-2 <?php echo $theme === 'dark' ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-blue-100'; ?> rounded focus:outline-none">
+          <?php echo translate('menu.logs') ?>
+        </button>
+        <ul id="logSubmenu" class="ml-4 mt-2 space-y-1 hidden">
+        <li><a href="?page=get-logs" class="block px-4 py-2 <?php echo $theme === 'dark' ? 'text-gray-300 hover:bg-gray-600' : 'text-gray-600 hover:bg-blue-50'; ?> rounded"><?php echo translate('menu.logs_get') ?></a></li>
+        </ul>
+      </li>
+      <li>
         <button onclick="toggleSubmenu('configLLamadaApi')" class="w-full text-left px-4 py-2 <?php echo $theme === 'dark' ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-blue-100'; ?> rounded focus:outline-none">
           <?php echo translate('menu.datos_api') ?>
         </button>
@@ -127,10 +151,11 @@ $page = $_GET['page'] ?? 'inicio';
           <li><a href="?page=get-lista-plantas" class="block px-4 py-2 <?php echo $theme === 'dark' ? 'text-gray-300 hover:bg-gray-600' : 'text-gray-600 hover:bg-blue-50'; ?> rounded"><?php echo translate('menu.lista_plantas') ?></a></li>
           <li><a href="?page=get-planta" class="block px-4 py-2 <?php echo $theme === 'dark' ? 'text-gray-300 hover:bg-gray-600' : 'text-gray-600 hover:bg-blue-50'; ?> rounded"><?php echo translate('menu.detalles_plantas') ?></a></li>
           <li><a href="?page=post-asociar-plantas-usuarios" class="block px-4 py-2 <?php echo $theme === 'dark' ? 'text-gray-300 hover:bg-gray-600' : 'text-gray-600 hover:bg-blue-50'; ?> rounded"><?php echo translate('menu.asociarplantas') ?></a></li>
-          <li><a href="?page=get-beneficios-plantas" class="block px-4 py-2 <?php echo $theme === 'dark' ? 'text-gray-300 hover:bg-gray-600' : 'text-gray-600 hover:bg-blue-50'; ?> rounded"><?php echo translate('menu.graficas') ?></a></li>
+          <li><a href="?page=post-graficas" class="block px-4 py-2 <?php echo $theme === 'dark' ? 'text-gray-300 hover:bg-gray-600' : 'text-gray-600 hover:bg-blue-50'; ?> rounded"><?php echo translate('menu.graficas') ?></a></li>
           <li><a href="?page=post-recoger-clima" class="block px-4 py-2 <?php echo $theme === 'dark' ? 'text-gray-300 hover:bg-gray-600' : 'text-gray-600 hover:bg-blue-50'; ?> rounded"><?php echo translate('menu.clima') ?></a></li>
           <li><a href="?page=get-realtime-power" class="block px-4 py-2 <?php echo $theme === 'dark' ? 'text-gray-300 hover:bg-gray-600' : 'text-gray-600 hover:bg-blue-50'; ?> rounded"><?php echo translate('menu.power') ?></a></li>
           <li><a href="?page=get-plant-overview" class="block px-4 py-2 <?php echo $theme === 'dark' ? 'text-gray-300 hover:bg-gray-600' : 'text-gray-600 hover:bg-blue-50'; ?> rounded"><?php echo translate('menu.overview') ?></a></li>
+          <li><a href="?page=get-beneficios-plantas" class="block px-4 py-2 <?php echo $theme === 'dark' ? 'text-gray-300 hover:bg-gray-600' : 'text-gray-600 hover:bg-blue-50'; ?> rounded"><?php echo translate('menu.benefits') ?></a></li>
         </ul>
       </li>
       <li>
@@ -186,9 +211,8 @@ $page = $_GET['page'] ?? 'inicio';
       case 'post-graficas':
         include('./app/pages/post-graficas.php');
         break;
-      //por aqui
       case 'get-beneficios-plantas':
-        include('./app/pages/post-graficas.php');
+        include('./app/pages/benefits.php');
         break;
       case 'post-recoger-clima':
         include('./app/pages/recoger-clima.php');
@@ -198,6 +222,15 @@ $page = $_GET['page'] ?? 'inicio';
         break;
       case 'get-plant-overview':
         include('./app/pages/overview.php');
+        break;
+      case 'get-clases':
+        include('./app/pages/clases.php');
+        break;
+      case 'get-logs':
+        include('./app/pages/logs.php');
+        break;
+      case 'get-proveedores':
+        include('./app/pages/proveedores.php');
         break;
       case 'ayuda':
         include('./app/pages/ayuda.php');

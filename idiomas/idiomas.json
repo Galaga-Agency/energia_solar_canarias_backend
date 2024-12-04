@@ -20,7 +20,14 @@
       "graficas": "POST Graficas de plantas",
       "clima": "POST Recoger clima de la planta",
       "power": "GET Datos en tiempo real",
-      "overview": "GET Descripcion general de la planta"
+      "overview": "GET Descripcion general de la planta",
+      "benefits": "GET Beneficios de las plantas",
+      "clases": "Clases",
+      "clases_get": "GET Clases que existen del usuario",
+      "logs": "Logs",
+      "logs_get": "GET Logs de los usuarios (Solo administradores)",
+      "proveedor_get": "GET Proveedores disponibles",
+      "proveedor":"Proveedores"
     },
     "inicio": {
       "titulo": "Inicio",
@@ -179,7 +186,14 @@
       "graficas": "Plant Charts",
       "clima": "POST Fetch plant's climate",
       "power": "GET Real-time data",
-      "overview": "GET overview of the plant"
+      "overview": "GET overview of the plant",
+      "benefits": "GET Environmental benefits of plants",
+      "clases_get": "GET Existing user classes",
+      "clases": "Classes",
+      "logs": "Logs",
+      "logs_get": "GET User logs (Administrators only)",
+      "proveedor_get": "GET Available providers",
+      "proveedor":"Suppliers"
     },
     "inicio": {
       "titulo": "Home",
