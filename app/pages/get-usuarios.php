@@ -24,41 +24,42 @@
         <h2 class="text-xl font-semibold <?php echo $theme === 'dark' ? 'text-gray-400' : 'text-gray-800'; ?> mb-2">
             <?php echo translate('usuarios_get.respuesta_ejemplo'); ?>
         </h2>
-        <pre class="<?php echo $theme === 'dark' ? 'bg-gray-900 text-gray-300' : 'bg-gray-100 text-gray-900'; ?> rounded-lg p-4 text-sm overflow-auto">
+        <pre class="<?php echo $theme === 'dark' ? 'bg-gray-900 text-gray-300' : 'bg-gray-100 text-gray-900'; ?> rounded-lg p-4 text-sm overflow-auto font-mono">
 {
-  "status": true,
-  "code": 200,
-  "message": "200 - Solicitud exitosa",
-  "data": [
+  <span class="text-blue-500">"status"</span>: <span class="text-yellow-500">true</span>,
+  <span class="text-blue-500">"code"</span>: <span class="text-yellow-500">200</span>,
+  <span class="text-blue-500">"message"</span>: <span class="text-green-500">"200 - Solicitud exitosa"</span>,
+  <span class="text-blue-500">"data"</span>: [
     {
-      "usuario_id": 1,
-      "email": "ejemplo1@galagaagency.com",
-      "password_hash": "token_hasheado",
-      "clase_id": 1,
-      "nombre": "ejemplo",
-      "apellido": "1",
-      "imagen": "https://example.com/ejemplo1.jpg",
-      "movil": "123456789",
-      "activo": 1,
-      "eliminado": 0
+      <span class="text-blue-500">"usuario_id"</span>: <span class="text-yellow-500">1</span>,
+      <span class="text-blue-500">"email"</span>: <span class="text-green-500">"ejemplo1@galagaagency.com"</span>,
+      <span class="text-blue-500">"password_hash"</span>: <span class="text-green-500">"token_hasheado"</span>,
+      <span class="text-blue-500">"clase_id"</span>: <span class="text-yellow-500">1</span>,
+      <span class="text-blue-500">"nombre"</span>: <span class="text-green-500">"ejemplo"</span>,
+      <span class="text-blue-500">"apellido"</span>: <span class="text-green-500">"1"</span>,
+      <span class="text-blue-500">"imagen"</span>: <span class="text-green-500">"https://example.com/ejemplo1.jpg"</span>,
+      <span class="text-blue-500">"movil"</span>: <span class="text-green-500">"123456789"</span>,
+      <span class="text-blue-500">"activo"</span>: <span class="text-yellow-500">1</span>,
+      <span class="text-blue-500">"eliminado"</span>: <span class="text-yellow-500">0</span>
     },
     {
-      "usuario_id": 1,
-      "email": "ejemplo2@galagaagency.com",
-      "password_hash": "token_hasheado",
-      "clase_id": 1,
-      "nombre": "ejemplo",
-      "apellido": "1",
-      "imagen": "https://example.com/ejemplo2.jpg",
-      "movil": "123456789",
-      "activo": 1,
-      "eliminado": 0
+      <span class="text-blue-500">"usuario_id"</span>: <span class="text-yellow-500">1</span>,
+      <span class="text-blue-500">"email"</span>: <span class="text-green-500">"ejemplo2@galagaagency.com"</span>,
+      <span class="text-blue-500">"password_hash"</span>: <span class="text-green-500">"token_hasheado"</span>,
+      <span class="text-blue-500">"clase_id"</span>: <span class="text-yellow-500">1</span>,
+      <span class="text-blue-500">"nombre"</span>: <span class="text-green-500">"ejemplo"</span>,
+      <span class="text-blue-500">"apellido"</span>: <span class="text-green-500">"1"</span>,
+      <span class="text-blue-500">"imagen"</span>: <span class="text-green-500">"https://example.com/ejemplo2.jpg"</span>,
+      <span class="text-blue-500">"movil"</span>: <span class="text-green-500">"123456789"</span>,
+      <span class="text-blue-500">"activo"</span>: <span class="text-yellow-500">1</span>,
+      <span class="text-blue-500">"eliminado"</span>: <span class="text-yellow-500">0</span>
     }
   ],
-  "page": 1,
-  "limit": 200
+  <span class="text-blue-500">"page"</span>: <span class="text-yellow-500">1</span>,
+  <span class="text-blue-500">"limit"</span>: <span class="text-yellow-500">200</span>
 }
-        </pre>
+</pre>
+
     </div>
 
     <!-- Componente de Código Copiable -->

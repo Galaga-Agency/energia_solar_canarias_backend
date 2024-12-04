@@ -17,60 +17,61 @@
         <h2 class="text-xl font-semibold <?php echo $theme === 'dark' ? 'text-gray-400' : 'text-gray-800'; ?> mb-2">
             <?php echo translate('usuarios_get.respuesta_ejemplo'); ?>
         </h2>
-        <pre class="<?php echo $theme === 'dark' ? 'bg-gray-900 text-gray-300' : 'bg-gray-100 text-gray-900'; ?> rounded-lg p-4 text-sm overflow-auto">
-        {
-    "status": true,
-    "code": 200,
-    "message": "200 - Solicitud exitosa",
-    "data": [
-        {
-            "organization": "Whatever",
-            "id": "identificador",
-            "name": "Whatever",
-            "accountId": "",
-            "status": "working",
-            "peakPower": 0,
-            "lastUpdateTime": "0000-00-00",
-            "installationDate": "0000-00-00",
-            "ptoDate": "",
-            "notes": "",
-            "type": "",
-            "location": "Whatever place, Madrid, Spain",
-            "batteryCapacity": null,
-            "orgCode": null,
-            "kpi": {
-                "monthGeneration": null,
-                "pac": null,
-                "power": null,
-                "totalPower": null,
-                "dayIncome": null,
-                "yieldRate": null,
-                "currency": null
-            },
-            "alertQuantity": "",
-            "highestImpact": "",
-            "primaryModule": {
-                "manufacturerName": "name",
-                "modelName": "things",
-                "maximumPower": 0,
-                "temperatureCoef": 0
-            },
-            "isEvcharge": null,
-            "isTigo": null,
-            "isPowerflow": null,
-            "isSec": null,
-            "isGenset": null,
-            "isMicroInverter": null,
-            "hasLayout": null,
-            "layout_id": null,
-            "isMeter": null,
-            "isEnvironmental": null,
-            "powercontrol_status": null,
-            "chartsTypesByPlant": null
-        }
-    ]
+        <pre class="<?php echo $theme === 'dark' ? 'bg-gray-900 text-gray-300' : 'bg-gray-100 text-gray-900'; ?> rounded-lg p-4 text-sm overflow-auto font-mono">
+{
+  <span class="text-blue-500">"status"</span>: <span class="text-yellow-500">true</span>,
+  <span class="text-blue-500">"code"</span>: <span class="text-yellow-500">200</span>,
+  <span class="text-blue-500">"message"</span>: <span class="text-green-500">"200 - Solicitud exitosa"</span>,
+  <span class="text-blue-500">"data"</span>: [
+    {
+      <span class="text-blue-500">"organization"</span>: <span class="text-green-500">"Whatever"</span>,
+      <span class="text-blue-500">"id"</span>: <span class="text-green-500">"identificador"</span>,
+      <span class="text-blue-500">"name"</span>: <span class="text-green-500">"Whatever"</span>,
+      <span class="text-blue-500">"accountId"</span>: <span class="text-yellow-500">""</span>,
+      <span class="text-blue-500">"status"</span>: <span class="text-green-500">"working"</span>,
+      <span class="text-blue-500">"peakPower"</span>: <span class="text-yellow-500">0</span>,
+      <span class="text-blue-500">"lastUpdateTime"</span>: <span class="text-green-500">"0000-00-00"</span>,
+      <span class="text-blue-500">"installationDate"</span>: <span class="text-green-500">"0000-00-00"</span>,
+      <span class="text-blue-500">"ptoDate"</span>: <span class="text-yellow-500">""</span>,
+      <span class="text-blue-500">"notes"</span>: <span class="text-yellow-500">""</span>,
+      <span class="text-blue-500">"type"</span>: <span class="text-yellow-500">""</span>,
+      <span class="text-blue-500">"location"</span>: <span class="text-green-500">"Whatever place, Madrid, Spain"</span>,
+      <span class="text-blue-500">"batteryCapacity"</span>: <span class="text-yellow-500">null</span>,
+      <span class="text-blue-500">"orgCode"</span>: <span class="text-yellow-500">null</span>,
+      <span class="text-blue-500">"kpi"</span>: {
+        <span class="text-blue-500">"monthGeneration"</span>: <span class="text-yellow-500">null</span>,
+        <span class="text-blue-500">"pac"</span>: <span class="text-yellow-500">null</span>,
+        <span class="text-blue-500">"power"</span>: <span class="text-yellow-500">null</span>,
+        <span class="text-blue-500">"totalPower"</span>: <span class="text-yellow-500">null</span>,
+        <span class="text-blue-500">"dayIncome"</span>: <span class="text-yellow-500">null</span>,
+        <span class="text-blue-500">"yieldRate"</span>: <span class="text-yellow-500">null</span>,
+        <span class="text-blue-500">"currency"</span>: <span class="text-yellow-500">null</span>
+      },
+      <span class="text-blue-500">"alertQuantity"</span>: <span class="text-yellow-500">""</span>,
+      <span class="text-blue-500">"highestImpact"</span>: <span class="text-yellow-500">""</span>,
+      <span class="text-blue-500">"primaryModule"</span>: {
+        <span class="text-blue-500">"manufacturerName"</span>: <span class="text-green-500">"name"</span>,
+        <span class="text-blue-500">"modelName"</span>: <span class="text-green-500">"things"</span>,
+        <span class="text-blue-500">"maximumPower"</span>: <span class="text-yellow-500">0</span>,
+        <span class="text-blue-500">"temperatureCoef"</span>: <span class="text-yellow-500">0</span>
+      },
+      <span class="text-blue-500">"isEvcharge"</span>: <span class="text-yellow-500">null</span>,
+      <span class="text-blue-500">"isTigo"</span>: <span class="text-yellow-500">null</span>,
+      <span class="text-blue-500">"isPowerflow"</span>: <span class="text-yellow-500">null</span>,
+      <span class="text-blue-500">"isSec"</span>: <span class="text-yellow-500">null</span>,
+      <span class="text-blue-500">"isGenset"</span>: <span class="text-yellow-500">null</span>,
+      <span class="text-blue-500">"isMicroInverter"</span>: <span class="text-yellow-500">null</span>,
+      <span class="text-blue-500">"hasLayout"</span>: <span class="text-yellow-500">null</span>,
+      <span class="text-blue-500">"layout_id"</span>: <span class="text-yellow-500">null</span>,
+      <span class="text-blue-500">"isMeter"</span>: <span class="text-yellow-500">null</span>,
+      <span class="text-blue-500">"isEnvironmental"</span>: <span class="text-yellow-500">null</span>,
+      <span class="text-blue-500">"powercontrol_status"</span>: <span class="text-yellow-500">null</span>,
+      <span class="text-blue-500">"chartsTypesByPlant"</span>: <span class="text-yellow-500">null</span>
+    }
+  ]
 }
-        </pre>
+</pre>
+
     </div>
 
     <!-- Componente de Código Copiable -->
@@ -85,8 +86,7 @@ curl -X GET "https://app-energiasolarcanarias-backend.com/plants/details/{id}" \
             </pre>
             <button
                 class="absolute top-2 right-2 <?php echo $theme === 'dark' ? 'bg-blue-400 hover:bg-blue-500' : 'bg-blue-600 hover:bg-blue-700'; ?> text-white px-3 py-1 rounded transition"
-                onclick="copiarCodigo()"
-            >
+                onclick="copiarCodigo()">
                 Copiar
             </button>
         </div>

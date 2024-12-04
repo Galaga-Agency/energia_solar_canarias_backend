@@ -17,59 +17,60 @@
         <h2 class="text-xl font-semibold <?php echo $theme === 'dark' ? 'text-gray-400' : 'text-gray-800'; ?> mb-2">
             <?php echo translate('usuarios_get.respuesta_ejemplo'); ?>
         </h2>
-        <pre class="<?php echo $theme === 'dark' ? 'bg-gray-900 text-gray-300' : 'bg-gray-100 text-gray-900'; ?> rounded-lg p-4 text-sm overflow-auto">
+        <pre class="<?php echo $theme === 'dark' ? 'bg-gray-900 text-gray-300' : 'bg-gray-100 text-gray-900'; ?> rounded-lg p-4 text-sm overflow-auto font-mono">
 {
-"status": true,
-"code": 200,
-"message": "200 - Solicitud exitosa",
-    "data": [
-        {
-            "id": "identificador",
-            "name": "Hola mundo",
-            "address": "street of example, 3, 00000 city, city, Country",
-            "capacity": 0,
-            "status": "error",
-            "type": "Residential",
-            "latitude": "0",
-            "longitude": "0",
-            "organization": "Whatever",
-            "current_power": 0,
-            "total_energy": 0,
-            "daily_energy": 0,
-            "monthly_energy": 0,
-            "installation_date": null,
-            "pto_date": null,
-            "notes": null,
-            "alert_quantity": null,
-            "highest_impact": null,
-            "primary_module": null,
-            "public_settings": null
-        },
-        {
-            "id": "identificador2",
-            "name": "Galaga",
-            "address": "street. of example, 3, 00000 city, city, Country",
-            "capacity": 0,
-            "status": "working",
-            "type": "Residential",
-            "latitude": "0",
-            "longitude": "0",
-            "organization": "Whatever",
-            "current_power": 0,
-            "total_energy": 0,
-            "daily_energy": 0,
-            "monthly_energy": 0,
-            "installation_date": null,
-            "pto_date": null,
-            "notes": null,
-            "alert_quantity": null,
-            "highest_impact": null,
-            "primary_module": null,
-            "public_settings": null
-        }
-    ]
+  <span class="text-blue-500">"status"</span>: <span class="text-yellow-500">true</span>,
+  <span class="text-blue-500">"code"</span>: <span class="text-yellow-500">200</span>,
+  <span class="text-blue-500">"message"</span>: <span class="text-green-500">"200 - Solicitud exitosa"</span>,
+  <span class="text-blue-500">"data"</span>: [
+    {
+      <span class="text-blue-500">"id"</span>: <span class="text-green-500">"identificador"</span>,
+      <span class="text-blue-500">"name"</span>: <span class="text-green-500">"Hola mundo"</span>,
+      <span class="text-blue-500">"address"</span>: <span class="text-green-500">"street of example, 3, 00000 city, city, Country"</span>,
+      <span class="text-blue-500">"capacity"</span>: <span class="text-yellow-500">0</span>,
+      <span class="text-blue-500">"status"</span>: <span class="text-green-500">"error"</span>,
+      <span class="text-blue-500">"type"</span>: <span class="text-green-500">"Residential"</span>,
+      <span class="text-blue-500">"latitude"</span>: <span class="text-green-500">"0"</span>,
+      <span class="text-blue-500">"longitude"</span>: <span class="text-green-500">"0"</span>,
+      <span class="text-blue-500">"organization"</span>: <span class="text-green-500">"Whatever"</span>,
+      <span class="text-blue-500">"current_power"</span>: <span class="text-yellow-500">0</span>,
+      <span class="text-blue-500">"total_energy"</span>: <span class="text-yellow-500">0</span>,
+      <span class="text-blue-500">"daily_energy"</span>: <span class="text-yellow-500">0</span>,
+      <span class="text-blue-500">"monthly_energy"</span>: <span class="text-yellow-500">0</span>,
+      <span class="text-blue-500">"installation_date"</span>: <span class="text-yellow-500">null</span>,
+      <span class="text-blue-500">"pto_date"</span>: <span class="text-yellow-500">null</span>,
+      <span class="text-blue-500">"notes"</span>: <span class="text-yellow-500">null</span>,
+      <span class="text-blue-500">"alert_quantity"</span>: <span class="text-yellow-500">null</span>,
+      <span class="text-blue-500">"highest_impact"</span>: <span class="text-yellow-500">null</span>,
+      <span class="text-blue-500">"primary_module"</span>: <span class="text-yellow-500">null</span>,
+      <span class="text-blue-500">"public_settings"</span>: <span class="text-yellow-500">null</span>
+    },
+    {
+      <span class="text-blue-500">"id"</span>: <span class="text-green-500">"identificador2"</span>,
+      <span class="text-blue-500">"name"</span>: <span class="text-green-500">"Galaga"</span>,
+      <span class="text-blue-500">"address"</span>: <span class="text-green-500">"street. of example, 3, 00000 city, city, Country"</span>,
+      <span class="text-blue-500">"capacity"</span>: <span class="text-yellow-500">0</span>,
+      <span class="text-blue-500">"status"</span>: <span class="text-green-500">"working"</span>,
+      <span class="text-blue-500">"type"</span>: <span class="text-green-500">"Residential"</span>,
+      <span class="text-blue-500">"latitude"</span>: <span class="text-green-500">"0"</span>,
+      <span class="text-blue-500">"longitude"</span>: <span class="text-green-500">"0"</span>,
+      <span class="text-blue-500">"organization"</span>: <span class="text-green-500">"Whatever"</span>,
+      <span class="text-blue-500">"current_power"</span>: <span class="text-yellow-500">0</span>,
+      <span class="text-blue-500">"total_energy"</span>: <span class="text-yellow-500">0</span>,
+      <span class="text-blue-500">"daily_energy"</span>: <span class="text-yellow-500">0</span>,
+      <span class="text-blue-500">"monthly_energy"</span>: <span class="text-yellow-500">0</span>,
+      <span class="text-blue-500">"installation_date"</span>: <span class="text-yellow-500">null</span>,
+      <span class="text-blue-500">"pto_date"</span>: <span class="text-yellow-500">null</span>,
+      <span class="text-blue-500">"notes"</span>: <span class="text-yellow-500">null</span>,
+      <span class="text-blue-500">"alert_quantity"</span>: <span class="text-yellow-500">null</span>,
+      <span class="text-blue-500">"highest_impact"</span>: <span class="text-yellow-500">null</span>,
+      <span class="text-blue-500">"primary_module"</span>: <span class="text-yellow-500">null</span>,
+      <span class="text-blue-500">"public_settings"</span>: <span class="text-yellow-500">null</span>
+    }
+  ]
 }
-        </pre>
+</pre>
+
     </div>
 
     <!-- Componente de Código Copiable -->

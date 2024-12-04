@@ -21,11 +21,11 @@ $theme = isset($_SESSION['theme']) ? $_SESSION['theme'] : 'light';
         <h2 class="text-xl font-semibold <?php echo $theme === 'dark' ? 'text-gray-400' : 'text-gray-800'; ?> mb-2">
             <?php echo translate('usuarios_delete.respuesta_ejemplo'); ?>
         </h2>
-        <pre class="<?php echo $theme === 'dark' ? 'bg-gray-900 text-gray-300' : 'bg-gray-100 text-gray-900'; ?> rounded-lg p-4 text-sm overflow-auto">
+        <pre class="<?php echo $theme === 'dark' ? 'bg-gray-900 text-gray-300' : 'bg-gray-100 text-gray-900'; ?> rounded-lg p-4 text-sm overflow-auto font-mono">
 {
-  "status": true,
-  "code": 200,
-  "message": "200 - Usuario eliminado con éxito"
+  <span class="text-blue-500">"status"</span>: <span class="text-yellow-500">true</span>,
+  <span class="text-blue-500">"code"</span>: <span class="text-yellow-500">200</span>,
+  <span class="text-blue-500">"message"</span>: <span class="text-green-500">"200 - Usuario eliminado con éxito"</span>
 }
         </pre>
     </div>
@@ -40,8 +40,7 @@ curl -X DELETE "https://app-energiasolarcanarias-backend.com/usuarios/1" \
             </pre>
             <button
                 class="absolute top-2 right-2 <?php echo $theme === 'dark' ? 'bg-blue-400 hover:bg-blue-500' : 'bg-blue-600 hover:bg-blue-700'; ?> text-white px-3 py-1 rounded transition"
-                onclick="copiarCodigo()"
-            >
+                onclick="copiarCodigo()">
                 Copiar
             </button>
         </div>
