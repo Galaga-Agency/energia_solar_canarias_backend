@@ -11,7 +11,7 @@
             <?php echo translate('usuarios_get.parametros_consulta'); ?>
         </h2>
         <ul class="list-disc list-inside <?php echo $theme === 'dark' ? 'text-gray-300' : 'text-gray-700'; ?> mb-4">
-            <li><strong>idproveedor</strong> <?php echo translate('asociar_plantas_usuarios.proveedor'); ?></li>
+            <li><strong>proveedor</strong> <?php echo translate('asociar_plantas_usuarios.proveedor'); ?></li>
         </ul>
         <h2 class="text-xl font-semibold <?php echo $theme === 'dark' ? 'text-gray-400' : 'text-gray-800'; ?> mb-2">
             <?php echo translate('post_graficas.parameters_title'); ?>
@@ -155,7 +155,7 @@ curl -X POST "https://app-energiasolarcanarias-backend.com/plants/graficas?prove
             <li><strong><?php echo translate('post_graficas.parameters_list_fechaFin_name'); ?>:</strong> <?php echo translate('post_graficas.parameters_list_fechaFin_description'); ?></li>
             <li><strong><?php echo translate('post_graficas.parameters_list_chartIndexId_name'); ?>:</strong> <?php echo translate('post_graficas.parameters_list_chartIndexId_description'); ?></li>
             <li><strong><?php echo translate('post_graficas.parameters_list_range_name'); ?>:</strong> <?php echo translate('post_graficas.parameters_list_range_description'); ?></li>
-            <li><strong><?php echo translate('post_graficas.parameters_list_interval_name'); ?>:</strong> <?php echo translate('parameters_list_interval_description'); ?></li>
+            <li><strong><?php echo translate('post_graficas.parameters_list_interval_name'); ?>:</strong> <?php echo translate('post_graficas.parameters_list_interval_description'); ?></li>
             <li><strong><?php echo translate('post_graficas.parameters_list_type_name'); ?>:</strong> <?php echo translate('post_graficas.parameters_list_type_description'); ?></li>
         </ul>
 

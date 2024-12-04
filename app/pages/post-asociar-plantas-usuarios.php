@@ -13,7 +13,7 @@
         <ul class="list-disc list-inside <?php echo $theme === 'dark' ? 'text-gray-300' : 'text-gray-700'; ?> mb-4">
             <li><strong>idplanta</strong> <?php echo translate('asociar_plantas_usuarios.idplanta'); ?></li>
             <li><strong>idusuario</strong> <?php echo translate('asociar_plantas_usuarios.idusuario'); ?></li>
-            <li><strong>idproveedor</strong> <?php echo translate('asociar_plantas_usuarios.proveedor'); ?></li>
+            <li><strong>proveedor</strong> <?php echo translate('asociar_plantas_usuarios.proveedor'); ?></li>
         </ul>
         <h2 class="text-xl font-semibold <?php echo $theme === 'dark' ? 'text-gray-400' : 'text-gray-800'; ?> mb-2">
             Respuesta de Ejemplo
