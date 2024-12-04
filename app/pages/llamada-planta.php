@@ -2,7 +2,7 @@
     <!-- Descripción del Endpoint -->
     <div class="w-full md:w-7/12 p-4">
         <h1 class="text-3xl font-bold <?php echo $theme === 'dark' ? 'text-blue-400' : 'text-blue-600'; ?> mb-4">
-            GET /plants/details/{id}?proveedor={proveedor}
+            GET /plants/details/{id}
         </h1>
         <p class="<?php echo $theme === 'dark' ? 'text-gray-300' : 'text-gray-700'; ?> mb-4">
             <?php echo translate('get_detalles_planta.descripcion'); ?>
