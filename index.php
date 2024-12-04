@@ -91,7 +91,7 @@ $page = $_GET['page'] ?? 'inicio';
   </div>
 
   <!-- Menú Lateral -->
-  <div id="sidebar" class="fixed inset-y-0 left-0 w-64 <?php echo $theme === 'dark' ? 'bg-gray-800' : 'bg-white'; ?> shadow-lg transition-transform duration-300 ease-in-out z-40 md:translate-x-0 transform -translate-x-full">
+  <div id="sidebar" class="overflow-auto fixed inset-y-0 left-0 w-64 <?php echo $theme === 'dark' ? 'bg-gray-800' : 'bg-white'; ?> shadow-lg transition-transform duration-300 ease-in-out z-40 md:translate-x-0 transform -translate-x-full">
     <div class="p-4 <?php echo $theme === 'dark' ? 'bg-gray-700 text-white' : 'bg-blue-500 text-white'; ?>">
       <h2 class="text-lg font-semibold"><?php echo translate('menu.titulo'); ?></h2>
     </div>
@@ -140,7 +140,7 @@ $page = $_GET['page'] ?? 'inicio';
           <?php echo translate('menu.logs') ?>
         </button>
         <ul id="logSubmenu" class="ml-4 mt-2 space-y-1 hidden">
-        <li><a href="?page=get-logs" class="block px-4 py-2 <?php echo $theme === 'dark' ? 'text-gray-300 hover:bg-gray-600' : 'text-gray-600 hover:bg-blue-50'; ?> rounded"><?php echo translate('menu.logs_get') ?></a></li>
+        <li><a href="?page=get-logs" class="block px-4 py-2 <?php echo $theme === 'dark' ? 'text-gray-300 hover:bg-gray-600' : 'text-gray-600 hover:bg-blue-50'; ?> rounded"><?php echo translate('menu.logs') ?></a></li>
         </ul>
       </li>
       <li>
