@@ -260,7 +260,7 @@ class GoodWeService {
         } catch (Exception $e) {
             return ['error' => $e->getMessage()];
         }
-    }
+    } 
 
     //LoginUser en postman corresponde con la llamada POST LoginUser
     public function crossLogin() {
@@ -292,12 +292,12 @@ class GoodWeService {
             // Verifica si la respuesta es exitosa y contiene los datos necesarios
             if (isset($responseData['hasError']) && $responseData['hasError'] === false && isset($responseData['data'])) {
                 return [
-                    'uid' => $responseData['data']['uid'],
-                    'timestamp' => $responseData['data']['timestamp'],
-                    'token' => $responseData['data']['token'],
-                    'client' => $responseData['data']['client'],
-                    'version' => $responseData['data']['version'],
-                    'language' => $responseData['data']['language']
+                    'uid' => isset($responseData['data']['uid']) ? $responseData['data']['uid'] : '',
+                    'timestamp' => isset($responseData['data']['timestamp']) ? $responseData['data']['timestamp'] : '',
+                    'token' => isset($responseData['data']['token']) ? $responseData['data']['token'] : '',
+                    'client' => isset($responseData['data']['client']) ? $responseData['data']['client'] : '',
+                    'version' => isset($responseData['data']['version']) ? $responseData['data']['version'] : '',
+                    'language' => isset($responseData['data']['language']) ? $responseData['data']['language'] : ''
                 ];
             } else {
                 throw new Exception("Login fallido: " . ($responseData['msg'] ?? 'Error desconocido'));

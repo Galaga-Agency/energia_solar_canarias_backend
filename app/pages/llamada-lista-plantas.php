@@ -7,6 +7,14 @@
             <?php echo translate('get_lista_plantas.descripcion'); ?>
         </p>
         <h2 class="text-xl font-semibold <?php echo $theme === 'dark' ? 'text-gray-400' : 'text-gray-800'; ?> mb-2">
+            <?php echo translate('usuarios_get.parametros_consulta'); ?>
+        </h2>
+        <ul class="list-disc list-inside <?php echo $theme === 'dark' ? 'text-gray-300' : 'text-gray-700'; ?> mb-4">
+            <li>GET <strong>proveedor</strong> <?php echo translate('get_detalles_planta.proveedor'); ?></li>
+            <li>GET <strong>page</strong> <?php echo translate('usuarios_get.page_descripcion'); ?></li>
+            <li>GET <strong>pageSize</strong> <?php echo translate('usuarios_get.limit_descripcion'); ?></li>
+        </ul>
+        <h2 class="text-xl font-semibold <?php echo $theme === 'dark' ? 'text-gray-400' : 'text-gray-800'; ?> mb-2">
             <?php echo translate('usuarios_get.respuesta_ejemplo'); ?>
         </h2>
         <pre class="<?php echo $theme === 'dark' ? 'bg-gray-900 text-gray-300' : 'bg-gray-100 text-gray-900'; ?> rounded-lg p-4 text-sm overflow-auto">
