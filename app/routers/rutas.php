@@ -47,22 +47,25 @@ if (strpos($request, $baseDir) === 0) {
     $request = substr($request, strlen($baseDir));
     $request = trim($request, '/'); // Elimina cualquier barra adicional al inicio o final
 }
-
 $conexion = new Conexion;
 $conn = $conexion->getConexion();
 if ($conn == null) {
+    // Si la conexión falla, devuelve un JSON de error y detén la ejecución
     $respuesta = new Respuesta;
     $respuesta->_500();
-    $respuesta->message = 'El servidor no se a podido conectar exitosamente';
-    json_encode($respuesta);
-    return;
-}
+    $respuesta->message = 'El servidor no se ha podido conectar exitosamente';
+    http_response_code(500);
+    echo json_encode($respuesta);
+ exit;
+}   
+$handled = false; // Bandera para indicar si la ruta fue manejada
 
 // Rutas y endpoints
 switch ($method) {
     case 'GET':
         switch (true) {
             case (preg_match('/^plant\/overview\/([\w-]+)$/', $request, $matches) && isset($_GET['proveedor']) ? true : false):
+                $handled = true; 
                 $powerStationId = $matches[1];
                 //Verificamos que existe el usuario CREADOR del token y sino manejamos el error dentro de la funcion
                 if ($authMiddleware->verificarTokenUsuarioActivo() != false) {
@@ -101,6 +104,7 @@ switch ($method) {
                 }
                 break;
             case (preg_match('/^plant\/benefits\/([\w-]+)$/', $request, $matches) && isset($_GET['proveedor']) ? true : false):
+                $handled = true;
                 $powerStationId = $matches[1];
                 //Verificamos que existe el usuario CREADOR del token y sino manejamos el error dentro de la funcion
                 if ($authMiddleware->verificarTokenUsuarioActivo() != false) {
@@ -140,6 +144,7 @@ switch ($method) {
                 break;
 
             case (preg_match('/^usuario\/bearerToken/', $request, $matches) ? true : false):
+                $handled = true; 
                 //Verificamos que existe el usuario CREADOR del token y sino manejamos el error dentro de la funcion
                 $headers = getallheaders();
                 if (isset($headers['Authorization']) && preg_match('/Bearer\s(\S+)/', $headers['Authorization'], $matches)) {
@@ -167,6 +172,7 @@ switch ($method) {
                 }
                 break;
             case ($request === 'logs'):
+                $handled = true; 
                 try {
                     //Verificamos que existe el usuario CREADOR del token y sino manejamos el error dentro de la funcion
                     if ($authMiddleware->verificarTokenUsuarioActivo() != false) {
@@ -194,6 +200,7 @@ switch ($method) {
                 }
                 break;
             case ($request === 'clases'):
+                $handled = true; 
                 //Verificamos que existe el usuario CREADOR del token y sino manejamos el error dentro de la funcion
                 if ($authMiddleware->verificarTokenUsuarioActivo()!= false) {
                     // Verificar si el usuario es administrador
@@ -217,6 +224,7 @@ switch ($method) {
                 }
                 break;
             case ($request === 'proveedores'):
+                $handled = true; 
                 //Verificamos que existe el usuario CREADOR del token y sino manejamos el error dentro de la funcion
                 if ($authMiddleware->verificarTokenUsuarioActivo()!= false) {
                     // Verificar si el usuario es administrador
@@ -243,6 +251,7 @@ switch ($method) {
                 break;
                 // Nuevo caso para obtener los detalles de una planta por ID
             case (preg_match('/^plant\/power\/realtime\/([\w-]+)$/', $request, $matches) && isset($_GET['proveedor']) ? true : false):
+                $handled = true;
                 $powerStationId = $matches[1];
                 $proveedor = $_GET['proveedor'];
                 // Verificamos que el usuario esté autenticado y sea administrador
@@ -268,6 +277,7 @@ switch ($method) {
                 break;
                 // Nuevo caso para obtener los detalles de una planta por ID
             case (preg_match('/^plants\/details\/([\w-]+)$/', $request, $matches) && isset($_GET['proveedor']) ? true : false):
+                $handled = true; 
                 $powerStationId = $matches[1];
                 $proveedor = $_GET['proveedor'];
                 // Verificamos que el usuario esté autenticado y sea administrador
@@ -291,6 +301,7 @@ switch ($method) {
                 }
                 break;
             case ($request === 'usuarios'):
+                $handled = true; 
                 //Verificamos que existe el usuario CREADOR del token y sino manejamos el error dentro de la funcion
                 if ($authMiddleware->verificarTokenUsuarioActivo()!=false) {
                     // Verificar si el usuario es administrador
@@ -311,6 +322,7 @@ switch ($method) {
                 }
                 break;
             case ($request === 'usuario'):
+                $handled = true;
                 //Verificamos que existe el usuario CREADOR del token y sino manejamos el error dentro de la funcion
                 if ($authMiddleware->verificarTokenUsuarioActivo()!=false) {
                     $idUser = $authMiddleware->obtenerIdUsuarioActivo();
@@ -325,6 +337,7 @@ switch ($method) {
                 break;
 
             case (preg_match('/^usuarios\/(\d+)$/', $request, $matches)):
+                $handled = true; 
                 $id = $matches[1];
                 //Verificamos que existe el usuario CREADOR del token y sino manejamos el error dentro de la funcion
                 if ($authMiddleware->verificarTokenUsuarioActivo()!=false) {
@@ -347,6 +360,7 @@ switch ($method) {
                 break;
                 //Devuelve una lista de todas las plantas (Admin)
             case ($request === 'plants'):
+                $handled = true; 
                 //Verificamos que existe el usuario CREADOR del token y sino manejamos el error dentro de la funcion
                 if ($authMiddleware->verificarTokenUsuarioActivo()!=false) {
                     $admin = $authMiddleware->verificarAdmin();
@@ -378,7 +392,7 @@ switch ($method) {
                                 break;
                             case $proveedores['VictronEnergy']:
                                 if ($admin) {
-                                    $apiControladorService->getAllPlantsVictronEnergy();
+                                    $apiControladorService->getAllPlantsVictronEnergy($page, $pageSize);
                                 } else {
                                     $respuesta->_403();
                                     $respuesta->message = 'No tienes permisos para hacer esta consulta';
@@ -411,23 +425,33 @@ switch ($method) {
                     echo json_encode($respuesta);
                 }
                 break;
+                default:
+                $handled = true;     
+                $respuesta->_400();
+                $respuesta->message = 'El End Point no existe en la API ' . $request;
+                http_response_code($respuesta->code);
+                echo json_encode($respuesta);
+                break;
         }
         break;
 
     case 'POST':
         switch (true) {
             case ($request === 'login'):
+                $handled = true;
                 $postBody = file_get_contents("php://input");
                 $loginController = new LoginController($postBody);
                 $loginController->userLogin();
                 break;
 
             case ($request === 'token'):
+                $handled = true; 
                 $postBody = file_get_contents("php://input");
                 $tokenController = new TokenController($postBody);
                 $tokenController->validarToken();
                 break;
             case ($request === 'usuarios'):
+                $handled = true;
                 if ($authMiddleware->verificarTokenUsuarioActivo()!=false) {
                     // Verificar si el usuario es administrador
                     if ($authMiddleware->verificarAdmin()) {
@@ -447,6 +471,7 @@ switch ($method) {
                 }
                 break;
             case ($request === 'clima'):
+                $handled = true; 
                 if ($authMiddleware->verificarTokenUsuarioActivo()!=false) {
                     // Decodificar el cuerpo JSON
                     $input = json_decode(file_get_contents("php://input"), true);
@@ -473,6 +498,7 @@ switch ($method) {
                 }
                 break;
             case ($request === 'usuarios/relacionar'  && isset($_GET['idplanta']) && isset($_GET['idusuario']) && isset($_GET['proveedor'])):
+                $handled = true; 
                 if ($authMiddleware->verificarTokenUsuarioActivo()!=false) {
                     // Verificar si el usuario es administrador
                     if ($authMiddleware->verificarAdmin()) {
@@ -496,6 +522,7 @@ switch ($method) {
                 break;
                 // Nuevo caso para obtener las graficas de la planta
             case (preg_match('/^plants\/graficas$/', $request, $matches) && isset($_GET['proveedor'])):
+                $handled = true; 
                 // Verificamos que el usuario esté autenticado y sea administrador
                 if ($authMiddleware->verificarTokenUsuarioActivo()!=false) {
                     if ($authMiddleware->verificarAdmin()) {
@@ -533,6 +560,7 @@ switch ($method) {
                 break;
 
             default:
+                $handled = true;     
                 $respuesta->_400();
                 $respuesta->message = 'El End Point no existe en la API ' . $request;
                 http_response_code($respuesta->code);
@@ -591,6 +619,7 @@ switch ($method) {
     case 'DELETE':
         switch (true) {
             case ($request === 'usuario'):
+                $handled = true;
                 //Verificamos que existe el usuario CREADOR del token y sino manejamos el error dentro de la funcion
                 if ($authMiddleware->verificarTokenUsuarioActivo()!=false) {
                     $idUser = $authMiddleware->obtenerIdUsuarioActivo();
@@ -605,6 +634,7 @@ switch ($method) {
                 break;
 
             case (preg_match('/^usuarios\/(\d+)$/', $request, $matches) ? true : false):
+                $handled = true;
                 // Extraer el ID del usuario desde la URL
                 $id = $matches[1];
                 //Verificamos que existe el usuario CREADOR del token y sino manejamos el error dentro de la funcion
@@ -628,6 +658,7 @@ switch ($method) {
                 break;
 
             default:
+                $handled = true;
                 $respuesta->_400();
                 $respuesta->message = 'El End Point no existe en la API';
                 http_response_code($respuesta->code);
@@ -637,9 +668,18 @@ switch ($method) {
         break;
 
     default:
+        $handled = true;
         $respuesta->_405();
         $respuesta->message = 'Este método no está permitido en la API. Para cualquier duda o asesoría contactar por favor con soporte@galagaagency.com';
         http_response_code($respuesta->code);
         echo json_encode($respuesta);
         break;
+}
+
+if(!$handled){
+// Manejo global para rutas no definidas
+http_response_code(404);
+$respuesta->_404();
+$respuesta->message = 'La ruta solicitada no existe en esta API.';
+echo json_encode($respuesta);
 }

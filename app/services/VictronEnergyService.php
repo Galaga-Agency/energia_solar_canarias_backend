@@ -38,7 +38,7 @@ class VictronEnergyService {
     }
 
     //Método que recoje todas las plantas
-    public function getAllPlants() {
+    public function getAllPlants($page = 1, $pageSize = 200) {
         $url = $this->victronEnergy->getUrl() . "users/". $this->victronEnergy->getIdInstallation()."/installations";
         try {
             $response = $this->httpClient->get($url,$this->header);

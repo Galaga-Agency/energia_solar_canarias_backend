@@ -79,7 +79,9 @@
     },
     "get_detalles_planta": {
       "titulo_login": "GET /plants",
-      "descripcion": "El endpoint GET /plants/details/{id} permite obtener la planta con el id (identificador) proporcionado. Sacamos los datos detallados que hay en una planta, el administrador podrá acceder a todos los detalles de todas las plantas y el usuario solo a las que tiene a su disposición (si no sabe el id de su planta haga una consulta de todas sus plantas con /plants)"
+      "descripcion": "El endpoint GET /plants/details/{id} permite obtener la planta con el id (identificador) proporcionado. Sacamos los datos detallados que hay en una planta, el administrador podrá acceder a todos los detalles de todas las plantas y el usuario solo a las que tiene a su disposición (si no sabe el id de su planta haga una consulta de todas sus plantas con /plants)",
+      "id":"Es el id de la planta (tu usuario tiene que tener acceso)",
+      "proveedor":"Es el proveedor de quien viene la planta"
     },
     "asociar_plantas_usuarios": {
       "titulo_login": "GET /usuarios/relacionar",
@@ -93,7 +95,30 @@
       "descripcion": "Este endpoint proporciona al usuario un token que no caduca o que caduca cuando el usuario quiera esto se utiliza para dar al usuario una posible implementación de nuestra api en su propio código",
       "nombre_usuario":"(requerido): nombre del usuario",
       "password_usuario":"(requerido): contraseña del usuario"
-    }  
+    },
+    "ayuda": {
+      "titulo": "Centro de Ayuda",
+      "faq": "Preguntas Frecuentes",
+      "faq1": {
+        "titulo": "¿Cómo puedo restablecer mi contraseña?",
+        "contenido": "Para restablecer tu contraseña, dirígete a la página de inicio de sesión y selecciona '¿Olvidaste tu contraseña?'."
+      },
+      "faq2": {
+        "titulo": "¿Cómo cambio mi correo electrónico?",
+        "contenido": "Puedes cambiar tu correo electrónico en la sección de configuración de tu perfil."
+      },
+      "faq3": {
+        "titulo": "¿Dónde puedo encontrar mis facturas?",
+        "contenido": "Tus facturas están disponibles en la sección de facturación de tu cuenta."
+      },
+      "contacto": "Contacto",
+      "form": {
+        "nombre": "Nombre",
+        "email": "Correo Electrónico",
+        "mensaje": "Mensaje",
+        "enviar": "Enviar"
+      }
+    } 
   },
   "en": {
     "menu": {
@@ -175,7 +200,9 @@
     },
     "get_detalles_planta": {
       "titulo_login": "GET /plants/detalles",
-      "descripcion": "The endpoint GET /plants/details/{id} allows retrieving the plant with the provided ID (identifier). We obtain the detailed data for a plant; the administrator can access all details of all plants, while the user can only access the plants available to them. (If the user does not know their plant's ID, they can retrieve all their plants with /plants.)"
+      "descripcion": "The endpoint GET /plants/details/{id} allows retrieving the plant with the provided ID (identifier). We obtain the detailed data for a plant; the administrator can access all details of all plants, while the user can only access the plants available to them. (If the user does not know their plant's ID, they can retrieve all their plants with /plants.)",
+      "id":"It is the plant ID (your user must have access).",
+      "proveedor":"It is the provider from whom the plant originates."
     },
     "asociar_plantas_usuarios": {
       "titulo_login": "GET /usuarios/relacionar",
@@ -189,6 +216,29 @@
       "descripcion": "Este endpoint proporciona al usuario un token que no caduca o que caduca cuando el usuario quiera esto se utiliza para dar al usuario una posible implementación de nuestra api en su propio código",
       "nombre_usuario":"(requerido): nombre del usuario",
       "password_usuario":"(requerido): contraseña del usuario"
+    },
+    "ayuda": {
+      "titulo": "Help Center",
+      "faq": "Frequently Asked Questions",
+      "faq1": {
+        "titulo": "How can I reset my password?",
+        "contenido": "To reset your password, go to the login page and select 'Forgot Password'."
+      },
+      "faq2": {
+        "titulo": "How do I change my email address?",
+        "contenido": "You can change your email in the settings section of your profile."
+      },
+      "faq3": {
+        "titulo": "Where can I find my invoices?",
+        "contenido": "Your invoices are available in the billing section of your account."
+      },
+      "contacto": "Contact Support",
+      "form": {
+        "nombre": "Name",
+        "email": "Email",
+        "mensaje": "Message",
+        "enviar": "Send"
+      }
     }  
   }
 }

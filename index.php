@@ -180,12 +180,10 @@ $page = $_GET['page'] ?? 'inicio';
         include('./app/pages/post-asociar-plantas-usuarios.php');
         break;
       case 'ayuda':
-        echo "<h1 class='text-2xl font-bold'>Ayuda</h1>";
-        echo "<p>Contenido de Ayuda</p>";
+        include('./app/pages/ayuda.php');
         break;
       default:
-        echo "<h1 class='text-2xl font-bold'>Página no encontrada</h1>";
-        echo "<p>La página solicitada no existe.</p>";
+        echo "<h1 class='text-5xl font-bold text-center'>Página no encontrada</h1>";
         break;
     }
     ?>

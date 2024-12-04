@@ -374,7 +374,7 @@ class ApiControladorService
         $respuesta = new Paginacion();
         try {
             // Obtener datos de SolarEdge
-            $victronEnergyResponse = $this->victronEnergyController->getAllPlants();
+            $victronEnergyResponse = $this->victronEnergyController->getAllPlants($page, $pageSize);
             $victronEnergyData = json_decode($victronEnergyResponse, true);
 
             $plants = $this->processPlants([], [], $victronEnergyData);
