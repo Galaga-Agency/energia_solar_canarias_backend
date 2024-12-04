@@ -32,7 +32,7 @@
         <div class="<?php echo $theme === 'dark' ? 'bg-gray-900 text-gray-300' : 'bg-gray-800 text-white'; ?> rounded-lg p-4 relative">
             <h2 class="text-lg font-semibold mb-2">Ejemplo de Uso</h2>
             <pre class="text-sm overflow-auto mb-4">
-curl -X POST "https://app-energiasolarcanarias-backend.com/token" \
+curl -X POST "https://app-energiasolarcanarias-backend.com/usuario/bearerToken" \
 -H "Content-Type: application/json" \
 -d '{
   "nameUsuario": "usuarioEjemplo",
@@ -51,7 +51,7 @@ curl -X POST "https://app-energiasolarcanarias-backend.com/token" \
 
 <script>
     function copiarCodigo() {
-        const codigo = `curl -X POST "https://app-energiasolarcanarias-backend.com/token" \\
+        const codigo = `curl -X POST "https://app-energiasolarcanarias-backend.com/usuario/bearerToken" \\
 -H "Content-Type: application/json" \\
 -d '{
   "nameUsuario": "usuarioEjemplo",

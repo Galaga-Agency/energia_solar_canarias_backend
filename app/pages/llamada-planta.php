@@ -2,11 +2,18 @@
     <!-- Descripción del Endpoint -->
     <div class="w-full md:w-7/12 p-4">
         <h1 class="text-3xl font-bold <?php echo $theme === 'dark' ? 'text-blue-400' : 'text-blue-600'; ?> mb-4">
-            GET /plants/details/{id}
+            GET /plants/details/{id}?proveedor={proveedor}
         </h1>
         <p class="<?php echo $theme === 'dark' ? 'text-gray-300' : 'text-gray-700'; ?> mb-4">
             <?php echo translate('get_detalles_planta.descripcion'); ?>
         </p>
+        <h2 class="text-xl font-semibold <?php echo $theme === 'dark' ? 'text-gray-400' : 'text-gray-800'; ?> mb-2">
+            <?php echo translate('usuarios_get.parametros_consulta'); ?>
+        </h2>
+        <ul class="list-disc list-inside <?php echo $theme === 'dark' ? 'text-gray-300' : 'text-gray-700'; ?> mb-4">
+            <li><strong>id</strong> <?php echo translate('get_detalles_planta.id'); ?></li>
+            <li><strong>proveedor</strong> <?php echo translate('get_detalles_planta.proveedor'); ?></li>
+        </ul>
         <h2 class="text-xl font-semibold <?php echo $theme === 'dark' ? 'text-gray-400' : 'text-gray-800'; ?> mb-2">
             <?php echo translate('usuarios_get.respuesta_ejemplo'); ?>
         </h2>

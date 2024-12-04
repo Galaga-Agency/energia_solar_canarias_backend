@@ -176,6 +176,8 @@ class SolarEdgeController
                 }
             }
 
+            //Calcular pocentajes de SolarEdge
+
             $porcentajeImport= $totalImport / ($totalSelfConsumption + $totalImport) * 100;
             $porcentajeExport= $totalExport / ($totalSelfConsumption + $totalExport) * 100;
             $porcentajeSelfConsumptionImport = $totalSelfConsumption / ($totalSelfConsumption + $totalImport) * 100;
