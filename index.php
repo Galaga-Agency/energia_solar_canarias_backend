@@ -127,7 +127,10 @@ $page = $_GET['page'] ?? 'inicio';
           <li><a href="?page=get-lista-plantas" class="block px-4 py-2 <?php echo $theme === 'dark' ? 'text-gray-300 hover:bg-gray-600' : 'text-gray-600 hover:bg-blue-50'; ?> rounded"><?php echo translate('menu.lista_plantas') ?></a></li>
           <li><a href="?page=get-planta" class="block px-4 py-2 <?php echo $theme === 'dark' ? 'text-gray-300 hover:bg-gray-600' : 'text-gray-600 hover:bg-blue-50'; ?> rounded"><?php echo translate('menu.detalles_plantas') ?></a></li>
           <li><a href="?page=post-asociar-plantas-usuarios" class="block px-4 py-2 <?php echo $theme === 'dark' ? 'text-gray-300 hover:bg-gray-600' : 'text-gray-600 hover:bg-blue-50'; ?> rounded"><?php echo translate('menu.asociarplantas') ?></a></li>
-          <li><a href="?page=post-graficas" class="block px-4 py-2 <?php echo $theme === 'dark' ? 'text-gray-300 hover:bg-gray-600' : 'text-gray-600 hover:bg-blue-50'; ?> rounded"><?php echo translate('menu.graficas') ?></a></li>
+          <li><a href="?page=get-beneficios-plantas" class="block px-4 py-2 <?php echo $theme === 'dark' ? 'text-gray-300 hover:bg-gray-600' : 'text-gray-600 hover:bg-blue-50'; ?> rounded"><?php echo translate('menu.graficas') ?></a></li>
+          <li><a href="?page=post-recoger-clima" class="block px-4 py-2 <?php echo $theme === 'dark' ? 'text-gray-300 hover:bg-gray-600' : 'text-gray-600 hover:bg-blue-50'; ?> rounded"><?php echo translate('menu.clima') ?></a></li>
+          <li><a href="?page=get-realtime-power" class="block px-4 py-2 <?php echo $theme === 'dark' ? 'text-gray-300 hover:bg-gray-600' : 'text-gray-600 hover:bg-blue-50'; ?> rounded"><?php echo translate('menu.power') ?></a></li>
+          <li><a href="?page=get-plant-overview" class="block px-4 py-2 <?php echo $theme === 'dark' ? 'text-gray-300 hover:bg-gray-600' : 'text-gray-600 hover:bg-blue-50'; ?> rounded"><?php echo translate('menu.overview') ?></a></li>
         </ul>
       </li>
       <li>
@@ -182,6 +185,19 @@ $page = $_GET['page'] ?? 'inicio';
         break;
       case 'post-graficas':
         include('./app/pages/post-graficas.php');
+        break;
+      //por aqui
+      case 'get-beneficios-plantas':
+        include('./app/pages/post-graficas.php');
+        break;
+      case 'post-recoger-clima':
+        include('./app/pages/recoger-clima.php');
+        break;
+      case 'get-realtime-power':
+        include('./app/pages/realtime.php');
+        break;
+      case 'get-plant-overview':
+        include('./app/pages/overview.php');
         break;
       case 'ayuda':
         include('./app/pages/ayuda.php');

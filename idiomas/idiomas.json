@@ -17,7 +17,10 @@
       "configuracion": "Configuración",
       "ayuda": "Ayuda",
       "idiomas": "Idiomas",
-      "graficas": "Graficas de plantas"
+      "graficas": "POST Graficas de plantas",
+      "clima": "POST Recoger clima de la planta",
+      "power": "GET Datos en tiempo real",
+      "overview": "GET Descripcion general de la planta"
     },
     "inicio": {
       "titulo": "Inicio",
@@ -139,11 +142,20 @@
       "parameters_list_range_name": "range",
       "parameters_list_range_description": "Opcional, rango para proveedores específicos (e.g., \"dia\", \"mes\", \"año\").",
       "parameters_list_interval_name": "interval",
-      "parameters_list_interval_description": "Opcional, intervalo de tiempo para Victron Energy (e.g., \"15mins\", \"hours\").",
+      "parameters_list_interval_description": "Opcional, intervalo de tiempo para Victron Energy (e.g., \"15mins\", \"hours\", \"2hours\", \"days\", \"weeks\", \"months\", \"years\").",
       "parameters_list_type_name": "type",
-      "parameters_list_type_description": "Opcional, tipo de datos para Victron Energy (e.g., \"venus\", \"live_feed\").",
+      "parameters_list_type_description": "Opcional, tipo de datos para Victron Energy (e.g., \"venus\", \"live_feed\", \"consumption\", \"solar_yield\", \"kwh\", \"generator\", \"generator-runtime\", \"custom\", \"forecast\").",
       "response_example_title": "Respuesta de Ejemplo",
       "response_description": "Ejemplo de respuesta JSON con datos de consumo, producción y almacenamiento."
+    },
+    "realtime": {
+      "descripcion": "Este endpoint proporciona a tiempo real datos de la planta que se le proporciona en la URL",
+      "id_descripcion": "identificador de la planta la cual tiene que pertenecer al proveedor proporcionado y el cliente tiene que tener acceso a esa misma planta"
+    },
+    "clima":{
+      "descripcion": "Nombre de la calle donde se encuentra la planta.",
+      "body":"Cuerpo JSON",
+      "name": "El clima de la localizacion que se le pasa a la planta"
     }
   },
   "en": {
@@ -164,7 +176,10 @@
       "configuracion": "Settings",
       "ayuda": "Help",
       "idiomas": "languages",
-      "graficas": "Plant Charts"
+      "graficas": "Plant Charts",
+      "clima": "POST Fetch plant's climate",
+      "power": "GET Real-time data",
+      "overview": "GET overview of the plant"
     },
     "inicio": {
       "titulo": "Home",
@@ -286,11 +301,20 @@
       "parameters_list_range_name": "range",
       "parameters_list_range_description": "Optional, range for specific providers (e.g., \"day\", \"month\", \"year\").",
       "parameters_list_interval_name": "interval",
-      "parameters_list_interval_description": "Optional, time interval for Victron Energy (e.g., \"15mins\", \"hours\").",
+      "parameters_list_interval_description": "Optional, time interval for Victron Energy (e.g., \"15mins\", \"hours\", \"2hours\", \"days\", \"weeks\", \"months\", \"years\")",
       "parameters_list_type_name": "type",
-      "parameters_list_type_description": "Optional, type of data for Victron Energy (e.g., \"venus\", \"live_feed\").",
+      "parameters_list_type_description": "Optional, type of data for Victron Energy (e.g., \"venus\", \"live_feed\", \"consumption\", \"solar_yield\", \"kwh\", \"generator\", \"generator-runtime\", \"custom\", \"forecast\").",
       "response_example_title": "Example Response",
       "response_description": "Example of a JSON response with consumption, production, and storage data."
+    },
+    "realtime": {
+      "descripcion": "This endpoint provides real-time data of the plant specified in the URL.",
+      "id_descripcion": "Identifier of the plant, which must belong to the specified provider and be accessible to the client."
+    },
+    "clima":{
+      "descripcion": "Retrieve the weather of the location provided to the plant.",
+      "body":"Body JSON",
+      "name": "Name of the place where the plant is located"
     }
   }
 }
