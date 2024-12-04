@@ -16,7 +16,8 @@
       "login": "Login",
       "configuracion": "Configuración",
       "ayuda": "Ayuda",
-      "idiomas": "Idiomas"
+      "idiomas": "Idiomas",
+      "graficas": "Graficas de plantas"
     },
     "inicio": {
       "titulo": "Inicio",
@@ -137,7 +138,8 @@
       "login": "Login",
       "configuracion": "Settings",
       "ayuda": "Help",
-      "idiomas": "languages"
+      "idiomas": "languages",
+      "graficas": "Plant Charts"
     },
     "inicio": {
       "titulo": "Home",

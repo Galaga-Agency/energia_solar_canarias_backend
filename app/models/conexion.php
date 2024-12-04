@@ -1,7 +1,6 @@
 <?php
 
 require_once "../../vendor/autoload.php";
-require_once "../utils/respuesta.php";
 
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
@@ -24,7 +23,6 @@ class Conexion
     function __construct()
     {
         $listadatos = $this->datosConexion();
-
         foreach ($listadatos as $key => $value) {
             $this->server = $value['server'];
             $this->user = $value['user'];
@@ -32,22 +30,10 @@ class Conexion
             $this->database = $value['database'];
             $this->port = $value['port'];
         }
-
-        try {
-            // Intentar conectar a la base de datos
-            $this->conexion = new mysqli($this->server, $this->user, $this->password, $this->database, $this->port);
-
-            if ($this->conexion->connect_errno) {
-                // Lanza una excepción en caso de error de conexión
-                throw new mysqli_sql_exception($this->conexion->connect_error, $this->conexion->connect_errno);
-            }
-        } catch (mysqli_sql_exception $e) {
-            // Captura el error y devuelve un JSON
-            $respuesta = new Respuesta;
-            $respuesta->_500($e);
-            $respuesta->message = 'el servidor no se a podido establecer conexión con la base de datos: ' . $e->getMessage();
-            echo json_encode($respuesta);
-            exit; // Detener la ejecución del script
+        $this->conexion = new mysqli($this->server, $this->user, $this->password, $this->database, $this->port);
+        if ($this->conexion->connect_errno) {
+            $this->errno = $this->conexion->connect_errno;
+            $this->error = $this->conexion->connect_error;
         }
     }
 
