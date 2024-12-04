@@ -17,14 +17,15 @@
         <h2 class="text-xl font-semibold <?php echo $theme === 'dark' ? 'text-gray-400' : 'text-gray-800'; ?> mb-2">
             <?php echo translate('usuarios_delete.respuesta_ejemplo'); ?>
         </h2>
-        <pre class="<?php echo $theme === 'dark' ? 'bg-gray-900 text-gray-300' : 'bg-gray-100 text-gray-900'; ?> rounded-lg p-4 text-sm overflow-auto">
+        <pre class="<?php echo $theme === 'dark' ? 'bg-gray-900 text-gray-300' : 'bg-gray-100 text-gray-900'; ?> rounded-lg p-4 text-sm overflow-auto font-mono">
 {
-  "status": true,
-  "code": 200,
-  "token": tokenIdentificativo,
-  "message": "200 - Token asignado correctamente"
+  <span class="text-blue-500">"status"</span>: <span class="text-yellow-500">true</span>,
+  <span class="text-blue-500">"code"</span>: <span class="text-yellow-500">200</span>,
+  <span class="text-blue-500">"token"</span>: <span class="text-green-500">"tokenIdentificativo"</span>,
+  <span class="text-blue-500">"message"</span>: <span class="text-green-500">"200 - Token asignado correctamente"</span>
 }
-        </pre>
+</pre>
+
     </div>
 
     <!-- Componente de Código Copiable -->

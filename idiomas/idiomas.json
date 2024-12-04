@@ -36,9 +36,9 @@
       "descripcion": "El endpoint GET /usuarios permite obtener la lista de usuarios registrados en el sistema. Puedes utilizarlo para recuperar información detallada de los usuarios, incluyendo su nombre, correo electrónico, imagen de perfil, estado y más.",
       "parametros_consulta": "Parámetros de Consulta",
       "page": "page",
-      "page_descripcion":"(opcional): Número de página para la paginación (por defecto 1).",
+      "page_descripcion": "(opcional): Número de página para la paginación (por defecto 1).",
       "limit": "limit",
-      "limit_descripcion":"(opcional): Número máximo de usuarios a devolver (por defecto 200).",
+      "limit_descripcion": "(opcional): Número máximo de usuarios a devolver (por defecto 200).",
       "respuesta_ejemplo": "Respuesta de Ejemplo",
       "ejemplo_uso": "Ejemplo de Uso"
     },
@@ -81,21 +81,21 @@
     "get_detalles_planta": {
       "titulo_login": "GET /plants",
       "descripcion": "El endpoint GET /plants/details/{id} permite obtener la planta con el id (identificador) proporcionado. Sacamos los datos detallados que hay en una planta, el administrador podrá acceder a todos los detalles de todas las plantas y el usuario solo a las que tiene a su disposición (si no sabe el id de su planta haga una consulta de todas sus plantas con /plants)",
-      "id":"Es el id de la planta (tu usuario tiene que tener acceso)",
-      "proveedor":"Es el proveedor de quien viene la planta"
+      "id": "Es el id de la planta (tu usuario tiene que tener acceso)",
+      "proveedor": "Es el proveedor de quien viene la planta"
     },
     "asociar_plantas_usuarios": {
       "titulo_login": "GET /usuarios/relacionar",
       "descripcion": "La solicitud POST /usuarios/relacionar permite asociar una planta específica a un usuario en el sistema. (solo para administradores)",
-      "idplanta":"(requerido): ID único de la planta que se va a asociar.",
-      "idusuario":"(requerido): ID único del usuario al que se asociará la planta.",
-      "proveedor":"(requerido): ID único del proveedor de la planta."
+      "idplanta": "(requerido): ID único de la planta que se va a asociar.",
+      "idusuario": "(requerido): ID único del usuario al que se asociará la planta.",
+      "proveedor": "(requerido): ID único del proveedor de la planta."
     },
     "bearer_token": {
       "titulo_login": "POST /usuario/bearerToken",
       "descripcion": "Este endpoint proporciona al usuario un token que no caduca o que caduca cuando el usuario quiera esto se utiliza para dar al usuario una posible implementación de nuestra api en su propio código",
-      "nombre_usuario":"(requerido): nombre del usuario",
-      "password_usuario":"(requerido): contraseña del usuario"
+      "nombre_usuario": "(requerido): nombre del usuario",
+      "password_usuario": "(requerido): contraseña del usuario"
     },
     "ayuda": {
       "titulo": "Centro de Ayuda",
@@ -119,7 +119,32 @@
         "mensaje": "Mensaje",
         "enviar": "Enviar"
       }
-    } 
+    },
+    "post_graficas": {
+      "endpoint_title": "POST /plants/graficas",
+      "endpoint_description": "Permite realizar una solicitud para obtener gráficos basados en datos de plantas solares según el proveedor seleccionado.",
+      "parameters_title": "Parámetros de JSON",
+      "parameters_list_id_name": "id",
+      "parameters_list_id_description": "Identificador único de la planta (e.g., \"1851069\").",
+      "parameters_list_proveedor_name": "proveedor",
+      "parameters_list_proveedor_description": "Nombre del proveedor (e.g., \"SolarEdge\").",
+      "parameters_list_dia_name": "dia",
+      "parameters_list_dia_description": "Tipo de rango de tiempo (\"QUARTER_OF_AN_HOUR\",\"HOUR\",\"DAY\",\"WEEK\", \"MONTH\", or \"YEAR\") por defecto DAY.",
+      "parameters_list_fechaInicio_name": "fechaInicio",
+      "parameters_list_fechaInicio_description": "Fecha de inicio para los datos solicitados (formato: \"YYYY-MM-DD\").",
+      "parameters_list_fechaFin_name": "fechaFin",
+      "parameters_list_fechaFin_description": "Fecha de finalización para los datos solicitados (formato: \"YYYY-MM-DD\").",
+      "parameters_list_chartIndexId_name": "chartIndexId",
+      "parameters_list_chartIndexId_description": "Opcional, especifica el tipo de datos del gráfico (e.g., \"generación de energía\").",
+      "parameters_list_range_name": "range",
+      "parameters_list_range_description": "Opcional, rango para proveedores específicos (e.g., \"dia\", \"mes\", \"año\").",
+      "parameters_list_interval_name": "interval",
+      "parameters_list_interval_description": "Opcional, intervalo de tiempo para Victron Energy (e.g., \"15mins\", \"hours\").",
+      "parameters_list_type_name": "type",
+      "parameters_list_type_description": "Opcional, tipo de datos para Victron Energy (e.g., \"venus\", \"live_feed\").",
+      "response_example_title": "Respuesta de Ejemplo",
+      "response_description": "Ejemplo de respuesta JSON con datos de consumo, producción y almacenamiento."
+    }
   },
   "en": {
     "menu": {
@@ -203,21 +228,21 @@
     "get_detalles_planta": {
       "titulo_login": "GET /plants/detalles",
       "descripcion": "The endpoint GET /plants/details/{id} allows retrieving the plant with the provided ID (identifier). We obtain the detailed data for a plant; the administrator can access all details of all plants, while the user can only access the plants available to them. (If the user does not know their plant's ID, they can retrieve all their plants with /plants.)",
-      "id":"It is the plant ID (your user must have access).",
-      "proveedor":"It is the provider from whom the plant originates."
+      "id": "It is the plant ID (your user must have access).",
+      "proveedor": "It is the provider from whom the plant originates."
     },
     "asociar_plantas_usuarios": {
       "titulo_login": "GET /usuarios/relacionar",
       "descripcion": "The POST /usuarios/relacionar request allows associating a specific plant with a user in the system. (administrators only)",
-      "idplanta":"(required): Unique ID of the plant to be associated.",
-      "idusuario":"(required): Unique ID of the user with whom the plant will be associated.",
-      "proveedor":"(required): Unique ID of the plant provider."
+      "idplanta": "(required): Unique ID of the plant to be associated.",
+      "idusuario": "(required): Unique ID of the user with whom the plant will be associated.",
+      "proveedor": "(required): Unique ID of the plant provider."
     },
     "bearer_token": {
       "titulo_login": "POST /usuario/bearerToken",
       "descripcion": "Este endpoint proporciona al usuario un token que no caduca o que caduca cuando el usuario quiera esto se utiliza para dar al usuario una posible implementación de nuestra api en su propio código",
-      "nombre_usuario":"(requerido): nombre del usuario",
-      "password_usuario":"(requerido): contraseña del usuario"
+      "nombre_usuario": "(requerido): nombre del usuario",
+      "password_usuario": "(requerido): contraseña del usuario"
     },
     "ayuda": {
       "titulo": "Help Center",
@@ -241,6 +266,31 @@
         "mensaje": "Message",
         "enviar": "Send"
       }
-    }  
+    },
+    "post_graficas": {
+      "endpoint_title": "POST /plants/graficas",
+      "endpoint_description": "Allows requesting charts based on solar plant data according to the selected provider.",
+      "parameters_title": "Query JSON",
+      "parameters_list_id_name": "id",
+      "parameters_list_id_description": "Unique identifier of the plant (e.g., \"1851069\").",
+      "parameters_list_proveedor_name": "proveedor",
+      "parameters_list_proveedor_description": "Name of the provider (e.g., \"SolarEdge\").",
+      "parameters_list_dia_name": "dia",
+      "parameters_list_dia_description": "Time range type (\"QUARTER_OF_AN_HOUR\", \"HOUR\", \"DAY\", \"WEEK\", \"MONTH\", or \"YEAR\") default is DAY.",
+      "parameters_list_fechaInicio_name": "fechaInicio",
+      "parameters_list_fechaInicio_description": "Start date for the requested data (format: \"YYYY-MM-DD\").",
+      "parameters_list_fechaFin_name": "fechaFin",
+      "parameters_list_fechaFin_description": "End date for the requested data (format: \"YYYY-MM-DD\").",
+      "parameters_list_chartIndexId_name": "chartIndexId",
+      "parameters_list_chartIndexId_description": "Optional, specifies the type of chart data (e.g., \"energy generation\").",
+      "parameters_list_range_name": "range",
+      "parameters_list_range_description": "Optional, range for specific providers (e.g., \"day\", \"month\", \"year\").",
+      "parameters_list_interval_name": "interval",
+      "parameters_list_interval_description": "Optional, time interval for Victron Energy (e.g., \"15mins\", \"hours\").",
+      "parameters_list_type_name": "type",
+      "parameters_list_type_description": "Optional, type of data for Victron Energy (e.g., \"venus\", \"live_feed\").",
+      "response_example_title": "Example Response",
+      "response_description": "Example of a JSON response with consumption, production, and storage data."
+    }
   }
 }
