@@ -1,4 +1,3 @@
-
 <div>
     <h1 class="text-4xl font-bold <?php echo $theme === 'dark' ? 'text-blue-400' : 'text-blue-600'; ?> mb-4">
         <?php echo translate('inicio.titulo'); ?>
@@ -8,7 +7,7 @@
     </p>
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <!-- Tarjeta de ejemplo 1 -->
+        <!-- Tarjeta de tipo 1 -->
         <div class="<?php echo $theme === 'dark' ? 'bg-blue-900' : 'bg-blue-100'; ?> p-4 rounded-lg shadow-md hover:shadow-lg transition-shadow">
             <h2 class="text-xl font-semibold <?php echo $theme === 'dark' ? 'text-blue-300' : 'text-blue-700'; ?> mb-2">
                 <?php echo translate('inicio.usuarios'); ?>
@@ -21,7 +20,7 @@
             </a>
         </div>
 
-        <!-- Tarjeta de ejemplo 2 -->
+        <!-- Tarjeta de tipo 2 -->
         <div class="<?php echo $theme === 'dark' ? 'bg-green-900' : 'bg-green-100'; ?> p-4 rounded-lg shadow-md hover:shadow-lg transition-shadow">
             <h2 class="text-xl font-semibold <?php echo $theme === 'dark' ? 'text-green-300' : 'text-green-700'; ?> mb-2">
                 <?php echo translate('inicio.loginytokens'); ?>
@@ -34,7 +33,7 @@
             </a>
         </div>
 
-        <!-- Tarjeta de ejemplo 3 -->
+        <!-- Tarjeta de tipo 3 -->
         <div class="<?php echo $theme === 'dark' ? 'bg-yellow-900' : 'bg-yellow-100'; ?> p-4 rounded-lg shadow-md hover:shadow-lg transition-shadow">
             <h2 class="text-xl font-semibold <?php echo $theme === 'dark' ? 'text-yellow-300' : 'text-yellow-700'; ?> mb-2">
                 <?php echo translate('inicio.datos_api'); ?>
@@ -47,15 +46,41 @@
             </a>
         </div>
 
-        <!-- Tarjeta de ejemplo 4 -->
+        <!-- Tarjeta de tipo 4 -->
         <div class="<?php echo $theme === 'dark' ? 'bg-red-900' : 'bg-red-100'; ?> p-4 rounded-lg shadow-md hover:shadow-lg transition-shadow">
             <h2 class="text-xl font-semibold <?php echo $theme === 'dark' ? 'text-red-300' : 'text-red-700'; ?> mb-2">
-                <?php echo translate('inicio.datos_api'); ?>
+                <?php echo translate('inicio.logs'); ?>
             </h2>
             <p class="<?php echo $theme === 'dark' ? 'text-gray-400' : 'text-gray-600'; ?>">
-                <?php echo translate('inicio.mas_funcionalidades'); ?>
+                <?php echo translate('inicio.logs_descriopcion'); ?>
             </p>
             <a href="#" class="inline-block mt-4 <?php echo $theme === 'dark' ? 'text-red-400' : 'text-red-600'; ?> font-semibold hover:underline">
+                <?php echo translate('inicio.ver_mas'); ?> &rarr;
+            </a>
+        </div>
+
+        <!-- Tarjeta de tipo 5 (nuevo) -->
+        <div class="<?php echo $theme === 'dark' ? 'bg-indigo-900' : 'bg-indigo-100'; ?> p-4 rounded-lg shadow-md hover:shadow-lg transition-shadow">
+            <h2 class="text-xl font-semibold <?php echo $theme === 'dark' ? 'text-indigo-300' : 'text-indigo-700'; ?> mb-2">
+                <?php echo translate('inicio.clases'); ?>
+            </h2>
+            <p class="<?php echo $theme === 'dark' ? 'text-gray-400' : 'text-gray-600'; ?>">
+                <?php echo translate('inicio.clases_descripcion'); ?>
+            </p>
+            <a href="?page=get-beneficios-ecologicos" class="inline-block mt-4 <?php echo $theme === 'dark' ? 'text-indigo-400' : 'text-indigo-600'; ?> font-semibold hover:underline">
+                <?php echo translate('inicio.ver_mas'); ?> &rarr;
+            </a>
+        </div>
+
+        <!-- Tarjeta de tipo 6 (nuevo) -->
+        <div class="<?php echo $theme === 'dark' ? 'bg-purple-900' : 'bg-purple-100'; ?> p-4 rounded-lg shadow-md hover:shadow-lg transition-shadow">
+            <h2 class="text-xl font-semibold <?php echo $theme === 'dark' ? 'text-purple-300' : 'text-purple-700'; ?> mb-2">
+                <?php echo translate('inicio.proveedores'); ?>
+            </h2>
+            <p class="<?php echo $theme === 'dark' ? 'text-gray-400' : 'text-gray-600'; ?>">
+                <?php echo translate('inicio.proveedores_descripcion'); ?>
+            </p>
+            <a href="?page=get-device-data" class="inline-block mt-4 <?php echo $theme === 'dark' ? 'text-purple-400' : 'text-purple-600'; ?> font-semibold hover:underline">
                 <?php echo translate('inicio.ver_mas'); ?> &rarr;
             </a>
         </div>

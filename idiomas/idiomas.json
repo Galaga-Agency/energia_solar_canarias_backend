@@ -39,7 +39,13 @@
       "login_descripcion": "Crea el login y accede a tu token privado para hacer llamadas a la app",
       "datos_api": "LLamadas a la api",
       "datos_api_descripcion": "Solicita plantas si eres un cliente o asocia plantas a los clientes si eres administrador esta sección explica como puedes llamar los datos de la api",
-      "mas_funcionalidades": "Disponible próximamente..."
+      "mas_funcionalidades": "Disponible próximamente...",
+      "clases":"Clases",
+      "clases_descripcion":"Este endpoint gestiona las diferentes clases de usuario que existen en el sistema. Las clases definen el nivel de permisos y acceso que los usuarios tienen dentro de la aplicación, como administrador o usuario regular. Este endpoint permite visualizar, crear y actualizar clases.",
+      "logs":"Logs",
+      "logs_descriopcion":"Este endpoint proporciona acceso a los registros de actividad del sistema. Los logs incluyen información sobre las acciones realizadas por los usuarios, los errores ocurridos y otros eventos relevantes. Es útil para la supervisión y auditoría del sistema.",
+      "proveedores":"Proveedores",
+      "proveedores_descripcion":"Este endpoint gestiona la información de los proveedores conectados a la plataforma. Los proveedores pueden ser sistemas externos de energía. Permite consultar los datos de los proveedores, así como integrarlos o actualizarlos."
     },
     "usuarios_get": {
       "titulo": "GET /usuarios",
@@ -217,7 +223,13 @@
       "login_descripcion": "Create the login and access your private token to make API calls",
       "datos_api": "API Calls",
       "datos_api_descripcion": "Request plants if you are a client, or associate plants with clients if you are an administrator. This section explains how you can fetch data from the API.",
-      "mas_funcionalidades": "Coming soon..."
+      "mas_funcionalidades": "Coming soon...",
+      "clases":"Clases",
+      "clases_descripcion":"Este endpoint gestiona las diferentes clases de usuario que existen en el sistema. Las clases definen el nivel de permisos y acceso que los usuarios tienen dentro de la aplicación, como administrador o usuario regular. Este endpoint permite visualizar, crear y actualizar clases.",
+      "logs":"Logs",
+      "logs_descriopcion":"Este endpoint proporciona acceso a los registros de actividad del sistema. Los logs incluyen información sobre las acciones realizadas por los usuarios, los errores ocurridos y otros eventos relevantes. Es útil para la supervisión y auditoría del sistema.",
+      "proveedores":"Proveedores",
+      "proveedores_descripcion":"Este endpoint gestiona la información de los proveedores conectados a la plataforma. Los proveedores pueden ser sistemas externos de energía. Permite consultar los datos de los proveedores, así como integrarlos o actualizarlos."
     },
     "usuarios_get": {
       "titulo": "GET /users",
