@@ -27,7 +27,7 @@ if (isset($_GET['lang'])) {
 
 // Verificar si se ha seleccionado un tema manualmente
 if (isset($_GET['theme'])) {
-    $_SESSION['theme'] = $_GET['theme'];
+  $_SESSION['theme'] = $_GET['theme'];
 }
 $theme = isset($_SESSION['theme']) ? $_SESSION['theme'] : 'light';
 
@@ -76,31 +76,31 @@ $page = $_GET['page'] ?? 'inicio';
 
 <body class="<?php echo $theme === 'dark' ? 'bg-gray-900 text-white' : 'bg-gray-100 text-black'; ?> font-sans leading-normal tracking-normal">
 
-<!-- Botón de alternancia de tema -->
-<div class="fixed top-4 right-4 z-50">
+  <!-- Botón de alternancia de tema -->
+  <div class="fixed top-4 right-4 z-50">
     <button id="themeToggle" class="<?php echo $theme === 'dark' ? 'bg-white-800 text-gray' : 'bg-white-800 text-gray'; ?> p-2 rounded">
       <i id="themeIcon" class="fa-solid <?php echo $theme === 'dark' ? 'fa-sun' : 'fa-moon'; ?>"></i>
     </button>
-  </div>  
+  </div>
 
-<!-- Botón de menú para móviles -->
+  <!-- Botón de menú para móviles -->
   <div class="fixed top-4 left-4 z-50 md:hidden">
     <button id="menuButton" class="bg-blue-500 text-white p-2 rounded">
       <i class="fa-solid fa-bars"></i>
     </button>
   </div>
 
-<!-- Menú Lateral -->
-<div id="sidebar" class="fixed inset-y-0 left-0 w-64 <?php echo $theme === 'dark' ? 'bg-gray-800' : 'bg-white'; ?> shadow-lg transition-transform duration-300 ease-in-out z-40 md:translate-x-0 transform -translate-x-full">
+  <!-- Menú Lateral -->
+  <div id="sidebar" class="fixed inset-y-0 left-0 w-64 <?php echo $theme === 'dark' ? 'bg-gray-800' : 'bg-white'; ?> shadow-lg transition-transform duration-300 ease-in-out z-40 md:translate-x-0 transform -translate-x-full">
     <div class="p-4 <?php echo $theme === 'dark' ? 'bg-gray-700 text-white' : 'bg-blue-500 text-white'; ?>">
-        <h2 class="text-lg font-semibold"><?php echo translate('menu.titulo'); ?></h2>
+      <h2 class="text-lg font-semibold"><?php echo translate('menu.titulo'); ?></h2>
     </div>
     <ul class="p-4 space-y-2">
       <li>
         <a href="?page=inicio" class="block px-4 py-2 <?php echo $theme === 'dark' ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-blue-100'; ?> rounded"><?php echo translate('menu.inicio') ?></a>
       </li>
       <li>
-      <button onclick="toggleSubmenu('perfilSubmenu')" class="w-full text-left px-4 py-2 <?php echo $theme === 'dark' ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-blue-100'; ?> rounded focus:outline-none">
+        <button onclick="toggleSubmenu('perfilSubmenu')" class="w-full text-left px-4 py-2 <?php echo $theme === 'dark' ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-blue-100'; ?> rounded focus:outline-none">
           <?php echo translate('menu.usuarios') ?>
         </button>
         <ul id="perfilSubmenu" class="ml-4 mt-2 space-y-1 hidden">
@@ -115,7 +115,7 @@ $page = $_GET['page'] ?? 'inicio';
           <?php echo translate('menu.configuracion') ?>
         </button>
         <ul id="configSubmenu" class="ml-4 mt-2 space-y-1 hidden">
-        <li><a href="?page=bearer-token" class="block px-4 py-2 <?php echo $theme === 'dark' ? 'text-gray-300 hover:bg-gray-600' : 'text-gray-600 hover:bg-blue-50'; ?> rounded"><?php echo translate('menu.bearer_token') ?></a></li>
+          <li><a href="?page=bearer-token" class="block px-4 py-2 <?php echo $theme === 'dark' ? 'text-gray-300 hover:bg-gray-600' : 'text-gray-600 hover:bg-blue-50'; ?> rounded"><?php echo translate('menu.bearer_token') ?></a></li>
           <li><a href="?page=login" class="block px-4 py-2 <?php echo $theme === 'dark' ? 'text-gray-300 hover:bg-gray-600' : 'text-gray-600 hover:bg-blue-50'; ?> rounded"><?php echo translate('menu.login') ?></a></li>
         </ul>
       </li>
@@ -127,6 +127,7 @@ $page = $_GET['page'] ?? 'inicio';
           <li><a href="?page=get-lista-plantas" class="block px-4 py-2 <?php echo $theme === 'dark' ? 'text-gray-300 hover:bg-gray-600' : 'text-gray-600 hover:bg-blue-50'; ?> rounded"><?php echo translate('menu.lista_plantas') ?></a></li>
           <li><a href="?page=get-planta" class="block px-4 py-2 <?php echo $theme === 'dark' ? 'text-gray-300 hover:bg-gray-600' : 'text-gray-600 hover:bg-blue-50'; ?> rounded"><?php echo translate('menu.detalles_plantas') ?></a></li>
           <li><a href="?page=post-asociar-plantas-usuarios" class="block px-4 py-2 <?php echo $theme === 'dark' ? 'text-gray-300 hover:bg-gray-600' : 'text-gray-600 hover:bg-blue-50'; ?> rounded"><?php echo translate('menu.asociarplantas') ?></a></li>
+          <li><a href="?page=post-graficas" class="block px-4 py-2 <?php echo $theme === 'dark' ? 'text-gray-300 hover:bg-gray-600' : 'text-gray-600 hover:bg-blue-50'; ?> rounded"><?php echo translate('menu.graficas') ?></a></li>
         </ul>
       </li>
       <li>
@@ -179,6 +180,9 @@ $page = $_GET['page'] ?? 'inicio';
       case 'post-asociar-plantas-usuarios':
         include('./app/pages/post-asociar-plantas-usuarios.php');
         break;
+      case 'post-graficas':
+        include('./app/pages/post-graficas.php');
+        break;
       case 'ayuda':
         include('./app/pages/ayuda.php');
         break;
@@ -194,23 +198,23 @@ $page = $_GET['page'] ?? 'inicio';
   <!-- JavaScript para manejar las subrutas y el menú responsivo -->
   <script>
     document.addEventListener('DOMContentLoaded', () => {
-  const themeToggle = document.getElementById('themeToggle'); // Botón de alternancia de tema
-  const themeIcon = document.getElementById('themeIcon'); // Icono dentro del botón
-  const body = document.body; // Cuerpo del documento
-  const dynamicTextElements = document.querySelectorAll('.text-gray-700, .text-gray-600'); // Elementos que deben cambiar de color
+      const themeToggle = document.getElementById('themeToggle'); // Botón de alternancia de tema
+      const themeIcon = document.getElementById('themeIcon'); // Icono dentro del botón
+      const body = document.body; // Cuerpo del documento
+      const dynamicTextElements = document.querySelectorAll('.text-gray-700, .text-gray-600'); // Elementos que deben cambiar de color
 
-  // Cambiar tema y actualizar la interfaz
-  themeToggle.addEventListener('click', () => {
+      // Cambiar tema y actualizar la interfaz
+      themeToggle.addEventListener('click', () => {
 
-    // Determinar el tema actual
-    const isDarkTheme = body.classList.contains('bg-gray-900');
+        // Determinar el tema actual
+        const isDarkTheme = body.classList.contains('bg-gray-900');
 
-    // Actualizar el estado del tema en la URL
-    const url = new URL(window.location.href);
-    url.searchParams.set('theme', isDarkTheme ? 'light' : 'dark');
-    window.location.href = url; // Recargar la página con el nuevo tema
-  });
-});
+        // Actualizar el estado del tema en la URL
+        const url = new URL(window.location.href);
+        url.searchParams.set('theme', isDarkTheme ? 'light' : 'dark');
+        window.location.href = url; // Recargar la página con el nuevo tema
+      });
+    });
 
 
 
