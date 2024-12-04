@@ -22,7 +22,6 @@ class Conexion
 
     function __construct()
     {
-        $this->close();
         $listadatos = $this->datosConexion();
         foreach ($listadatos as $key => $value) {
             $this->server = $value['server'];
@@ -31,7 +30,7 @@ class Conexion
             $this->database = $value['database'];
             $this->port = $value['port'];
         }
-        $this->conexion = new mysqli($this->server, $this->user, $this->password, $this->database, $this->port);
+        $this->conexion = new mysqli("p:" . $this->server, $this->user, $this->password, $this->database, $this->port);
         if ($this->conexion->connect_errno) {
             $this->errno = $this->conexion->connect_errno;
             $this->error = $this->conexion->connect_error;
