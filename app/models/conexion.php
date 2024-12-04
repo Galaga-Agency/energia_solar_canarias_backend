@@ -22,6 +22,7 @@ class Conexion
 
     function __construct()
     {
+        $this->close();
         $listadatos = $this->datosConexion();
         foreach ($listadatos as $key => $value) {
             $this->server = $value['server'];
