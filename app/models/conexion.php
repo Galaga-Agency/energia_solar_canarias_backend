@@ -30,12 +30,29 @@ class Conexion
             $this->database = $value['database'];
             $this->port = $value['port'];
         }
+
+        // Intentar la conexión a la base de datos
         $this->conexion = new mysqli("p:" . $this->server, $this->user, $this->password, $this->database, $this->port);
+
+        // Verificar si hay un error en la conexión
         if ($this->conexion->connect_errno) {
+            // Almacenar el código de error y el mensaje de error
             $this->errno = $this->conexion->connect_errno;
             $this->error = $this->conexion->connect_error;
+
+            // Crear el array de error en formato JSON
+            $errorResponse = array(
+                'status' => false,
+                'code' => $this->errno,
+                'message' => 'Connection failed: ' . $this->error
+            );
+
+            // Mostrar el error en formato JSON
+            echo json_encode($errorResponse);
+            exit(); // Detener la ejecución del script si no se puede conectar
         }
     }
+
 
     private function datosConexion()
     {
