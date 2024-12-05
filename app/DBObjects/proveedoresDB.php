@@ -6,7 +6,7 @@ class ProveedoresDB {
     private $conexion;
 
     public function __construct() {
-        $this->conexion = new Conexion();
+        $this->conexion = Conexion::getInstance();
     }
 
     /**
@@ -16,7 +16,7 @@ class ProveedoresDB {
     */
     public function getTodosProveedores() {
         try {
-            $conexion = new Conexion();
+            $conexion = Conexion::getInstance();
             $conn = $conexion->getConexion();
     
             $query = "SELECT * FROM proveedores;";
@@ -40,7 +40,6 @@ class ProveedoresDB {
     
             // Cierra la consulta y la conexión
             $stmt->close();
-            $conn->close();
     
             // Devuelve el array de plantas asociadas
             return $proveedores;
@@ -56,7 +55,7 @@ class ProveedoresDB {
     */
     public function getTokenProveedor($nombreProveedor) {
         try {
-            $conexion = new Conexion();
+            $conexion = Conexion::getInstance();
             $conn = $conexion->getConexion();
     
             $query = "SELECT tokenAuth, tokenRenovation from proveedores inner join bearertoken on proveedores.token_id = bearertoken.id where proveedores.nombre = ?;";
@@ -82,7 +81,6 @@ class ProveedoresDB {
     
             // Cierra la consulta y la conexión
             $stmt->close();
-            $conn->close();
     
             // Devuelve el array de plantas asociadas
             return $data;
@@ -98,7 +96,7 @@ class ProveedoresDB {
     */
     public function verificarTokenProveedor($nombreProveedor) {
         try {
-            $conexion = new Conexion();
+            $conexion = Conexion::getInstance();
             $conn = $conexion->getConexion();
     
             // Verificar si el proveedor existe
@@ -120,7 +118,6 @@ class ProveedoresDB {
     
             $row = $result->fetch_assoc();
             $stmt->close();
-            $conn->close();
     
             // Retornar el `token_id` si el proveedor existe, o null si no tiene token asociado
             return $row['token_id'] ?? null;
@@ -134,7 +131,7 @@ class ProveedoresDB {
      */
     public function actualizarToken($tokenId, $token, $tokenRenovation = '', $expires_at = null) {
         try {
-            $conexion = new Conexion();
+            $conexion = Conexion::getInstance();
             $conn = $conexion->getConexion();
     
             $query = "UPDATE bearertoken 
@@ -151,7 +148,6 @@ class ProveedoresDB {
             }
     
             $stmt->close();
-            $conn->close();
     
             return true; // Actualización exitosa
         } catch (Exception $e) {
@@ -164,7 +160,7 @@ class ProveedoresDB {
      */
     public function insertarTokenYAsociar($nombreProveedor, $token, $tokenRenovation = '', $expires_at = null) {
         try {
-            $conexion = new Conexion();
+            $conexion = Conexion::getInstance();
             $conn = $conexion->getConexion();
     
             // Insertar un nuevo token
@@ -197,7 +193,6 @@ class ProveedoresDB {
             }
     
             $stmtUpdateProveedor->close();
-            $conn->close();
     
             return true; // Inserción y asociación exitosas
         } catch (Exception $e) {

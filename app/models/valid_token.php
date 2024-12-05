@@ -122,7 +122,7 @@ class ValidToken
         try {
             $this->id = $id;
             // Creamos una nueva conexión (buena práctica para abrir y cerrar peticiones)
-            $conexion = new Conexion();
+            $conexion = Conexion::getInstance();
             $conn = $conexion->getConexion();
 
 

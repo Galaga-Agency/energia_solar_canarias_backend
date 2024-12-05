@@ -5,7 +5,7 @@ class UsuariosDB {
     private $conexion;
 
     public function __construct() {
-        $this->conexion = new Conexion();
+        $this->conexion = Conexion::getInstance();
     }
     /**
    * Relacionar un usuario con una planta
@@ -17,7 +17,7 @@ class UsuariosDB {
     */
     public function relacionarUsers($idPlanta, $idUsuario, $idProveedor) {
         try {
-            $conexion = new Conexion();
+            $conexion = Conexion::getInstance();
             $conn = $conexion->getConexion();
 
             $query = "INSERT INTO plantas_asociadas(usuario_id, planta_id, proveedor_id) VALUES (?, ?, ?)";
@@ -27,7 +27,7 @@ class UsuariosDB {
             }
         
             // Vincula los parámetros: 'i' para enteros (usuario y planta) y 's' para string (proveedor)
-            $stmt->bind_param('iii', $idUsuario, $idPlanta, $proveedor);
+            $stmt->bind_param('iii', $idUsuario, $idPlanta, $idProveedor);
         
             // Ejecuta la consulta
             if (!$stmt->execute()) {
@@ -37,7 +37,6 @@ class UsuariosDB {
 
             // Cierra la consulta y la conexión
             $stmt->close();
-            $conn->close();
         
             return true;
         } catch (Exception $e) {
@@ -52,7 +51,7 @@ class UsuariosDB {
      */
     public function getUsers($page = 1, $limit = 200) {
         try {
-            $conexion = new Conexion();
+            $conexion = Conexion::getInstance();
             $conn = $conexion->getConexion();
             
             $offset = ($page - 1) * $limit; // Calcula el desplazamiento en base a la página actual
@@ -77,7 +76,6 @@ class UsuariosDB {
             }
     
             $stmt->close();
-            $conn->close();
             return $usuarios;
     
         } catch (Exception $e) {
@@ -91,7 +89,7 @@ class UsuariosDB {
      */
     public function getUser($id) {
         try {
-            $conexion = new Conexion();
+            $conexion = Conexion::getInstance();
             $conn = $conexion->getConexion();
     
             $query = "SELECT usuarios.usuario_id, usuarios.nombre AS usuario_nombre,  usuarios.apellido, usuarios.email,  usuarios.movil, usuarios.imagen, usuarios.activo, usuarios.eliminado, clases.nombre AS clase
@@ -107,7 +105,6 @@ class UsuariosDB {
             $usuario = $result->fetch_assoc(); // Obtiene una sola fila
     
             $stmt->close();
-            $conn->close();
     
             return $usuario;
     
@@ -124,7 +121,7 @@ class UsuariosDB {
      */
     public function insertUser($data) {
         try {
-            $conexion = new Conexion();
+            $conexion = Conexion::getInstance();
             $conn = $conexion->getConexion();
     
             // Consulta de inserción
@@ -159,7 +156,6 @@ class UsuariosDB {
     
             // Cerrar el statement y la conexión
             $stmt->close();
-            $conn->close();
             return $result;
     
         } catch (Exception $e) {
@@ -177,7 +173,7 @@ class UsuariosDB {
     public function updateUser($id, $data) {
         try {
             // Obtener la conexión de nuevo para asegurar que esté abierta
-            $conexion = new Conexion();
+            $conexion = Conexion::getInstance();
             $conn = $conexion->getConexion();
             
             if (!$conn) {
@@ -217,7 +213,6 @@ class UsuariosDB {
     
             // Cerrar el statement y la conexión
             $stmt->close();
-            $conn->close();
     
             return $result;
     
@@ -247,7 +242,6 @@ class UsuariosDB {
     
             // Cerrar el statement y la conexión
             $stmt->close();
-            $conn->close();
     
             return $result;
     
@@ -263,7 +257,7 @@ class UsuariosDB {
      */
     public function getAdmin($id) {
         try {
-            $conexion = new Conexion();
+            $conexion = Conexion::getInstance();
             $conn = $conexion->getConexion();
             $query = "SELECT clases.nombre as clase FROM usuarios
                       INNER JOIN clases ON clases.clase_id = usuarios.clase_id
@@ -287,7 +281,7 @@ class UsuariosDB {
     
             // Cerrar el statement y la conexión
             $stmt->close();
-            $conn->close();
+            $conexion->close(); // Cierra la conexión
     
             return $isAdmin; // Devolver el resultado
     
@@ -304,7 +298,7 @@ class UsuariosDB {
      */ 
     public function comprobarUsuario($email) {
         try {
-            $conexion = new Conexion();
+            $conexion = Conexion::getInstance();
             $conn = $conexion->getConexion();
             $query = "SELECT COUNT(usuario_id) as usuarios FROM usuarios WHERE email = ? AND eliminado = 0;";
     
@@ -322,7 +316,6 @@ class UsuariosDB {
     
             // Cerrar el statement y la conexión
             $stmt->close();
-            $conn->close();
             return false;
     
         } catch (Exception $e) {
@@ -337,7 +330,7 @@ class UsuariosDB {
      */ 
     public function esMismoUsuario($id, $email) {
         try {
-            $conexion = new Conexion();
+            $conexion = Conexion::getInstance();
             $conn = $conexion->getConexion();
     
             // Consulta para verificar si el email pertenece al usuario con el ID proporcionado
@@ -351,13 +344,11 @@ class UsuariosDB {
             // Si se encuentra un registro, el email pertenece al usuario con ese ID
             if ($result->num_rows > 0) {
                 $stmt->close();
-                $conn->close();
                 return true;
             }
     
             // Cerrar el statement y la conexión si no se encuentra coincidencia
             $stmt->close();
-            $conn->close();
             return false;
     
         } catch (Exception $e) {
@@ -372,7 +363,7 @@ class UsuariosDB {
      */ 
     public function verificarEstadoUsuario($id) {
         try {
-            $conexion = new Conexion();
+            $conexion = Conexion::getInstance();
             $conn = $conexion->getConexion();
 
             // Consulta para verificar el estado del usuario
@@ -386,7 +377,6 @@ class UsuariosDB {
             // Verificar si se encontró un registro
             if ($result && $row = $result->fetch_assoc()) {
                 $stmt->close();
-                $conn->close();
     
                 // Retornar el estado en función de los campos 'activo' y 'eliminado'
                 if ($row['eliminado'] == 1 || $row['activo'] == 0) {
@@ -398,7 +388,6 @@ class UsuariosDB {
     
             // Cerrar el statement y la conexión si no se encontró el usuario
             $stmt->close();
-            $conn->close();
             return null; // O retorna un valor que indique que el usuario no existe
     
         } catch (Exception $e) {
@@ -413,7 +402,7 @@ class UsuariosDB {
      */ 
     public function usuarioEliminado($id) {
         try {
-            $conexion = new Conexion();
+            $conexion = Conexion::getInstance();
             $conn = $conexion->getConexion();
             
             // Consulta para verificar el estado del usuario
@@ -427,7 +416,6 @@ class UsuariosDB {
             // Verificar si se encontró un registro
             if ($result && $row = $result->fetch_assoc()) {
                 $stmt->close();
-                $conn->close();
     
                 // Retornar el estado en función del campo 'eliminado'
                 if ($row['eliminado'] == 1) {
@@ -439,7 +427,6 @@ class UsuariosDB {
     
             // Cerrar el statement y la conexión si no se encontró el usuario
             $stmt->close();
-            $conn->close();
             return null; // O retorna un valor que indique que el usuario no existe
     
         } catch (Exception $e) {
@@ -454,7 +441,7 @@ class UsuariosDB {
      */ 
     public function comprobarClaseExiste($clase) {
         try {
-            $conexion = new Conexion();
+            $conexion = Conexion::getInstance();
             $conn = $conexion->getConexion();
     
             // Consulta para verificar si la clase existe
@@ -468,13 +455,11 @@ class UsuariosDB {
             // Verificar si se encontró un registro
             if ($result && $result->num_rows > 0) {
                 $stmt->close();
-                $conn->close();
                 return true; // La clase existe
             }
     
             // Cerrar el statement y la conexión si no se encontró la clase
             $stmt->close();
-            $conn->close();
             return false; // La clase no existe
     
         } catch (Exception $e) {
@@ -489,7 +474,7 @@ class UsuariosDB {
      */ 
     public function comprobarUsuarioAsociadoPlanta($usuarioId,$plantaId,$idProveedor) {
         try {
-            $conexion = new Conexion();
+            $conexion = Conexion::getInstance();
             $conn = $conexion->getConexion();
     
             // Consulta para verificar si la clase existe
@@ -503,13 +488,11 @@ class UsuariosDB {
             // Verificar si se encontró un registro
             if ($result && $result->num_rows > 0) {
                 $stmt->close();
-                $conn->close();
                 return true; // La clase existe
             }
     
             // Cerrar el statement y la conexión si no se encontró la clase
             $stmt->close();
-            $conn->close();
             return false; // La clase no existe
     
         } catch (Exception $e) {
@@ -525,7 +508,7 @@ class UsuariosDB {
  */
 public function actualizarUltimoLogin($usuarioId) {
     try {
-        $conexion = new Conexion();
+        $conexion = Conexion::getInstance();
         $conn = $conexion->getConexion();
 
         // Consulta para actualizar el campo ultimo_login
@@ -543,7 +526,6 @@ public function actualizarUltimoLogin($usuarioId) {
 
         // Cierra la consulta y la conexión
         $stmt->close();
-        $conn->close();
 
         return $resultado; // True si se ejecutó correctamente, false si no
     } catch (Exception $e) {
@@ -557,7 +539,7 @@ public function actualizarUltimoLogin($usuarioId) {
      */
     public function getIdUserPorEmail($email) {
         try {
-            $conexion = new Conexion();
+            $conexion = Conexion::getInstance();
             $conn = $conexion->getConexion();
             
     
@@ -571,7 +553,6 @@ public function actualizarUltimoLogin($usuarioId) {
             $idUsuario = $result->fetch_assoc(); // Obtiene una sola fila
     
             $stmt->close();
-            $conn->close();
             return $idUsuario;
     
         } catch (Exception $e) {

@@ -11,7 +11,7 @@ class Usuarios
 
     function __construct()
     {
-        $this->conexion = new Conexion;
+        $this->conexion = Conexion::getInstance();
     }
 
     // Getter y setter para 'error'

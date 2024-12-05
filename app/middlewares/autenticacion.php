@@ -18,7 +18,7 @@ class Autenticacion
 
     function __construct()
     {
-        $this->conexion = new Conexion;
+        $this->conexion = Conexion::getInstance();
         $this->apiScope = [
             "admin" => "scope1",
             "usuario" => "scope2"
