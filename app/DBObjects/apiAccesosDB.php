@@ -6,7 +6,7 @@ class ApiAccesosDB {
     private $conexion;
 
     public function __construct() {
-        $this->conexion = new Conexion();
+        $this->conexion = Conexion::getInstance();
     }
 
     /**
@@ -80,7 +80,6 @@ class ApiAccesosDB {
                 $registroActualizado = $result->fetch_assoc();
 
                 $stmtGetRecord->close();
-                $conn->close();
 
                 return $registroActualizado; // Devuelve el registro actualizado
             } else {
@@ -109,7 +108,6 @@ class ApiAccesosDB {
                 $registroCreado = $result->fetch_assoc();
 
                 $stmtGetRecord->close();
-                $conn->close();
 
                 return $registroCreado; // Devuelve el registro creado
             }
@@ -146,7 +144,6 @@ class ApiAccesosDB {
     
             $scope = $result->fetch_assoc();
             $stmt->close();
-            $conn->close();
     
             return $scope;
         } catch (Exception $e) {
@@ -174,7 +171,6 @@ class ApiAccesosDB {
             $usuario = $result->fetch_assoc();
 
             $stmt->close();
-            $conn->close();
 
             return $usuario ? $usuario['usuario_id'] : false;
         } catch (Exception $e) {
@@ -201,7 +197,6 @@ class ApiAccesosDB {
             $afectados = $stmt->affected_rows;
 
             $stmt->close();
-            $conn->close();
 
             return $afectados > 0;
         } catch (Exception $e) {

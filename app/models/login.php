@@ -19,7 +19,7 @@ class Login
     {
         $this->datos = $datos;
         $this->idiomaUsuario = $idiomaUsuario;
-        $this->conexion = new Conexion;
+        $this->conexion = Conexion::getInstance();
     }
 
     public function userLogin()
@@ -35,7 +35,7 @@ class Login
                 $this->password = $this->datos['password'];
                 $this->usuario = $this->datos['email'];
                 // Creamos una nueva conexión (buena práctica para abrir y cerrar peticiones)
-                $conexion = new Conexion();
+                $conexion = Conexion::getInstance();
                 $conn = $conexion->getConexion();
 
                 // Definimos la consulta con marcador de posición

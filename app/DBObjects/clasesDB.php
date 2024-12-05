@@ -6,7 +6,7 @@ class ClasesDB {
     private $conexion;
 
     public function __construct() {
-        $this->conexion = new Conexion();
+        $this->conexion = Conexion::getInstance();
     }
 
  /**
@@ -19,7 +19,7 @@ class ClasesDB {
     */
     public function getClases() {
         try {
-            $conexion = new Conexion();
+            $conexion = Conexion::getInstance();
             $conn = $conexion->getConexion();
     
             $query = "SELECT * FROM clases";
@@ -43,7 +43,6 @@ class ClasesDB {
     
             // Cierra la consulta y la conexión
             $stmt->close();
-            $conn->close();
     
             // Devuelve el array de plantas asociadas
             return $clases;

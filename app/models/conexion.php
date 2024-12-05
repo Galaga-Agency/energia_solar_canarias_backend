@@ -16,12 +16,23 @@ class Conexion
     private $password;
     private $database;
     private $port;
+
+    // Instancia única
+    private static $instance = null;
+
     public $conexion;
     public $errno;
     public $error;
 
-    function __construct()
+    // Constructor privado
+    private function __construct()
     {
+        $this->iniciarConexion();
+    }
+    // Método para iniciar o reiniciar la conexión
+    private function iniciarConexion()
+    {
+        // Cargar configuración desde el archivo
         $listadatos = $this->datosConexion();
         foreach ($listadatos as $key => $value) {
             $this->server = $value['server'];
@@ -31,28 +42,23 @@ class Conexion
             $this->port = $value['port'];
         }
 
-        // Intentar la conexión a la base de datos
+        // Crear la conexión a MySQL
         $this->conexion = new mysqli($this->server, $this->user, $this->password, $this->database, $this->port);
 
-        // Verificar si hay un error en la conexión
+        // Manejar errores en la conexión
         if ($this->conexion->connect_errno) {
-            // Almacenar el código de error y el mensaje de error
-            $this->errno = $this->conexion->connect_errno;
-            $this->error = $this->conexion->connect_error;
-
-            // Crear el array de error en formato JSON
-            $errorResponse = array(
-                'status' => false,
-                'code' => $this->errno,
-                'message' => 'Connection failed: ' . $this->error
-            );
-
-            // Mostrar el error en formato JSON
-            echo json_encode($errorResponse);
-            exit(); // Detener la ejecución del script si no se puede conectar
+            throw new Exception("Error al conectar a la base de datos: " . $this->conexion->connect_error);
         }
     }
 
+    // Método estático para obtener la instancia única
+    public static function getInstance()
+    {
+        if (self::$instance === null) {
+            self::$instance = new Conexion();
+        }
+        return self::$instance;
+    }
 
     private function datosConexion()
     {
@@ -116,11 +122,16 @@ class Conexion
     {
         if ($this->conexion) {
             $this->conexion->close();
+            self::$instance = null; // Reinicia la instancia para la próxima solicitud
         }
     }
-    // Método opcional para obtener la conexión actual
+    // Método para obtener la conexión activa
     public function getConexion()
     {
+        // Verificar si la conexión sigue activa
+        if (!$this->conexion || !$this->conexion instanceof mysqli || !$this->conexion->ping()) {
+            $this->iniciarConexion(); // Reconectar si es necesario
+        }
         return $this->conexion;
     }
     // Método para reemplazar y obtener la conexión actual

@@ -20,7 +20,7 @@ class ApiKey
     function __construct()
     {
         $this->token = new Token;
-        $this->conexion = new Conexion;
+        $this->conexion = Conexion::getInstance();
     }
     // Getter y setter para 'email'
     public function getEmail()

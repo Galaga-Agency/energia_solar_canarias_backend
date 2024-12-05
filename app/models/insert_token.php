@@ -18,7 +18,7 @@ class InsertToken
         $this->tokenLogin = $tokenLogin;
         $this->timeTokenLogin = $timeTokenLogin;
         $this->usuarioId = $dataUsuario['id'];
-        $this->conexion = new Conexion;
+        $this->conexion = Conexion::getInstance();
     }
 
     public function execute()
@@ -26,7 +26,7 @@ class InsertToken
         $respuesta = new Respuesta;
         try {
             // Crear instancia de la conexion
-            $conexion = new Conexion();
+            $conexion = Conexion::getInstance();
 
             // Obtener la conexion
             $conn = $conexion->getConexion();

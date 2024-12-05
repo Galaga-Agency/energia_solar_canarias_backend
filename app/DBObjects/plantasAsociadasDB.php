@@ -6,7 +6,7 @@ class PlantasAsociadasDB {
     private $conexion;
 
     public function __construct() {
-        $this->conexion = new Conexion();
+        $this->conexion = Conexion::getInstance();
     }
 
  /**
@@ -19,7 +19,7 @@ class PlantasAsociadasDB {
     */
     public function getPlantasAsociadasAlUsuario($idUsuario) {
         try {
-            $conexion = new Conexion();
+            $conexion = Conexion::getInstance();
             $conn = $conexion->getConexion();
     
             $query = "SELECT * FROM plantas_asociadas WHERE usuario_id = ?;";
@@ -46,7 +46,6 @@ class PlantasAsociadasDB {
     
             // Cierra la consulta y la conexión
             $stmt->close();
-            $conn->close();
     
             // Devuelve el array de plantas asociadas
             return $plantas;
@@ -65,7 +64,7 @@ class PlantasAsociadasDB {
  */
 public function isPlantasAsociadasAlUsuario($usuarioId, $idPlanta, $proveedor) {
     try {
-        $conexion = new Conexion();
+        $conexion = Conexion::getInstance();
         $conn = $conexion->getConexion();
 
         $query = "SELECT * FROM plantas_asociadas WHERE usuario_id = ? AND planta_id = ? AND nombre_proveedor = ?;";
@@ -90,7 +89,6 @@ public function isPlantasAsociadasAlUsuario($usuarioId, $idPlanta, $proveedor) {
 
         // Cierra la consulta y la conexión
         $stmt->close();
-        $conn->close();
 
         return $existeAsociacion;
 

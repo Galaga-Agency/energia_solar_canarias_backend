@@ -48,7 +48,7 @@ if (strpos($request, $baseDir) === 0) {
     $request = substr($request, strlen($baseDir));
     $request = trim($request, '/'); // Elimina cualquier barra adicional al inicio o final
 }
-$conexion = new Conexion;
+$conexion = Conexion::getInstance();
 $conn = $conexion->getConexion();
 if ($conn == null) {
     // Si la conexión falla, devuelve un JSON de error y detén la ejecución
@@ -58,7 +58,8 @@ if ($conn == null) {
     http_response_code(500);
     echo json_encode($respuesta);
  exit;
-}   
+}
+$conexion->close(); // Cierra la conexión   
 $handled = false; // Bandera para indicar si la ruta fue manejada
 
 // Rutas y endpoints
