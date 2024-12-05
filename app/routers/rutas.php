@@ -476,18 +476,24 @@ switch ($method) {
                     // Decodificar el cuerpo JSON
                     $input = json_decode(file_get_contents("php://input"), true);
                     // Verificar si se proporcionó el campo 'name'
-                    if (empty($input['name'])) {
-                        $respuesta->_404();
-                        $respuesta->message = 'No se a encontrado el campo name en el json';
-                        http_response_code($respuesta->code);
-                        echo json_encode($respuesta);
-                        break;
-                    }
+                    if(isset($input['name'])){
                     $name = $input['name'];
                     // Pasarle la ruta
                     $openMeteo = new OpenMeteo;
                     $resultado = $openMeteo->obtenerClima($name);
-
+                    }elseif(isset($input['lat']) && isset($input['long'])){
+                    $lat = $input['lat'];
+                    $long = $input['long'];
+                    // Pasarle la ruta
+                    $openMeteo = new OpenMeteo;
+                    $resultado = $openMeteo->obtenerClimaCoordenadas($lat,$long);
+                    }else{
+                        $respuesta->_404();
+                        $respuesta->message = 'No se a encontrado el campo name o lat y long en el json';
+                        http_response_code($respuesta->code);
+                        echo json_encode($respuesta);
+                        break;
+                    }
                     //Enviar la respuesta en formato json
                     echo $resultado;
                 }else{
