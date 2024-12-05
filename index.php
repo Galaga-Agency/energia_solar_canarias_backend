@@ -235,6 +235,9 @@ $page = $_GET['page'] ?? 'inicio';
       case 'ayuda':
         include('./app/pages/ayuda.php');
         break;
+      case 'ayuda':
+        include('./app/pages/ayudaForm.php');
+        break;
       default:
         echo "<h1 class='text-5xl font-bold text-center'>Página no encontrada</h1>";
         break;

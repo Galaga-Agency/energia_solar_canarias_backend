@@ -24,6 +24,9 @@ RewriteEngine On
     Require all granted
 </Files>
 
+<Files "ayudaForm.php">
+    Require all granted
+</Files>
 
 #CORS
 RewriteCond %{REQUEST_METHOD} OPTIONS
