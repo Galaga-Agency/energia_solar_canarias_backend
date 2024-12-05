@@ -54,7 +54,7 @@
             <p class="<?php echo $theme === 'dark' ? 'text-gray-400' : 'text-gray-600'; ?>">
                 <?php echo translate('inicio.logs_descriopcion'); ?>
             </p>
-            <a href="#" class="inline-block mt-4 <?php echo $theme === 'dark' ? 'text-red-400' : 'text-red-600'; ?> font-semibold hover:underline">
+            <a href="?page=get-logs" class="inline-block mt-4 <?php echo $theme === 'dark' ? 'text-red-400' : 'text-red-600'; ?> font-semibold hover:underline">
                 <?php echo translate('inicio.ver_mas'); ?> &rarr;
             </a>
         </div>
@@ -67,7 +67,7 @@
             <p class="<?php echo $theme === 'dark' ? 'text-gray-400' : 'text-gray-600'; ?>">
                 <?php echo translate('inicio.clases_descripcion'); ?>
             </p>
-            <a href="?page=get-beneficios-ecologicos" class="inline-block mt-4 <?php echo $theme === 'dark' ? 'text-indigo-400' : 'text-indigo-600'; ?> font-semibold hover:underline">
+            <a href="?page=get-clases" class="inline-block mt-4 <?php echo $theme === 'dark' ? 'text-indigo-400' : 'text-indigo-600'; ?> font-semibold hover:underline">
                 <?php echo translate('inicio.ver_mas'); ?> &rarr;
             </a>
         </div>
@@ -80,7 +80,7 @@
             <p class="<?php echo $theme === 'dark' ? 'text-gray-400' : 'text-gray-600'; ?>">
                 <?php echo translate('inicio.proveedores_descripcion'); ?>
             </p>
-            <a href="?page=get-device-data" class="inline-block mt-4 <?php echo $theme === 'dark' ? 'text-purple-400' : 'text-purple-600'; ?> font-semibold hover:underline">
+            <a href="?page=get-proveedores" class="inline-block mt-4 <?php echo $theme === 'dark' ? 'text-purple-400' : 'text-purple-600'; ?> font-semibold hover:underline">
                 <?php echo translate('inicio.ver_mas'); ?> &rarr;
             </a>
         </div>
