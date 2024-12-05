@@ -32,7 +32,7 @@ class Conexion
         }
 
         // Intentar la conexión a la base de datos
-        $this->conexion = new mysqli("p:" . $this->server, $this->user, $this->password, $this->database, $this->port);
+        $this->conexion = new mysqli($this->server, $this->user, $this->password, $this->database, $this->port);
 
         // Verificar si hay un error en la conexión
         if ($this->conexion->connect_errno) {
