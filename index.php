@@ -85,7 +85,7 @@ $page = $_GET['page'] ?? 'inicio';
 
   <!-- Botón de menú para móviles -->
   <div class="fixed top-4 left-4 z-50 md:hidden">
-    <button id="menuButton" class="bg-blue-500 text-white p-2 rounded">
+    <button id="menuButton" class="<?php echo $theme === 'dark' ? 'bg-gray-700 text-white' : 'bg-blue-500 text-white'; ?> p-2 rounded">
       <i class="fa-solid fa-bars"></i>
     </button>
   </div>
@@ -132,7 +132,7 @@ $page = $_GET['page'] ?? 'inicio';
           <?php echo translate('menu.clases') ?>
         </button>
         <ul id="claseSubmenu" class="ml-4 mt-2 space-y-1 hidden">
-        <li><a href="?page=get-clases" class="block px-4 py-2 <?php echo $theme === 'dark' ? 'text-gray-300 hover:bg-gray-600' : 'text-gray-600 hover:bg-blue-50'; ?> rounded"><?php echo translate('menu.clases_get') ?></a></li>
+          <li><a href="?page=get-clases" class="block px-4 py-2 <?php echo $theme === 'dark' ? 'text-gray-300 hover:bg-gray-600' : 'text-gray-600 hover:bg-blue-50'; ?> rounded"><?php echo translate('menu.clases_get') ?></a></li>
         </ul>
       </li>
       <li>
@@ -140,7 +140,7 @@ $page = $_GET['page'] ?? 'inicio';
           <?php echo translate('menu.logs') ?>
         </button>
         <ul id="logSubmenu" class="ml-4 mt-2 space-y-1 hidden">
-        <li><a href="?page=get-logs" class="block px-4 py-2 <?php echo $theme === 'dark' ? 'text-gray-300 hover:bg-gray-600' : 'text-gray-600 hover:bg-blue-50'; ?> rounded"><?php echo translate('menu.logs') ?></a></li>
+          <li><a href="?page=get-logs" class="block px-4 py-2 <?php echo $theme === 'dark' ? 'text-gray-300 hover:bg-gray-600' : 'text-gray-600 hover:bg-blue-50'; ?> rounded"><?php echo translate('menu.logs') ?></a></li>
         </ul>
       </li>
       <li>
@@ -326,11 +326,24 @@ $page = $_GET['page'] ?? 'inicio';
     const menuButton = document.getElementById('menuButton');
     const sidebar = document.getElementById('sidebar');
     const content = document.getElementById('content');
+    let activado = false;
 
     menuButton.addEventListener('click', () => {
       if (window.innerWidth < 768) { // Solo ejecutar en dispositivos móviles
         sidebar.classList.toggle('-translate-x-full');
         content.classList.toggle('content-shift'); // Desplazar el contenido
+        menuButton.style.display = 'none';//Quitamos el boton que molesta con el menu activado
+        activado = !activado;
+      }
+    });
+
+    // Cerrar el menú si se hace clic fuera de él
+    document.addEventListener('click', (e) => {
+      if (window.innerWidth < 768 && !sidebar.contains(e.target) && !menuButton.contains(e.target) && activado) {
+        sidebar.classList.toggle('-translate-x-full');
+        content.classList.toggle('content-shift');
+        menuButton.style.display = 'block';//Ponemos el boton cuando quitamos el menu
+        activado = !activado;
       }
     });
 
