@@ -6,7 +6,7 @@ class LogsDB {
     private $conexion;
 
     public function __construct() {
-        $this->conexion = new Conexion();
+        $this->conexion = Conexion::getInstance();
     }
 
 /**
@@ -18,7 +18,7 @@ class LogsDB {
  */
 public function getLogs($page = 1, $limit = 200, $like = '') {
     try {
-        $conexion = new Conexion();
+        $conexion = Conexion::getInstance();
         $conn = $conexion->getConexion();
         
         $offset = ($page - 1) * $limit; // Calcula el desplazamiento en base a la página actual
@@ -46,7 +46,6 @@ public function getLogs($page = 1, $limit = 200, $like = '') {
         }
 
         $stmt->close();
-        $conn->close();
         return $logs;
 
     } catch (Exception $e) {
@@ -64,7 +63,7 @@ public function getLogs($page = 1, $limit = 200, $like = '') {
  */
 public function postLogs(int $userId, Logs $level, string $message): bool {
     try {
-        $conexion = new Conexion();
+        $conexion = Conexion::getInstance();
         $conn = $conexion->getConexion();
 
         // Consulta SQL para insertar el log
@@ -86,12 +85,10 @@ public function postLogs(int $userId, Logs $level, string $message): bool {
         // Verificar si la consulta fue exitosa
         if ($result && $stmt->affected_rows > 0) {
             $stmt->close();
-            $conn->close();
             return true;
         }
 
         $stmt->close();
-        $conn->close();
         return false;
 
     } catch (Exception $e) {

@@ -35,7 +35,7 @@ class Token
     public function deleteAllTokensUser($user)
     {
 
-        $conexion = new Conexion();
+        $conexion = Conexion::getInstance();
         $conn = $conexion->getConexion();
         //borramos todos los tokens que excedan de 5 minutos
         $sql = "
@@ -51,7 +51,6 @@ class Token
         $stmt->execute();
         //cerramos la consulta
         $stmt->close();
-        $conn->close();
         // Mensaje de control
         //echo ("<script>console.log('PHP: Borrados correctamentes los token del usuario que han excedido los 5 minutos');</script>");
     }
@@ -61,7 +60,7 @@ class Token
     {
         $time_actual = time(); // Tiempo actual en segundos
 
-        $conexion = new Conexion();
+        $conexion = Conexion::getInstance();
         $conn = $conexion->getConexion();
         //borramos todos los tokens que excedan de 5 minutos
         $sql = "
@@ -78,7 +77,6 @@ class Token
         $stmt->execute();
         //cerramos la consulta
         $stmt->close();
-        $conn->close();
         // Mensaje de control
         //echo ("<script>console.log('PHP: Borrados correctamentes los token del usuario que han excedido los 5 minutos');</script>");
     }
@@ -87,7 +85,7 @@ class Token
     {
         $time_actual = time(); // Tiempo actual en segundos
 
-        $conexion = new Conexion();
+        $conexion = Conexion::getInstance();
         $conn = $conexion->getConexion();
         //borramos todos los tokens que excedan de 5 minutos
         $sql = "
@@ -112,14 +110,13 @@ class Token
          */
         //cerramos la consulta
         $stmt->close();
-        $conn->close();
         // Mensaje de control
         //echo ("<script>console.log('PHP: Borrados correctamentes los token del usuario que han excedido los 5 minutos');</script>");
     }
     // Método para recoger el ultimo token del usuario
     public function getLastTokenUser($userId)
     {
-        $conexion = new Conexion();
+        $conexion = Conexion::getInstance();
         $conn = $conexion->getConexion();
         //recogemos el ultimo token activo del usuario
         $sql = "
@@ -137,7 +134,6 @@ class Token
         $lastToken = $result->fetch_assoc();
 
         $stmt->close();
-        $conn->close();
         //echo ("<script>console.log('PHP: Borrados correctamentes los token del usuario que han excedido los 5 minutos');</script>");
         return $lastToken ? $lastToken : null; // Devuelve el token o null si no existe
     }
