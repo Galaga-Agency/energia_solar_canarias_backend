@@ -26,6 +26,7 @@ public function getLogs($page = 1, $limit = 200, $like = '') {
         // Construir la consulta con parámetros dinámicos para LIMIT y OFFSET
         $query = "SELECT * FROM logs 
                   WHERE message LIKE ? 
+                  ORDER BY id DESC
                   LIMIT $limit OFFSET $offset";
 
         $stmt = $conn->prepare($query);

@@ -179,7 +179,12 @@ switch ($method) {
                     //Verificamos que existe el usuario CREADOR del token y sino manejamos el error dentro de la funcion
                     if ($authMiddleware->verificarTokenUsuarioActivo() != false) {
                         if ($authMiddleware->verificarAdmin()) {
-                            $logs = $logsDB->getLogs();
+                            $body = file_get_contents("php://input");
+                            $data = json_decode($body, true); // Decodificar JSON a un array asociativo
+                            $mensaje = isset($data['mensaje'])? $data['mensaje'] : '';
+                            $page = isset($_GET['page'])? $_GET['page'] : 1;
+                            $limit = isset($_GET['limit'])? $_GET['limit'] : 200;
+                            $logs = $logsDB->getLogs($page,$limit,$mensaje);
                             $respuesta->success($logs);
                             http_response_code($respuesta->code);
                             echo json_encode($respuesta);
