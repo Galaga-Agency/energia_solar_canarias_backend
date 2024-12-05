@@ -1,6 +1,7 @@
 <?php
 // Mostrar errores en pantalla
-//ini_set('display_errors', 1); // Activar la visualización de errores
+ini_set('display_errors', 1); // Activar la visualización de errores
+error_reporting(E_ALL);
 require_once "../../config/configApi.php";
 require_once "../middlewares/autenticacion.php";
 require_once "../controllers/usuarios.php";
