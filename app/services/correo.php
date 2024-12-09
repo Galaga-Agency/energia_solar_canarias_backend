@@ -106,12 +106,12 @@ class Correo
     public function enviarMensajeContacto($dataUsuario, $lang)
     {
         try {
-            // Validar y sanitizar los datos
+            // Validar que los datos necesarios estén presentes
             if (isset($dataUsuario['email']) && isset($dataUsuario['nombre']) && isset($dataUsuario['mensaje'])) {
-                // Sanitización en UTF-8 con htmlentities
+                // Sanitizar los datos sin convertir caracteres UTF-8
                 $emailUsuario = filter_var($dataUsuario['email'], FILTER_SANITIZE_EMAIL);
-                $nombreUsuario = htmlentities(trim($dataUsuario['nombre']), ENT_QUOTES, 'UTF-8');
-                $mensajeUsuario = htmlentities(trim($dataUsuario['mensaje']), ENT_QUOTES, 'UTF-8');
+                $nombreUsuario = trim($dataUsuario['nombre']);
+                $mensajeUsuario = trim($dataUsuario['mensaje']);
 
                 // Configuración SMTP
                 $this->mail->isSMTP();
@@ -121,40 +121,41 @@ class Correo
                 $this->mail->Password = $this->password; // Contraseña SMTP
                 $this->mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS; // SSL
                 $this->mail->Port = $this->port; // Puerto
+                $this->mail->CharSet = 'UTF-8'; // Configuración para UTF-8
 
                 // Mensajes dependiendo del idioma
-                $asuntoSoporte = $lang === 'es' ? htmlentities('Nuevo mensaje desde el formulario de contacto') : htmlentities('New message from the contact form');
-                $asuntoConfirmacion = $lang === 'es' ? htmlentities('Confirmación de envío de mensaje') : htmlentities('Message submission confirmation');
+                $asuntoSoporte = $lang === 'es' ? 'Nuevo mensaje desde el formulario de contacto' : 'New message from the contact form';
+                $asuntoConfirmacion = $lang === 'es' ? 'Confirmación de envío de mensaje' : 'Message submission confirmation';
                 $mensajeSoporte = $lang === 'es'
                     ? "
-                    <h3>Mensaje de contacto</h3>
-                    <p><strong>Nombre:</strong> $nombreUsuario</p>
-                    <p><strong>Email:</strong> $emailUsuario</p>
-                    <p><strong>Mensaje:</strong><br>$mensajeUsuario</p>
-                "
+                <h3>Mensaje de contacto</h3>
+                <p><strong>Nombre:</strong> $nombreUsuario</p>
+                <p><strong>Email:</strong> $emailUsuario</p>
+                <p><strong>Mensaje:</strong><br>$mensajeUsuario</p>
+            "
                     : "
-                    <h3>Contact Message</h3>
-                    <p><strong>Name:</strong> $nombreUsuario</p>
-                    <p><strong>Email:</strong> $emailUsuario</p>
-                    <p><strong>Message:</strong><br>$mensajeUsuario</p>
-                ";
+                <h3>Contact Message</h3>
+                <p><strong>Name:</strong> $nombreUsuario</p>
+                <p><strong>Email:</strong> $emailUsuario</p>
+                <p><strong>Message:</strong><br>$mensajeUsuario</p>
+            ";
                 $mensajeCliente = $lang === 'es'
                     ? "
-                    <h3>Gracias por contactarnos</h3>
-                    <p>Hola <strong>$nombreUsuario</strong>,</p>
-                    <p>Hemos recibido tu mensaje y nuestro equipo de soporte se pondrá en contacto contigo lo antes posible.</p>
-                    <p><strong>Tu mensaje:</strong></p>
-                    <blockquote>$mensajeUsuario</blockquote>
-                    <p>Gracias,<br>". htmlentities("El equipo de Energía Solar Canarias.)")."</p>
-                "
+                <h3>Gracias por contactarnos</h3>
+                <p>Hola <strong>$nombreUsuario</strong>,</p>
+                <p>Hemos recibido tu mensaje y nuestro equipo de soporte se pondrá en contacto contigo lo antes posible.</p>
+                <p><strong>Tu mensaje:</strong></p>
+                <blockquote>$mensajeUsuario</blockquote>
+                <p>Gracias,<br>El equipo de Energía Solar Canarias.</p>
+            "
                     : "
-                    <h3>Thank you for contacting us</h3>
-                    <p>Hello <strong>$nombreUsuario</strong>,</p>
-                    <p>We have received your message, and our support team will get in touch with you as soon as possible.</p>
-                    <p><strong>Your message:</strong></p>
-                    <blockquote>$mensajeUsuario</blockquote>
-                    <p>Thank you,<br>". htmlentities("The Energía Solar Canarias Team.") . "</p>
-                ";
+                <h3>Thank you for contacting us</h3>
+                <p>Hello <strong>$nombreUsuario</strong>,</p>
+                <p>We have received your message, and our support team will get in touch with you as soon as possible.</p>
+                <p><strong>Your message:</strong></p>
+                <blockquote>$mensajeUsuario</blockquote>
+                <p>Thank you,<br>The Energía Solar Canarias Team.</p>
+            ";
 
                 // **Correo para soporte**
                 $this->mail->setFrom('admin@app-energiasolarcanarias.com', 'Formulario de Contacto');
