@@ -82,7 +82,7 @@ if (isset($_GET['status']) && isset($_GET['message'])) {
       </div>
       <div>
         <label for="captcha" class="block font-medium text-sm sm:text-base">Escribe el texto del CAPTCHA:</label>
-        <img src="/esc-backend/app/utils/captcha.php" alt="CAPTCHA" class="mb-2">
+        <img src="./app/utils/captcha.php" alt="CAPTCHA" class="mb-2">
         <input type="text" id="captcha" name="captcha" required class="mt-1 w-full rounded-md border <?php echo $theme === 'dark' ? 'bg-gray-700 text-white' : 'bg-gray-100 text-black'; ?> focus:ring-2 focus:ring-blue-500">
       </div>
       <button type="submit" class="bg-blue-500 text-white rounded-md px-4 py-2 sm:px-6 sm:py-3 hover:bg-blue-600 w-full sm:w-auto">
