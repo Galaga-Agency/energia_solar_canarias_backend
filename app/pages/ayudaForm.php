@@ -3,6 +3,8 @@ require_once __DIR__ . '/../services/correo.php';
 
 session_start();
 
+$url = "https://app-energiasolarcanarias-backend.com/";
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Capturar los datos enviados desde el formulario
     $nombre = htmlspecialchars(trim($_POST['name']));
@@ -13,7 +15,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Validar el CAPTCHA
     if (!isset($_SESSION['captcha']) || strtolower($captcha) !== strtolower($_SESSION['captcha'])) {
         // Redirigir con mensaje de error si el CAPTCHA es incorrecto
-        header('Location: http://localhost/esc-backend/index.php?page=ayuda&status=error&message=Captcha incorrecto. Inténtalo nuevamente.');
+        header("Location: " . $url . "index.php?page=ayuda&status=error&message=Captcha incorrecto. Inténtalo nuevamente.");
         unset($_SESSION['captcha']); // Eliminar el CAPTCHA para evitar reusos
         exit;
     }
@@ -39,7 +41,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $message = urlencode($respuesta->message);
 
     // Redirige de vuelta con el resultado del procesamiento
-    header("Location: http://localhost/esc-backend/index.php?page=ayuda&status=$status&message=$message");
+    header("Location: " . $url . "index.php?page=ayuda&status=$status&message=$message");
     exit;
 }
 ?>
