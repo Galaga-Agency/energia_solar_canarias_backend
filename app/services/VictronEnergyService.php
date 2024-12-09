@@ -37,6 +37,17 @@ class VictronEnergyService {
         }
     }
 
+    //Recoger datos detallados de la planta
+    public function getSiteRealtime($siteId) {
+        $url = $this->victronEnergy->getUrl() . "plant/". $siteId ."/diagnostics";
+        try {
+            $response = $this->httpClient->get($url, $this->header);
+            return $response;
+        } catch (Exception $e) {
+            return ['error' => $e->getMessage()];
+        }
+    }
+
     //Método que recoje todas las plantas
     public function getAllPlants($page = 1, $pageSize = 200) {
         $url = $this->victronEnergy->getUrl() . "users/". $this->victronEnergy->getIdInstallation()."/installations";

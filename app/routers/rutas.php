@@ -273,6 +273,8 @@ switch ($method) {
                             $solarEdge->getPlantPowerRealtimeSolarEdge($powerStationId);
                             break;
                         case $proveedores['VictronEnergy']:
+                            $victronEnergy = new ApiControladorService;
+                            $victronEnergy->getPlantPowerRealtimeVictronEnergy($powerStationId);
                             break;
                     }
                 }else{
