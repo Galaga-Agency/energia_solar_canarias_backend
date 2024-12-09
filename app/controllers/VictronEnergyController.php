@@ -41,7 +41,7 @@ class VictronEnergyController
         $this->logsController->registrarLog(Logs::INFO, " accede a la api de VictronEnergy todas las plantas");
         $data = $this->victronEnergyService->getSiteRealtime($siteId);
         header('Content-Type: application/json');
-        return json_encode($data);
+        return $data;
     }
 
     //Método para obtener los datos de todas las plantas
