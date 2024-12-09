@@ -39,7 +39,7 @@ class VictronEnergyService {
 
     //Recoger datos detallados de la planta
     public function getSiteRealtime($siteId) {
-        $url = $this->victronEnergy->getUrl() . "plant/". $siteId ."/diagnostics";
+        $url = $this->victronEnergy->getUrl() . "installations/". $siteId ."/diagnostics";
         try {
             $response = $this->httpClient->get($url, $this->header);
             return $response;
