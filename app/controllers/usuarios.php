@@ -175,7 +175,6 @@ class UsuariosController
         // Restaurar usuario eliminado
         $result = $usuariosDB->updateUser($idUsuarioPorEmail['usuario_id'], $data);
     } else {
-        echo 'pasa dos ';
         // Crear un nuevo usuario
         $result = $usuariosDB->insertUser($data);
     }
