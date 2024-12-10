@@ -20,7 +20,7 @@ class Correo
     {
         $this->mail = new PHPMailer(true);
         $direccion = dirname(__FILE__);
-        $jsondata = file_get_contents("../../config/smtp.json");
+        $jsondata = file_get_contents(dirname(__FILE__) . '/../../config/smtp.json');
         $dataSmtp =  json_decode($jsondata, true);
         foreach ($dataSmtp as $key => $value) {
             $this->host = $value['host'];

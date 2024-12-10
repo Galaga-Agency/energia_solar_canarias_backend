@@ -61,7 +61,7 @@ if (isset($_GET['status']) && isset($_GET['message'])) {
     <h2 class="text-xl sm:text-2xl font-semibold mb-4 text-center sm:text-left">
       <?php echo translate('ayuda.contacto'); ?>
     </h2>
-    <form id="contactForm" method="POST" action="/esc-backend/app/pages/ayudaForm.php" class="<?php echo $theme === 'dark' ? 'bg-gray-800 text-white' : 'bg-white text-black'; ?> shadow-md rounded-md p-4 sm:p-6 space-y-4">
+    <form id="contactForm" method="POST" action="index.php?page=ayudaForm" class="<?php echo $theme === 'dark' ? 'bg-gray-800 text-white' : 'bg-white text-black'; ?> shadow-md rounded-md p-4 sm:p-6 space-y-4">
       <div>
         <label for="name" class="block font-medium text-sm sm:text-base">
           <?php echo translate('ayuda.form.nombre'); ?>
