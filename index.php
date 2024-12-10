@@ -1,6 +1,5 @@
 <?php
 session_start();
-
 // Cargar el archivo JSON con las traducciones
 $jsonData = file_get_contents('./idiomas/idiomas.json');
 $translations = json_decode($jsonData, true);
@@ -235,7 +234,7 @@ $page = $_GET['page'] ?? 'inicio';
       case 'ayuda':
         include('./app/pages/ayuda.php');
         break;
-      case 'ayuda':
+      case 'ayudaForm':
         include('./app/pages/ayudaForm.php');
         break;
       default:
