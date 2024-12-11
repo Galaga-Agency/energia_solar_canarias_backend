@@ -53,7 +53,6 @@ class ApiAccesosController {
     
     public function devolverIdPorAccesoApiKey($apiAcceso){      
         $userId = $this->apiAccesosDB->devolverIdPorAccesoApiKey($apiAcceso);
-        $this->logsController->registrarLog(Logs::WARNING, 'se crea un acceso a un token permanente');
         return $userId;
     }
 }
