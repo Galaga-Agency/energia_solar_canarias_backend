@@ -204,6 +204,38 @@ class ApiAccesosDB {
             return false;
         }
     }
+    public function getApiAccesoPorToken($token) {
+    try {
+        $conn = $this->conexion->getConexion();
+        
+        // Preparar la consulta
+        $query = "SELECT usuario_id, api_scope FROM api_accesos WHERE api_key = ?";
+        $stmt = $conn->prepare($query);
+
+        if (!$stmt) {
+            throw new Exception("Error en la preparación de la consulta: " . $conn->error);
+        }
+
+        // Vincular parámetro y ejecutar
+        $stmt->bind_param('s', $token);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        
+        $registro = $result->fetch_assoc();
+        $stmt->close();
+
+        if ($registro) {
+            return $registro; // Retorna el array con usuario_id, api_scope
+        } else {
+            return false; // No se encontró el token
+        }
+
+    } catch (Exception $e) {
+        error_log("Error en getApiAccesoPorToken: " . $e->getMessage());
+        return false;
+    }
+}
+
 }
 
 ?>

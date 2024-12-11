@@ -38,11 +38,12 @@ class ApiAccesosController {
     public function verificarApiAcceso($apiAcceso) {
         try {
             $acceso = $this->apiAccesosDB->verificarAccesoApiKey($apiAcceso);
-            if (!$acceso) {
+
+            if (!isset($acceso)) {
                 throw new Exception("Acceso no válido para el token proporcionado.");
             }
-    
-            $this->logsController->registrarLog(Logs::WARNING, 'Se creó un acceso a un token permanente');
+            //No podemos meter un log aqui porque esta creando un error de referencia ciclica
+            //$this->logsController->registrarLog(Logs::WARNING, 'Se creó un acceso a un token permanente');
             return $acceso;
         } catch (Exception $e) {
             error_log("Error en verificarApiAcceso: " . $e->getMessage());

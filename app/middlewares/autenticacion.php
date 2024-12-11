@@ -68,7 +68,6 @@ class Autenticacion
     {
         $apiAccesosDB = new ApiAccesosController();
         $token = $this->getAuthApiScope();
-
         if ($token != null) {
             return $apiAccesosDB->verificarApiAcceso($token);
         }
@@ -118,6 +117,7 @@ class Autenticacion
      */
     public function verificarAdmin() {
         $authScope = $this->verificarAuthApiScope();
+        
         if (isset($authScope['api_scope']) && $authScope['api_scope'] === $this->apiScope['admin']) {
             return true;
         }
