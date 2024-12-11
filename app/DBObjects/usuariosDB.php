@@ -281,7 +281,6 @@ class UsuariosDB {
     
             // Cerrar el statement y la conexión
             $stmt->close();
-            $conexion->close(); // Cierra la conexión
     
             return $isAdmin; // Devolver el resultado
     
