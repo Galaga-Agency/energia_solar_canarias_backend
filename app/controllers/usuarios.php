@@ -48,6 +48,7 @@ class UsuariosController
             return;
         }
          $usuario = $usuariosDB->relacionarUsers($idPlanta, $idUsuario, $idProveedor);
+
          if($usuario != false){
              $logsController->registrarLog(Logs::POST, "El usuario se a relacionado con la planta correctamente");
              $respuesta = new Respuesta();
