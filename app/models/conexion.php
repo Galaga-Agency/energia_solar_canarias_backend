@@ -127,22 +127,27 @@ class Conexion
     }
     // Método para obtener la conexión activa
     public function getConexion()
-    {
-        // Si no tenemos objeto o no es instancia de mysqli, creamos la conexión
-        if (!($this->conexion instanceof mysqli)) {
+{
+    // Verificar si existe o no la conexión
+    if (!($this->conexion instanceof mysqli)) {
+        // Intentar iniciar la conexión
+        $this->iniciarConexion();
+    } else {
+        // Ya tenemos un objeto mysqli, verificar su validez
+        if (!$this->conexion->ping()) {
+            // Si ping falla, intentar reconectar una vez
             $this->iniciarConexion();
-        } else {
-            // Es un objeto mysqli, intentamos el ping con @ para suprimir error
-            if (!@mysqli_ping($this->conexion)) {
-                // Si el ping falla, reconectamos
-                $this->iniciarConexion();
+
+            // Comprobar inmediatamente si ahora sí funciona
+            if (!$this->conexion instanceof mysqli || !$this->conexion->ping()) {
+                // Si seguimos sin poder hacer ping, lanzar excepción
+                throw new Exception("No se pudo restablecer la conexión a la base de datos.");
             }
         }
-    
-        return $this->conexion;
     }
-    
-    
+
+    return $this->conexion;
+}
 
     // Método para reemplazar y obtener la conexión actual
     public function setConexion($conexion)
