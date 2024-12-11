@@ -59,7 +59,6 @@ if ($conn == null) {
     echo json_encode($respuesta);
  exit;
 }
-$conexion->close(); // Cierra la conexión   
 $handled = false; // Bandera para indicar si la ruta fue manejada
 
 // Rutas y endpoints
@@ -106,7 +105,7 @@ switch ($method) {
                 }
                 break;
             case (preg_match('/^plant\/benefits\/([\w-]+)$/', $request, $matches) && isset($_GET['proveedor']) ? true : false):
-                $handled = true;
+                $handled = true; 
                 $powerStationId = $matches[1];
                 //Verificamos que existe el usuario CREADOR del token y sino manejamos el error dentro de la funcion
                 if ($authMiddleware->verificarTokenUsuarioActivo() != false) {
@@ -587,6 +586,7 @@ switch ($method) {
     case 'PUT':
         switch (true) {
             case ($request === 'usuario'):
+                $handled = true;
                 //Verificamos que existe el usuario CREADOR del token y sino manejamos el error dentro de la funcion
                 if ($authMiddleware->verificarTokenUsuarioActivo()!=false) {
                     $idUser = $authMiddleware->obtenerIdUsuarioActivo();
@@ -600,6 +600,7 @@ switch ($method) {
                 }
                 break;
             case (preg_match('/^usuarios\/(\d+)$/', $request, $matches) ? true : false):
+                $handled = true;
                 // Extraer el ID del usuario desde la URL
                 $id = $matches[1];
                 //Verificamos que existe el usuario CREADOR del token y sino manejamos el error dentro de la funcion
@@ -623,6 +624,7 @@ switch ($method) {
                 break;
 
             default:
+                $handled = true;
                 $respuesta->_400();
                 $respuesta->message = 'El End Point no existe en la API';
                 http_response_code($respuesta->code);
