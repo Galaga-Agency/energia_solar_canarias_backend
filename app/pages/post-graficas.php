@@ -140,12 +140,12 @@ curl -X POST "https://app-energiasolarcanarias-backend.com/plants/graficas?prove
             <button
                 class="absolute top-2 right-2 <?php echo $theme === 'dark' ? 'bg-blue-400 hover:bg-blue-500' : 'bg-blue-600 hover:bg-blue-700'; ?> text-white px-3 py-1 rounded transition"
                 onclick="copiarCodigo()">
-                Copiar
+                <?php echo translate('copiar'); ?>
             </button>
         </div>
         </pre>
         <h3 class="text-md font-semibold mt-4">
-            <?php echo translate('post_graficas.parametros_requeridos'); ?>
+            <?php echo translate('post_graficas.parameters_title'); ?>
         </h3>
         <ul class="list-disc pl-5 text-sm <?php echo $theme === 'dark' ? 'text-gray-300' : 'text-gray-900'; ?>">
             <li><strong><?php echo translate('post_graficas.parameters_list_id_name'); ?>:</strong> <?php echo translate('post_graficas.parameters_list_id_description'); ?></li>

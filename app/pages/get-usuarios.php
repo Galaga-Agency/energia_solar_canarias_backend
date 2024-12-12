@@ -76,7 +76,7 @@ curl -X GET "https://app-energiasolarcanarias-backend.com/usuarios?page=1&limit=
                 class="absolute top-2 right-2 <?php echo $theme === 'dark' ? 'bg-blue-400 hover:bg-blue-500' : 'bg-blue-600 hover:bg-blue-700'; ?> text-white px-3 py-1 rounded transition"
                 onclick="copiarCodigo()"
             >
-                Copiar
+            <?php echo translate('copiar'); ?>
             </button>
         </div>
     </div>

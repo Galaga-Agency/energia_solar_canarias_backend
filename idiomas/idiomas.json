@@ -1,5 +1,6 @@
 {
   "es": {
+    "copiar":"Copiar",
     "menu": {
       "titulo": "Energia Solar Canarias",
       "inicio": "Inicio",
@@ -27,7 +28,8 @@
       "logs": "Logs",
       "logs_get": "GET Logs de los usuarios (Solo administradores)",
       "proveedor_get": "GET Proveedores disponibles",
-      "proveedor":"Proveedores"
+      "proveedor":"Proveedores",
+      "eliminar_relaciones":"DEL Eliminar relaciones a una planta"
     },
     "inicio": {
       "titulo": "Inicio",
@@ -103,6 +105,7 @@
     "asociar_plantas_usuarios": {
       "titulo_login": "GET /usuarios/relacionar",
       "descripcion": "La solicitud POST /usuarios/relacionar permite asociar una planta específica a un usuario en el sistema. (solo para administradores)",
+      "delete_descripcion": "La solicitud DELETE /usuarios/relacionar permite desrelacionar una planta específica a un usuario en el sistema. (solo para administradores)",
       "idplanta": "(requerido): ID único de la planta que se va a asociar.",
       "idusuario": "(requerido): ID único del usuario al que se asociará la planta.",
       "proveedor": "(requerido): ID único del proveedor de la planta."
@@ -184,6 +187,7 @@
     }
   },
   "en": {
+    "copiar":"Copy",
     "menu": {
       "titulo": "Energia Solar Canarias",
       "datos_api": "API Calls",
@@ -211,7 +215,8 @@
       "logs": "Logs",
       "logs_get": "GET User logs (Administrators only)",
       "proveedor_get": "GET Available providers",
-      "proveedor":"Suppliers"
+      "proveedor":"Suppliers",
+      "eliminar_relaciones":"DEL Delete relationships to a plant"
     },
     "inicio": {
       "titulo": "Home",
@@ -287,6 +292,7 @@
     "asociar_plantas_usuarios": {
       "titulo_login": "GET /usuarios/relacionar",
       "descripcion": "The POST /usuarios/relacionar request allows associating a specific plant with a user in the system. (administrators only)",
+      "delete_descripcion": "The DELETE /usuarios/relacionar request allows you to unrelate a specific plant to a user in the system. (administrators only)",
       "idplanta": "(required): Unique ID of the plant to be associated.",
       "idusuario": "(required): Unique ID of the user with whom the plant will be associated.",
       "proveedor": "(required): Unique ID of the plant provider."
