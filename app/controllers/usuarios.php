@@ -13,14 +13,15 @@ class UsuariosController
     {
         $this->usuarios = new Usuarios;
     }
-
-    public function relacionarUsers($idUsuario, $idPlanta, $idProveedor){
-         // Crear una instancia del controlador de logs
-         $logsController = new LogsController();
-         // Instanciar el objeto de acceso a la base de datos
-         $usuariosDB = new UsuariosDB();
-         $user = $usuariosDB->getAdmin($idUsuario);
-         if($user == true){
+    //Relaciona un id de una planta de un proveedor al id de la planta del usuario
+    public function relacionarUsers($idUsuario, $idPlanta, $idProveedor)
+    {
+        // Crear una instancia del controlador de logs
+        $logsController = new LogsController();
+        // Instanciar el objeto de acceso a la base de datos
+        $usuariosDB = new UsuariosDB();
+        $user = $usuariosDB->getAdmin($idUsuario);
+        if ($user == true) {
             $logsController->registrarLog(Logs::WARNING, "no se a podido relacionar un usuario");
             $respuesta = new Respuesta();
             $respuesta->_400();
@@ -28,8 +29,8 @@ class UsuariosController
             http_response_code(400);
             echo json_encode($respuesta);
             return;
-         }
-         if (!$usuariosDB->verificarEstadoUsuario($idUsuario)) {
+        }
+        if (!$usuariosDB->verificarEstadoUsuario($idUsuario)) {
             $logsController->registrarLog(Logs::WARNING, "El usuario que se intenta relacionar no existe en la base de datos o a sido eliminado");
             $respuesta = new Respuesta();
             $respuesta->_404();
@@ -47,22 +48,78 @@ class UsuariosController
             echo json_encode($respuesta);
             return;
         }
-         $usuario = $usuariosDB->relacionarUsers($idPlanta, $idUsuario, $idProveedor);
+        $usuario = $usuariosDB->relacionarUsers($idPlanta, $idUsuario, $idProveedor);
 
-         if($usuario != false){
-             $logsController->registrarLog(Logs::POST, "El usuario se a relacionado con la planta correctamente");
-             $respuesta = new Respuesta();
-             $respuesta->success($usuario);
-             http_response_code($respuesta->code);
-             echo json_encode($respuesta);
-         }else{
-             $logsController->registrarLog(Logs::WARNING, "Error al realizar la operación");
-             $respuesta = new Respuesta();
-             $respuesta->_400();
-             $respuesta->message = "Error al realizar la operación";
-             http_response_code(400);
-             echo json_encode($respuesta);
-         }
+        if ($usuario != false) {
+            $logsController->registrarLog(Logs::POST, "El usuario se a relacionado con la planta correctamente");
+            $respuesta = new Respuesta();
+            $respuesta->success($usuario);
+            http_response_code($respuesta->code);
+            echo json_encode($respuesta);
+        } else {
+            $logsController->registrarLog(Logs::WARNING, "Error al realizar la operación");
+            $respuesta = new Respuesta();
+            $respuesta->_400();
+            $respuesta->message = "Error al realizar la operación";
+            http_response_code(400);
+            echo json_encode($respuesta);
+        }
+    }
+
+    public function desrelacionarUsers($idUsuario, $idPlanta, $idProveedor)
+    {
+        // Crear una instancia del controlador de logs
+        $logsController = new LogsController();
+        // Instanciar el objeto de acceso a la base de datos
+        $usuariosDB = new UsuariosDB();
+        $user = $usuariosDB->getAdmin($idUsuario);
+        if ($user == true) {
+            $logsController->registrarLog(Logs::WARNING, "no se a podido desrelacionar un usuario");
+            $respuesta = new Respuesta();
+            $respuesta->_400();
+            $respuesta->message = "No puedes desrelacionar una planta a un usuario admin el usuario admin tiene acceso a todas las plantas";
+            http_response_code(400);
+            echo json_encode($respuesta);
+            return;
+        }
+        if (!$usuariosDB->verificarEstadoUsuario($idUsuario)) {
+            $logsController->registrarLog(Logs::WARNING, "El usuario que se intenta desrelacionar no existe en la base de datos o a sido eliminado");
+            $respuesta = new Respuesta();
+            $respuesta->_404();
+            $respuesta->message = "El usuario que se intenta desrelacionar no existe en la base de datos o a sido eliminado";
+            http_response_code(404);
+            echo json_encode($respuesta);
+            return;
+        }
+        if ($usuariosDB->comprobarUsuarioAsociadoPlanta($idUsuario, $idPlanta, $idProveedor)) {
+
+            $usuario = $usuariosDB->desrelacionarUsers($idPlanta, $idUsuario, $idProveedor);
+
+            if ($usuario != false) {
+                $logsController->registrarLog(Logs::DELETE, "El usuario se a desrelacionado con la planta correctamente");
+                $respuesta = new Respuesta();
+                $respuesta->success($usuario);
+                http_response_code($respuesta->code);
+                echo json_encode($respuesta);
+                return;
+            } else {
+                $logsController->registrarLog(Logs::WARNING, "Error al realizar la operación");
+                $respuesta = new Respuesta();
+                $respuesta->_400();
+                $respuesta->message = "Error al realizar la operación";
+                http_response_code(400);
+                echo json_encode($respuesta);
+                return;
+            }
+        } else {
+            $logsController->registrarLog(Logs::WARNING, "El usuario que se intenta desrelacionar no esta relacionado con esa misma planta");
+            $respuesta = new Respuesta();
+            $respuesta->_400();
+            $respuesta->message = "El usuario que se intenta desrelacionar no esta relacionado con esa misma planta";
+            http_response_code(400);
+            echo json_encode($respuesta);
+            return;
+        }
     }
 
     public function getAllUsers()
@@ -105,7 +162,7 @@ class UsuariosController
         // Instanciar el objeto de acceso a la base de datos
         $usuariosDB = new UsuariosDB();
         $usuario = $usuariosDB->getUser($id);
-        if($usuario != false){
+        if ($usuario != false) {
             $logsController->registrarLog(Logs::GET, "Se solicita su mismo usuario");
             //quitamos la contraseña hasheada para enviar los datos
             if (isset($usuario[0]['password_hash'])) {
@@ -115,7 +172,7 @@ class UsuariosController
             $respuesta->success($usuario);
             http_response_code($respuesta->code);
             echo json_encode($respuesta);
-        }else{
+        } else {
             $logsController->registrarLog(Logs::WARNING, "Error al realizar la operación obtener su usuario");
             $respuesta = new Respuesta();
             $respuesta->_404();
@@ -125,77 +182,77 @@ class UsuariosController
     }
 
     public function crearUser()
-{
-    // Crear una instancia del controlador de logs
-    $logsController = new LogsController();
+    {
+        // Crear una instancia del controlador de logs
+        $logsController = new LogsController();
 
-    // Obtener el JSON desde el cuerpo de la solicitud
-    $postBody = file_get_contents("php://input");
-    $data = json_decode($postBody, true); // Decodificar el JSON en un array asociativo
+        // Obtener el JSON desde el cuerpo de la solicitud
+        $postBody = file_get_contents("php://input");
+        $data = json_decode($postBody, true); // Decodificar el JSON en un array asociativo
 
-    // Validar que los datos requeridos existan en el JSON
-    if (!isset($data['email'], $data['password'], $data['clase'], $data['nombre'], $data['apellido'], $data['imagen'], $data['movil'], $data['activo'], $data['eliminado'])) {
-        $logsController->registrarLog(Logs::WARNING, "Datos incompletos en el JSON de la solicitud.");
-        $respuesta = new Respuesta();
-        $respuesta->_400();
-        $respuesta->message = "Datos incompletos en la solicitud.";
-        echo json_encode($respuesta);
-        return;
+        // Validar que los datos requeridos existan en el JSON
+        if (!isset($data['email'], $data['password'], $data['clase'], $data['nombre'], $data['apellido'], $data['imagen'], $data['movil'], $data['activo'], $data['eliminado'])) {
+            $logsController->registrarLog(Logs::WARNING, "Datos incompletos en el JSON de la solicitud.");
+            $respuesta = new Respuesta();
+            $respuesta->_400();
+            $respuesta->message = "Datos incompletos en la solicitud.";
+            echo json_encode($respuesta);
+            return;
+        }
+
+        // Instancia de la base de datos
+        $usuariosDB = new UsuariosDB();
+
+        // Verificar si la clase existe
+        if (!$usuariosDB->comprobarClaseExiste($data['clase'])) {
+            $logsController->registrarLog(Logs::WARNING, "Clase inválida: El administrador intentó registrar un usuario con una clase inexistente.");
+            $respuesta = new Respuesta();
+            $respuesta->_400();
+            $respuesta->message = "El nombre de la clase no existe.";
+            echo json_encode($respuesta);
+            return;
+        }
+
+        // Verificar si el email ya está registrado
+        if ($usuariosDB->comprobarUsuario($data['email'])) {
+            $logsController->registrarLog(Logs::WARNING, "Intento de creación con email existente: {$data['email']}");
+            $respuesta = new Respuesta();
+            $respuesta->_409();
+            $respuesta->message = "El email ya está registrado.";
+            echo json_encode($respuesta);
+            return;
+        }
+
+        // Función para obtener el ID del usuario activo
+        $authMiddleware = new Autenticacion();
+        $idUser = $authMiddleware->obtenerIdUsuarioActivo();
+
+        // Obtener el ID del usuario por email si ya existe en estado eliminado
+        $idUsuarioPorEmail = $usuariosDB->getIdUserPorEmail($data['email']);
+        if ($idUsuarioPorEmail && $usuariosDB->usuarioEliminado($idUsuarioPorEmail)) {
+            // Restaurar usuario eliminado
+            $result = $usuariosDB->updateUser($idUsuarioPorEmail['usuario_id'], $data);
+        } else {
+            // Crear un nuevo usuario
+            $result = $usuariosDB->insertUser($data);
+        }
+
+        // Responder según el resultado
+        if ($result) {
+            $logsController->registrarLog(Logs::POST, "Usuario creado o restaurado exitosamente: {$data['email']} por el administrador {$idUser}");
+            $respuesta = new Respuesta();
+            $respuesta->success($result);
+            $respuesta->code = 201; // Código de creación exitosa
+            $respuesta->message = "Usuario creado exitosamente.";
+            echo json_encode($respuesta);
+        } else {
+            $logsController->registrarLog(Logs::ERROR, "Error al crear el usuario: {$data['email']} por el administrador {$idUser}");
+            $respuesta = new Respuesta();
+            $respuesta->_500();
+            $respuesta->message = "Error al crear el usuario.";
+            echo json_encode($respuesta);
+        }
     }
-
-    // Instancia de la base de datos
-    $usuariosDB = new UsuariosDB();
-
-    // Verificar si la clase existe
-    if (!$usuariosDB->comprobarClaseExiste($data['clase'])) {
-        $logsController->registrarLog(Logs::WARNING, "Clase inválida: El administrador intentó registrar un usuario con una clase inexistente.");
-        $respuesta = new Respuesta();
-        $respuesta->_400();
-        $respuesta->message = "El nombre de la clase no existe.";
-        echo json_encode($respuesta);
-        return;
-    }
-
-    // Verificar si el email ya está registrado
-    if ($usuariosDB->comprobarUsuario($data['email'])) {
-        $logsController->registrarLog(Logs::WARNING, "Intento de creación con email existente: {$data['email']}");
-        $respuesta = new Respuesta();
-        $respuesta->_409();
-        $respuesta->message = "El email ya está registrado.";
-        echo json_encode($respuesta);
-        return;
-    }
-
-    // Función para obtener el ID del usuario activo
-    $authMiddleware = new Autenticacion();
-    $idUser = $authMiddleware->obtenerIdUsuarioActivo();
-
-    // Obtener el ID del usuario por email si ya existe en estado eliminado
-    $idUsuarioPorEmail = $usuariosDB->getIdUserPorEmail($data['email']);
-    if ($idUsuarioPorEmail && $usuariosDB->usuarioEliminado($idUsuarioPorEmail)) {
-        // Restaurar usuario eliminado
-        $result = $usuariosDB->updateUser($idUsuarioPorEmail['usuario_id'], $data);
-    } else {
-        // Crear un nuevo usuario
-        $result = $usuariosDB->insertUser($data);
-    }
-
-    // Responder según el resultado
-    if ($result) {
-        $logsController->registrarLog(Logs::POST, "Usuario creado o restaurado exitosamente: {$data['email']} por el administrador {$idUser}");
-        $respuesta = new Respuesta();
-        $respuesta->success($result);
-        $respuesta->code = 201; // Código de creación exitosa
-        $respuesta->message = "Usuario creado exitosamente.";
-        echo json_encode($respuesta);
-    } else {
-        $logsController->registrarLog(Logs::ERROR, "Error al crear el usuario: {$data['email']} por el administrador {$idUser}");
-        $respuesta = new Respuesta();
-        $respuesta->_500();
-        $respuesta->message = "Error al crear el usuario.";
-        echo json_encode($respuesta);
-    }
-}
 
 
     public function actualizarUser($id)
