@@ -28,7 +28,7 @@ if (isset($_GET['lang'])) {
 if (isset($_GET['theme'])) {
   $_SESSION['theme'] = $_GET['theme'];
 }
-$theme = isset($_SESSION['theme']) ? $_SESSION['theme'] : 'light';
+$theme = isset($_SESSION['theme']) ? $_SESSION['theme'] : 'dark';
 
 // Función para obtener la traducción
 function translate($key)
@@ -149,6 +149,7 @@ $page = $_GET['page'] ?? 'inicio';
         <ul id="configLLamadaApi" class="ml-4 mt-2 space-y-1 hidden">
           <li><a href="?page=get-lista-plantas" class="block px-4 py-2 <?php echo $theme === 'dark' ? 'text-gray-300 hover:bg-gray-600' : 'text-gray-600 hover:bg-blue-50'; ?> rounded"><?php echo translate('menu.lista_plantas') ?></a></li>
           <li><a href="?page=get-planta" class="block px-4 py-2 <?php echo $theme === 'dark' ? 'text-gray-300 hover:bg-gray-600' : 'text-gray-600 hover:bg-blue-50'; ?> rounded"><?php echo translate('menu.detalles_plantas') ?></a></li>
+          <li><a href="?page=eliminar-relaciones" class="block px-4 py-2 <?php echo $theme === 'dark' ? 'text-gray-300 hover:bg-gray-600' : 'text-gray-600 hover:bg-blue-50'; ?> rounded"><?php echo translate('menu.eliminar_relaciones') ?></a></li>
           <li><a href="?page=post-asociar-plantas-usuarios" class="block px-4 py-2 <?php echo $theme === 'dark' ? 'text-gray-300 hover:bg-gray-600' : 'text-gray-600 hover:bg-blue-50'; ?> rounded"><?php echo translate('menu.asociarplantas') ?></a></li>
           <li><a href="?page=post-graficas" class="block px-4 py-2 <?php echo $theme === 'dark' ? 'text-gray-300 hover:bg-gray-600' : 'text-gray-600 hover:bg-blue-50'; ?> rounded"><?php echo translate('menu.graficas') ?></a></li>
           <li><a href="?page=post-recoger-clima" class="block px-4 py-2 <?php echo $theme === 'dark' ? 'text-gray-300 hover:bg-gray-600' : 'text-gray-600 hover:bg-blue-50'; ?> rounded"><?php echo translate('menu.clima') ?></a></li>
@@ -236,6 +237,9 @@ $page = $_GET['page'] ?? 'inicio';
         break;
       case 'ayudaForm':
         include('./app/pages/ayudaForm.php');
+        break;
+      case 'eliminar-relaciones':
+        include('./app/pages/eliminar-relaciones.php');
         break;
       default:
         echo "<h1 class='text-5xl font-bold text-center'>Página no encontrada</h1>";
@@ -334,7 +338,7 @@ $page = $_GET['page'] ?? 'inicio';
       if (window.innerWidth < 768) { // Solo ejecutar en dispositivos móviles
         sidebar.classList.toggle('-translate-x-full');
         content.classList.toggle('content-shift'); // Desplazar el contenido
-        menuButton.style.display = 'none';//Quitamos el boton que molesta con el menu activado
+        menuButton.style.display = 'none'; //Quitamos el boton que molesta con el menu activado
         activado = !activado;
       }
     });
@@ -344,7 +348,7 @@ $page = $_GET['page'] ?? 'inicio';
       if (window.innerWidth < 768 && !sidebar.contains(e.target) && !menuButton.contains(e.target) && activado) {
         sidebar.classList.toggle('-translate-x-full');
         content.classList.toggle('content-shift');
-        menuButton.style.display = 'block';//Ponemos el boton cuando quitamos el menu
+        menuButton.style.display = 'block'; //Ponemos el boton cuando quitamos el menu
         activado = !activado;
       }
     });
