@@ -635,6 +635,29 @@ switch ($method) {
 
     case 'DELETE':
         switch (true) {
+            case ($request === 'usuarios/relacionar'  && isset($_GET['idplanta']) && isset($_GET['idusuario']) && isset($_GET['proveedor'])):
+                $handled = true; 
+                if ($authMiddleware->verificarTokenUsuarioActivo()!=false) {
+                    // Verificar si el usuario es administrador
+                    if ($authMiddleware->verificarAdmin()) {
+                        $idPlanta = $_GET['idplanta'];
+                        $idUsuario = $_GET['idusuario'];
+                        $idProveedor = $_GET['proveedor'];
+                        $usuarios = new UsuariosController;
+                        $usuarios->desrelacionarUsers($idUsuario, $idPlanta, $idProveedor);
+                    } else {
+                        $respuesta->_403();
+                        $respuesta->message = 'No tienes permisos para hacer esta consulta';
+                        http_response_code($respuesta->code);
+                        echo json_encode($respuesta);
+                    }
+                }else{
+                    $respuesta->_403();
+                    $respuesta->message = 'El token no se puede authentificar con exito';
+                    http_response_code($respuesta->code);
+                    echo json_encode($respuesta);
+                }
+                break;
             case ($request === 'usuario'):
                 $handled = true;
                 //Verificamos que existe el usuario CREADOR del token y sino manejamos el error dentro de la funcion

@@ -58,6 +58,58 @@ class UsuariosDB
     }
 
     /**
+     * Relacionar un usuario con una planta
+     * 
+     * @param int $idPlanta El ID de la planta
+     * @param int $idUsuario El ID del usuario
+     * @param string $proveedor El nombre del proveedor
+     * @return bool true en caso de éxito o false en caso de error
+     */
+    public function desrelacionarUsers($idPlanta, $idUsuario, $idProveedor)
+    {
+        try {
+            $conexion = Conexion::getInstance();
+            $conn = $conexion->getConexion();
+
+            // Si idProveedor no es numérico, buscar su ID en la base de datos
+            if (!is_numeric($idProveedor)) {
+                $idProveedor = $this->obtenerIdProveedorPorNombre($idProveedor, $conn);
+                if ($idProveedor == false) {
+                    // Si no encontramos el ID del proveedor, devolvemos false
+                    return false;
+                }
+            }
+
+            $query = "DELETE FROM `plantas_asociadas` WHERE planta_id = ? AND proveedor_id = ? AND usuario_id = ?;";
+            $stmt = $conn->prepare($query);
+            if (!$stmt) {
+                throw new Exception("Error en la preparación de la consulta: " . $conn->error);
+            }
+
+            $stmt->bind_param('iii', $idPlanta, $idProveedor, $idUsuario);
+
+            if (!$stmt->execute()) {
+                throw new Exception("Error en la ejecución de la consulta: " . $stmt->error);
+            }
+
+            // Verificar si se eliminaron filas
+            if ($stmt->affected_rows === 0) {
+                // No se ha eliminado ningún dato
+                $stmt->close();
+                return false;
+            }
+
+            // Cierra la consulta
+            $stmt->close();
+
+            return true;
+        } catch (Exception $e) {
+            error_log("Error al desrelacionar usuario y planta: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
      * Obtener todos los usuarios
      * @return array|false Array con los usuarios o false en caso de error
      */
