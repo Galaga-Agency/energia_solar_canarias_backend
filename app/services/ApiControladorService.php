@@ -900,8 +900,8 @@ class ApiControladorService
         $id = isset($data['id']) ? $data['id'] : null;
         $tipo = isset($data['type']) ? $data['type'] : null;
         $interval = isset($data['interval']) ? $data['interval'] : null;
-        $fechaInicio = isset($data['fechaInicio']) ? strtotime($data['fechaInicio']) : strtotime($data['fechaInicio']);
-        $fechaFin = isset($data['fechaFin']) ? strtotime($data['fechaFin']) : strtotime($data['fechaFin']);
+        $fechaInicio = isset($data['fechaInicio']) ? $data['fechaInicio'] : $data['fechaInicio'];
+        $fechaFin = isset($data['fechaFin']) ? $data['fechaFin'] : $data['fechaFin'];
 
         // Si alguna de las claves no existe, retorna null
         if ($id === null || $tipo === null || $fechaInicio === null || $fechaFin === null || $interval === null) {
