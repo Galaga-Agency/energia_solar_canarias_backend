@@ -73,7 +73,7 @@ class ApiControladorService
         try {
 
             $solarEdgeResponse = $this->solarEdgeController->overviewSolarEdge($siteId);
-            
+
             $solarEdgeData = json_decode($solarEdgeResponse);
 
 
@@ -87,7 +87,7 @@ class ApiControladorService
                 http_response_code(400);
             }
         } catch (Throwable $e) {
-            $this->logsController->registrarLog(Logs::ERROR, "Error del proveedor de SolarEdge: " + $e->getMessage());
+            $this->logsController->registrarLog(Logs::ERROR, "Error del proveedor de SolarEdge: " . $e->getMessage());
             $respuesta->_500();
             $respuesta->message = "Error en el servidor de algun proveedor";
             http_response_code(500);
@@ -96,6 +96,34 @@ class ApiControladorService
         header('Content-Type: application/json');
         echo json_encode($respuesta);
     }
+    public function getPlantComparative($siteId, $startTime, $timeUnit)
+    {
+        $respuesta = new Respuesta;
+        try {
+            $solarEdgeResponse = $this->solarEdgeController->getPlantComparative($siteId, $startTime, $timeUnit);
+            $solarEdgeData = json_decode($solarEdgeResponse);
+
+            if ($solarEdgeData != null) {
+                $this->logsController->registrarLog(Logs::INFO, "se han encontrado la comparacion de años de SolarEdge");
+                $respuesta->success($solarEdgeData);
+            } else {
+                $this->logsController->registrarLog(Logs::INFO, "no se han encontrado la comparacion de años de SolarEdge");
+                $respuesta->_400($solarEdgeData);
+                $respuesta->message = "No se han encontrado la comparacion de años o la peticion es nula";
+                http_response_code(400);
+            }
+        } catch (Throwable $e) {
+            $this->logsController->registrarLog(Logs::ERROR, "Error del proveedor de SolarEdge: " . $e->getMessage());
+            $respuesta->_500($e->getMessage());
+            $respuesta->message = "Error en el servidor de algun proveedor";
+            http_response_code(500);
+        }
+        // Devolver el resultado como JSON
+        header('Content-Type: application/json');
+        echo json_encode($respuesta);
+    }
+
+
     /**
      * 
      * Estas funciones se utilizan para obtener los beneficios de las plantas de todos los proveedores que lo permitan
@@ -107,7 +135,7 @@ class ApiControladorService
         try {
 
             $solarEdgeResponse = $this->solarEdgeController->getPlantPowerBenefits($powerStationId);
-            
+
             $solarEdgeData = json_decode($solarEdgeResponse);
 
 
@@ -210,10 +238,10 @@ class ApiControladorService
             $data = $this->getCuerpoGraficaVictronEnergy();
 
             // Obtener datos de GoodWe
-            if($data != null){
+            if ($data != null) {
                 $victronEnergyResponse = $this->victronEnergyController->getGraficoDetails($data);
                 $victronEnergyData = json_decode($victronEnergyResponse, true);
-            }else{
+            } else {
                 $this->logsController->registrarLog(Logs::INFO, "No se han pasado los parametros correctos en VictronEnergy");
                 $respuesta->_400();
                 $respuesta->message = "revisa los parametros";
@@ -523,7 +551,7 @@ class ApiControladorService
                 $victronEnergyResponse = $this->victronEnergyController->getSiteDetails($id);
                 $victronEnergyData = json_decode($victronEnergyResponse, true);
                 $plants = $victronEnergyData;
-            }else {
+            } else {
                 // Proveedor inválido
                 $this->logsController->registrarLog(Logs::ERROR, "Proveedor no válido: $proveedor");
                 $respuesta->_400();
@@ -852,7 +880,8 @@ class ApiControladorService
      * Estas funciones se utilizan para mapear el codigo de status
      */
     // Función para mapear el estado de GoodWe a una descripción legible
-    private function mapGoodWeStatus($statusCode) {
+    private function mapGoodWeStatus($statusCode)
+    {
         switch ($statusCode) {
             case 2:
                 return 'error';
