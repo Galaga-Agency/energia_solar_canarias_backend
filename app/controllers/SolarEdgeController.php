@@ -17,6 +17,62 @@ class SolarEdgeController
         $this->logsController = new LogsController();
     }
 
+    public function getPlantComparative($powerStationId, $startDate, $timeUnit)
+    {
+        // Registrar log
+        $this->logsController->registrarLog(Logs::INFO, "Accede a la API SolarEdge para comparación de años de plantas");
+
+        // Convertir la fecha de inicio a un objeto DateTime (asumiendo que $startDate llega en formato 'YYYY-MM-DD')
+        $startDateObj = new DateTime($startDate);
+        $currentDate = new DateTime('today');
+
+        // Obtener años de inicio y fin
+        $startYear = (int)$startDateObj->format('Y');
+        $endYear = (int)$currentDate->format('Y');
+
+        $allData = [];
+
+        for ($year = $startYear; $year <= $endYear; $year++) {
+            // Determinar las fechas "from" y "to" para cada solicitud
+            if ($year === $startYear && $year === $endYear) {
+                // Caso especial: la planta se implementó este mismo año
+                $from = $startDateObj;
+                $to = $currentDate;
+            } elseif ($year === $startYear) {
+                // Primer año desde la fecha de implementación hasta 31 de diciembre de ese año
+                $from = $startDateObj;
+                $to = new DateTime("$year-12-31");
+            } elseif ($year < $endYear) {
+                // Años intermedios desde el 1 de enero hasta 31 de diciembre
+                $from = new DateTime("$year-01-01");
+                $to = new DateTime("$year-12-31");
+            } else {
+                // Último año desde el 1 de enero hasta la fecha actual
+                $from = new DateTime("$year-01-01");
+                $to = $currentDate;
+            }
+
+            $formattedDateInicio = $from->format('Y-m-d');
+            $formattedDateFin = $to->format('Y-m-d');
+
+            // Llamar a la API por el rango determinado
+            // Aquí asumiré que el método solarEdgeService->getPlantComparative($powerStationId, $from, $to)
+            // devuelve los datos correspondientes a ese rango. Es un método hipotético.
+            $yearData = $this->solarEdgeService->getPlantComparative($powerStationId, $formattedDateInicio, $formattedDateFin, $timeUnit);
+
+            // Extraer solo el array de values
+            $values = isset($yearData->energy->values) ? $yearData->energy->values : [];
+
+            // Ir concatenándolos al array principal
+            $allData = array_merge($allData, $values);
+        }
+
+        // Retornar la respuesta en JSON
+        header('Content-Type: application/json');
+        return json_encode($allData);
+    }
+
+
     public function getPlantPowerRealtime($powerStationId)
     {
         $this->logsController->registrarLog(Logs::INFO, " accede a la api de solarEdge power en tiempo real");
@@ -123,8 +179,8 @@ class SolarEdgeController
             // Sumar valores de producción solar
             if (!empty($solarProductionValues)) {
                 foreach ($solarProductionValues as $value) {
-                    if(isset($value['value'])){
-                    $totalSolarProduction += $value['value'];
+                    if (isset($value['value'])) {
+                        $totalSolarProduction += $value['value'];
                     }
                 }
             }
@@ -132,8 +188,8 @@ class SolarEdgeController
             // Sumar valores de consumo
             if (!empty($consumptionMeters)) {
                 foreach ($consumptionMeters as $value) {
-                    if(isset($value['value'])){
-                    $totalConsumption += $value['value'];
+                    if (isset($value['value'])) {
+                        $totalConsumption += $value['value'];
                     }
                 }
             }
@@ -152,8 +208,8 @@ class SolarEdgeController
             // Sumar valores de exportación
             if (!empty($exportValues)) {
                 foreach ($exportValues as $value) {
-                    if(isset($value['value'])){
-                    $totalExport += $value['value'];
+                    if (isset($value['value'])) {
+                        $totalExport += $value['value'];
                     }
                 }
             }
@@ -161,8 +217,8 @@ class SolarEdgeController
             // Sumar valores de importación
             if (!empty($importValues)) {
                 foreach ($importValues as $value) {
-                    if(isset($value['value'])){
-                    $totalImport += $value['value'];
+                    if (isset($value['value'])) {
+                        $totalImport += $value['value'];
                     }
                 }
             }
@@ -170,16 +226,16 @@ class SolarEdgeController
             // Sumar valores de autoconsumo
             if (!empty($selfConsumptionValues)) {
                 foreach ($selfConsumptionValues as $value) {
-                    if(isset($value['value'])){
-                    $totalSelfConsumption += $value['value'];
+                    if (isset($value['value'])) {
+                        $totalSelfConsumption += $value['value'];
                     }
                 }
             }
 
             //Calcular pocentajes de SolarEdge
 
-            $porcentajeImport= $totalImport / ($totalSelfConsumption + $totalImport) * 100;
-            $porcentajeExport= $totalExport / ($totalSelfConsumption + $totalExport) * 100;
+            $porcentajeImport = $totalImport / ($totalSelfConsumption + $totalImport) * 100;
+            $porcentajeExport = $totalExport / ($totalSelfConsumption + $totalExport) * 100;
             $porcentajeSelfConsumptionImport = $totalSelfConsumption / ($totalSelfConsumption + $totalImport) * 100;
             $porcentajeSelfConsumptionExport = $totalSelfConsumption / ($totalSelfConsumption + $totalExport) * 100;
 
@@ -200,8 +256,8 @@ class SolarEdgeController
                 'porcentajeImport' => $porcentajeImport,
                 'selfConsumption' => $selfConsumptionValues,
                 'totalSelfConsumption' => $totalSelfConsumption,
-                'porcentajeSelfConsumptionImport' =>$porcentajeSelfConsumptionImport,
-                'porcentajeSelfConsumptionExport' =>$porcentajeSelfConsumptionExport,
+                'porcentajeSelfConsumptionImport' => $porcentajeSelfConsumptionImport,
+                'porcentajeSelfConsumptionExport' => $porcentajeSelfConsumptionExport,
                 'overview' => $overviewValues
             ];
 
