@@ -122,7 +122,32 @@ class ApiControladorService
         header('Content-Type: application/json');
         echo json_encode($respuesta);
     }
+    public function inventarioSolarEdge($siteId)
+    {
+        $respuesta = new Respuesta;
+        try {
+            $solarEdgeResponse = $this->solarEdgeController->inventarioSolarEdge($siteId);
+            $solarEdgeData = json_decode($solarEdgeResponse);
 
+            if ($solarEdgeData != null) {
+                $this->logsController->registrarLog(Logs::INFO, "se ha encontrado el inventario de SolarEdge");
+                $respuesta->success($solarEdgeData);
+            } else {
+                $this->logsController->registrarLog(Logs::INFO, "no se ha encontrado el inventario de SolarEdge");
+                $respuesta->_400($solarEdgeData);
+                $respuesta->message = "no se ha encontrado el inventario de SolarEdge";
+                http_response_code(400);
+            }
+        } catch (Throwable $e) {
+            $this->logsController->registrarLog(Logs::ERROR, "Error del proveedor de SolarEdge: " . $e->getMessage());
+            $respuesta->_500($e->getMessage());
+            $respuesta->message = "Error en el servidor de algun proveedor";
+            http_response_code(500);
+        }
+        // Devolver el resultado como JSON
+        header('Content-Type: application/json');
+        echo json_encode($respuesta);
+    }
 
     /**
      * 
@@ -149,7 +174,7 @@ class ApiControladorService
                 http_response_code(400);
             }
         } catch (Throwable $e) {
-            $this->logsController->registrarLog(Logs::ERROR, "Error del proveedor de SolarEdge: " + $e->getMessage());
+            $this->logsController->registrarLog(Logs::ERROR, "Error del proveedor de SolarEdge: " . $e->getMessage());
             $respuesta->_500();
             $respuesta->message = "Error en el servidor de algun proveedor";
             http_response_code(500);
@@ -193,7 +218,7 @@ class ApiControladorService
                 http_response_code(400);
             }
         } catch (Throwable $e) {
-            $this->logsController->registrarLog(Logs::ERROR, "Error del proveedor de SolarEdge: " + $e->getMessage());
+            $this->logsController->registrarLog(Logs::ERROR, "Error del proveedor de SolarEdge: " . $e->getMessage());
             $respuesta->_500();
             $respuesta->message = "Error en el servidor de algun proveedor";
             http_response_code(500);
@@ -294,7 +319,7 @@ class ApiControladorService
                 http_response_code(400);
             }
         } catch (Throwable $e) {
-            $this->logsController->registrarLog(Logs::ERROR, "Error del proveedor de SolarEdge: " + $e->getMessage());
+            $this->logsController->registrarLog(Logs::ERROR, "Error del proveedor de SolarEdge: " . $e->getMessage());
             $respuesta->_500();
             $respuesta->message = "Error en el servidor de algun proveedor";
             http_response_code(500);
