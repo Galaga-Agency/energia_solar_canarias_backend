@@ -239,13 +239,21 @@ class SolarEdgeController
                     }
                 }
             }
+            // Cálculo del porcentaje de Importación
+            $denominatorImport = $totalSelfConsumption + $totalImport;
+            $porcentajeImport = ($denominatorImport != 0) ? ($totalImport / $denominatorImport) * 100 : 0;
 
-            //Calcular pocentajes de SolarEdge
+            // Cálculo del porcentaje de Exportación
+            $denominatorExport = $totalSelfConsumption + $totalExport;
+            $porcentajeExport = ($denominatorExport != 0) ? ($totalExport / $denominatorExport) * 100 : 0;
 
-            $porcentajeImport = $totalImport / ($totalSelfConsumption + $totalImport) * 100;
-            $porcentajeExport = $totalExport / ($totalSelfConsumption + $totalExport) * 100;
-            $porcentajeSelfConsumptionImport = $totalSelfConsumption / ($totalSelfConsumption + $totalImport) * 100;
-            $porcentajeSelfConsumptionExport = $totalSelfConsumption / ($totalSelfConsumption + $totalExport) * 100;
+            // Cálculo del porcentaje de Autoconsumo en Importación
+            $denominatorSelfConsumptionImport = $totalSelfConsumption + $totalImport;
+            $porcentajeSelfConsumptionImport = ($denominatorSelfConsumptionImport != 0) ? ($totalSelfConsumption / $denominatorSelfConsumptionImport) * 100 : 0;
+
+            // Cálculo del porcentaje de Autoconsumo en Exportación
+            $denominatorSelfConsumptionExport = $totalSelfConsumption + $totalExport;
+            $porcentajeSelfConsumptionExport = ($denominatorSelfConsumptionExport != 0) ? ($totalSelfConsumption / $denominatorSelfConsumptionExport) * 100 : 0;
 
 
             // Construimos la salida separando cada conjunto de datos
