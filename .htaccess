@@ -20,6 +20,14 @@ RewriteEngine On
     Require all granted
 </Files>
 
+<Files "webhookgithub.php">
+    Require all granted
+</Files>
+
+<Files "verificar.php">
+    Require all granted
+</Files>
+
 <Files "rutas.php">
     Require all granted
 </Files>
