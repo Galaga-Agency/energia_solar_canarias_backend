@@ -13,7 +13,17 @@ class SolarEdgeService
         $this->httpClient = new HttpClient();
     }
 
-    //energy?api_key=TRZUMFRMSND66ZFKV7F47HMBLVQRNQTR&timeUnit=MONTH&startDate=2021-01-01&endDate=2021-01-31
+    //Método que devuelve la potencia de las plantas que esten en funcionamiento
+    public function inventarioSolarEdge($siteId)
+    {
+        $url = $this->solarEdge->getUrl() . "site/$siteId/inventory?api_key=" . $this->solarEdge->getApiKey();
+        try {
+            $response = $this->httpClient->get($url);
+            return json_decode($response);
+        } catch (Exception $e) {
+            return ['error' => $e->getMessage()];
+        }
+    }
 
     //Método que devuelve la potencia de las plantas que esten en funcionamiento
     public function getPlantComparative($siteId, $from, $to, $timeUnit)

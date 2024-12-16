@@ -71,8 +71,16 @@ class SolarEdgeController
         header('Content-Type: application/json');
         return json_encode($allData);
     }
-
-
+    public function inventarioSolarEdge($powerStationId)
+    {
+        // Registrar log
+        $this->logsController->registrarLog(Logs::INFO, "Accede a la API SolarEdge para el inventario de las plantas");
+        //Recoger el inventario con una llamada a la api
+        $inventario = $this->solarEdgeService->inventarioSolarEdge($powerStationId);
+        // Retornar la respuesta en JSON
+        header('Content-Type: application/json');
+        return json_encode($inventario);
+    }
     public function getPlantPowerRealtime($powerStationId)
     {
         $this->logsController->registrarLog(Logs::INFO, " accede a la api de solarEdge power en tiempo real");
