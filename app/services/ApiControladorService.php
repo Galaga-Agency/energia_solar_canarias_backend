@@ -809,7 +809,7 @@ class ApiControladorService
                 'type' => $goodWePlant['data']['info']['powerstation_type'] ?? null,
                 'latitude' => $goodWePlant['latitude'] ?? null,
                 'longitude' => $goodWePlant['longitude'] ?? null,
-                'organization' => $goodWePlant['data']['info']['org_name'] ?? 'GoodWe',
+                'organization' => 'goodwe',
                 'current_power' => $goodWePlant['data']['kpi']['pac'] ?? null, // Potencia actual en W
                 'total_energy' => $goodWePlant['data']['kpi']['total_power'] ?? null, // Energía total generada en kWh
                 'daily_energy' => $goodWePlant['data']['kpi']['power'] ?? null, // Energía generada hoy en kWh
