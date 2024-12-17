@@ -687,7 +687,7 @@ class ApiControladorService
                     'type' => $plant['powerstation_type'] ?? '',
                     'latitude' => $plant['latitude'] ?? '',
                     'longitude' => $plant['longitude'] ?? '',
-                    'organization' => $plant['org_name'] ?? 'GoodWe',
+                    'organization' => 'goodwe',
                     'current_power' => $plant['pac'] ?? 0, // Potencia actual en W
                     'total_energy' => $plant['etotal'] ?? 0, // Energía total generada en kWh
                     'daily_energy' => $plant['eday'] ?? 0, // Energía generada hoy en kWh
