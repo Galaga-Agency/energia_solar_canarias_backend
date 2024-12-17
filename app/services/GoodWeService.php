@@ -5,10 +5,12 @@ require_once '../models/GoodWe.php';
 class GoodWeService {
     private $goodWe;
     private $httpClient;
+    private $proveedoresController;
 
     public function __construct() {
         $this->goodWe = new GoodWeTokenAuthentified();
         $this->httpClient = new HttpClient();
+        $this->proveedoresController = new ProveedoresController();
     }
 
     //Llamada en tiempo real a la energia que genera la planta, en postman corresponde con la llamada POST GetPowerFlow
@@ -19,7 +21,7 @@ class GoodWeService {
         $tokenData = [
             'uid' => $this->goodWe->getUid(),
             'timestamp' => $this->goodWe->getTimestamp(),
-            'token' => $this->goodWe->getToken(),
+            'token' => $this->proveedoresController->getTokenProveedor('GoodWe'),
             'client' => $this->goodWe->getClient(),
             'version' => $this->goodWe->getVersion(),
             'language' => $this->goodWe->getLanguage()
@@ -81,7 +83,7 @@ class GoodWeService {
         $tokenData = [
             'uid' => $this->goodWe->getUid(),
             'timestamp' => $this->goodWe->getTimestamp(),
-            'token' => $this->goodWe->getToken(),
+            'token' => $this->proveedoresController->getTokenProveedor('GoodWe'),
             'client' => $this->goodWe->getClient(),
             'version' => $this->goodWe->getVersion(),
             'language' => $this->goodWe->getLanguage()
@@ -110,6 +112,7 @@ class GoodWeService {
                         $this->goodWe->setTimestamp($newTokenData['timestamp']);
                         $this->goodWe->setToken($newTokenData['token']);
 
+
                         // Reintentar la solicitud con los nuevos datos
                         $tokenData['uid'] = $newTokenData['uid'];
                         $tokenData['timestamp'] = $newTokenData['timestamp'];
@@ -135,11 +138,13 @@ class GoodWeService {
     public function GetAllPlants($page = 1, $pageSize = 200) {
         $url = $this->goodWe->getUrl() . "api/PowerStationMonitor/QueryPowerStationMonitor";
 
+        $token = $this->proveedoresController->getTokenProveedor('GoodWe');
+
         // Token en formato JSON
         $tokenData = [
             'uid' => $this->goodWe->getUid(),
             'timestamp' => $this->goodWe->getTimestamp(),
-            'token' => $this->goodWe->getToken(),
+            'token' => $token['tokenAuth'],
             'client' => $this->goodWe->getClient(),
             'version' => $this->goodWe->getVersion(),
             'language' => $this->goodWe->getLanguage()
@@ -180,6 +185,7 @@ class GoodWeService {
                         $this->goodWe->setTimestamp($newTokenData['timestamp']);
                         $this->goodWe->setToken($newTokenData['token']);
 
+
                         // Reintentar la solicitud con los nuevos datos
                         $tokenData['uid'] = $newTokenData['uid'];
                         $tokenData['timestamp'] = $newTokenData['timestamp'];
@@ -209,7 +215,7 @@ class GoodWeService {
         $tokenData = [
             'uid' => $this->goodWe->getUid(),
             'timestamp' => $this->goodWe->getTimestamp(),
-            'token' => $this->goodWe->getToken(),
+            'token' => $this->proveedoresController->getTokenProveedor('GoodWe'),
             'client' => $this->goodWe->getClient(),
             'version' => $this->goodWe->getVersion(),
             'language' => $this->goodWe->getLanguage()
@@ -240,6 +246,7 @@ class GoodWeService {
                     $this->goodWe->setUid($newTokenData['uid']);
                     $this->goodWe->setTimestamp($newTokenData['timestamp']);
                     $this->goodWe->setToken($newTokenData['token']);
+
     
                     // Reintentar la solicitud con los nuevos datos
                     $tokenData['uid'] = $newTokenData['uid'];
@@ -291,10 +298,15 @@ class GoodWeService {
 
             // Verifica si la respuesta es exitosa y contiene los datos necesarios
             if (isset($responseData['hasError']) && $responseData['hasError'] === false && isset($responseData['data'])) {
+                $token = isset($responseData['data']['token']) ? $responseData['data']['token'] : '';
+                $timestamp = isset($responseData['data']['timestamp']) ? $responseData['data']['timestamp'] : '';
+
+                $this->proveedoresController->setTokenProveedor('GoodWe', $token, '', $timestamp);
+                $proveedor = $this->proveedoresController->getTokenProveedor('GoodWe');
                 return [
                     'uid' => isset($responseData['data']['uid']) ? $responseData['data']['uid'] : '',
-                    'timestamp' => isset($responseData['data']['timestamp']) ? $responseData['data']['timestamp'] : '',
-                    'token' => isset($responseData['data']['token']) ? $responseData['data']['token'] : '',
+                    'timestamp' => isset($proveedor['expires_at']) ? $proveedor['expires_at'] : '',
+                    'token' => isset($proveedor['tokenAuth']) ? $proveedor['tokenAuth'] : '',
                     'client' => isset($responseData['data']['client']) ? $responseData['data']['client'] : '',
                     'version' => isset($responseData['data']['version']) ? $responseData['data']['version'] : '',
                     'language' => isset($responseData['data']['language']) ? $responseData['data']['language'] : ''

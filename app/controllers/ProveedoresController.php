@@ -14,7 +14,7 @@ class ProveedoresController{
         try {
             // Paso 1: Verificar si el proveedor existe y obtener su token_id
             $tokenId = $this->proveedoresDB->verificarTokenProveedor($nombreProveedor);
-    
+
             if ($tokenId === false) {
                 // El proveedor no existe, no se inserta el token
                 throw new Exception("El proveedor '$nombreProveedor' no existe en la base de datos.");
@@ -49,7 +49,8 @@ class ProveedoresController{
             if($this->proveedoresDB->getTokenProveedor($nombreProveedor) == false){
                 return [
                     'tokenAuth' => '',
-                    'tokenRenovation' => ''
+                    'tokenRenovation' => '',
+                    'expires_at' => ''
                 ];
             }else{
                 return $tokenProveedor;
