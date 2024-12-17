@@ -17,11 +17,13 @@ class GoodWeService {
     public function getPlantPowerRealtime($powerStationId) {
         $url = $this->goodWe->getUrl() . "api/v2/PowerStation/GetPowerflow";
 
+        $token = $this->proveedoresController->getTokenProveedor('GoodWe');
+
         // Token en formato JSON
         $tokenData = [
             'uid' => $this->goodWe->getUid(),
             'timestamp' => $this->goodWe->getTimestamp(),
-            'token' => $this->proveedoresController->getTokenProveedor('GoodWe'),
+            'token' => $token['tokenAuth'],
             'client' => $this->goodWe->getClient(),
             'version' => $this->goodWe->getVersion(),
             'language' => $this->goodWe->getLanguage()
@@ -40,6 +42,8 @@ class GoodWeService {
             // Realiza la primera solicitud
             $response = $this->httpClient->post($url, $headers, json_encode($data));
             $decodedResponse = json_decode($response, true);
+
+            
 
             // Verificar si la respuesta indica que la autorización ha caducado
             while($decodedResponse['code'] == 100002){
@@ -79,11 +83,13 @@ class GoodWeService {
     public function GetChartByPlant($data) {
         $url = $this->goodWe->getUrl() . "api/v2/Charts/GetChartByPlant";
 
+        $token = $this->proveedoresController->getTokenProveedor('GoodWe');
+
         // Token en formato JSON
         $tokenData = [
             'uid' => $this->goodWe->getUid(),
             'timestamp' => $this->goodWe->getTimestamp(),
-            'token' => $this->proveedoresController->getTokenProveedor('GoodWe'),
+            'token' => $token['tokenAuth'],
             'client' => $this->goodWe->getClient(),
             'version' => $this->goodWe->getVersion(),
             'language' => $this->goodWe->getLanguage()
@@ -211,11 +217,13 @@ class GoodWeService {
     public function GetPlantDetailByPowerstationId($powerStationId) {
         $url = $this->goodWe->getUrl() . "api/v3/PowerStation/GetPlantDetailByPowerstationId";
     
+        $token = $this->proveedoresController->getTokenProveedor('GoodWe');
+
         // Token en formato JSON
         $tokenData = [
             'uid' => $this->goodWe->getUid(),
             'timestamp' => $this->goodWe->getTimestamp(),
-            'token' => $this->proveedoresController->getTokenProveedor('GoodWe'),
+            'token' => $token['tokenAuth'],
             'client' => $this->goodWe->getClient(),
             'version' => $this->goodWe->getVersion(),
             'language' => $this->goodWe->getLanguage()
@@ -234,6 +242,11 @@ class GoodWeService {
             // Realiza la primera solicitud
             $response = $this->httpClient->get($url, $headers, $data);
             $decodedResponse = json_decode($response, true);
+
+            //Si todo esta correcto devolvemos los datos
+            if($decodedResponse['code'] != 100002){
+                return $response;
+            }
     
             // Verificar si la respuesta indica que la autorización ha caducado
             while($decodedResponse['code'] == 100002){
