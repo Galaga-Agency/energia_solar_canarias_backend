@@ -458,7 +458,12 @@ switch ($method) {
                         // Verificar si el usuario es administrador
                         if ($admin) {
                             $apiControladorService = new ApiControladorService();
-                            $apiControladorService->getAllPlants();
+                            if (isset($_GET['usuarioId'])) {
+                                $usuarioId = $_GET['usuarioId'];
+                                $apiControladorService->getAllPlantsCliente($usuarioId);
+                            } else {
+                                $apiControladorService->getAllPlants();
+                            }
                         } else {
                             $idUsuario = $authMiddleware->obtenerIdUsuarioActivo();
                             $apiControladorService = new ApiControladorService();
