@@ -501,16 +501,18 @@ class ApiControladorService
             $victronEnergyArray = [];
 
             foreach ($plantasAsociadas as $planta) {
-                if ($planta['nombre_proveedor'] === 'GoodWe') {
+                if ($planta['proveedor_id'] === 9) {
                     // Obtener y decodificar datos de GoodWe
                     $goodWeResponse = $this->goodWeController->getPlantDetails($planta['planta_id']);
                     $goodWeData = $this->decodeJsonResponse($goodWeResponse);
+
+                    echo json_encode($goodWeData);
 
                     if (is_array($goodWeData) && isset($goodWeData['data']['info']['powerstation_id'])) {
                         // Usar el ID como clave para evitar duplicados
                         $goodWeArray[$goodWeData['data']['info']['powerstation_id']] = $goodWeData;
                     }
-                } elseif ($planta['nombre_proveedor'] === 'SolarEdge') {
+                } elseif ($planta['proveedor_id'] === 11) {
                     // Obtener y decodificar datos de SolarEdge
                     $solarEdgeResponse = $this->solarEdgeController->getSiteDetails($planta['planta_id']);
                     $solarEdgeData = $this->decodeJsonResponse($solarEdgeResponse);
@@ -519,7 +521,7 @@ class ApiControladorService
                         // Usar el ID como clave para evitar duplicados
                         $solarEdgeArray[$solarEdgeData['details']['id']] = $solarEdgeData;
                     }
-                } elseif ($planta['nombre_proveedor'] === 'VictronEnergy') {
+                } elseif ($planta['proveedor_id'] === 10) {
                     // Obtener y decodificar datos de SolarEdge
                     $victronEnergyResponse = $this->victronEnergyController->getSiteDetails($planta['planta_id']);
                     $victronEnergyData = $this->decodeJsonResponse($victronEnergyResponse);
