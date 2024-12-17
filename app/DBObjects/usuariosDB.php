@@ -39,7 +39,7 @@ class UsuariosDB
             }
 
             // Vincula los parámetros: 'i' para enteros (usuario y planta) y 's' para string (proveedor)
-            $stmt->bind_param('iii', $idUsuario, $idPlanta, $idProveedor);
+            $stmt->bind_param('isi', $idUsuario, $idPlanta, $idProveedor);
 
             // Ejecuta la consulta
             if (!$stmt->execute()) {
@@ -563,7 +563,7 @@ class UsuariosDB
             $stmt = $conn->prepare($query);
 
             // Asumiendo que planta_id, usuario_id e idProveedor son enteros
-            $stmt->bind_param('iii', $plantaId, $usuarioId, $idProveedor);
+            $stmt->bind_param('sii', $plantaId, $usuarioId, $idProveedor);
 
             $stmt->execute();
             $result = $stmt->get_result();
