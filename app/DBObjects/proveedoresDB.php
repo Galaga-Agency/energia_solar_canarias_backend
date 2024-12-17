@@ -58,7 +58,7 @@ class ProveedoresDB {
             $conexion = Conexion::getInstance();
             $conn = $conexion->getConexion();
     
-            $query = "SELECT tokenAuth, tokenRenovation from proveedores inner join bearertoken on proveedores.token_id = bearertoken.id where proveedores.nombre = ?;";
+            $query = "SELECT tokenAuth, tokenRenovation, expires_at from proveedores inner join bearertoken on proveedores.token_id = bearertoken.id where proveedores.nombre = ?;";
             $stmt = $conn->prepare($query);
             $stmt->bind_param("s", $nombreProveedor);
             if (!$stmt) {
@@ -171,7 +171,7 @@ class ProveedoresDB {
                 throw new Exception("Error en la preparación de la consulta de inserción: " . $conn->error);
             }
     
-            $stmtInsertToken->bind_param("sss", $token, $tokenRenovation, $expires_at);
+            $stmtInsertToken->bind_param("ssi", $token, $tokenRenovation, $expires_at);
             if (!$stmtInsertToken->execute()) {
                 throw new Exception("Error en la ejecución de la consulta de inserción: " . $stmtInsertToken->error);
             }
@@ -196,6 +196,7 @@ class ProveedoresDB {
     
             return true; // Inserción y asociación exitosas
         } catch (Exception $e) {
+            echo $e->getMessage();
             error_log("Error en insertarTokenYAsociar: " . $e->getMessage());
             return false;
         }
