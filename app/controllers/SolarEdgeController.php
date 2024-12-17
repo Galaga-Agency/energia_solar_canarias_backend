@@ -17,6 +17,17 @@ class SolarEdgeController
         $this->logsController = new LogsController();
     }
 
+    public function cargaBateriaSolarEdge($powerStationId,$startTime,$endTime)
+    {
+        // Registrar log
+        $this->logsController->registrarLog(Logs::INFO, "Accede a la API SolarEdge para la carga de batería");
+        //Recoger el inventario con una llamada a la api
+        $inventario = $this->solarEdgeService->cargaBateriaSolarEdge($powerStationId,$startTime,$endTime);
+        // Retornar la respuesta en JSON
+        header('Content-Type: application/json');
+        return json_encode($inventario);
+    }
+
     public function getPlantComparative($powerStationId, $startDate, $timeUnit)
     {
         // Registrar log

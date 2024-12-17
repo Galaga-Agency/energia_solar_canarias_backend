@@ -13,6 +13,24 @@ class SolarEdgeService
         $this->httpClient = new HttpClient();
     }
 
+    //Método que devuelve la grafica del consumo de bateria
+    public function cargaBateriaSolarEdge($siteId, $startTime, $endTime)
+    {
+        $startParam = urlencode("$startTime 00:00:00");
+        $endParam = urlencode("$endTime 23:59:59");
+
+        $url = $this->solarEdge->getUrl() . "site/$siteId/storageData?startTime={$startParam}&endTime={$endParam}&api_key=" . $this->solarEdge->getApiKey();
+
+        try {
+            $response = $this->httpClient->get($url);
+            echo $response;
+            return json_decode($response);
+        } catch (Exception $e) {
+            return ['error' => $e->getMessage()];
+        }
+    }
+
+
     //Método que devuelve la potencia de las plantas que esten en funcionamiento
     public function inventarioSolarEdge($siteId)
     {
@@ -61,7 +79,7 @@ class SolarEdgeService
         }
     }
 
-    
+
     //Método que devuelve el estado de la bateria
     public function getCurrentPowerFlow($siteId)
     {
