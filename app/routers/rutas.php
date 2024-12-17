@@ -489,6 +489,55 @@ switch ($method) {
 
     case 'POST':
         switch (true) {
+            case (preg_match('/^plant\/grafica\/bateria\/([\w-]+)$/', $request, $matches) && isset($_GET['proveedor']) ? true : false):
+                $handled = true;
+                $powerStationId = $matches[1];
+                //Verificamos que existe el usuario CREADOR del token y sino manejamos el error dentro de la funcion
+                if ($authMiddleware->verificarTokenUsuarioActivo() != false) {
+                    if (isset($_GET['proveedor'])) {
+                        $apiControladorService = new ApiControladorService;
+                        $proveedor = $_GET['proveedor'];
+                        switch ($proveedor) {
+                            case $proveedores['GoodWe']:
+                                $respuesta->_404();
+                                $respuesta->message = 'No hay beneficios en la planta de GoodWe';
+                                http_response_code($respuesta->code);
+                                echo json_encode($respuesta);
+                                break;
+                            case $proveedores['SolarEdge']:
+                                $body = file_get_contents("php://input");
+                                $data = json_decode($body, true); // Decodificar JSON a un array asociativo
+                                if (isset($data['fechaInicio']) && isset($data['fechaFin'])) {
+                                    $apiControladorService->cargaBateriaSolarEdge($powerStationId, $data['fechaInicio'], $data['fechaFin']);
+                                } else {
+                                    $respuesta->_404();
+                                    $respuesta->message = 'Parametros faltantes en el body';
+                                    http_response_code($respuesta->code);
+                                    echo json_encode($respuesta);
+                                    break;
+                                }
+                                break;
+                            case $proveedores['VictronEnergy']:
+                                $respuesta->_404();
+                                $respuesta->message = 'No hay beneficios en la planta de VictronEnergy';
+                                http_response_code($respuesta->code);
+                                echo json_encode($respuesta);
+                                break;
+                            default:
+                                $respuesta->_404();
+                                $respuesta->message = 'El proveedor no es valido';
+                                http_response_code($respuesta->code);
+                                echo json_encode($respuesta);
+                                break;
+                        }
+                    }
+                } else {
+                    $respuesta->_403();
+                    $respuesta->message = 'El token no se puede authentificar con exito';
+                    http_response_code($respuesta->code);
+                    echo json_encode($respuesta);
+                }
+                break;
             case (preg_match('/^plant\/grafica\/comparacion\/([\w-]+)$/', $request, $matches) && isset($_GET['proveedor']) ? true : false):
                 $handled = true;
                 $powerStationId = $matches[1];
