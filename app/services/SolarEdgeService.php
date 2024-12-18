@@ -23,7 +23,6 @@ class SolarEdgeService
 
         try {
             $response = $this->httpClient->get($url);
-            echo $response;
             return json_decode($response);
         } catch (Exception $e) {
             return ['error' => $e->getMessage()];
