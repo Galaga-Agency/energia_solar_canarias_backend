@@ -85,7 +85,14 @@ class GoodWeService
     //Llamada que se hace para construir el grafico de la planta en postman corresponde con la llamada POST GetPlantPowerChart
     public function GetChartByPlant($data)
     {
-        $url = $this->goodWe->getUrl() . "api/v2/Charts/GetChartByPlant";
+        if ($data['full_script']) {
+            $url = $this->goodWe->getUrl() . "api/v2/Charts/GetPlantPowerChart";
+            if(isset($data['chartIndexId'])){
+                unset($data['chartIndexId']);
+            }
+        } else {
+            $url = $this->goodWe->getUrl() . "api/v2/Charts/GetChartByPlant";
+        }
 
         $token = $this->proveedoresController->getTokenProveedor('GoodWe');
 
