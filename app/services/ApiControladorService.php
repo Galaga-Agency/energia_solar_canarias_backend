@@ -122,32 +122,6 @@ class ApiControladorService
         header('Content-Type: application/json');
         echo json_encode($respuesta);
     }
-    public function inventarioSolarEdge($siteId)
-    {
-        $respuesta = new Respuesta;
-        try {
-            $solarEdgeResponse = $this->solarEdgeController->inventarioSolarEdge($siteId);
-            $solarEdgeData = json_decode($solarEdgeResponse);
-
-            if ($solarEdgeData != null) {
-                $this->logsController->registrarLog(Logs::INFO, "se ha encontrado el inventario de SolarEdge");
-                $respuesta->success($solarEdgeData);
-            } else {
-                $this->logsController->registrarLog(Logs::INFO, "no se ha encontrado el inventario de SolarEdge");
-                $respuesta->_400($solarEdgeData);
-                $respuesta->message = "no se ha encontrado el inventario de SolarEdge";
-                http_response_code(400);
-            }
-        } catch (Throwable $e) {
-            $this->logsController->registrarLog(Logs::ERROR, "Error del proveedor de SolarEdge: " . $e->getMessage());
-            $respuesta->_500($e->getMessage());
-            $respuesta->message = "Error en el servidor de algun proveedor";
-            http_response_code(500);
-        }
-        // Devolver el resultado como JSON
-        header('Content-Type: application/json');
-        echo json_encode($respuesta);
-    }
     public function cargaBateriaSolarEdge($powerStationId,$startTime,$endTime)
     {
         $respuesta = new Respuesta;
@@ -174,6 +148,64 @@ class ApiControladorService
         header('Content-Type: application/json');
         echo json_encode($respuesta);
     }
+    /**
+     * 
+     * Estas funcion proporcionan informacion sobre el equipo
+     * 
+     */
+
+     public function inventarioSolarEdge($siteId)
+     {
+         $respuesta = new Respuesta;
+         try {
+             $solarEdgeResponse = $this->solarEdgeController->inventarioSolarEdge($siteId);
+             $solarEdgeData = json_decode($solarEdgeResponse);
+ 
+             if ($solarEdgeData != null) {
+                 $this->logsController->registrarLog(Logs::INFO, "se ha encontrado el inventario de SolarEdge");
+                 $respuesta->success($solarEdgeData);
+             } else {
+                 $this->logsController->registrarLog(Logs::INFO, "no se ha encontrado el inventario de SolarEdge");
+                 $respuesta->_400($solarEdgeData);
+                 $respuesta->message = "no se ha encontrado el inventario de SolarEdge";
+                 http_response_code(400);
+             }
+         } catch (Throwable $e) {
+             $this->logsController->registrarLog(Logs::ERROR, "Error del proveedor de SolarEdge: " . $e->getMessage());
+             $respuesta->_500($e->getMessage());
+             $respuesta->message = "Error en el servidor de algun proveedor";
+             http_response_code(500);
+         }
+         // Devolver el resultado como JSON
+         header('Content-Type: application/json');
+         echo json_encode($respuesta);
+     }
+     public function GetInverterAllPoint($powerStationId)
+     {
+         $respuesta = new Respuesta;
+         try {
+             $goodWeResponse = $this->goodWeController->GetInverterAllPoint($powerStationId);
+             $goodWeEdgeData = json_decode($goodWeResponse);
+ 
+             if ($goodWeEdgeData != null) {
+                 $this->logsController->registrarLog(Logs::INFO, "se ha encontrado el inventario de GoodWe");
+                 $respuesta->success($goodWeEdgeData);
+             } else {
+                 $this->logsController->registrarLog(Logs::INFO, "no se ha encontrado el inventario de GoodWe");
+                 $respuesta->_400($goodWeEdgeData);
+                 $respuesta->message = "no se ha encontrado el inventario de GoodWe";
+                 http_response_code(400);
+             }
+         } catch (Throwable $e) {
+             $this->logsController->registrarLog(Logs::ERROR, "Error del proveedor de GoodWe: " . $e->getMessage());
+             $respuesta->_500($e->getMessage());
+             $respuesta->message = "Error en el servidor de algun proveedor";
+             http_response_code(500);
+         }
+         // Devolver el resultado como JSON
+         header('Content-Type: application/json');
+         echo json_encode($respuesta);
+     }
 
     /**
      * 

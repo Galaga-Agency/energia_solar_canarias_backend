@@ -2,19 +2,22 @@
 require_once '../utils/HttpClient.php';
 require_once '../models/GoodWe.php';
 
-class GoodWeService {
+class GoodWeService
+{
     private $goodWe;
     private $httpClient;
     private $proveedoresController;
 
-    public function __construct() {
+    public function __construct()
+    {
         $this->goodWe = new GoodWeTokenAuthentified();
         $this->httpClient = new HttpClient();
         $this->proveedoresController = new ProveedoresController();
     }
 
     //Llamada en tiempo real a la energia que genera la planta, en postman corresponde con la llamada POST GetPowerFlow
-    public function getPlantPowerRealtime($powerStationId) {
+    public function getPlantPowerRealtime($powerStationId)
+    {
         $url = $this->goodWe->getUrl() . "api/v2/PowerStation/GetPowerflow";
 
         $token = $this->proveedoresController->getTokenProveedor('GoodWe');
@@ -43,10 +46,10 @@ class GoodWeService {
             $response = $this->httpClient->post($url, $headers, json_encode($data));
             $decodedResponse = json_decode($response, true);
 
-            
+
 
             // Verificar si la respuesta indica que la autorización ha caducado
-            while($decodedResponse['code'] == 100002){
+            while ($decodedResponse['code'] == 100002) {
                 // Verificar si la respuesta indica que la autorización ha caducado
                 if (isset($decodedResponse['code']) && $decodedResponse['code'] === 100002) {
                     // Realizar login para obtener nuevos datos de autorización
@@ -80,7 +83,8 @@ class GoodWeService {
     }
 
     //Llamada que se hace para construir el grafico de la planta en postman corresponde con la llamada POST GetPlantPowerChart
-    public function GetChartByPlant($data) {
+    public function GetChartByPlant($data)
+    {
         $url = $this->goodWe->getUrl() . "api/v2/Charts/GetChartByPlant";
 
         $token = $this->proveedoresController->getTokenProveedor('GoodWe');
@@ -106,7 +110,7 @@ class GoodWeService {
             $decodedResponse = json_decode($response, true);
 
             // Verificar si la respuesta indica que la autorización ha caducado
-            while($decodedResponse['code'] == 100002){
+            while ($decodedResponse['code'] == 100002) {
                 // Verificar si la respuesta indica que la autorización ha caducado
                 if (isset($decodedResponse['code']) && $decodedResponse['code'] === 100002) {
                     // Realizar login para obtener nuevos datos de autorización
@@ -139,9 +143,10 @@ class GoodWeService {
             return ['error' => $e->getMessage()];
         }
     }
-    
+
     //LLamada a todas las plantas en postman corresponde a la llamada POST Todas plantas
-    public function GetAllPlants($page = 1, $pageSize = 200) {
+    public function GetAllPlants($page = 1, $pageSize = 200)
+    {
         $url = $this->goodWe->getUrl() . "api/PowerStationMonitor/QueryPowerStationMonitor";
 
         $token = $this->proveedoresController->getTokenProveedor('GoodWe');
@@ -179,7 +184,7 @@ class GoodWeService {
             $decodedResponse = json_decode($response, true);
 
             // Verificar si la respuesta indica que la autorización ha caducado
-            while($decodedResponse['code'] == 100002){
+            while ($decodedResponse['code'] == 100002) {
                 // Verificar si la respuesta indica que la autorización ha caducado
                 if (isset($decodedResponse['code']) && $decodedResponse['code'] === 100002) {
                     // Realizar login para obtener nuevos datos de autorización
@@ -214,9 +219,10 @@ class GoodWeService {
     }
 
     //LLamada a los detalles e la planta en postman corresponde con la llamada POST GetPlantDetailByPowerstation
-    public function GetPlantDetailByPowerstationId($powerStationId) {
+    public function GetPlantDetailByPowerstationId($powerStationId)
+    {
         $url = $this->goodWe->getUrl() . "api/v3/PowerStation/GetPlantDetailByPowerstationId";
-    
+
         $token = $this->proveedoresController->getTokenProveedor('GoodWe');
 
         // Token en formato JSON
@@ -228,62 +234,129 @@ class GoodWeService {
             'version' => $this->goodWe->getVersion(),
             'language' => $this->goodWe->getLanguage()
         ];
-    
+
         $headers = [
             'Content-Type: application/x-www-form-urlencoded; charset=UTF-8',
             'Token: ' . json_encode($tokenData)
         ];
-    
+
         $data = [
             'powerStationId' => $powerStationId
         ];
-    
+
         try {
             // Realiza la primera solicitud
             $response = $this->httpClient->get($url, $headers, $data);
             $decodedResponse = json_decode($response, true);
 
             //Si todo esta correcto devolvemos los datos
-            if($decodedResponse['code'] != 100002){
+            if ($decodedResponse['code'] != 100002) {
                 return $response;
             }
-    
-            // Verificar si la respuesta indica que la autorización ha caducado
-            while($decodedResponse['code'] == 100002){
-            if (isset($decodedResponse['code']) && $decodedResponse['code'] === 100002) {
-                // Realizar login para obtener nuevos datos de autorización
-                $newTokenData = $this->crossLogin();
-    
-                if (isset($newTokenData['uid'])) {
-                    // Actualizar los datos del token
-                    $this->goodWe->setUid($newTokenData['uid']);
-                    $this->goodWe->setTimestamp($newTokenData['timestamp']);
-                    $this->goodWe->setToken($newTokenData['token']);
 
-    
-                    // Reintentar la solicitud con los nuevos datos
-                    $tokenData['uid'] = $newTokenData['uid'];
-                    $tokenData['timestamp'] = $newTokenData['timestamp'];
-                    $tokenData['token'] = $newTokenData['token'];
-                    $headers[1] = 'Token: ' . json_encode($tokenData);
-    
-                    // Segunda solicitud con el nuevo token
-                    $response = $this->httpClient->get($url, $headers, $data);
-                    return $response;
-                } else {
-                    throw new Exception("No se pudo obtener el nuevo token de autorización.");
+            // Verificar si la respuesta indica que la autorización ha caducado
+            while ($decodedResponse['code'] == 100002) {
+                if (isset($decodedResponse['code']) && $decodedResponse['code'] === 100002) {
+                    // Realizar login para obtener nuevos datos de autorización
+                    $newTokenData = $this->crossLogin();
+
+                    if (isset($newTokenData['uid'])) {
+                        // Actualizar los datos del token
+                        $this->goodWe->setUid($newTokenData['uid']);
+                        $this->goodWe->setTimestamp($newTokenData['timestamp']);
+                        $this->goodWe->setToken($newTokenData['token']);
+
+
+                        // Reintentar la solicitud con los nuevos datos
+                        $tokenData['uid'] = $newTokenData['uid'];
+                        $tokenData['timestamp'] = $newTokenData['timestamp'];
+                        $tokenData['token'] = $newTokenData['token'];
+                        $headers[1] = 'Token: ' . json_encode($tokenData);
+
+                        // Segunda solicitud con el nuevo token
+                        $response = $this->httpClient->get($url, $headers, $data);
+                        return $response;
+                    } else {
+                        throw new Exception("No se pudo obtener el nuevo token de autorización.");
+                    }
                 }
             }
-        }
-    
+
             return $decodedResponse;
         } catch (Exception $e) {
             return ['error' => $e->getMessage()];
         }
-    } 
+    }
+
+    //LLamada a los detalles e la planta en postman corresponde con la llamada POST GetInverterAllPoint
+    public function GetInverterAllPoint($powerStationId)
+    {
+        $url = $this->goodWe->getUrl() . "api/v3/PowerStation/GetInverterAllPoint";
+        $token = $this->proveedoresController->getTokenProveedor('GoodWe');
+
+        // Token en formato JSON
+        $tokenData = [
+            'uid' => $this->goodWe->getUid(),
+            'timestamp' => $this->goodWe->getTimestamp(),
+            'token' => $token['tokenAuth'],
+            'client' => $this->goodWe->getClient(),
+            'version' => $this->goodWe->getVersion(),
+            'language' => $this->goodWe->getLanguage()
+        ];
+
+        $headers = [
+            'Content-Type: application/json',
+            'Token: ' . json_encode($tokenData)
+        ];
+
+        $data = [
+            'PowerStationId' => $powerStationId
+        ];
+
+        try {
+            // Realiza la primera solicitud
+            $response = $this->httpClient->post($url, $headers, json_encode($data));
+            $decodedResponse = json_decode($response, true);
+
+
+
+            // Verificar si la respuesta indica que la autorización ha caducado
+            while ($decodedResponse['code'] == 100002) {
+                // Verificar si la respuesta indica que la autorización ha caducado
+                if (isset($decodedResponse['code']) && $decodedResponse['code'] === 100002) {
+                    // Realizar login para obtener nuevos datos de autorización
+                    $newTokenData = $this->crossLogin();
+
+                    if (isset($newTokenData['uid'])) {
+                        // Actualizar los datos del token
+                        $this->goodWe->setUid($newTokenData['uid']);
+                        $this->goodWe->setTimestamp($newTokenData['timestamp']);
+                        $this->goodWe->setToken($newTokenData['token']);
+
+                        // Reintentar la solicitud con los nuevos datos
+                        $tokenData['uid'] = $newTokenData['uid'];
+                        $tokenData['timestamp'] = $newTokenData['timestamp'];
+                        $tokenData['token'] = $newTokenData['token'];
+                        $headers[1] = 'Token: ' . json_encode($tokenData);
+
+                        // Segunda solicitud con el nuevo token
+                        $response = $this->httpClient->post($url, $headers, json_encode($data));
+                        $decodedResponse = json_decode($response, true);
+                    } else {
+                        throw new Exception("No se pudo obtener el nuevo token de autorización.");
+                    }
+                }
+            }
+
+            return $decodedResponse;
+        } catch (Exception $e) {
+            return ['error' => $e->getMessage()];
+        }
+    }
 
     //LoginUser en postman corresponde con la llamada POST LoginUser
-    public function crossLogin() {
+    public function crossLogin()
+    {
         $url = $this->goodWe->getUrl() . "api/v1/Common/CrossLogin";
 
         // Datos de la solicitud en el cuerpo
@@ -327,11 +400,8 @@ class GoodWeService {
             } else {
                 throw new Exception("Login fallido: " . ($responseData['msg'] ?? 'Error desconocido'));
             }
-
         } catch (Exception $e) {
             return ['error' => $e->getMessage()];
         }
     }
 }
-
-?>

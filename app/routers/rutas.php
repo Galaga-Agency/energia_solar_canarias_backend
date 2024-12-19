@@ -75,10 +75,7 @@ switch ($method) {
                         $proveedor = $_GET['proveedor'];
                         switch ($proveedor) {
                             case $proveedores['GoodWe']:
-                                $respuesta->_404();
-                                $respuesta->message = 'No hay inventario en la planta de GoodWe';
-                                http_response_code($respuesta->code);
-                                echo json_encode($respuesta);
+                                $apiControladorService->GetInverterAllPoint($powerStationId);
                                 break;
                             case $proveedores['SolarEdge']:
                                 $apiControladorService->inventarioSolarEdge($powerStationId);
