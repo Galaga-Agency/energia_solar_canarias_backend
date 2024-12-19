@@ -1049,6 +1049,7 @@ class ApiControladorService
         $date = isset($data['date']) ? $data['date'] : null;
         $range = isset($data['range']) ? $data['range'] : null;
         $chartIndexId = isset($data['chartIndexId']) ? $data['chartIndexId'] : null;
+        $full_script = isset($data['full_script']) ? $data['full_script'] : null;
 
         // Si alguna de las claves no existe, retorna null
         if ($id === null || $date === null || $range === null && $chartIndexId != "potencia" || $chartIndexId === null) {
@@ -1190,7 +1191,7 @@ class ApiControladorService
                 $range = 2;
                 break;
         }
-        if (isset($full_script)) {
+        if ($full_script != null) {
             return [
                 'id' => $id,
                 'date' => $date,
