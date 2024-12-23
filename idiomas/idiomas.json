@@ -1,6 +1,6 @@
 {
   "es": {
-    "copiar":"Copiar",
+    "copiar": "Copiar",
     "menu": {
       "titulo": "Energia Solar Canarias",
       "inicio": "Inicio",
@@ -28,8 +28,8 @@
       "logs": "Logs",
       "logs_get": "GET Logs de los usuarios (Solo administradores)",
       "proveedor_get": "GET Proveedores disponibles",
-      "proveedor":"Proveedores",
-      "eliminar_relaciones":"DEL Eliminar relaciones a una planta"
+      "proveedor": "Proveedores",
+      "eliminar_relaciones": "DEL Eliminar relaciones a una planta"
     },
     "inicio": {
       "titulo": "Inicio",
@@ -42,12 +42,12 @@
       "datos_api": "LLamadas a la api",
       "datos_api_descripcion": "Solicita plantas si eres un cliente o asocia plantas a los clientes si eres administrador esta sección explica como puedes llamar los datos de la api",
       "mas_funcionalidades": "Disponible próximamente...",
-      "clases":"Clases",
-      "clases_descripcion":"Este endpoint gestiona las diferentes clases de usuario que existen en el sistema. Las clases definen el nivel de permisos y acceso que los usuarios tienen dentro de la aplicación, como administrador o usuario regular. Este endpoint permite visualizar, crear y actualizar clases.",
-      "logs":"Logs",
-      "logs_descriopcion":"Este endpoint proporciona acceso a los registros de actividad del sistema. Los logs incluyen información sobre las acciones realizadas por los usuarios, los errores ocurridos y otros eventos relevantes. Es útil para la supervisión y auditoría del sistema.",
-      "proveedores":"Proveedores",
-      "proveedores_descripcion":"Este endpoint gestiona la información de los proveedores conectados a la plataforma. Los proveedores pueden ser sistemas externos de energía. Permite consultar los datos de los proveedores, así como integrarlos o actualizarlos."
+      "clases": "Clases",
+      "clases_descripcion": "Este endpoint gestiona las diferentes clases de usuario que existen en el sistema. Las clases definen el nivel de permisos y acceso que los usuarios tienen dentro de la aplicación, como administrador o usuario regular. Este endpoint permite visualizar, crear y actualizar clases.",
+      "logs": "Logs",
+      "logs_descriopcion": "Este endpoint proporciona acceso a los registros de actividad del sistema. Los logs incluyen información sobre las acciones realizadas por los usuarios, los errores ocurridos y otros eventos relevantes. Es útil para la supervisión y auditoría del sistema.",
+      "proveedores": "Proveedores",
+      "proveedores_descripcion": "Este endpoint gestiona la información de los proveedores conectados a la plataforma. Los proveedores pueden ser sistemas externos de energía. Permite consultar los datos de los proveedores, así como integrarlos o actualizarlos."
     },
     "usuarios_get": {
       "titulo": "GET /usuarios",
@@ -168,26 +168,32 @@
       "descripcion": "Este endpoint proporciona a tiempo real datos de la planta que se le proporciona en la URL",
       "id_descripcion": "identificador de la planta la cual tiene que pertenecer al proveedor proporcionado y el cliente tiene que tener acceso a esa misma planta"
     },
-    "clima":{
+    "clima": {
       "descripcion": "Nombre de la calle donde se encuentra la planta.",
-      "body":"Cuerpo JSON",
+      "body": "Cuerpo JSON",
       "name": "El clima de la localizacion que se le pasa a la planta"
     },
-    "beneficios":{
+    "beneficios": {
       "descripcion": "Este endpoint proporciona los beneficios ecológicos generados por la planta, incluyendo la reducción de emisiones contaminantes y su impacto positivo en el medio ambiente."
     },
-    "clases":{
+    "clases": {
       "descripcion": "Este endpoint muestra los diferentes tipos de usuarios que hay"
     },
-    "logs":{
+    "logs": {
       "descripcion": "Este endpoint muestra los logs"
     },
-    "proveedores":{
+    "proveedores": {
       "descripcion": "Este endpoint muestra los proveedores"
+    },
+    "alertas": {
+      "descripcion": "Este endpoint muestra todas las alertas de las plantas de un proveedor",
+      "pageIndex_descripcion": "Número de la paginación por defecto 1",
+      "pageSize_descripcion": "Número de elementos por pagina por defecto 200",
+      "proveedor": "(requerido):proveedor de la planta."
     }
   },
   "en": {
-    "copiar":"Copy",
+    "copiar": "Copy",
     "menu": {
       "titulo": "Energia Solar Canarias",
       "datos_api": "API Calls",
@@ -215,8 +221,8 @@
       "logs": "Logs",
       "logs_get": "GET User logs (Administrators only)",
       "proveedor_get": "GET Available providers",
-      "proveedor":"Suppliers",
-      "eliminar_relaciones":"DEL Delete relationships to a plant"
+      "proveedor": "Suppliers",
+      "eliminar_relaciones": "DEL Delete relationships to a plant"
     },
     "inicio": {
       "titulo": "Home",
@@ -229,12 +235,12 @@
       "datos_api": "API Calls",
       "datos_api_descripcion": "Request plants if you are a client, or associate plants with clients if you are an administrator. This section explains how you can fetch data from the API.",
       "mas_funcionalidades": "Coming soon...",
-      "clases":"Clases",
-      "clases_descripcion":"Este endpoint gestiona las diferentes clases de usuario que existen en el sistema. Las clases definen el nivel de permisos y acceso que los usuarios tienen dentro de la aplicación, como administrador o usuario regular. Este endpoint permite visualizar, crear y actualizar clases.",
-      "logs":"Logs",
-      "logs_descriopcion":"Este endpoint proporciona acceso a los registros de actividad del sistema. Los logs incluyen información sobre las acciones realizadas por los usuarios, los errores ocurridos y otros eventos relevantes. Es útil para la supervisión y auditoría del sistema.",
-      "proveedores":"Proveedores",
-      "proveedores_descripcion":"Este endpoint gestiona la información de los proveedores conectados a la plataforma. Los proveedores pueden ser sistemas externos de energía. Permite consultar los datos de los proveedores, así como integrarlos o actualizarlos."
+      "clases": "Clases",
+      "clases_descripcion": "Este endpoint gestiona las diferentes clases de usuario que existen en el sistema. Las clases definen el nivel de permisos y acceso que los usuarios tienen dentro de la aplicación, como administrador o usuario regular. Este endpoint permite visualizar, crear y actualizar clases.",
+      "logs": "Logs",
+      "logs_descriopcion": "Este endpoint proporciona acceso a los registros de actividad del sistema. Los logs incluyen información sobre las acciones realizadas por los usuarios, los errores ocurridos y otros eventos relevantes. Es útil para la supervisión y auditoría del sistema.",
+      "proveedores": "Proveedores",
+      "proveedores_descripcion": "Este endpoint gestiona la información de los proveedores conectados a la plataforma. Los proveedores pueden ser sistemas externos de energía. Permite consultar los datos de los proveedores, así como integrarlos o actualizarlos."
     },
     "usuarios_get": {
       "titulo": "GET /users",
@@ -355,22 +361,28 @@
       "descripcion": "This endpoint provides real-time data of the plant specified in the URL.",
       "id_descripcion": "Identifier of the plant, which must belong to the specified provider and be accessible to the client."
     },
-    "clima":{
+    "clima": {
       "descripcion": "Retrieve the weather of the location provided to the plant.",
-      "body":"Body JSON",
+      "body": "Body JSON",
       "name": "Name of the place where the plant is located"
     },
-    "beneficios":{
+    "beneficios": {
       "descripcion": "This endpoint provides the environmental benefits generated by the plant, including the reduction of harmful emissions and its positive impact on the environment."
     },
-    "clases":{
+    "clases": {
       "descripcion": "This endpoint shows the different types of users available."
     },
-    "logs":{
+    "logs": {
       "descripcion": "This endpoint shows the logs."
     },
-    "proveedores":{
+    "proveedores": {
       "descripcion": "This endpoint shows the suppliers."
+    },
+    "alertas": {
+      "descripcion": "This endpoint shows all alerts from a provider's plants.",
+      "pageIndex_descripcion": "Page number, default is 1.",
+      "pageSize_descripcion": "Number of items per page, default is 200.",
+      "proveedor": "(required): Provider of the plant."
     }
   }
 }
