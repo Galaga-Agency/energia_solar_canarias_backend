@@ -86,10 +86,15 @@ switch ($method) {
                                 echo json_encode($respuesta);
                                 break;
                             case $proveedores['VictronEnergy']:
-                                $respuesta->_404();
-                                $respuesta->message = 'No hay Alertas en la planta de VictronEnergy';
-                                http_response_code($respuesta->code);
-                                echo json_encode($respuesta);
+                                if(isset($_GET['siteId'])){
+                                    $siteId = $_GET['siteId'];
+                                    $apiControladorService->getSiteAlarms($siteId);
+                                }else{
+                                    $respuesta->_404();
+                                    $respuesta->message = 'No se ha encontrado el siteId';
+                                    http_response_code($respuesta->code);
+                                    echo json_encode($respuesta);
+                                }
                                 break;
                             default:
                                 $respuesta->_404();
