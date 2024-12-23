@@ -122,10 +122,7 @@ switch ($method) {
                                 $apiControladorService->inventarioSolarEdge($powerStationId);
                                 break;
                             case $proveedores['VictronEnergy']:
-                                $respuesta->_404();
-                                $respuesta->message = 'No hay inventario en la planta de VictronEnergy';
-                                http_response_code($respuesta->code);
-                                echo json_encode($respuesta);
+                                $apiControladorService->getSiteEquipoVictronEnergy($powerStationId);
                                 break;
                             default:
                                 $respuesta->_404();
