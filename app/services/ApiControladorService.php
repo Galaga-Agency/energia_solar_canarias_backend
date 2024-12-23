@@ -189,7 +189,34 @@ class ApiControladorService
      * Estas funcion proporcionan informacion sobre el equipo
      * 
      */
-
+     //VictronEnergy
+     public function getSiteEquipoVictronEnergy($siteId)
+     {
+         $respuesta = new Respuesta;
+         try {
+             $victronEnergyResponse = $this->victronEnergyController->getSiteEquipo($siteId);
+             $victronEnergyData = json_decode($victronEnergyResponse);
+ 
+             if ($victronEnergyData != null) {
+                 $this->logsController->registrarLog(Logs::INFO, "se ha encontrado el inventario de VictronEnergy");
+                 $respuesta->success($victronEnergyData);
+             } else {
+                 $this->logsController->registrarLog(Logs::INFO, "no se ha encontrado el inventario de VictronEnergy");
+                 $respuesta->_400($victronEnergyData);
+                 $respuesta->message = "no se ha encontrado el inventario de VictronEnergy";
+                 http_response_code(400);
+             }
+         } catch (Throwable $e) {
+             $this->logsController->registrarLog(Logs::ERROR, "Error del proveedor de VictronEnergy: " . $e->getMessage());
+             $respuesta->_500($e->getMessage());
+             $respuesta->message = "Error en el servidor de algun proveedor";
+             http_response_code(500);
+         }
+         // Devolver el resultado como JSON
+         header('Content-Type: application/json');
+         echo json_encode($respuesta);
+     }
+     //SolarEdge
      public function inventarioSolarEdge($siteId)
      {
          $respuesta = new Respuesta;
@@ -216,6 +243,7 @@ class ApiControladorService
          header('Content-Type: application/json');
          echo json_encode($respuesta);
      }
+     //GoodWe
      public function GetInverterAllPoint($powerStationId)
      {
          $respuesta = new Respuesta;
