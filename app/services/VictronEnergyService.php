@@ -15,6 +15,17 @@ class VictronEnergyService {
         ];
     }
 
+    //Recoger datos detallados de la planta
+    public function getSiteEquipo($siteId) {
+        $url = $this->victronEnergy->getUrl() . "installations/$siteId/system-overview";
+        try {
+            $response = $this->httpClient->get($url, $this->header);
+            return json_decode($response);
+        } catch (Exception $e) {
+            return ['error' => $e->getMessage()];
+        }
+    }
+
     //recoger el grafico de las plantas / parece que tambien funciona para recoger en tiempo real los valores
     public function getGraficoDetails($siteId,$timeStart,$timeEnd,$type,$interval) {
         $url = $this->victronEnergy->getUrl() . "installations/$siteId/stats?end=$timeEnd&interval=hours&start=$timeStart&type=$type&interval=$interval";
