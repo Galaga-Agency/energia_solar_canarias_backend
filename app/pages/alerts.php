@@ -13,16 +13,20 @@
         </h2>
         <ul class="list-disc list-inside <?php echo $theme === 'dark' ? 'text-gray-400' : 'text-gray-700'; ?> mb-4">
             <li>
-                <strong>pageIndex</strong> 
+                <strong>(GoodWe) pageIndex</strong> 
                 <?php echo translate('alertas.pageIndex_descripcion'); ?>
             </li>
             <li>
-                <strong>pageSize</strong> 
+                <strong>(GoodWe) pageSize</strong> 
                 <?php echo translate('alertas.pageSize_descripcion'); ?>
             </li>
             <li>
-                <strong>proveedor</strong> 
+                <strong>(All) proveedor</strong> 
                 <?php echo translate('alertas.proveedor'); ?>
+            </li>
+            <li>
+                <strong>(VictronEnergy) siteId</strong> 
+                ID
             </li>
         </ul>
         <h2 class="text-xl font-semibold <?php echo $theme === 'dark' ? 'text-gray-400' : 'text-gray-800'; ?> mb-2">

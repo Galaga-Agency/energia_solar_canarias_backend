@@ -149,12 +149,40 @@ class ApiControladorService
         echo json_encode($respuesta);
     }
     /**
-     * 
-     * Estas funcion proporcionan informacion sobre las alertas
-     * 
-     */
+    * 
+    * Estas funcion proporcionan informacion sobre las alertas
+    * 
+    */
 
-     public function GetPowerStationWariningInfoByMultiCondition($pageIndex = 1, $pageSize = 200)
+    //VictronEnergy
+    public function getSiteAlarms($siteId){
+        $respuesta = new Respuesta;
+        try {
+            // Obtener datos de GoodWe
+            $victronEnergyResponse = $this->victronEnergyController->getSiteAlarms($siteId);
+            $victronEnergyData = json_decode($victronEnergyResponse, true);
+
+            if ($victronEnergyData != null) {
+                $this->logsController->registrarLog(Logs::INFO, "se han encontrado las plantas en VictronEnergy");
+                $respuesta->success($victronEnergyData);
+            } else {
+                $this->logsController->registrarLog(Logs::INFO, "No se han encontrado plantas en VictronEnergy");
+                $respuesta->_400($victronEnergyData);
+                $respuesta->message = "No se han encontrado plantas";
+                http_response_code(400);
+            }
+        } catch (Throwable $e) {
+            $this->logsController->registrarLog(Logs::ERROR, $e->getMessage() . "Error en el servidor de VictronEnergy");
+            $respuesta->_500();
+            $respuesta->message = "Error en el servidor de algun proveedor";
+            http_response_code(500);
+        }
+        // Devolver el resultado como JSON
+        header('Content-Type: application/json');
+        echo json_encode($respuesta);
+    }
+
+    public function GetPowerStationWariningInfoByMultiCondition($pageIndex = 1, $pageSize = 200)
     {
         $respuesta = new Respuesta;
         try {
