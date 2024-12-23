@@ -225,6 +225,87 @@ class GoodWeService
         }
     }
 
+    //LLamada a todas las plantas en postman corresponde a la llamada POST GetPowerStationWariningInfoByMultiCondition
+    public function GetPowerStationWariningInfoByMultiCondition($pageIndex = 1, $pageSize = 200)
+    {
+        $url = $this->goodWe->getUrl() . "api/SmartOperateMaintenance/GetPowerStationWariningInfoByMultiCondition";
+
+        $token = $this->proveedoresController->getTokenProveedor('GoodWe');
+
+        // Token en formato JSON
+        $tokenData = [
+            'uid' => $this->goodWe->getUid(),
+            'timestamp' => $this->goodWe->getTimestamp(),
+            'token' => $token['tokenAuth'],
+            'client' => $this->goodWe->getClient(),
+            'version' => $this->goodWe->getVersion(),
+            'language' => $this->goodWe->getLanguage()
+        ];
+
+        $headers = [
+            'Content-Type: application/json',
+            'Token: ' . json_encode($tokenData)
+        ];
+        //Generar la fecha de inicio y fin por ejemplo si hoy es 24/11/2024 la fecha de inicio seria 11/24/2024 00:00:00 y la fecha de fin seria 12/23/2024 23:59:59
+        $fechaFin = date('m/d/Y') . ' 23:59:59';
+        $fechaInicio = date('m/d/Y', strtotime('-1 month +1 day')) . ' 00:00:00';
+
+        $data =[
+            "adcode" => "",
+            "township" => "",
+            "orgid" => "",
+            "stationid" => "",
+            "warninglevel" => 7,
+            "status" => "3",
+            "starttime" => $fechaInicio,
+            "endtime" => $fechaFin,
+            "page_size" => $pageSize,
+            "page_index" => $pageIndex,
+            "device_type" => [],
+            "fault_classification" => [],
+            "standard_faultLevel" => []
+        ];
+
+        try {
+            // Realiza la primera solicitud
+            $response = $this->httpClient->post($url, $headers, json_encode($data));
+            $decodedResponse = json_decode($response, true);
+
+            // Verificar si la respuesta indica que la autorización ha caducado
+            while ($decodedResponse['code'] == 100002) {
+                // Verificar si la respuesta indica que la autorización ha caducado
+                if (isset($decodedResponse['code']) && $decodedResponse['code'] === 100002) {
+                    // Realizar login para obtener nuevos datos de autorización
+                    $newTokenData = $this->crossLogin();
+
+                    if (isset($newTokenData['uid'])) {
+                        // Actualizar los datos del token
+                        $this->goodWe->setUid($newTokenData['uid']);
+                        $this->goodWe->setTimestamp($newTokenData['timestamp']);
+                        $this->goodWe->setToken($newTokenData['token']);
+
+
+                        // Reintentar la solicitud con los nuevos datos
+                        $tokenData['uid'] = $newTokenData['uid'];
+                        $tokenData['timestamp'] = $newTokenData['timestamp'];
+                        $tokenData['token'] = $newTokenData['token'];
+                        $headers[1] = 'Token: ' . json_encode($tokenData);
+
+                        // Segunda solicitud con el nuevo token
+                        $response = $this->httpClient->post($url, $headers, json_encode($data));
+                        $decodedResponse = json_decode($response, true);
+                    } else {
+                        throw new Exception("No se pudo obtener el nuevo token de autorización.");
+                    }
+                }
+            }
+
+            return $decodedResponse;
+        } catch (Exception $e) {
+            return ['error' => $e->getMessage()];
+        }
+    }
+
     //LLamada a los detalles e la planta en postman corresponde con la llamada POST GetPlantDetailByPowerstation
     public function GetPlantDetailByPowerstationId($powerStationId)
     {
