@@ -238,6 +238,9 @@ $page = $_GET['page'] ?? 'inicio';
       case 'ayudaForm':
         include('./app/pages/ayudaForm.php');
         break;
+      case 'alerts':
+        include('./app/pages/alerts.php');
+        break;
       case 'eliminar-relaciones':
         include('./app/pages/eliminar-relaciones.php');
         break;
