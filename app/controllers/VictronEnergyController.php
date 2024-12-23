@@ -17,6 +17,15 @@ class VictronEnergyController
         $this->logsController = new LogsController();
     }
 
+    //Método para obtener las alertas de la planta
+    public function getSiteAlarms($siteId)
+    {
+        $this->logsController->registrarLog(Logs::INFO, " accede a la api de VictronEnergy todas las plantas");
+        $data = $this->victronEnergyService->getSiteAlarms($siteId);
+        header('Content-Type: application/json');
+        return json_encode($data);
+    }
+
     //Método para obtener el inventario de la planta
     public function getSiteEquipo($siteId)
     {
