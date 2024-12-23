@@ -1,7 +1,7 @@
 <?php
 // Mostrar errores en pantalla
-//ini_set('display_errors', 1); // Activar la visualización de errores
-//error_reporting(E_ALL);
+ini_set('display_errors', 1); // Activar la visualización de errores
+error_reporting(E_ALL);
 require_once "../../config/configApi.php";
 require_once "../middlewares/autenticacion.php";
 require_once "../controllers/usuarios.php";
@@ -64,7 +64,48 @@ $handled = false; // Bandera para indicar si la ruta fue manejada
 // Rutas y endpoints
 switch ($method) {
     case 'GET':
+        
         switch (true) {
+            case (preg_match('/^plant\/alert/', $request, $matches) && isset($_GET['proveedor']) ? true : false):
+                $handled = true;
+                //Verificamos que existe el usuario CREADOR del token y sino manejamos el error dentro de la funcion
+                if ($authMiddleware->verificarTokenUsuarioActivo() != false) {
+                    if (isset($_GET['proveedor'])) {
+                        $apiControladorService = new ApiControladorService;
+                        $proveedor = $_GET['proveedor'];
+                        switch ($proveedor) {
+                            case $proveedores['GoodWe']:
+                                $pageIndex = isset($_GET['pageIndex']) ? $_GET['pageIndex'] : 1;
+                                $pageSize = isset($_GET['pageSize']) ? $_GET['pageSize'] : 200;
+                                $apiControladorService->GetPowerStationWariningInfoByMultiCondition($pageIndex, $pageSize);
+                                break;
+                            case $proveedores['SolarEdge']:
+                                $respuesta->_404();
+                                $respuesta->message = 'No hay Alertas en la planta de SolarEdge';
+                                http_response_code($respuesta->code);
+                                echo json_encode($respuesta);
+                                break;
+                            case $proveedores['VictronEnergy']:
+                                $respuesta->_404();
+                                $respuesta->message = 'No hay Alertas en la planta de VictronEnergy';
+                                http_response_code($respuesta->code);
+                                echo json_encode($respuesta);
+                                break;
+                            default:
+                                $respuesta->_404();
+                                $respuesta->message = 'El proveedor no es valido';
+                                http_response_code($respuesta->code);
+                                echo json_encode($respuesta);
+                                break;
+                        }
+                    }
+                } else {
+                    $respuesta->_403();
+                    $respuesta->message = 'El token no se puede authentificar con exito';
+                    http_response_code($respuesta->code);
+                    echo json_encode($respuesta);
+                }
+                break;
             case (preg_match('/^plant\/inventario\/([\w-]+)$/', $request, $matches) && isset($_GET['proveedor']) ? true : false):
                 $handled = true;
                 $powerStationId = $matches[1];
