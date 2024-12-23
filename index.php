@@ -156,6 +156,7 @@ $page = $_GET['page'] ?? 'inicio';
           <li><a href="?page=get-realtime-power" class="block px-4 py-2 <?php echo $theme === 'dark' ? 'text-gray-300 hover:bg-gray-600' : 'text-gray-600 hover:bg-blue-50'; ?> rounded"><?php echo translate('menu.power') ?></a></li>
           <li><a href="?page=get-plant-overview" class="block px-4 py-2 <?php echo $theme === 'dark' ? 'text-gray-300 hover:bg-gray-600' : 'text-gray-600 hover:bg-blue-50'; ?> rounded"><?php echo translate('menu.overview') ?></a></li>
           <li><a href="?page=get-beneficios-plantas" class="block px-4 py-2 <?php echo $theme === 'dark' ? 'text-gray-300 hover:bg-gray-600' : 'text-gray-600 hover:bg-blue-50'; ?> rounded"><?php echo translate('menu.benefits') ?></a></li>
+          <li><a href="?page=alerts" class="block px-4 py-2 <?php echo $theme === 'dark' ? 'text-gray-300 hover:bg-gray-600' : 'text-gray-600 hover:bg-blue-50'; ?> rounded"><?php echo translate('menu.get-alerts') ?></a></li>
         </ul>
       </li>
       <li>
