@@ -28,7 +28,7 @@ class VictronEnergyService {
 
     //Recoger datos detallados de la planta
     public function getSiteAlarms($siteId) {
-        $url = $this->victronEnergy->getUrl() . "installations/$siteId/alarms";
+        $url = $this->victronEnergy->getUrl() . "installations/$siteId/alarm-log?page1&count=3000";
         try {
             $response = $this->httpClient->get($url, $this->header);
             return json_decode($response);
