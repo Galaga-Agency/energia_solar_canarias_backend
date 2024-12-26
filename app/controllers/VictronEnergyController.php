@@ -18,10 +18,10 @@ class VictronEnergyController
     }
 
     //Método para obtener las alertas de la planta
-    public function getSiteAlarms($siteId)
+    public function getSiteAlarms($siteId,$pageIndex = 1,$pageSize = 200)
     {
         $this->logsController->registrarLog(Logs::INFO, " accede a la api de VictronEnergy todas las plantas");
-        $data = $this->victronEnergyService->getSiteAlarms($siteId);
+        $data = $this->victronEnergyService->getSiteAlarms($siteId,$pageIndex,$pageSize);
         header('Content-Type: application/json');
         return json_encode($data);
     }
