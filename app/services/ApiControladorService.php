@@ -155,11 +155,11 @@ class ApiControladorService
     */
 
     //VictronEnergy
-    public function getSiteAlarms($siteId){
+    public function getSiteAlarms($siteId, $pageIndex = 1, $pageSize = 200){
         $respuesta = new Respuesta;
         try {
             // Obtener datos de GoodWe
-            $victronEnergyResponse = $this->victronEnergyController->getSiteAlarms($siteId);
+            $victronEnergyResponse = $this->victronEnergyController->getSiteAlarms($siteId,$pageIndex,$pageSize);
             $victronEnergyData = json_decode($victronEnergyResponse, true);
 
             if ($victronEnergyData != null) {

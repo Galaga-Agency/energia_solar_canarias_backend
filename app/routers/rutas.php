@@ -88,7 +88,9 @@ switch ($method) {
                             case $proveedores['VictronEnergy']:
                                 if(isset($_GET['siteId'])){
                                     $siteId = $_GET['siteId'];
-                                    $apiControladorService->getSiteAlarms($siteId);
+                                    $pageIndex = isset($_GET['pageIndex']) ? $_GET['pageIndex'] : 1;
+                                    $pageSize = isset($_GET['pageSize']) ? $_GET['pageSize'] : 200;
+                                    $apiControladorService->getSiteAlarms($siteId,$pageIndex,$pageSize);
                                 }else{
                                     $respuesta->_404();
                                     $respuesta->message = 'No se ha encontrado el siteId';
