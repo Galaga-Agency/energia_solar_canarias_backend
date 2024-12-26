@@ -122,11 +122,11 @@ class ApiControladorService
         header('Content-Type: application/json');
         echo json_encode($respuesta);
     }
-    public function cargaBateriaSolarEdge($powerStationId,$startTime,$endTime)
+    public function cargaBateriaSolarEdge($powerStationId, $startTime, $endTime)
     {
         $respuesta = new Respuesta;
         try {
-            $solarEdgeResponse = $this->solarEdgeController->cargaBateriaSolarEdge($powerStationId,$startTime,$endTime);
+            $solarEdgeResponse = $this->solarEdgeController->cargaBateriaSolarEdge($powerStationId, $startTime, $endTime);
             $solarEdgeData = json_decode($solarEdgeResponse);
 
             if ($solarEdgeData != null) {
@@ -149,17 +149,18 @@ class ApiControladorService
         echo json_encode($respuesta);
     }
     /**
-    * 
-    * Estas funcion proporcionan informacion sobre las alertas
-    * 
-    */
+     * 
+     * Estas funcion proporcionan informacion sobre las alertas
+     * 
+     */
 
     //VictronEnergy
-    public function getSiteAlarms($siteId, $pageIndex = 1, $pageSize = 200){
+    public function getSiteAlarms($siteId, $pageIndex = 1, $pageSize = 200)
+    {
         $respuesta = new Respuesta;
         try {
             // Obtener datos de GoodWe
-            $victronEnergyResponse = $this->victronEnergyController->getSiteAlarms($siteId,$pageIndex,$pageSize);
+            $victronEnergyResponse = $this->victronEnergyController->getSiteAlarms($siteId, $pageIndex, $pageSize);
             $victronEnergyData = json_decode($victronEnergyResponse, true);
 
             if ($victronEnergyData != null) {
@@ -217,87 +218,87 @@ class ApiControladorService
      * Estas funcion proporcionan informacion sobre el equipo
      * 
      */
-     //VictronEnergy
-     public function getSiteEquipoVictronEnergy($siteId)
-     {
-         $respuesta = new Respuesta;
-         try {
-             $victronEnergyResponse = $this->victronEnergyController->getSiteEquipo($siteId);
-             $victronEnergyData = json_decode($victronEnergyResponse);
- 
-             if ($victronEnergyData != null) {
-                 $this->logsController->registrarLog(Logs::INFO, "se ha encontrado el inventario de VictronEnergy");
-                 $respuesta->success($victronEnergyData);
-             } else {
-                 $this->logsController->registrarLog(Logs::INFO, "no se ha encontrado el inventario de VictronEnergy");
-                 $respuesta->_400($victronEnergyData);
-                 $respuesta->message = "no se ha encontrado el inventario de VictronEnergy";
-                 http_response_code(400);
-             }
-         } catch (Throwable $e) {
-             $this->logsController->registrarLog(Logs::ERROR, "Error del proveedor de VictronEnergy: " . $e->getMessage());
-             $respuesta->_500($e->getMessage());
-             $respuesta->message = "Error en el servidor de algun proveedor";
-             http_response_code(500);
-         }
-         // Devolver el resultado como JSON
-         header('Content-Type: application/json');
-         echo json_encode($respuesta);
-     }
-     //SolarEdge
-     public function inventarioSolarEdge($siteId)
-     {
-         $respuesta = new Respuesta;
-         try {
-             $solarEdgeResponse = $this->solarEdgeController->inventarioSolarEdge($siteId);
-             $solarEdgeData = json_decode($solarEdgeResponse);
- 
-             if ($solarEdgeData != null) {
-                 $this->logsController->registrarLog(Logs::INFO, "se ha encontrado el inventario de SolarEdge");
-                 $respuesta->success($solarEdgeData);
-             } else {
-                 $this->logsController->registrarLog(Logs::INFO, "no se ha encontrado el inventario de SolarEdge");
-                 $respuesta->_400($solarEdgeData);
-                 $respuesta->message = "no se ha encontrado el inventario de SolarEdge";
-                 http_response_code(400);
-             }
-         } catch (Throwable $e) {
-             $this->logsController->registrarLog(Logs::ERROR, "Error del proveedor de SolarEdge: " . $e->getMessage());
-             $respuesta->_500($e->getMessage());
-             $respuesta->message = "Error en el servidor de algun proveedor";
-             http_response_code(500);
-         }
-         // Devolver el resultado como JSON
-         header('Content-Type: application/json');
-         echo json_encode($respuesta);
-     }
-     //GoodWe
-     public function GetInverterAllPoint($powerStationId)
-     {
-         $respuesta = new Respuesta;
-         try {
-             $goodWeResponse = $this->goodWeController->GetInverterAllPoint($powerStationId);
-             $goodWeEdgeData = json_decode($goodWeResponse);
- 
-             if ($goodWeEdgeData != null) {
-                 $this->logsController->registrarLog(Logs::INFO, "se ha encontrado el inventario de GoodWe");
-                 $respuesta->success($goodWeEdgeData);
-             } else {
-                 $this->logsController->registrarLog(Logs::INFO, "no se ha encontrado el inventario de GoodWe");
-                 $respuesta->_400($goodWeEdgeData);
-                 $respuesta->message = "no se ha encontrado el inventario de GoodWe";
-                 http_response_code(400);
-             }
-         } catch (Throwable $e) {
-             $this->logsController->registrarLog(Logs::ERROR, "Error del proveedor de GoodWe: " . $e->getMessage());
-             $respuesta->_500($e->getMessage());
-             $respuesta->message = "Error en el servidor de algun proveedor";
-             http_response_code(500);
-         }
-         // Devolver el resultado como JSON
-         header('Content-Type: application/json');
-         echo json_encode($respuesta);
-     }
+    //VictronEnergy
+    public function getSiteEquipoVictronEnergy($siteId)
+    {
+        $respuesta = new Respuesta;
+        try {
+            $victronEnergyResponse = $this->victronEnergyController->getSiteEquipo($siteId);
+            $victronEnergyData = json_decode($victronEnergyResponse);
+
+            if ($victronEnergyData != null) {
+                $this->logsController->registrarLog(Logs::INFO, "se ha encontrado el inventario de VictronEnergy");
+                $respuesta->success($victronEnergyData);
+            } else {
+                $this->logsController->registrarLog(Logs::INFO, "no se ha encontrado el inventario de VictronEnergy");
+                $respuesta->_400($victronEnergyData);
+                $respuesta->message = "no se ha encontrado el inventario de VictronEnergy";
+                http_response_code(400);
+            }
+        } catch (Throwable $e) {
+            $this->logsController->registrarLog(Logs::ERROR, "Error del proveedor de VictronEnergy: " . $e->getMessage());
+            $respuesta->_500($e->getMessage());
+            $respuesta->message = "Error en el servidor de algun proveedor";
+            http_response_code(500);
+        }
+        // Devolver el resultado como JSON
+        header('Content-Type: application/json');
+        echo json_encode($respuesta);
+    }
+    //SolarEdge
+    public function inventarioSolarEdge($siteId)
+    {
+        $respuesta = new Respuesta;
+        try {
+            $solarEdgeResponse = $this->solarEdgeController->inventarioSolarEdge($siteId);
+            $solarEdgeData = json_decode($solarEdgeResponse);
+
+            if ($solarEdgeData != null) {
+                $this->logsController->registrarLog(Logs::INFO, "se ha encontrado el inventario de SolarEdge");
+                $respuesta->success($solarEdgeData);
+            } else {
+                $this->logsController->registrarLog(Logs::INFO, "no se ha encontrado el inventario de SolarEdge");
+                $respuesta->_400($solarEdgeData);
+                $respuesta->message = "no se ha encontrado el inventario de SolarEdge";
+                http_response_code(400);
+            }
+        } catch (Throwable $e) {
+            $this->logsController->registrarLog(Logs::ERROR, "Error del proveedor de SolarEdge: " . $e->getMessage());
+            $respuesta->_500($e->getMessage());
+            $respuesta->message = "Error en el servidor de algun proveedor";
+            http_response_code(500);
+        }
+        // Devolver el resultado como JSON
+        header('Content-Type: application/json');
+        echo json_encode($respuesta);
+    }
+    //GoodWe
+    public function GetInverterAllPoint($powerStationId)
+    {
+        $respuesta = new Respuesta;
+        try {
+            $goodWeResponse = $this->goodWeController->GetInverterAllPoint($powerStationId);
+            $goodWeEdgeData = json_decode($goodWeResponse);
+
+            if ($goodWeEdgeData != null) {
+                $this->logsController->registrarLog(Logs::INFO, "se ha encontrado el inventario de GoodWe");
+                $respuesta->success($goodWeEdgeData);
+            } else {
+                $this->logsController->registrarLog(Logs::INFO, "no se ha encontrado el inventario de GoodWe");
+                $respuesta->_400($goodWeEdgeData);
+                $respuesta->message = "no se ha encontrado el inventario de GoodWe";
+                http_response_code(400);
+            }
+        } catch (Throwable $e) {
+            $this->logsController->registrarLog(Logs::ERROR, "Error del proveedor de GoodWe: " . $e->getMessage());
+            $respuesta->_500($e->getMessage());
+            $respuesta->message = "Error en el servidor de algun proveedor";
+            http_response_code(500);
+        }
+        // Devolver el resultado como JSON
+        header('Content-Type: application/json');
+        echo json_encode($respuesta);
+    }
 
     /**
      * 
@@ -840,6 +841,8 @@ class ApiControladorService
                     'latitude' => $plant['latitude'] ?? '',
                     'longitude' => $plant['longitude'] ?? '',
                     'organization' => 'goodwe',
+                    'batteryVoltage' => null,//No disponible en GoodWe
+                    'batterySoc' => null,//No disponible en GoodWe
                     'current_power' => $plant['pac'] ?? 0, // Potencia actual en W
                     'total_energy' => $plant['etotal'] ?? 0, // Energía total generada en kWh
                     'daily_energy' => $plant['eday'] ?? 0, // Energía generada hoy en kWh
@@ -879,6 +882,8 @@ class ApiControladorService
                     'latitude' => $site['location']['latitude'] ?? '',
                     'longitude' => $site['location']['longitude'] ?? '',
                     'organization' => 'SolarEdge',
+                    'batteryVoltage' => null,//No disponible en SolarEdge
+                    'batterySoc' => null,//No disponible en SolarEdge
                     'current_power' => null, // No disponible en SolarEdge
                     'total_energy' => null, // No disponible en SolarEdge
                     'daily_energy' => null, // No disponible en SolarEdge
@@ -914,6 +919,19 @@ class ApiControladorService
                 // Convertir syscreated a fecha
                 $installation_date = isset($plant['syscreated']) ? date("Y-m-d", $plant['syscreated']) : null;
 
+                // Verificar si 'extended' existe y es un array
+                if (isset($plant['extended']) && is_array($plant['extended'])) {
+                    foreach ($plant['extended'] as $item) {
+                        if (isset($item['idDataAttribute'], $item['rawValue'])) {
+                            if ($item['idDataAttribute'] == 144) {
+                                $batterySoc = $item['rawValue'];
+                            } elseif ($item['idDataAttribute'] == 143) {
+                                $batteryVoltage = $item['rawValue'];
+                            }
+                        }
+                    }
+                }
+
                 // Construir el array de datos
                 $plants[] = [
                     'id' => $plant['idSite'] ?? '',
@@ -925,6 +943,8 @@ class ApiControladorService
                     'latitude' => $latitud, // Procesado previamente
                     'longitude' => $longitud, // Procesado previamente
                     'organization' => 'victronenergy', // Valor fijo
+                    'batteryVoltage' => $batteryVoltage,
+                    'batterySoc' => $batterySoc,
                     'current_power' => null,
                     'total_energy' => null,
                     'daily_energy' => null,
