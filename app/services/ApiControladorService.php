@@ -927,6 +927,8 @@ class ApiControladorService
                                 $batterySoc = $item['rawValue'];
                             } elseif ($item['idDataAttribute'] == 143) {
                                 $batteryVoltage = $item['rawValue'];
+                            } elseif ($item['idDataAttribute'] == 215) {
+                                $status = $item['formattedValue'];
                             }
                         }
                     }
@@ -938,13 +940,13 @@ class ApiControladorService
                     'name' => $plant['name'] ?? '',
                     'address' => $plant['geofence'] ?? null,
                     'capacity' => $plant['pvMax'] ?? 0,
-                    'status' => null, // Valor predeterminado
+                    'status' => $status ?? null, // Valor predeterminado
                     'type' => $plant['device_icon'] ?? '',
                     'latitude' => $latitud, // Procesado previamente
                     'longitude' => $longitud, // Procesado previamente
                     'organization' => 'victronenergy', // Valor fijo
-                    'batteryVoltage' => $batteryVoltage,
-                    'batterySoc' => $batterySoc,
+                    'batteryVoltage' => $batteryVoltage ?? null,
+                    'batterySoc' => $batterySoc ?? null,
                     'current_power' => null,
                     'total_energy' => null,
                     'daily_energy' => null,
