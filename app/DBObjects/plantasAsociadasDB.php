@@ -67,7 +67,7 @@ public function isPlantasAsociadasAlUsuario($usuarioId, $idPlanta, $proveedor) {
         $conexion = Conexion::getInstance();
         $conn = $conexion->getConexion();
 
-        $query = "SELECT * FROM plantas_asociadas WHERE usuario_id = ? AND planta_id = ? AND nombre_proveedor = ?;";
+        $query = "SELECT * FROM plantas_asociadas WHERE usuario_id = ? AND planta_id = ? AND proveedor_id = (SELECT proveedores.id from proveedores WHERE proveedores.nombre = ?);";
         $stmt = $conn->prepare($query);
         if (!$stmt) {
             throw new Exception("Error en la preparación de la consulta: " . $conn->error);
