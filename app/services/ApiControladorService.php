@@ -792,7 +792,12 @@ class ApiControladorService
 
                 if ($plants != null) {
                     $this->logsController->registrarLog(Logs::INFO, "Se han solicitado las plantas del cliente");
-                    $respuesta->success($plants);
+                    // Verificar si los datos son un array o un string
+                    if(is_array($plants)){
+                        $respuesta->success($plants);
+                    }else{
+                        $respuesta->success(json_decode($plants));
+                    }
                 } else {
                     $this->logsController->registrarLog(Logs::INFO, "No se han encontrado plantas");
                     $respuesta->_400($plants);
@@ -806,7 +811,7 @@ class ApiControladorService
                 http_response_code(404);
             }
         } catch (Throwable $e) {
-            $this->logsController->registrarLog(Logs::ERROR, "error en el servidor de la API");
+            $this->logsController->registrarLog(Logs::ERROR, "error en el servidor de la API" . $e->getMessage());
             $respuesta->_500();
             $respuesta->message = $e->getMessage();;
             http_response_code(500);
