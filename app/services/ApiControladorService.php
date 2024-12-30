@@ -652,18 +652,17 @@ class ApiControladorService
             $victronEnergyArray = [];
 
             foreach ($plantasAsociadas as $planta) {
-                if ($planta['proveedor_id'] === 9) {
+                if ($planta['nombre_proveedor'] === 'GoodWe') {
                     // Obtener y decodificar datos de GoodWe
                     $goodWeResponse = $this->goodWeController->getPlantDetails($planta['planta_id']);
                     $goodWeData = $this->decodeJsonResponse($goodWeResponse);
-
-                    echo json_encode($goodWeData);
 
                     if (is_array($goodWeData) && isset($goodWeData['data']['info']['powerstation_id'])) {
                         // Usar el ID como clave para evitar duplicados
                         $goodWeArray[$goodWeData['data']['info']['powerstation_id']] = $goodWeData;
                     }
-                } elseif ($planta['proveedor_id'] === 11) {
+                }
+                if ($planta['nombre_proveedor'] === 'SolarEdge') {
                     // Obtener y decodificar datos de SolarEdge
                     $solarEdgeResponse = $this->solarEdgeController->getSiteDetails($planta['planta_id']);
                     $solarEdgeData = $this->decodeJsonResponse($solarEdgeResponse);
@@ -672,14 +671,15 @@ class ApiControladorService
                         // Usar el ID como clave para evitar duplicados
                         $solarEdgeArray[$solarEdgeData['details']['id']] = $solarEdgeData;
                     }
-                } elseif ($planta['proveedor_id'] === 10) {
+                }
+                if ($planta['nombre_proveedor'] === 'VictronEnergy') {
                     // Obtener y decodificar datos de SolarEdge
                     $victronEnergyResponse = $this->victronEnergyController->getSiteDetails($planta['planta_id']);
                     $victronEnergyData = $this->decodeJsonResponse($victronEnergyResponse);
 
-                    if (is_array($victronEnergyData) && isset($victronEnergyData['records'])) {
+                    if (is_array($victronEnergyData) && isset($victronEnergyData['records'][0]['idSite'])) {
                         // Usar el ID como clave para evitar duplicados
-                        $victronEnergyArray[$victronEnergyData['records']] = $victronEnergyData;
+                        $victronEnergyArray[$victronEnergyData['records'][0]['idSite']] = $victronEnergyData;
                     }
                 }
             }
@@ -687,6 +687,8 @@ class ApiControladorService
             // Convertir los arrays asociativos en arrays simples para procesarlos
             $goodWeArray = array_values($goodWeArray);
             $solarEdgeArray = array_values($solarEdgeArray);
+            $victronEnergyArray = array_values($victronEnergyArray);
+
 
             $processedPlants = $this->processPlantsCliente($goodWeArray, $solarEdgeArray, $victronEnergyArray);
             $respuesta->success($processedPlants);
@@ -694,7 +696,7 @@ class ApiControladorService
         } catch (Throwable $e) {
             $this->logsController->registrarLog(Logs::ERROR, $e->getMessage() . "Error cogiendo las plantas del usuario");
             $respuesta->_500();
-            $respuesta->message = "Error en el servidor de algún proveedor";
+            $respuesta->message = "Error en el servidor de algún proveedor " . $e->getMessage();
             http_response_code(500);
         }
 
@@ -793,9 +795,9 @@ class ApiControladorService
                 if ($plants != null) {
                     $this->logsController->registrarLog(Logs::INFO, "Se han solicitado las plantas del cliente");
                     // Verificar si los datos son un array o un string
-                    if(is_array($plants)){
+                    if (is_array($plants)) {
                         $respuesta->success($plants);
-                    }else{
+                    } else {
                         $respuesta->success(json_decode($plants));
                     }
                 } else {
@@ -846,8 +848,8 @@ class ApiControladorService
                     'latitude' => $plant['latitude'] ?? '',
                     'longitude' => $plant['longitude'] ?? '',
                     'organization' => 'goodwe',
-                    'batteryVoltage' => null,//No disponible en GoodWe
-                    'batterySoc' => null,//No disponible en GoodWe
+                    'batteryVoltage' => null, //No disponible en GoodWe
+                    'batterySoc' => null, //No disponible en GoodWe
                     'current_power' => $plant['pac'] ?? 0, // Potencia actual en W
                     'total_energy' => $plant['etotal'] ?? 0, // Energía total generada en kWh
                     'daily_energy' => $plant['eday'] ?? 0, // Energía generada hoy en kWh
@@ -887,8 +889,8 @@ class ApiControladorService
                     'latitude' => $site['location']['latitude'] ?? '',
                     'longitude' => $site['location']['longitude'] ?? '',
                     'organization' => 'SolarEdge',
-                    'batteryVoltage' => null,//No disponible en SolarEdge
-                    'batterySoc' => null,//No disponible en SolarEdge
+                    'batteryVoltage' => null, //No disponible en SolarEdge
+                    'batterySoc' => null, //No disponible en SolarEdge
                     'current_power' => null, // No disponible en SolarEdge
                     'total_energy' => null, // No disponible en SolarEdge
                     'daily_energy' => null, // No disponible en SolarEdge
@@ -1041,39 +1043,65 @@ class ApiControladorService
 
             $plants[] = $plant; // Agregar la planta de SolarEdge al array $plants
         }
-
         // Procesar datos de victronEnergyData
-        if (isset($victronEnergyData['records']) && is_array($victronEnergyData['records'])) {
-            foreach ($victronEnergyData['records'] as $plant) {
-                // Mapear el código de estado a una descripción legible
-                if (isset($plant['geofence']) && $plant['geofence'] != null) {
-                    $latitud = $plant['geofence']['lat'];
-                    $longitud = $plant['geofence']['lng'];
-                } else {
-                    $latitud = null;
-                    $longitud = null;
+        if (isset($victronEnergyData[0]['records']) && is_array($victronEnergyData[0]['records'])) {
+            foreach ($victronEnergyData[0]['records'] as $plant) {
+                // Inicializar latitud y longitud como null
+                $latitud = null;
+                $longitud = null;
+
+                $address = $plant['geofence']; //Le paso el array que luego parseamos para recoger la latitud y longitud
+
+                // Buscar los valores de 'lat' y 'lng'
+                if (preg_match('/"lat":([0-9\.-]+)/', $address, $latMatch)) {
+                    $latitud = $latMatch[1];
                 }
+                if (preg_match('/"lng":([0-9\.-]+)/', $address, $lngMatch)) {
+                    $longitud = $lngMatch[1];
+                }
+
+                // Convertir syscreated a fecha
+                $installation_date = isset($plant['syscreated']) ? date("Y-m-d", $plant['syscreated']) : null;
+
+                // Verificar si 'extended' existe y es un array
+                if (isset($plant['extended']) && is_array($plant['extended'])) {
+                    foreach ($plant['extended'] as $item) {
+                        if (isset($item['idDataAttribute'], $item['rawValue'])) {
+                            if ($item['idDataAttribute'] == 144) {
+                                $batterySoc = $item['rawValue'];
+                            } elseif ($item['idDataAttribute'] == 143) {
+                                $batteryVoltage = $item['rawValue'];
+                            } elseif ($item['idDataAttribute'] == 215) {
+                                $status = $item['formattedValue'];
+                            }
+                        }
+                    }
+                }
+
+                // Construir el array de datos
                 $plants[] = [
-                    'id' => $plant['idSite'] ?? null, //Existe el campo siempre
-                    'name' => $plant['name'] ?? null, //Existe el campo siempre
-                    'address' => $plant['geofence'] ?? null, //A veces no existe el campo
-                    'capacity' => $plant['pvMax'] ?? null, //tien pvMax ¿? posible capacity segun chatgpt
-                    'status' => null, //No tiene estatus como mucho te muestra si la bateria carga o no
-                    'type' => $plant['powerstation_type'] ?? null,
-                    'latitude' => $latitud, //si existe se pone depende del campo geofence que en muchos casos es null
-                    'longitude' => $longitud, //si existe se pone depende del campo geofence que en muchos casos es null
-                    'organization' => 'victronenergy', //Existe el campo siempre
-                    'current_power' => null, // No disponible en victronEnergyData
-                    'total_energy' => null, // No disponible en victronEnergyData
-                    'daily_energy' => null, // No disponible en victronEnergyData
-                    'monthly_energy' => null, // No disponible en victronEnergyData
-                    'installation_date' => null, // No disponible en victronEnergyData
-                    'pto_date' => null, // No disponible en victronEnergyData
-                    'notes' => null, // No disponible en victronEnergyData
-                    'alert_quantity' => $plant['alarmMonitoring'] ?? null, // Posible adaptacion segun chatGpt es lo mismo
-                    'highest_impact' => null, // No disponible en victronEnergyData
-                    'primary_module' => null, // No disponible en victronEnergyData
-                    'public_settings' => null // No disponible en victronEnergyData
+                    'id' => $plant['idSite'] ?? '',
+                    'name' => $plant['name'] ?? '',
+                    'address' => $plant['geofence'] ?? null,
+                    'capacity' => $plant['pvMax'] ?? 0,
+                    'status' => $status ?? null, // Valor predeterminado
+                    'type' => $plant['device_icon'] ?? '',
+                    'latitude' => $latitud, // Procesado previamente
+                    'longitude' => $longitud, // Procesado previamente
+                    'organization' => 'victronenergy', // Valor fijo
+                    'batteryVoltage' => $batteryVoltage ?? null,
+                    'batterySoc' => $batterySoc ?? null,
+                    'current_power' => null,
+                    'total_energy' => null,
+                    'daily_energy' => null,
+                    'monthly_energy' => null,
+                    'installation_date' => $installation_date,
+                    'pto_date' => null,
+                    'notes' => $plant['notes'] ?? null,
+                    'alert_quantity' => $plant['alarmMonitoring'] ?? null,
+                    'highest_impact' => null,
+                    'primary_module' => null,
+                    'public_settings' => null
                 ];
             }
         }
