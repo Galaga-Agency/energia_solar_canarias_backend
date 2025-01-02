@@ -1,0 +1,31 @@
+name: PHP Unit Tests
+
+on:
+  push:
+    branches:
+      - main    # Ejecutar pruebas en la rama principal (puedes cambiarla a cualquier rama que desees)
+  pull_request:
+    branches:
+      - main    # Ejecutar pruebas cuando se haga un PR a la rama principal
+
+jobs:
+  phpunit:
+    runs-on: ubuntu-latest  # El sistema operativo sobre el que se ejecutará el flujo de trabajo
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2  # Este paso asegura que el código esté disponible en el entorno de GitHub Actions
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2.4'  # Puedes especificar la versión de PHP que estés usando
+
+      - name: Install dependencies
+        run: |
+          composer install --no-interaction  # Instalar las dependencias de PHP con Composer
+
+      - name: Run PHPUnit tests
+        run: |
+          vendor/bin/phpunit --configuration phpunit.xml  # Ejecutar los tests utilizando PHPUnit
+
