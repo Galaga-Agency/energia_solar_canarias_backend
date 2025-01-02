@@ -1,9 +1,10 @@
 <?php
-require_once './../controllers/SolarEdgeController.php';
-require_once './../controllers/GoodWeController.php';
-require_once './../controllers/VictronEnergyController.php';
-require_once './../utils/respuesta.php';
-require_once './../DBObjects/plantasAsociadasDB.php';
+require_once __DIR__ . '/../controllers/SolarEdgeController.php';
+require_once __DIR__ . '/../controllers/GoodWeController.php';
+require_once __DIR__ . '/../controllers/VictronEnergyController.php';
+require_once __DIR__ . '/../utils/respuesta.php';
+require_once __DIR__ . '/../DBObjects/plantasAsociadasDB.php';
+
 
 class ApiControladorService
 {
