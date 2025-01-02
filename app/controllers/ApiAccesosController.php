@@ -1,5 +1,5 @@
 <?php
-require_once '../DBObjects/apiAccesosDB.php';
+require_once __DIR__ . '/../DBObjects/apiAccesosDB.php';
 
 class ApiAccesosController {
     private $apiAccesosDB;
