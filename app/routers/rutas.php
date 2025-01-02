@@ -2,22 +2,23 @@
 // Mostrar errores en pantalla
 //ini_set('display_errors', 1); // Activar la visualización de errores
 //error_reporting(E_ALL);
-require_once "../../config/configApi.php";
-require_once "../middlewares/autenticacion.php";
-require_once "../controllers/usuarios.php";
-require_once "../controllers/login.php";
-require_once "../controllers/token.php";
-require_once "../utils/respuesta.php";
-require_once "../DBObjects/usuariosDB.php";
-require_once "../DBObjects/clasesDB.php";
-require_once "../controllers/SolarEdgeController.php";
-require_once "../controllers/GoodWeController.php";
-require_once "../services/ApiControladorService.php";
-require_once "../services/GoodWeService.php";
-require_once "../services/SolarEdgeService.php";
-require_once "../DBObjects/logsDB.php";
-require_once "../enums/Logs.php";
-require_once "../models/OpenMeteo.php";
+require_once __DIR__ . '/../../config/configApi.php';
+require_once __DIR__ . '/../middlewares/autenticacion.php';
+require_once __DIR__ . '/../controllers/usuarios.php';
+require_once __DIR__ . '/../controllers/login.php';
+require_once __DIR__ . '/../controllers/token.php';
+require_once __DIR__ . '/../utils/respuesta.php';
+require_once __DIR__ . '/../DBObjects/usuariosDB.php';
+require_once __DIR__ . '/../DBObjects/clasesDB.php';
+require_once __DIR__ . '/../controllers/SolarEdgeController.php';
+require_once __DIR__ . '/../controllers/GoodWeController.php';
+require_once __DIR__ . '/../services/ApiControladorService.php';
+require_once __DIR__ . '/../services/GoodWeService.php';
+require_once __DIR__ . '/../services/SolarEdgeService.php';
+require_once __DIR__ . '/../DBObjects/logsDB.php';
+require_once __DIR__ . '/../enums/Logs.php';
+require_once __DIR__ . '/../models/OpenMeteo.php';
+
 
 $respuesta = new Respuesta;
 $authMiddleware = new Autenticacion;

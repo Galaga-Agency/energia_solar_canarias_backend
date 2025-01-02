@@ -1,9 +1,10 @@
 <?php
 
-require_once "../models/login.php";
-require_once "../utils/token.php";
-require_once "../models/insert_token.php";
-require_once "../services/correo.php";
+require_once __DIR__ . "/../models/login.php";
+require_once __DIR__ . "/../utils/token.php";
+require_once __DIR__ . "/../models/insert_token.php";
+require_once __DIR__ . "/../services/correo.php";
+
 
 class LoginController
 {
