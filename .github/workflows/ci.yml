@@ -3,7 +3,7 @@ name: PHP Unit Tests
 on:
   push:
     branches:
-      - main    # Ejecutar pruebas en la rama principal (puedes cambiarla a cualquier rama que desees)
+      - main    # Ejecutar pruebas en la rama principal
   pull_request:
     branches:
       - main    # Ejecutar pruebas cuando se haga un PR a la rama principal
@@ -19,7 +19,12 @@ jobs:
       - name: Set up PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.2.4'  # Puedes especificar la versión de PHP que estés usando
+          php-version: '8.4'  # Puedes especificar la versión de PHP que estés usando
+
+      - name: Install Composer
+        run: |
+          curl -sS https://getcomposer.org/installer | php  # Instalar Composer
+          mv composer.phar /usr/local/bin/composer  # Moverlo al directorio bin
 
       - name: Install dependencies
         run: |
@@ -28,4 +33,3 @@ jobs:
       - name: Run PHPUnit tests
         run: |
           vendor/bin/phpunit --configuration phpunit.xml  # Ejecutar los tests utilizando PHPUnit
-
