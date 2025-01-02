@@ -1,39 +1,35 @@
-name: PHP Composer
+name: PHP Unit Tests
 
 on:
   push:
-    branches: [ "main" ]
+    branches:
+      - main    # Ejecutar pruebas en la rama principal
   pull_request:
-    branches: [ "main" ]
-
-permissions:
-  contents: read
+    branches:
+      - main    # Ejecutar pruebas cuando se haga un PR a la rama principal
 
 jobs:
-  build:
-
-    runs-on: ubuntu-latest
+  phpunit:
+    runs-on: ubuntu-latest  # El sistema operativo sobre el que se ejecutará el flujo de trabajo
 
     steps:
-    - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v2  # Este paso asegura que el código esté disponible en el entorno de GitHub Actions
 
-    - name: Validate composer.json and composer.lock
-      run: composer validate --strict
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'  # Puedes especificar la versión de PHP que estés usando
 
-    - name: Cache Composer packages
-      id: composer-cache
-      uses: actions/cache@v3
-      with:
-        path: vendor
-        key: ${{ runner.os }}-php-${{ hashFiles('**/composer.lock') }}
-        restore-keys: |
-          ${{ runner.os }}-php-
+      - name: Install Composer
+        run: |
+          curl -sS https://getcomposer.org/installer | php  # Instalar Composer
+          mv composer.phar /usr/local/bin/composer  # Moverlo al directorio bin
 
-    - name: Install dependencies
-      run: composer install --prefer-dist --no-progress
+      - name: Install dependencies
+        run: |
+          composer install --no-interaction  # Instalar las dependencias de PHP con Composer
 
-    # Add a test script to composer.json, for instance: "test": "vendor/bin/phpunit"
-    # Docs: https://getcomposer.org/doc/articles/scripts.md
-
-    # - name: Run test suite
-    #   run: composer run-script test
+      - name: Run PHPUnit tests
+        run: |
+          vendor/bin/phpunit --configuration phpunit.xml  # Ejecutar los tests utilizando PHPUnit
