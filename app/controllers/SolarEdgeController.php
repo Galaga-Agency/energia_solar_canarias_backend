@@ -1,5 +1,5 @@
 <?php
-require_once '../services/SolarEdgeService.php';
+require_once __DIR__ . '/../services/SolarEdgeService.php';
 /**
  * @param $siteId = el id de la planta
  * @param $startDate = la fecha de inicio

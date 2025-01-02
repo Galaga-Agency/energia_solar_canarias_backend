@@ -1,5 +1,5 @@
 <?php
-require_once '../services/GoodWeService.php';
+require_once __DIR__ . '/../../services/GoodWeService.php';
 
 class GoodWeController
 {

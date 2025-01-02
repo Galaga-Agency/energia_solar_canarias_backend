@@ -1,6 +1,7 @@
 <?php
-require_once '../utils/HttpClient.php';
-require_once '../models/GoodWe.php';
+require_once __DIR__ . '/../utils/HttpClient.php';
+require_once __DIR__ . '/../models/GoodWe.php';
+
 
 class GoodWeService
 {
