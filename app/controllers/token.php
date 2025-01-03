@@ -1,8 +1,8 @@
 <?php
 
-require_once "../models/valid_token.php";
-require_once "../utils/respuesta.php";
-require_once "../controllers/LogsController.php";
+require_once __DIR__ . '/../models/valid_token.php';
+require_once __DIR__ . '/../utils/respuesta.php';
+require_once __DIR__ . '/../controllers/LogsController.php';
 
 
 class TokenController

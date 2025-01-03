@@ -1,5 +1,5 @@
 <?php
-require_once '../services/VictronEnergyService.php';
+require_once __DIR__ . '/../services/VictronEnergyService.php';
 /**
  * @param $siteId = el id de la planta
  * @param $startDate = la fecha de inicio
