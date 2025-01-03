@@ -14,6 +14,18 @@ class VictronEnergyService {
             'x-authorization: ' . $this->victronEnergy->getApiKey()
         ];
     }
+    public function getHttpClient() {
+        return $this->httpClient;
+    }
+    public function getVictronEnergy() {
+        return $this->victronEnergy;
+    }
+    public function setHttpClient($httpClient) {
+        $this->httpClient = $httpClient;
+    }
+    public function setVictronEnergy($victronEnergy) {
+        $this->victronEnergy = $victronEnergy;
+    }
 
     //Recoger datos detallados de la planta
     public function getSiteEquipo($siteId) {
