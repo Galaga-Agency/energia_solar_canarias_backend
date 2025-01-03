@@ -51,7 +51,7 @@ jobs:
 
       - name: Set up database schema
         run: |
-          mysql -h 127.0.0.1 -u test_user -ptest_password test_db < ./database/schema.sql
+          mysql -h 127.0.0.1 -u test_user -p test_password test_db < ./database/schema.sql
         env:
           PATH_TO_SCHEMA: ./database/schema.sql  # Ruta al archivo de esquema de base de datos
 
