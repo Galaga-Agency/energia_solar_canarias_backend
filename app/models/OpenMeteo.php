@@ -1,5 +1,6 @@
 <?php
-require_once "Nominatim.php";
+require_once __DIR__ . '/Nominatim.php';
+
 class OpenMeteo{
     private $nominatim;
 

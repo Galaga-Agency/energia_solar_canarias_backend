@@ -1,6 +1,6 @@
 <?php
 
-require_once './../DBObjects/proveedoresDB.php';
+require_once __DIR__ . "/../DBObjects/proveedoresDB.php";
 
 class ProveedoresController{
     private $proveedoresDB;

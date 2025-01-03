@@ -1,9 +1,10 @@
 <?php
 
-require_once "../models/usuarios.php";
-require_once "../utils/respuesta.php";
-require_once "../middlewares/autenticacion.php";
-require_once "../controllers/LogsController.php";
+require_once __DIR__ . "/../models/usuarios.php";
+require_once __DIR__ . "/../utils/respuesta.php";
+require_once __DIR__ . "/../middlewares/autenticacion.php";
+require_once __DIR__ . "/../controllers/LogsController.php";
+
 
 class UsuariosController
 {
