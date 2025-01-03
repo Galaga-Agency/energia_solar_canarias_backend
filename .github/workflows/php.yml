@@ -55,15 +55,6 @@ jobs:
         run: |
           composer install --no-interaction  # Instalar las dependencias de PHP con Composer
 
-      - name: Wait for MySQL to be ready
-        run: |
-          echo "Esperando a que MySQL esté listo..."
-          until mysqladmin -h mysql -u root -proot ping --silent; do
-            echo "Esperando MySQL..."
-            sleep 3  # Espera más tiempo entre intentos para dar tiempo al contenedor
-          done
-          echo "MySQL está listo."
-
       - name: Set up database schema
         run: |
           echo "Creando base de datos test_db si no existe..."
