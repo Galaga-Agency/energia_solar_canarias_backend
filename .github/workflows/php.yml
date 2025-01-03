@@ -40,7 +40,7 @@ jobs:
       - name: Install Apache and PHP modules
         run: |
           sudo apt-get update
-          sudo apt-get install apache2 libapache2-mod-php php8.2-mysql php8.2-cli php8.2-xml php8.2-mbstring php8.2-json php8.2-curl -y  # Instalar Apache y las extensiones de PHP necesarias
+          sudo apt-get install apache2 libapache2-mod-php php8.2-mysql php8.2-cli php8.2-xml php8.2-mbstring php8.2-curl -y  # Instalar Apache y las extensiones de PHP necesarias (sin php8.2-json)
 
       - name: Install MySQL client
         run: |
