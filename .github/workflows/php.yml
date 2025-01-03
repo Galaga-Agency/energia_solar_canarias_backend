@@ -49,6 +49,9 @@ jobs:
           done
           echo "MySQL está listo."
 
+      - name: List files
+        run: ls -l ./database # Listar archivos en el directorio de base de datos  
+
       - name: Set up database schema
         run: |
           echo "Esperando 10 segundos antes de configurar el esquema de la base de datos..."
