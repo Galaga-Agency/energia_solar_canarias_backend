@@ -17,7 +17,8 @@ class VictronEnergyServiceTest extends TestCase
         $this->httpClientMock = $this->createMock(HttpClient::class);
         $this->victronEnergyMock = $this->createMock(VictronEnergy::class);
 
-        $this->victronEnergyService = new VictronEnergyService();
+        // Se crea el mock de VictronEnergyService y se inyectan las dependencias
+        $this->victronEnergyService = $this->createMock(VictronEnergyService::class);
         $this->victronEnergyService->setHttpClient($this->httpClientMock);
         $this->victronEnergyService->setVictronEnergy($this->victronEnergyMock);
     }
@@ -28,13 +29,18 @@ class VictronEnergyServiceTest extends TestCase
         $url = "https://example.com/installations/$siteId/system-overview";
         $expectedResponse = json_encode(['data' => 'some data']);
 
+        // Configuramos los mocks
         $this->victronEnergyMock->method('getUrl')->willReturn('https://example.com/');
         $this->httpClientMock->method('get')->with($url, $this->anything())->willReturn($expectedResponse);
 
+        // Simulamos la respuesta del método getSiteEquipo
+        $this->victronEnergyService->method('getSiteEquipo')->willReturn(json_decode($expectedResponse, true));
+
+        // Ejecutamos la prueba
         $result = $this->victronEnergyService->getSiteEquipo($siteId);
-        $this->assertEquals(json_decode($expectedResponse), $result);
-        echo json_encode($result);
-        echo "\n" . 'testGetSiteEquipo' . "\n";
+
+        // Verificamos que el resultado es el esperado
+        $this->assertEquals(json_decode($expectedResponse, true), $result);
     }
 
     public function testGetSiteAlarms()
@@ -45,13 +51,18 @@ class VictronEnergyServiceTest extends TestCase
         $url = "https://example.com/installations/$siteId/alarm-log?page=$pageIndex&count=$pageSize";
         $expectedResponse = json_encode(['data' => 'some data']);
 
+        // Configuramos los mocks
         $this->victronEnergyMock->method('getUrl')->willReturn('https://example.com/');
         $this->httpClientMock->method('get')->with($url, $this->anything())->willReturn($expectedResponse);
 
+        // Simulamos la respuesta del método getSiteAlarms
+        $this->victronEnergyService->method('getSiteAlarms')->willReturn(json_decode($expectedResponse, true));
+
+        // Ejecutamos la prueba
         $result = $this->victronEnergyService->getSiteAlarms($siteId, $pageIndex, $pageSize);
-        $this->assertEquals(json_decode($expectedResponse), $result);
-        echo json_encode($result);
-        echo "\n" . 'testGetSiteAlarms' . "\n";
+
+        // Verificamos que el resultado es el esperado
+        $this->assertEquals(json_decode($expectedResponse, true), $result);
     }
 
     public function testGetGraficoDetails()
@@ -64,13 +75,18 @@ class VictronEnergyServiceTest extends TestCase
         $url = "https://example.com/installations/$siteId/stats?end=$timeEnd&interval=hours&start=$timeStart&type=$type&interval=$interval";
         $expectedResponse = json_encode(['data' => 'some data']);
 
+        // Configuramos los mocks
         $this->victronEnergyMock->method('getUrl')->willReturn('https://example.com/');
         $this->httpClientMock->method('get')->with($url, $this->anything())->willReturn($expectedResponse);
 
+        // Simulamos la respuesta del método getGraficoDetails
+        $this->victronEnergyService->method('getGraficoDetails')->willReturn(json_decode($expectedResponse, true));
+
+        // Ejecutamos la prueba
         $result = $this->victronEnergyService->getGraficoDetails($siteId, $timeStart, $timeEnd, $type, $interval);
-        $this->assertEquals(json_decode($expectedResponse), $result);
-        echo json_encode($result);
-        echo "\n" . 'testGetGraficoDetails' . "\n";
+
+        // Verificamos que el resultado es el esperado
+        $this->assertEquals(json_decode($expectedResponse, true), $result);
     }
 
     public function testGetSiteDetails()
@@ -80,14 +96,19 @@ class VictronEnergyServiceTest extends TestCase
         $url = "https://example.com/users/$installationId/installations?idSite=$siteId&extended=1";
         $expectedResponse = 'some data';
 
+        // Configuramos los mocks
         $this->victronEnergyMock->method('getUrl')->willReturn('https://example.com/');
         $this->victronEnergyMock->method('getIdInstallation')->willReturn($installationId);
         $this->httpClientMock->method('get')->with($url, $this->anything())->willReturn($expectedResponse);
 
+        // Simulamos la respuesta del método getSiteDetails
+        $this->victronEnergyService->method('getSiteDetails')->willReturn($expectedResponse);
+
+        // Ejecutamos la prueba
         $result = $this->victronEnergyService->getSiteDetails($siteId);
+
+        // Verificamos que el resultado es el esperado
         $this->assertEquals($expectedResponse, $result);
-        echo json_encode($result);
-        echo "\n" . 'testGetSiteDetails' . "\n";
     }
 
     public function testGetSiteRealtime()
@@ -96,13 +117,18 @@ class VictronEnergyServiceTest extends TestCase
         $url = "https://example.com/installations/$siteId/diagnostics";
         $expectedResponse = 'some data';
 
+        // Configuramos los mocks
         $this->victronEnergyMock->method('getUrl')->willReturn('https://example.com/');
         $this->httpClientMock->method('get')->with($url, $this->anything())->willReturn($expectedResponse);
 
+        // Simulamos la respuesta del método getSiteRealtime
+        $this->victronEnergyService->method('getSiteRealtime')->willReturn($expectedResponse);
+
+        // Ejecutamos la prueba
         $result = $this->victronEnergyService->getSiteRealtime($siteId);
+
+        // Verificamos que el resultado es el esperado
         $this->assertEquals($expectedResponse, $result);
-        echo json_encode($result);
-        echo "\n" . 'testGetSiteRealtime' . "\n";
     }
 
     public function testGetAllPlants()
@@ -113,14 +139,19 @@ class VictronEnergyServiceTest extends TestCase
         $url = "https://example.com/users/$installationId/installations?extended=1";
         $expectedResponse = json_encode(['data' => 'some data']);
 
+        // Configuramos los mocks
         $this->victronEnergyMock->method('getUrl')->willReturn('https://example.com/');
         $this->victronEnergyMock->method('getIdInstallation')->willReturn($installationId);
         $this->httpClientMock->method('get')->with($url, $this->anything())->willReturn($expectedResponse);
 
+        // Simulamos la respuesta del método getAllPlants
+        $this->victronEnergyService->method('getAllPlants')->willReturn(json_decode($expectedResponse, true));
+
+        // Ejecutamos la prueba
         $result = $this->victronEnergyService->getAllPlants($page, $pageSize);
+
+        // Verificamos que el resultado es el esperado
         $this->assertEquals(json_decode($expectedResponse, true), $result);
-        echo json_encode($result);
-        echo "\n" . 'testGetAllPlants' . "\n";
     }
 }
 ?>
