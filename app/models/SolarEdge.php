@@ -1,6 +1,6 @@
 <?php
 
-require_once './../controllers/ProveedoresController.php';
+require_once __DIR__ . '/../controllers/ProveedoresController.php';
 
 class SolarEdge{
     private $url;

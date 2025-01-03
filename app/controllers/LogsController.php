@@ -1,8 +1,9 @@
 <?php
 
-require_once "../middlewares/autenticacion.php";
-require_once "../DBObjects/logsDB.php";
-require_once "../enums/Logs.php";
+require_once __DIR__ . "/../middlewares/autenticacion.php";
+require_once __DIR__ . "/../DBObjects/logsDB.php";
+require_once __DIR__ . "/../enums/Logs.php";
+
 
 class LogsController {
     private Autenticacion $authMiddleware;

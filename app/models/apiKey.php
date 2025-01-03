@@ -1,7 +1,7 @@
 <?php
 
-require_once "conexion.php";
-require_once "../utils/respuesta.php";
+require_once __DIR__ . '/conexion.php';
+require_once __DIR__ . '/../utils/respuesta.php';
 
 class ApiKey
 {

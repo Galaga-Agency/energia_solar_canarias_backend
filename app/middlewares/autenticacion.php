@@ -1,13 +1,13 @@
 <?php
-
 use Firebase\JWT\Key;
 use Firebase\JWT\JWT;
 
-require_once "../models/conexion.php";
-require_once "../utils/respuesta.php";
-require_once "../controllers/usuarios.php";
-require_once "../DBObjects/usuariosDB.php";
-require_once "../controllers/ApiAccesosController.php";
+require_once __DIR__ . '/../models/conexion.php';
+require_once __DIR__ . '/../utils/respuesta.php';
+require_once __DIR__ . '/../controllers/usuarios.php';
+require_once __DIR__ . '/../DBObjects/usuariosDB.php';
+require_once __DIR__ . '/../controllers/ApiAccesosController.php';
+
 
 class Autenticacion
 {

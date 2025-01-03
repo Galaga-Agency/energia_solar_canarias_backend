@@ -1,6 +1,6 @@
 <?php
 
-require_once './../models/conexion.php';
+require_once __DIR__ . '/../models/conexion.php';
 
 class ApiAccesosDB {
     private $conexion;
