@@ -75,7 +75,7 @@ jobs:
           echo "Esperando 10 segundos antes de configurar el esquema de la base de datos..."
           sleep 10  # Espera adicional para asegurar que el contenedor MySQL esté completamente disponible
           echo "Importando esquema de la base de datos..."
-          mysql -h 127.0.0.1 -P 3306 -u test_user -ptest_password test_db < ./database/schema.sql  # Importar el esquema de la base de datos
+          mysql -h 127.0.0.1 -P 3306 -u test_user -ptest_password test_db < ./schema.sql  # Ajustar la ruta si es necesario
         env:
           PATH_TO_SCHEMA: ./database/schema.sql  # Ruta al archivo de esquema de base de datos
 
