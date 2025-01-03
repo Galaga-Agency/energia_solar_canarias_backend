@@ -14,7 +14,7 @@ jobs:
 
     services:
       mysql:
-        image: mysql:8.0   # Imagen de MySQL
+        image: mysql:8.0   # Imagen de MySQL 8.0 compatible
         ports:
           - 3306:3306
         env:
@@ -35,12 +35,12 @@ jobs:
       - name: Set up PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.4'  # Puedes especificar la versión de PHP que estés usando
+          php-version: '8.2'  # Especificamos PHP 8.2, que es una versión estable y ampliamente utilizada
 
       - name: Install Apache and PHP modules
         run: |
           sudo apt-get update
-          sudo apt-get install apache2 libapache2-mod-php php-mysqli php-pdo-mysql -y  # Instalar Apache y las extensiones de PHP necesarias
+          sudo apt-get install apache2 libapache2-mod-php php8.2-mysql php8.2-cli php8.2-xml php8.2-mbstring php8.2-json php8.2-curl -y  # Instalar Apache y las extensiones de PHP necesarias
 
       - name: Install MySQL client
         run: |
