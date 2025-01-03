@@ -35,11 +35,11 @@ class Conexion
         // Cargar configuración desde el archivo
         $listadatos = $this->datosConexion();
         foreach ($listadatos as $key => $value) {
-            $this->server = $value['server'];
-            $this->user = $value['user'];
-            $this->password = $value['password'];
-            $this->database = $value['database'];
-            $this->port = $value['port'];
+            $this->server = $value['server'] ?? '127.0.0.1';
+            $this->user = $value['user'] ?? 'test_db';
+            $this->password = $value['password'] ?? 'test_user';
+            $this->database = $value['database'] ?? 'test_password';
+            $this->port = $value['port'] ?? '3306';
         }
 
         // Crear la conexión a MySQL
@@ -63,7 +63,7 @@ class Conexion
     private function datosConexion()
     {
         $direccion = dirname(__FILE__);
-        $jsondata = file_get_contents("../../config/conexion.json");
+        $jsondata = file_get_contents(__DIR__ . "/../../config/conexion.json");
         return json_decode($jsondata, true);
     }
 
