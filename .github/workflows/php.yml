@@ -49,6 +49,11 @@ jobs:
           done
           echo "MySQL está listo."
 
+      - name: Ensure database directory exists
+        run: |
+          mkdir -p ./database  # Crear el directorio si no existe
+          echo "Este es el contenido del archivo schema.sql" > ./database/schema.sql  # O copia el archivo desde otra ubicación si es necesario
+          
       - name: List files
         run: ls -l ./database # Listar archivos en el directorio de base de datos  
 
