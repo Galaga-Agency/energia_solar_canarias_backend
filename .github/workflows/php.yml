@@ -52,10 +52,7 @@ jobs:
       - name: Ensure database directory exists
         run: |
           mkdir -p ./database  # Crear el directorio si no existe
-          echo "Este es el contenido del archivo schema.sql" > ./database/schema.sql  # O copia el archivo desde otra ubicación si es necesario
-          
-      - name: List files
-        run: ls -l ./database # Listar archivos en el directorio de base de datos  
+          echo "Este es el contenido del archivo schema.sql" > ./database/schema.sql  # O copia el archivo desde otra ubicación si es necesario 
 
       - name: Set up database schema
         run: |
@@ -64,6 +61,9 @@ jobs:
           mysql -h 127.0.0.1 -u test_user -ptest_password test_db < ./database/schema.sql
         env:
           PATH_TO_SCHEMA: ./database/schema.sql  # Ruta al archivo de esquema de base de datos
+          
+      - name: List files
+        run: ls -l ./database # Listar archivos en el directorio de base de datos 
 
       - name: Run PHPUnit tests
         run: vendor/bin/phpunit --configuration phpunit.xml  # Ejecutar los tests con PHPUnit
