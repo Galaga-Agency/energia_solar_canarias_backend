@@ -59,6 +59,49 @@ class PlantAlert extends TestCase
         $this->assertCount(2, $response['data']['stations']);
         $this->assertEquals('Estación 1', $response['data']['stations'][0]['name']);
         $this->assertEquals('Estación 2', $response['data']['stations'][1]['name']);
+        //salto de línea
+        echo "\n" . json_encode($response) . "\n";
+        echo 'testProveedorGoodWe' . "\n";
+    }
+    public function testProveedorVictronEnergy(){
+        // Configurar el mock para la autenticación
+        $this->authMiddlewareMock->method('verificarTokenUsuarioActivo')
+            ->willReturn(true); // Simular un token válido
+
+        // Configurar el proveedor y los parámetros en $_GET
+        $_GET['proveedor'] = 'VictronEnergy';
+        $_GET['pageIndex'] = 1;
+        $_GET['pageSize'] = 200;
+
+        // Datos simulados de la respuesta de la API de VictronEnergy
+        $mockedResponse = [
+            'code' => 200,
+            'data' => [
+                'sites' => [
+                    ['siteId' => '1', 'name' => 'Sitio 1'],
+                    ['siteId' => '2', 'name' => 'Sitio 2']
+                ]
+            ]
+        ];
+
+        // Mockear la respuesta de la API
+        $this->apiControladorServiceMock->expects($this->once())
+            ->method('getSiteAlarms')
+            ->with($this->equalTo(1), $this->equalTo(1), $this->equalTo(200)) // Verifica que los parámetros sean correctos
+            ->willReturn($mockedResponse); // Retorna la respuesta simulada
+
+        // Ejecutar el código que simula el endpoint
+        $response = $this->apiControladorServiceMock->getSiteAlarms(1, 1, 200);
+
+        // Validar que la respuesta es la esperada
+        $this->assertArrayHasKey('code', $response);
+        $this->assertEquals(200, $response['code']);
+        $this->assertArrayHasKey('data', $response);
+        $this->assertCount(2, $response['data']['sites']);
+        $this->assertEquals('Sitio 1', $response['data']['sites'][0]['name']);
+        $this->assertEquals('Sitio 2', $response['data']['sites'][1]['name']);
+        echo "\n" . json_encode($response) . "\n";
+        echo 'testProveedorVictronEnergy' . "\n";
     }
     public function testProveedorNoValido()
     {
@@ -86,6 +129,7 @@ class PlantAlert extends TestCase
         $response = json_encode($this->respuestaMock);
         $this->assertStringContainsString('El proveedor no es valido', $response);
         $this->assertStringContainsString('"code":404', $response);
+        echo "\n" . 'testProveedorNoValido' . "\n";
     }
 
     public function testTokenNoValido()
@@ -114,6 +158,7 @@ class PlantAlert extends TestCase
         $response = json_encode($this->respuestaMock);
         $this->assertStringContainsString('El token no se puede authentificar con exito', $response);
         $this->assertStringContainsString('"code":403', $response);
+        echo "\n" . 'testTokenNoValido' . "\n";
     }
     // Ejemplo en PHPUnit, donde realizas una llamada HTTP a tu endpoint
 
