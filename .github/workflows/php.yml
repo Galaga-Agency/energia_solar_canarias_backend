@@ -3,14 +3,14 @@ name: PHP Unit Tests
 on:
   push:
     branches:
-      - main    # Ejecutar pruebas en la rama principal
+      - main  # Ejecutar pruebas en la rama principal
   pull_request:
     branches:
-      - main    # Ejecutar pruebas cuando se haga un PR a la rama principal
+      - main  # Ejecutar pruebas cuando se haga un PR a la rama principal
 
 jobs:
   phpunit:
-    runs-on: ubuntu-latest  # El sistema operativo sobre el que se ejecutará el flujo de trabajo
+    runs-on: ubuntu-latest  # Sistema operativo sobre el que se ejecutará el flujo de trabajo
 
     services:
       mysql:
@@ -30,34 +30,31 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2  # Este paso asegura que el código esté disponible en el entorno de GitHub Actions
+        uses: actions/checkout@v3  # Asegura que el código esté disponible en el entorno de GitHub Actions
 
       - name: Set up PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.4'  # Puedes especificar la versión de PHP que estés usando
+          php-version: '8.4'  # Especifica la versión de PHP
           extensions: mysqli, pdo_mysql  # Extensiones necesarias para MySQL
 
-      - name: Install Composer
-        run: |
-          curl -sS https://getcomposer.org/installer | php  # Instalar Composer
-          mv composer.phar /usr/local/bin/composer  # Moverlo al directorio bin
-
-      - name: Install dependencies
-        run: |
-          composer install --no-interaction  # Instalar las dependencias de PHP con Composer
+      - name: Install Composer dependencies
+        run: composer install --no-interaction  # Instalar dependencias de PHP con Composer
 
       - name: Wait for MySQL to be ready
         run: |
+          echo "Esperando a que MySQL esté listo..."
           until mysqladmin ping -h 127.0.0.1 --silent; do
-            echo "Esperando a que MySQL esté listo..."
             sleep 2
           done
+          echo "MySQL está listo."
 
       - name: Set up database schema
         run: |
-          mysql -h 127.0.0.1 -u test_user -ptest_password test_db < /path/to/your/schema.sql
+          mysql -h 127.0.0.1 -u test_user -ptest_password test_db < ./database/schema.sql
+        env:
+          PATH_TO_SCHEMA: ./database/schema.sql  # Ruta al archivo de esquema de base de datos
 
       - name: Run PHPUnit tests
-        run: |
-          vendor/bin/phpunit --configuration phpunit.xml  # Ejecutar los tests utilizando PHPUnit
+        run: vendor/bin/phpunit --configuration phpunit.xml  # Ejecutar los tests con PHPUnit
+
