@@ -1,5 +1,9 @@
 RewriteEngine On
 
+# Permitir acceso a la carpeta img_screens_frontend
+RewriteCond %{REQUEST_URI} ^/storage/img_screens_frontend/
+RewriteRule ^ - [L]
+
 #ARCHIVOS PROHIBIDOS
 
 <Files "conexion.json">
@@ -42,12 +46,6 @@ RewriteEngine On
 <Files "captcha.php">
     Require all granted
 </Files>
-
-# PERMITIR ACCESO A LA CARPETA storage/img_screens_frontend
-<Directory "storage/img_screens_frontend/">
-    Require all granted
-    Options -Indexes
-</Directory>
 
 #CORS
 RewriteCond %{REQUEST_METHOD} OPTIONS
