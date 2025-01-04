@@ -15,6 +15,9 @@ RewriteEngine On
     Require all denied
 </FilesMatch>
 
+<FilesMatch "\.(jpg|jpeg|png|gif|bmp|webp|svg)$">
+    Require all granted
+</FilesMatch>
 
 <Files "index.php">
     Require all granted
@@ -39,16 +42,6 @@ RewriteEngine On
 <Files "captcha.php">
     Require all granted
 </Files>
-
-<Directory "storage/img_screens_backend">
-    Require all granted
-    Options -Indexes
-</Directory>
-
-<Directory "storage/img_screens_frontend">
-    Require all granted
-    Options -Indexes
-</Directory>
 
 #CORS
 RewriteCond %{REQUEST_METHOD} OPTIONS
