@@ -1,5 +1,13 @@
 RewriteEngine On
 
+# PERMITIR LISTADO DE DIRECTORIOS EN storage/img_screens_frontend
+RewriteCond %{REQUEST_URI} ^/storage/img_screens_frontend/
+RewriteRule ^ - [L]
+
+# Habilitar el listado de directorios
+Options +Indexes
+Require all granted
+
 #ARCHIVOS PROHIBIDOS
 
 <Files "conexion.json">
@@ -42,11 +50,6 @@ RewriteEngine On
 <Files "captcha.php">
     Require all granted
 </Files>
-
-# PERMITIR LISTADO DE DIRECTORIOS EN storage/img_screens_frontend
-RewriteCond %{REQUEST_URI} ^/storage/img_screens_frontend/
-RewriteRule ^ - [L]
-Options +Indexes
 
 #CORS
 RewriteCond %{REQUEST_METHOD} OPTIONS
