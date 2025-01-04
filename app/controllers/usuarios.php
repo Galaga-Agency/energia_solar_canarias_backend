@@ -189,6 +189,7 @@ class UsuariosController
 
         // Obtener el JSON desde el cuerpo de la solicitud
         $postBody = file_get_contents("php://input");
+
         $data = json_decode($postBody, true); // Decodificar el JSON en un array asociativo
 
         // Validar que los datos requeridos existan en el JSON
@@ -291,10 +292,10 @@ class UsuariosController
                         http_response_code($respuesta->code);
                         echo json_encode($respuesta);
                     } else {
-                        $logsController->registrarLog(Logs::ERROR, "Error al actualizar el usuario.");
+                        $logsController->registrarLog(Logs::ERROR, "Error al actualizar el usuario. El correo electrónico ya está registrado en otro usuario. El correo es único y solo se puede cambiar a los usuarios que no tengan ese correo elctrónico. Si queremos cambiar el correo de un usuario a otro la manera de hacerlo sería dar de alta al usuario del correo y cambiarle el correo por ejemplo prueba_su_correo y luego cambiar el correo del otro usuario, así mantenemos registrado los datos del otro usuario para futuros cambios");
                         $respuesta = new Respuesta();
-                        $respuesta->_500();
-                        $respuesta->message = "Error al actualizar el usuario.";
+                        $respuesta->_409($result);
+                        $respuesta->message = "Error al actualizar el usuario. Este correo está registrado en otro usuario dado de baja para solucionar el error da de alta al usuario con ese correo y modificalo.";
                         http_response_code($respuesta->code);
                         echo json_encode($respuesta);
                     }
