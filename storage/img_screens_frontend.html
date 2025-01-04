@@ -7,48 +7,53 @@
     <title>Frontend - Carrusel</title>
     <style>
         /* General Reset */
-        html {
+        html,
+        body {
             margin: 0;
             padding: 0;
             width: 100%;
             height: 100%;
-            overflow-y: scroll;
-            overflow-x: hidden;
+            overflow: hidden;
+            /* Evitar desbordamiento en ambos ejes */
         }
 
         .carousel {
             position: relative;
-            width: 98vw;
-            height: 98vh;
+            width: 100%;
+            /* Asegura que no se base en vw */
+            height: 100%;
+            /* Utiliza todo el alto disponible */
             display: flex;
             justify-content: center;
             align-items: center;
             overflow: hidden;
+            /* Evita el desbordamiento */
+            margin: 0;
+            padding: 0;
         }
 
         .carousel-inner {
             display: flex;
             transition: transform 0.5s ease-in-out;
             width: 100%;
+            /* Restricción completa al ancho del contenedor */
             height: 100%;
+            /* Igual al contenedor padre */
         }
 
         .carousel-item {
             min-width: 100%;
+            /* Siempre ocupa todo el ancho del contenedor */
             height: 100%;
+            /* Ajusta al alto del contenedor */
             background-size: contain;
-            /* Ajustar imagen sin recortar */
+            /* Ajusta la imagen dentro del contenedor sin recorte */
             background-repeat: no-repeat;
-            /* Evitar repeticiones */
             background-position: center;
             flex-shrink: 0;
+            /* Previene que los elementos se compriman */
         }
 
-        .carousel-item.active {
-            opacity: 1;
-        }
-
-        /* Estilizado de los botones de navegación */
         .carousel-control {
             position: absolute;
             top: 50%;
@@ -65,29 +70,44 @@
             justify-content: center;
             align-items: center;
             border-radius: 8px;
-            /* Botón cuadrado con bordes redondeados */
             box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.3);
             transition: background-color 0.3s, transform 0.2s;
         }
 
         .carousel-control.prev {
-            left: 20px;
+            left: 10px;
         }
 
         .carousel-control.next {
-            right: 20px;
+            right: 10px;
         }
 
         .carousel-control:hover {
             background-color: rgba(255, 255, 255, 0.9);
             color: black;
             transform: scale(1.1);
-            /* Animación de escala */
         }
 
         .carousel-control:active {
             transform: scale(0.95);
-            /* Efecto al hacer clic */
+        }
+
+        /* Media Queries para Dispositivos Móviles */
+        @media (max-width: 768px) {
+            .carousel-control {
+                width: 40px;
+                /* Ajustar tamaño para pantallas pequeñas */
+                height: 40px;
+                font-size: 1.5rem;
+            }
+
+            .carousel-control.prev {
+                left: 5px;
+            }
+
+            .carousel-control.next {
+                right: 5px;
+            }
         }
     </style>
 </head>
@@ -106,8 +126,8 @@
 
     const carouselInner = document.querySelector('.carousel-inner');
 
-    // Generar dinámicamente imágenes desde 2.png hasta 41.png
-    for (let i = 2; i <= 41; i++) {
+    // Generar dinámicamente imágenes desde 1.png hasta 41.png
+    for (let i = 1; i <= 41; i++) {
         const div = document.createElement('div');
         div.className = 'carousel-item';
         div.style.backgroundImage = `url('https://app-energiasolarcanarias-backend.com/storage/img_screens_frontend/${i}.png')`;
@@ -142,9 +162,11 @@
     }
 
     // Navegación automática (opcional)
+    /*
     setInterval(() => {
         nextSlide();
-    }, 3000); // Cambiar cada 5 segundos
+    }, 5000); // Cambiar cada 5 segundos
+    */
 
 </script>
 
