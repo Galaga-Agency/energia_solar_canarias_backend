@@ -19,7 +19,7 @@ Require all granted
 
 #Denegamos el acceso a todo menos index.php y rutas.php
 
-<FilesMatch "\.(json|css|js|pdf|php|html|txt)$">
+<FilesMatch "\.(json|css|js|pdf|php|txt)$">
     Require all denied
 </FilesMatch>
 
