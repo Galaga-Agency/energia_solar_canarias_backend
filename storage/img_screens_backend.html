@@ -127,10 +127,10 @@
     const carouselInner = document.querySelector('.carousel-inner');
 
     // Generar dinámicamente imágenes desde 1.png hasta 41.png
-    for (let i = 1; i <= 41; i++) {
+    for (let i = 1; i <= 9; i++) {
         const div = document.createElement('div');
         div.className = 'carousel-item';
-        div.style.backgroundImage = `url('https://app-energiasolarcanarias-backend.com/storage/img_screens_frontend/${i}.png')`;
+        div.style.backgroundImage = `url('https://app-energiasolarcanarias-backend.com/storage/img_screens_backend/${i}.png')`;
         carouselInner.appendChild(div);
     }
 
