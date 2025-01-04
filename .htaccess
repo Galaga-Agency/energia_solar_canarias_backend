@@ -40,12 +40,12 @@ RewriteEngine On
     Require all granted
 </Files>
 
-<Directory "/var/www/html/esc-backend/storage/img_screens_backend">
+<Directory "storage/img_screens_backend">
     Require all granted
     Options -Indexes
 </Directory>
 
-<Directory "/var/www/html/esc-backend/storage/img_screens_frontend">
+<Directory "storage/img_screens_frontend">
     Require all granted
     Options -Indexes
 </Directory>
