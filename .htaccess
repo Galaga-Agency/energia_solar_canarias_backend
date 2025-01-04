@@ -44,7 +44,7 @@ RewriteEngine On
 </Files>
 
 # PERMITIR ACCESO Y LISTADO AL DIRECTORIO storage/img_screens_frontend
-<Directory "storage/img_screens_frontend/">
+<Directory "storage/img_screens_frontend">
     Options +Indexes
     Require all granted
 </Directory>
