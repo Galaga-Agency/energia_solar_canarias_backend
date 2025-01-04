@@ -2,9 +2,10 @@ RewriteEngine On
 
 #CARPETAS PERMITIDAS
 
-<Directory "storage/img_screens_frontend">
+<Directory "/var/www/html/esc-backend/storage/img_screens_frontend">
     Require all granted
 </Directory>
+
 
 #ARCHIVOS PROHIBIDOS
 
