@@ -40,9 +40,15 @@ RewriteEngine On
     Require all granted
 </Files>
 
-<Files "storage/.*">
+<Directory "/var/www/html/esc-backend/storage/img_screens_backend">
     Require all granted
-</Files>
+    Options -Indexes
+</Directory>
+
+<Directory "/var/www/html/esc-backend/storage/img_screens_frontend">
+    Require all granted
+    Options -Indexes
+</Directory>
 
 #CORS
 RewriteCond %{REQUEST_METHOD} OPTIONS
