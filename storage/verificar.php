@@ -1,3 +1,3 @@
 <?php
-echo "VERIFICACIÓN 25"; 
+echo "VERIFICACIÓN 26"; 
 ?>
