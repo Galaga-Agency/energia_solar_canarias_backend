@@ -43,11 +43,10 @@ RewriteEngine On
     Require all granted
 </Files>
 
-# PERMITIR ACCESO Y LISTADO AL DIRECTORIO storage/img_screens_frontend
-<Directory "storage/img_screens_frontend">
-    Options +Indexes
-    Require all granted
-</Directory>
+# PERMITIR LISTADO DE DIRECTORIOS EN storage/img_screens_frontend
+RewriteCond %{REQUEST_URI} ^/storage/img_screens_frontend/
+RewriteRule ^ - [L]
+Options +Indexes
 
 #CORS
 RewriteCond %{REQUEST_METHOD} OPTIONS
