@@ -1,8 +1,10 @@
 RewriteEngine On
 
-# Permitir acceso a la carpeta img_screens_frontend
-RewriteCond %{REQUEST_URI} ^/storage/img_screens_frontend/
-RewriteRule ^ - [L]
+#CARPETAS PERMITIDAS
+
+<Directory "storage/img_screens_frontend">
+    Require all granted
+</Directory>
 
 #ARCHIVOS PROHIBIDOS
 
