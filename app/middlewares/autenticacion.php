@@ -1,4 +1,5 @@
 <?php
+use Dotenv\Dotenv;
 use Firebase\JWT\Key;
 use Firebase\JWT\JWT;
 
@@ -11,13 +12,24 @@ require_once __DIR__ . '/../controllers/ApiAccesosController.php';
 
 class Autenticacion
 {
-    private static $secret_key = 'CWdefsJNq0KMJddeMZ!gaaWs3IuxgWdJAXIdl5bBzygLRE3-3FyhqGuwrseppjr9ldmJo4Y?4WVwcb6Lvv4MQ3nO!exF9Ch!XinpigxBq2WT-wSyKdgRUrNbrAorbvipvFx4-M';
-    private static $algorithm = 'HS256';
+    private static $secret_key;
+    private static $algorithm;
     private $conexion;
     private $apiScope;
 
     function __construct()
     {
+        try{
+            // Cargar el archivo .env desde la carpeta config
+            $dotenv = Dotenv::createImmutable(__DIR__ . '/../../config');
+            $dotenv->load();
+
+            // Asignar los valores del .env a las propiedades estáticas
+            self::$secret_key = $_ENV['SECRET_KEY'];
+            self::$algorithm = $_ENV['ALGORITHM'];
+        }catch(Exception $e){
+            echo "Error al cargar el archivo .env";
+        }
         $this->conexion = Conexion::getInstance();
         $this->apiScope = [
             "admin" => "scope1",

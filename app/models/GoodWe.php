@@ -1,36 +1,26 @@
 <?php
+use Dotenv\Dotenv;
 class GoodWe{
-    private $url;
-    private $account;
-    private $pwd;
+    public static $url;
+    public static $account;
+    public static $pwd;
     private $proveedoresController;
 
     //definimos el constructor de la clase
     public function __construct()
     {
-        $this->url = 'https://www.semsportal.com/';
-        $this->account = "carlaisari@energiasolarcanarias.es";
-        $this->pwd = "Good@20We19!";
-    }
+        try{
+            // Cargar el archivo .env desde la carpeta config
+            $dotenv = Dotenv::createImmutable(__DIR__ . '/../../config');
+            $dotenv->load();
 
-    //definimos el getter y setter
-    public function getUrl(){
-        return $this->url;
-    }
-    public function setUrl($url){
-        $this->url = $url;
-    }
-    public function getAccount(){
-        return $this->account;
-    }
-    public function setAccount($account){
-        $this->account = $account;
-    }
-    public function getPwd(){
-        return $this->pwd;
-    }
-    public function setPwd($pwd){
-        $this->pwd = $pwd;
+            // Asignar los valores del .env a las propiedades estáticas
+            self::$url = $_ENV['GOODWE_URL'];
+            self::$account = $_ENV['GOODWE_ACCOUNT'];
+            self::$pwd = $_ENV['GOODWE_PASSWORD'];
+        }catch(Exception $e){
+            echo "Error al cargar el archivo .env GoodWe" . $e->getMessage();
+        }
     }
 }
 //Esta clase es para loguearse

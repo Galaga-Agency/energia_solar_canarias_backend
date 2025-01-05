@@ -2,15 +2,16 @@
 
 require_once __DIR__ . "/../../vendor/autoload.php";
 
+use Dotenv\Dotenv;
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
 
 class Conexion
 {
     //ESTA ES LA API KEY DEL SERVIDOR
-    private static $secret_key = 'CWdefsJNq0KMJddeMZ!gaaWs3IuxgWdJAXIdl5bBzygLRE3-3FyhqGuwrseppjr9ldmJo4Y?4WVwcb6Lvv4MQ3nO!exF9Ch!XinpigxBq2WT-wSyKdgRUrNbrAorbvipvFx4-M';
+    private static $secret_key;
     //ESTA ES EL ALGORITMO DE CIFRADO
-    private static $algorithm = 'HS256';
+    private static $algorithm;
     private $server;
     private $user;
     private $password;
@@ -27,6 +28,18 @@ class Conexion
     // Constructor privado
     private function __construct()
     {
+        try{
+            // Cargar el archivo .env desde la carpeta config
+            $dotenv = Dotenv::createImmutable(__DIR__ . '/../../config');
+            $dotenv->load();
+
+            // Asignar los valores del .env a las propiedades estáticas
+            self::$secret_key = $_ENV['SECRET_KEY'];
+            self::$algorithm = $_ENV['ALGORITHM'];
+        }catch(Exception $e){
+            echo "Error al cargar el archivo .env";
+        }
+
         $this->iniciarConexion();
     }
     // Método para iniciar o reiniciar la conexión
