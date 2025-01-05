@@ -19,7 +19,7 @@ class GoodWeService
     //Llamada en tiempo real a la energia que genera la planta, en postman corresponde con la llamada POST GetPowerFlow
     public function getPlantPowerRealtime($powerStationId)
     {
-        $url = $this->goodWe->getUrl() . "api/v2/PowerStation/GetPowerflow";
+        $url = GoodWe::$url . "api/v2/PowerStation/GetPowerflow";
 
         $token = $this->proveedoresController->getTokenProveedor('GoodWe');
 
@@ -87,12 +87,12 @@ class GoodWeService
     public function GetChartByPlant($data)
     {
         if ($data['full_script']) {
-            $url = $this->goodWe->getUrl() . "api/v2/Charts/GetPlantPowerChart";
+            $url = GoodWe::$url . "api/v2/Charts/GetPlantPowerChart";
             if(isset($data['chartIndexId'])){
                 unset($data['chartIndexId']);
             }
         } else {
-            $url = $this->goodWe->getUrl() . "api/v2/Charts/GetChartByPlant";
+            $url = GoodWe::$url . "api/v2/Charts/GetChartByPlant";
         }
 
         $token = $this->proveedoresController->getTokenProveedor('GoodWe');
@@ -155,7 +155,7 @@ class GoodWeService
     //LLamada a todas las plantas en postman corresponde a la llamada POST Todas plantas
     public function GetAllPlants($page = 1, $pageSize = 200)
     {
-        $url = $this->goodWe->getUrl() . "api/PowerStationMonitor/QueryPowerStationMonitor";
+        $url = GoodWe::$url . "api/PowerStationMonitor/QueryPowerStationMonitor";
 
         $token = $this->proveedoresController->getTokenProveedor('GoodWe');
 
@@ -229,7 +229,7 @@ class GoodWeService
     //LLamada a todas las plantas en postman corresponde a la llamada POST GetPowerStationWariningInfoByMultiCondition
     public function GetPowerStationWariningInfoByMultiCondition($pageIndex = 1, $pageSize = 200)
     {
-        $url = $this->goodWe->getUrl() . "api/SmartOperateMaintenance/GetPowerStationWariningInfoByMultiCondition";
+        $url = $this->goodWe->url . "api/SmartOperateMaintenance/GetPowerStationWariningInfoByMultiCondition";
 
         $token = $this->proveedoresController->getTokenProveedor('GoodWe');
 
@@ -310,7 +310,7 @@ class GoodWeService
     //LLamada a los detalles e la planta en postman corresponde con la llamada POST GetPlantDetailByPowerstation
     public function GetPlantDetailByPowerstationId($powerStationId)
     {
-        $url = $this->goodWe->getUrl() . "api/v3/PowerStation/GetPlantDetailByPowerstationId";
+        $url = GoodWe::$url . "api/v3/PowerStation/GetPlantDetailByPowerstationId";
 
         $token = $this->proveedoresController->getTokenProveedor('GoodWe');
 
@@ -380,7 +380,7 @@ class GoodWeService
     //LLamada a los detalles e la planta en postman corresponde con la llamada POST GetInverterAllPoint
     public function GetInverterAllPoint($powerStationId)
     {
-        $url = $this->goodWe->getUrl() . "api/v3/PowerStation/GetInverterAllPoint";
+        $url = GoodWe::$url . "api/v3/PowerStation/GetInverterAllPoint";
         $token = $this->proveedoresController->getTokenProveedor('GoodWe');
 
         // Token en formato JSON
@@ -446,14 +446,13 @@ class GoodWeService
     //LoginUser en postman corresponde con la llamada POST LoginUser
     public function crossLogin()
     {
-        $url = $this->goodWe->getUrl() . "api/v1/Common/CrossLogin";
+        $url = GoodWe::$url . "api/v1/Common/CrossLogin";
 
         // Datos de la solicitud en el cuerpo
         $data = [
-            'account' => $this->goodWe->getAccount(),
-            'pwd' => $this->goodWe->getPwd()
+            'account' => GoodWe::$account,
+            'pwd' => GoodWe::$pwd
         ];
-
         // Headers
         $headers = [
             'Content-Type: application/json',
