@@ -2,3 +2,4 @@ vendor/
 config/conexion.json
 config/smtp.json
 config/jwt.env
+config/.env
