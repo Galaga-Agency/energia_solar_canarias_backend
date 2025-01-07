@@ -229,7 +229,7 @@ class GoodWeService
     //LLamada a todas las plantas en postman corresponde a la llamada POST GetPowerStationWariningInfoByMultiCondition
     public function GetPowerStationWariningInfoByMultiCondition($pageIndex = 1, $pageSize = 200)
     {
-        $url = $this->goodWe->url . "api/SmartOperateMaintenance/GetPowerStationWariningInfoByMultiCondition";
+        $url = GoodWe::$url . "api/SmartOperateMaintenance/GetPowerStationWariningInfoByMultiCondition";
 
         $token = $this->proveedoresController->getTokenProveedor('GoodWe');
 
