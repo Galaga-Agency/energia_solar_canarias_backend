@@ -121,7 +121,7 @@ class UsuariosDB
 
             $offset = ($page - 1) * $limit; // Calcula el desplazamiento en base a la página actual
 
-            $query = "SELECT usuarios.usuario_id, usuarios.nombre AS usuario_nombre,  usuarios.apellido, usuarios.email,  usuarios.movil, usuarios.imagen, usuarios.activo, usuarios.eliminado, clases.nombre AS clase
+            $query = "SELECT usuarios.usuario_id, usuarios.nombre AS usuario_nombre,  usuarios.apellido, usuarios.email,  usuarios.movil, usuarios.imagen, usuarios.activo, usuarios.eliminado, clases.nombre AS clase, ultimo_login
             FROM usuarios 
             INNER JOIN clases ON usuarios.clase_id = clases.clase_id
             LIMIT ? OFFSET ?";
