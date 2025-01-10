@@ -193,11 +193,11 @@ class UsuariosController
         $data = json_decode($postBody, true); // Decodificar el JSON en un array asociativo
 
         // Validar que los datos requeridos existan en el JSON
-        if (!isset($data['email'], $data['password'], $data['clase'], $data['nombre'], $data['apellido'], $data['imagen'], $data['movil'], $data['activo'], $data['eliminado'])) {
+        if (!isset($data['email'], $data['password'], $data['clase'])) {
             $logsController->registrarLog(Logs::WARNING, "Datos incompletos en el JSON de la solicitud.");
             $respuesta = new Respuesta();
             $respuesta->_400();
-            $respuesta->message = "Datos incompletos en la solicitud.";
+            $respuesta->message = "Datos incompletos en la solicitud, Se requiere un email, clase y una contraseña.";
             echo json_encode($respuesta);
             return;
         }
@@ -264,26 +264,56 @@ class UsuariosController
         // Obtener el JSON desde el cuerpo de la solicitud
         $postBody = file_get_contents("php://input");
         $data = json_decode($postBody, true); // Decodificar el JSON en un array asociativo
+        $usuariosDB = new UsuariosDB();
 
         // Validar que los datos requeridos existan en el JSON
-        if (isset($data['email'], $data['password'], $data['clase'], $data['nombre'], $data['apellido'], $data['imagen'], $data['movil'], $data['activo'], $data['eliminado'])) {
+        if (isset($data)) {
             // Instancia de la base de datos
-            $usuariosDB = new UsuariosDB();
-            if (!$usuariosDB->comprobarClaseExiste($data['clase'])) {
-                $logsController->registrarLog(Logs::WARNING, "Error al realizar la operación actualizar los usuarios el nombre de la clase no existe");
-                $respuesta = new Respuesta();
-                $respuesta->_400();
-                $respuesta->message = "El nombre de la clase no existe";
-                http_response_code($respuesta->code);
-                echo json_encode($respuesta);
-                return;
+            if (isset($data['clase'])) {
+                if (!$usuariosDB->comprobarClaseExiste($data['clase'])) {
+                    $logsController->registrarLog(Logs::WARNING, "Error al realizar la operación actualizar los usuarios el nombre de la clase no existe");
+                    $respuesta = new Respuesta();
+                    $respuesta->_400();
+                    $respuesta->message = "El nombre de la clase no existe";
+                    http_response_code($respuesta->code);
+                    echo json_encode($respuesta);
+                    return;
+                }
             }
             if ($usuariosDB->verificarEstadoUsuario($id)) {
-                // Verificar si el email pertenece a otro usuario
-                if (!$usuariosDB->comprobarUsuario($data['email']) || $usuariosDB->esMismoUsuario($id, $data['email'])) {
-                    // Llamar a la función para actualizar el usuario en la base de datos
-                    $result = $usuariosDB->updateUser($id, $data);
+                if (isset($data['email'])) {
+                    // Verificar si el email pertenece a otro usuario
+                    if (!$usuariosDB->comprobarUsuario($data['email']) || $usuariosDB->esMismoUsuario($id, $data['email'])) {
+                        // Llamar a la función para actualizar el usuario en la base de datos
+                        $result = $usuariosDB->updateUser($id, $data);
 
+                        if ($result) {
+                            $logsController->registrarLog(Logs::PUT, "a modificado al usuario " . $id);
+                            $respuesta = new Respuesta();
+                            $respuesta->success($result);
+                            $respuesta->message = "Usuario actualizado exitosamente.";
+                            http_response_code($respuesta->code);
+                            echo json_encode($respuesta);
+                        } else {
+                            $logsController->registrarLog(Logs::ERROR, "Error al actualizar el usuario. El correo electrónico ya está registrado en otro usuario. El correo es único y solo se puede cambiar a los usuarios que no tengan ese correo elctrónico. Si queremos cambiar el correo de un usuario a otro la manera de hacerlo sería dar de alta al usuario del correo y cambiarle el correo por ejemplo prueba_su_correo y luego cambiar el correo del otro usuario, así mantenemos registrado los datos del otro usuario para futuros cambios");
+                            $respuesta = new Respuesta();
+                            $respuesta->_409($result);
+                            $respuesta->message = "Error al actualizar el usuario. Este correo está registrado en otro usuario dado de baja para solucionar el error da de alta al usuario con ese correo y modificalo.";
+                            http_response_code($respuesta->code);
+                            echo json_encode($respuesta);
+                        }
+                    } else {
+                        $logsController->registrarLog(Logs::WARNING, "El email ya está registrado en otro usuario.");
+                        $respuesta = new Respuesta();
+                        $respuesta->_409();
+                        $respuesta->message = "El email ya está registrado en otro usuario.";
+                        http_response_code($respuesta->code);
+                        echo json_encode($respuesta);
+                    }
+                // Si no se envía el email, se actualiza el usuario sin actualizar el email
+                }else{
+                     // Llamar a la función para actualizar el usuario en la base de datos
+                    $result = $usuariosDB->updateUser($id, $data);
                     if ($result) {
                         $logsController->registrarLog(Logs::PUT, "a modificado al usuario " . $id);
                         $respuesta = new Respuesta();
@@ -292,20 +322,13 @@ class UsuariosController
                         http_response_code($respuesta->code);
                         echo json_encode($respuesta);
                     } else {
-                        $logsController->registrarLog(Logs::ERROR, "Error al actualizar el usuario. El correo electrónico ya está registrado en otro usuario. El correo es único y solo se puede cambiar a los usuarios que no tengan ese correo elctrónico. Si queremos cambiar el correo de un usuario a otro la manera de hacerlo sería dar de alta al usuario del correo y cambiarle el correo por ejemplo prueba_su_correo y luego cambiar el correo del otro usuario, así mantenemos registrado los datos del otro usuario para futuros cambios");
+                        $logsController->registrarLog(Logs::ERROR, "Error al actualizar el usuario. No se a podido registrar el cambio. El usuario a mandado datos erróneos que no se pueden actualizar. por ejemplo corchetes vacios sin ningun campo o campos que no existen en la base de datos");
                         $respuesta = new Respuesta();
                         $respuesta->_409($result);
-                        $respuesta->message = "Error al actualizar el usuario. Este correo está registrado en otro usuario dado de baja para solucionar el error da de alta al usuario con ese correo y modificalo.";
+                        $respuesta->message = "Error al actualizar el usuario. No se a podido registrar el cambio.";
                         http_response_code($respuesta->code);
                         echo json_encode($respuesta);
                     }
-                } else {
-                    $logsController->registrarLog(Logs::WARNING, "El email ya está registrado en otro usuario.");
-                    $respuesta = new Respuesta();
-                    $respuesta->_409();
-                    $respuesta->message = "El email ya está registrado en otro usuario.";
-                    http_response_code($respuesta->code);
-                    echo json_encode($respuesta);
                 }
             } else {
                 $logsController->registrarLog(Logs::WARNING, "Datos incompletos en la solicitud en actualizar user.");
@@ -317,10 +340,10 @@ class UsuariosController
                 echo json_encode($respuesta);
             }
         } else {
-            $logsController->registrarLog(Logs::WARNING, "El usuario no se a encontrado en actualizar user.");
+            $logsController->registrarLog(Logs::WARNING, "El usuario no ha mandado cuerpo en la peticion");
             $respuesta = new Respuesta();
             $respuesta->_404(); // Error de solicitud
-            $respuesta->message = "El usuario no se a encontrado";
+            $respuesta->message = "No se han mandado datos en el body";
             http_response_code($respuesta->code);
             echo json_encode($respuesta);
         }
