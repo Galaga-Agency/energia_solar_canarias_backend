@@ -121,10 +121,27 @@ class UsuariosDB
 
             $offset = ($page - 1) * $limit; // Calcula el desplazamiento en base a la página actual
 
-            $query = "SELECT usuarios.usuario_id, usuarios.nombre AS usuario_nombre,  usuarios.apellido, usuarios.email,  usuarios.movil, usuarios.imagen, usuarios.activo, usuarios.eliminado, clases.nombre AS clase, ultimo_login
-            FROM usuarios 
-            INNER JOIN clases ON usuarios.clase_id = clases.clase_id
-            LIMIT ? OFFSET ?";
+            $query = "SELECT 
+                        usuarios.usuario_id,
+                        usuarios.nombre AS usuario_nombre,
+                        usuarios.apellido,
+                        usuarios.email,
+                        usuarios.movil,
+                        usuarios.imagen,
+                        usuarios.activo,
+                        usuarios.eliminado,
+                        clases.nombre AS clase,
+                        usuarios.ultimo_login,
+                        usuarios.empresa,
+                        usuarios.direccion,
+                        usuarios.ciudad,
+                        usuarios.codigo_postal,
+                        usuarios.region_estado,
+                        usuarios.pais,
+                        usuarios.cif_nif
+                    FROM usuarios 
+                    INNER JOIN clases ON usuarios.clase_id = clases.clase_id
+                    LIMIT ? OFFSET ?";
             $stmt = $conn->prepare($query);
             $stmt->bind_param('ii', $limit, $offset); // Bind de los parámetros para LIMIT y OFFSET
 
@@ -157,10 +174,28 @@ class UsuariosDB
             $conexion = Conexion::getInstance();
             $conn = $conexion->getConexion();
 
-            $query = "SELECT usuarios.usuario_id, usuarios.nombre AS usuario_nombre,  usuarios.apellido, usuarios.email,  usuarios.movil, usuarios.imagen, usuarios.activo, usuarios.eliminado, clases.nombre AS clase
-            FROM usuarios 
-            INNER JOIN clases ON usuarios.clase_id = clases.clase_id
-            WHERE usuarios.usuario_id = ?";
+            $query = "SELECT
+                        usuarios.usuario_id,
+                        usuarios.nombre AS usuario_nombre,
+                        usuarios.apellido,
+                        usuarios.email,
+                        usuarios.movil,
+                        usuarios.imagen,
+                        usuarios.activo,
+                        usuarios.eliminado,
+                        clases.nombre AS clase,
+                        usuarios.ultimo_login,
+                        usuarios.empresa,
+                        usuarios.direccion,
+                        usuarios.ciudad,
+                        usuarios.codigo_postal,
+                        usuarios.region_estado,
+                        usuarios.pais,
+                        usuarios.cif_nif
+                    FROM usuarios
+                    INNER JOIN clases ON usuarios.clase_id = clases.clase_id
+                    WHERE usuarios.usuario_id = ?
+                    ";
             $stmt = $conn->prepare($query);
             $stmt->bind_param('i', $id); // Vincula el parámetro $id como entero
 
@@ -189,31 +224,102 @@ class UsuariosDB
             $conexion = Conexion::getInstance();
             $conn = $conexion->getConexion();
 
-            // Consulta de inserción
-            $query = "INSERT INTO usuarios (email, password_hash, clase_id, nombre, apellido, imagen, movil, activo, eliminado)
-                      VALUES (?, ?, (SELECT clase_id FROM clases WHERE nombre = ?), ?, ?, ?, ?, ?, ?)";
-
-            $stmt = $conn->prepare($query);
+            // Campos obligatorios (ej. email y password)
+            if (empty($data['email']) || empty($data['password'])) {
+                // Puedes retornar un error o lanzar una excepción
+                throw new Exception("Los campos 'email' y 'password' son obligatorios.");
+            }
 
             // Generar el hash de la contraseña
             $passwordHash = password_hash($data['password'], PASSWORD_BCRYPT);
 
-            // Convertir booleanos a enteros
-            $activo = $data['activo'] ? 1 : 0;
-            $eliminado = $data['eliminado'] ? 1 : 0;
+            // Para cada campo opcional, asignamos null si no está en $data:
+            // (El operador null coalesce ?? permite asignar un valor por defecto si no existe la clave en $data)
+            $clase          = $data['clase']          ?? 'usuario'; // Clase por defecto
+            $nombre         = $data['nombre']         ?? null;
+            $apellido       = $data['apellido']       ?? null;
+            $imagen         = $data['imagen']         ?? null;
+            $movil          = $data['movil']          ?? null;
+            // Convertir booleanos a enteros (o dejar null si no viene):
+            $activo         = isset($data['activo']) ? (int)$data['activo'] : 1;
+            $eliminado      = isset($data['eliminado']) ? (int)$data['eliminado'] : 0;
+            $ultimo_login   = $data['ultimo_login']   ?? null;
+            $empresa        = $data['empresa']        ?? null;
+            $direccion      = $data['direccion']      ?? null;
+            $ciudad         = $data['ciudad']         ?? null;
+            $codigo_postal  = $data['codigo_postal']  ?? null;
+            $region_estado  = $data['region_estado']  ?? null;
+            $pais           = $data['pais']           ?? null;
+            $cif_nif        = $data['cif_nif']        ?? null;
 
-            // Ligar parámetros a la consulta
+            // Consulta de inserción
+            // NOTA: si clase es opcional, la subconsulta (SELECT clase_id FROM clases WHERE nombre = ?)
+            // debe permitir que se pase NULL (o que no exista). Puedes ajustar la lógica si "clase"
+            // no siempre se envía.
+            $query = "
+            INSERT INTO usuarios (
+                email,
+                password_hash,
+                clase_id,
+                nombre,
+                apellido,
+                imagen,
+                movil,
+                activo,
+                eliminado,
+                ultimo_login,
+                empresa,
+                direccion,
+                ciudad,
+                codigo_postal,
+                region_estado,
+                pais,
+                cif_nif
+            ) 
+            VALUES (
+                ?,
+                ?,
+                (SELECT clase_id FROM clases WHERE nombre = ?), 
+                ?,
+                ?,
+                ?,
+                ?,
+                ?,
+                ?,
+                ?,
+                ?,
+                ?,
+                ?,
+                ?,
+                ?,
+                ?,
+                ?
+            )
+        ";
+
+            $stmt = $conn->prepare($query);
+
+            // Bind de parámetros (asegúrate de que el número y tipo de parámetros coincida)
+            // s = string, i = integer, etc.
             $stmt->bind_param(
-                'sssssssii',
-                $data['email'],
-                $passwordHash,
-                $data['clase'],
-                $data['nombre'],
-                $data['apellido'],
-                $data['imagen'],
-                $data['movil'],
-                $activo,
-                $eliminado
+                'sssssssiissssssss',
+                $data['email'],      // s
+                $passwordHash,       // s
+                $clase,              // s (busca clase_id por nombre)
+                $nombre,             // s
+                $apellido,           // s
+                $imagen,             // s
+                $movil,              // s
+                $activo,             // i
+                $eliminado,          // i
+                $ultimo_login,       // s (guarda fecha/hora como string)
+                $empresa,            // s
+                $direccion,          // s
+                $ciudad,             // s
+                $codigo_postal,      // s
+                $region_estado,      // s
+                $pais,               // s
+                $cif_nif             // s
             );
 
             // Ejecutar la consulta
@@ -228,6 +334,7 @@ class UsuariosDB
         }
     }
 
+
     /**
      * Actualizar un usuario existente
      * @param int $id ID del usuario a actualizar
@@ -237,7 +344,7 @@ class UsuariosDB
     public function updateUser($id, $data)
     {
         try {
-            // Obtener la conexión de nuevo para asegurar que esté abierta
+            // Obtener conexión
             $conexion = Conexion::getInstance();
             $conn = $conexion->getConexion();
 
@@ -245,38 +352,106 @@ class UsuariosDB
                 throw new Exception("Conexión no disponible.");
             }
 
-            // Consulta de actualización
-            $query = "UPDATE usuarios SET email = ?, password_hash = ?, clase_id = (SELECT clase_id FROM clases WHERE nombre = ?), 
-                      nombre = ?, apellido = ?, imagen = ?, movil = ?, activo = ?, eliminado = ? WHERE usuario_id = ?";
+            // --------------------------------------------------
+            // 1. Validar o forzar que cierto campo sea obligatorio
+            // --------------------------------------------------
+            if ($id === null) {
+                throw new Exception("El campo 'id' es obligatorio para la actualización.");
+            }
+
+            // --------------------------------------------------
+            // 2. Obtener el registro actual para preservar el password si no llega uno nuevo
+            // --------------------------------------------------
+
+            $oldPasswordHash = $this->getUserPassword($id);
+
+            // Si mandan 'password', generamos un nuevo hash; de lo contrario, mantenemos el que existía.
+            if (!empty($data['password'])) {
+                $passwordHash = password_hash($data['password'], PASSWORD_BCRYPT);
+            } else {
+                $passwordHash = $oldPasswordHash; // Se conserva la anterior
+            }
+
+            $usuario = $this->getUser($id);
+
+            // --------------------------------------------------
+            // 3. Asignar los campos opcionales con ?? null
+            // --------------------------------------------------
+            $email         = $data['email']          ?? $usuario['email']; // Mantener el email actual si no viene
+            $clase         = $data['clase']          ?? $usuario['clase']; // Mantener la clase actual si no viene
+            $nombre        = $data['nombre']         ?? $usuario['usuario_nombre']; // Mantener el nombre actual si no viene
+            $apellido      = $data['apellido']       ?? $usuario['apellido']; // Mantener el apellido actual si no viene
+            $imagen        = $data['imagen']         ?? $usuario['imagen']; // Mantener la imagen actual si no viene
+            $movil         = $data['movil']          ?? $usuario['movil']; // Mantener el móvil actual si no viene
+            $activo        = isset($data['activo']) ? (int)$data['activo'] : 1;
+            $eliminado     = isset($data['eliminado']) ? (int)$data['eliminado'] : 0;
+            $ultimo_login  = $data['ultimo_login']   ?? $usuario['ultimo_login']; // Mantener el último login actual si no viene
+            $empresa       = $data['empresa']        ?? $usuario['empresa']; // Mantener la empresa actual si no viene
+            $direccion     = $data['direccion']      ?? $usuario['direccion']; // Mantener la dirección actual si no viene
+            $ciudad        = $data['ciudad']         ?? $usuario['ciudad']; // Mantener la ciudad actual si no viene
+            $codigo_postal = $data['codigo_postal']  ?? $usuario['codigo_postal']; // Mantener el código postal actual si no viene
+            $region_estado = $data['region_estado']  ?? $usuario['region_estado']; // Mantener la región/estado actual si no viene
+            $pais          = $data['pais']           ?? $usuario['pais']; // Mantener el país actual si no viene
+            $cif_nif       = $data['cif_nif']        ?? $usuario['cif_nif']; // Mantener el CIF/NIF actual si no viene
+
+            // --------------------------------------------------
+            // 4. Preparar la consulta de actualización
+            // --------------------------------------------------
+            // NOTA: si quieres "mantener" los valores viejos para los campos que no vengan,
+            // en lugar de ponerlos a null, tendrías que cargar esos valores antes y usarlos aquí.
+            $query = "
+            UPDATE usuarios 
+            SET
+                email = ?,
+                password_hash = ?,
+                clase_id = (SELECT clase_id FROM clases WHERE nombre = ?),
+                nombre = ?,
+                apellido = ?,
+                imagen = ?,
+                movil = ?,
+                activo = ?,
+                eliminado = ?,
+                ultimo_login = ?,
+                empresa = ?,
+                direccion = ?,
+                ciudad = ?,
+                codigo_postal = ?,
+                region_estado = ?,
+                pais = ?,
+                cif_nif = ?
+            WHERE usuario_id = ?
+        ";
 
             $stmt = $conn->prepare($query);
 
-            // Generar el hash de la contraseña
-            $passwordHash = password_hash($data['password'], PASSWORD_BCRYPT);
-
-            // Convertir booleanos a enteros
-            $activo = $data['activo'] ? 1 : 0;
-            $eliminado = $data['eliminado'] ? 1 : 0;
-
-            // Ligar parámetros a la consulta
+            // 5. Vincular parámetros (18 placeholders + 1 para el WHERE)
+            // Tipos: s (string), i (int). El orden debe coincidir con el de la sentencia.
             $stmt->bind_param(
-                'sssssssiii',
-                $data['email'],
-                $passwordHash,
-                $data['clase'],
-                $data['nombre'],
-                $data['apellido'],
-                $data['imagen'],
-                $data['movil'],
-                $activo,
-                $eliminado,
-                $id
+                'sssssssiissssssssi',
+                $email,     // s
+                $passwordHash,      // s
+                $clase,             // s
+                $nombre,            // s
+                $apellido,          // s
+                $imagen,            // s
+                $movil,             // s
+                $activo,            // i
+                $eliminado,         // i
+                $ultimo_login,      // s
+                $empresa,           // s
+                $direccion,         // s
+                $ciudad,            // s
+                $codigo_postal,     // s
+                $region_estado,     // s
+                $pais,              // s
+                $cif_nif,           // s
+                $id                 // i (WHERE usuario_id = ?)
             );
 
-            // Ejecutar la consulta
+            // --------------------------------------------------
+            // 6. Ejecutar y cerrar
+            // --------------------------------------------------
             $result = $stmt->execute();
-
-            // Cerrar el statement y la conexión
             $stmt->close();
 
             return $result;
@@ -286,7 +461,43 @@ class UsuariosDB
         }
     }
 
+    /**
+     * Obtener la contraseña hasheada de un usuario por su ID
+     * @param int $id El ID del usuario
+     * @return string|null El password_hash o null si no se encuentra
+     */
+    public function getUserPassword($id)
+    {
+        try {
+            // Obtenemos la conexión
+            $conexion = Conexion::getInstance();
+            $conn = $conexion->getConexion();
 
+            // Consulta para obtener el password_hash
+            $sql = "SELECT password_hash 
+                FROM usuarios 
+                WHERE usuario_id = ? 
+                LIMIT 1";
+
+            $stmt = $conn->prepare($sql);
+            $stmt->bind_param('i', $id); // 'i' porque usuario_id es entero
+            $stmt->execute();
+
+            // Forma 1: usando get_result() y fetch_assoc()
+            $result = $stmt->get_result();
+            if ($row = $result->fetch_assoc()) {
+                $stmt->close();
+                return $row['password_hash'];
+            }
+
+            // Si no encuentra fila
+            $stmt->close();
+            return null;
+        } catch (Exception $e) {
+            error_log("Error al obtener password del usuario: " . $e->getMessage());
+            return null;
+        }
+    }
 
     /**
      * Esta funcion "elimina" al user de manera logica es decir cambia el estado de la eliminacion del usuario
