@@ -206,4 +206,78 @@ class Correo
             return $respuesta;
         }
     }
+    public function recuperarContrasena($dataUsuario, $tokenRecuperacion, $idiomaUsuario = 'es')
+    {
+        try {
+            if (isset($dataUsuario['email']) && isset($dataUsuario['usuario_nombre'])) {
+                $emailUsuario = $dataUsuario['email'];
+                $nombreUsuario = $dataUsuario['usuario_nombre'];
+
+                // Configuración SMTP para Amazon WorkMail (puedes cambiar el proveedor SMTP si lo necesitas)
+                $this->mail->isSMTP();
+                $this->mail->Host =  $this->host; // Servidor SMTP
+                $this->mail->SMTPAuth = true;
+                $this->mail->Username = $this->username; // Tu correo de WorkMail
+                $this->mail->Password = $this->password; // Contraseña de la cuenta de WorkMail
+                $this->mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS; // Usa SSL
+                $this->mail->Port = $this->port; // También puedes usar 587 para TLS
+
+                // Configuración del correo
+                $this->mail->setFrom('admin@app-energiasolarcanarias.com', 'Admin');
+                $this->mail->addAddress($emailUsuario, $nombreUsuario); // Dirección del destinatario
+
+                $this->mail->isHTML(true);
+
+                // Mensaje en español
+                $textoEspanol = 'Saludos ' . $nombreUsuario . '. ' . 'Hemos recibido una solicitud para restablecer tu contraseña. El enlace para restablecer tu contraseña es: ';
+                $textoEspanolHtml = htmlentities($textoEspanol);
+                $validezEs = "Este enlace tiene una validez de 10 minutos.";
+                $validezEs = htmlentities($validezEs);
+
+                // Mensaje en inglés
+                $textoEnglish = 'Greetings ' . $nombreUsuario . '. ' . 'We have received a request to reset your password. The link to reset your password is: ';
+                $textoEnglishlHtml = htmlentities($textoEnglish);
+                $validezEn = "This link is valid for 10 minutes.";
+                $validezEn = htmlentities($validezEn);
+
+                // Enlace de recuperación (esto dependerá de tu sistema de backend, por ejemplo: tu URL de recuperación)
+                $urlRecuperacion = 'https://app-energiasolarcanarias.com/recuperar-contrasena?token=' . $tokenRecuperacion;
+
+                if ($idiomaUsuario == 'es') {
+                    $this->mail->Subject = 'Recuperación de Contraseña';
+                    $this->message = '<p style="font-size: 20px; color: black; text-align: center;">' . $textoEspanolHtml . '</p><p style="font-size: 20px; color: black; text-align: center;"><b>' . $urlRecuperacion . '</b></p><p style="font-size: 20px; color: black; text-align: center;">' . $validezEs . '</p><div style="display: flex; width: 100%; justify-content: center; align-items: center;"><img src="https://app-energiasolarcanarias-backend.com/public/assets/img/logo.png" style="width: 260px;"></div>';
+                } else {
+                    $this->mail->Subject = 'Password Recovery';
+                    $this->message = '<p style="font-size: 20px; color: black; text-align: center;">' . $textoEnglishlHtml . '</p><p style="font-size: 20px; color: black; text-align: center;"><b>' . $urlRecuperacion . '</b></p><p style="font-size: 20px; color: black; text-align: center;">' . $validezEn . '</p><div style="display: flex; width: 100%; justify-content: center; align-items: center;"><img src="https://app-energiasolarcanarias-backend.com/public/assets/img/logo.png" style="width: 260px;"></div>';
+                }
+
+                $this->mail->Body = $this->message;
+
+                // Enviar correo
+                $this->mail->send();
+
+                // Retornar respuesta
+                $respuesta = new Respuesta;
+                $respuesta->success();
+                if ($idiomaUsuario == 'es') {
+                    $respuesta->message = 'Se ha enviado un enlace para recuperar tu contraseña a tu email, con una validez de 10 minutos.';
+                } else {
+                    $respuesta->message = 'A recovery link has been sent to your email with a validity of 10 minutes.';
+                }
+                return $respuesta;
+            } else {
+                // Si no se reciben los datos necesarios
+                $respuesta = new Respuesta;
+                $respuesta->_500();
+                $respuesta->message = 'Error en el servicio correo: No se han recibido los datos necesarios del usuario.';
+                return $respuesta;
+            }
+        } catch (Exception $e) {
+            // Si ocurre un error al enviar el correo
+            $respuesta = new Respuesta;
+            $respuesta->_500($e);
+            $respuesta->message = 'Error al enviar el correo de recuperación de contraseña al usuario: ' . $this->mail->ErrorInfo;
+            return $respuesta;
+        }
+    }
 }
