@@ -4,6 +4,8 @@ require_once __DIR__ . "/../models/login.php";
 require_once __DIR__ . "/../utils/token.php";
 require_once __DIR__ . "/../models/insert_token.php";
 require_once __DIR__ . "/../services/correo.php";
+require_once __DIR__ . "/../DBObjects/usuariosDB.php";
+require_once __DIR__ . "/../models/conexion.php";
 
 
 class LoginController
@@ -58,6 +60,79 @@ class LoginController
         } else {
             http_response_code($responseLogin->code);
             echo json_encode($responseLogin);
+        }
+    }
+
+    public function userPasswordRecover()
+    {
+        $usuarioDB = new UsuariosDB;
+        $correo = new Correo;
+        try {
+            if ($usuarioDB->comprobarUsuario($this->datos['email'])) {
+                $usuarioId = $usuarioDB->getIdUserPorEmail($this->datos['email']);
+                $jwt = Conexion::jwtVolatil($usuarioId, $this->datos['email']);
+                $usuario = $usuarioDB->getUser($usuarioId['usuario_id']);
+                $respuesta = $correo->recuperarContrasena($usuario, $jwt, $this->idiomaUsuario);
+                http_response_code($respuesta->code);
+                echo json_encode($respuesta);
+            } else {
+                $respuesta = new Respuesta;
+                $respuesta->_404();
+                $respuesta->message = "404 - El usuario no existe";
+                http_response_code($respuesta->code);
+                echo json_encode($respuesta);
+            }
+        } catch (Exception $e) {
+            $respuesta = new Respuesta;
+            $respuesta->_500($e);
+            $respuesta->message = "500 - Error al recuperar la contraseña";
+            http_response_code($respuesta->code);
+            echo json_encode($respuesta);
+        }
+    }
+    //Cambia la contraseña del usuario con un token de autentificacion
+    public function changePasswordUser($datos)
+    {
+        $usuarioDB = new UsuariosDB;
+        try {
+            $jwt = Conexion::verifyJwtVolatil($datos['token']);
+            if($jwt == false){
+                $respuesta = new Respuesta;
+                $respuesta->_401();
+                $respuesta->message = "401 - Token inválido o expirado";
+                http_response_code($respuesta->code);
+                echo json_encode($respuesta);
+                return;
+            }
+            if ($usuarioDB->comprobarUsuario($jwt->data->email)) {
+                $usuarioId = $usuarioDB->getIdUserPorEmail($jwt->data->email);
+                $contrasenaCambiada = $usuarioDB->putUserPassword($usuarioId['usuario_id'], $this->datos['password']);
+                if($contrasenaCambiada){
+                    $respuesta = new Respuesta;
+                    $respuesta->success();
+                    $respuesta->message = "200 - La contraseña ha sido cambiada con éxito";
+                    http_response_code($respuesta->code);
+                    echo json_encode($respuesta);
+                }else{
+                    $respuesta = new Respuesta;
+                    $respuesta->_500();
+                    $respuesta->message = "500 - Algo salió mal al cambiar la contraseña";
+                    http_response_code($respuesta->code);
+                    echo json_encode($respuesta);
+                }
+            } else {
+                $respuesta = new Respuesta;
+                $respuesta->_404();
+                $respuesta->message = "404 - El usuario no existe";
+                http_response_code($respuesta->code);
+                echo json_encode($respuesta);
+            }
+        } catch (Exception $e) {
+            $respuesta = new Respuesta;
+            $respuesta->_500($e);
+            $respuesta->message = "500 - Error al recuperar la contraseña " . $e->getMessage();
+            http_response_code($respuesta->code);
+            echo json_encode($respuesta);
         }
     }
 }

@@ -630,6 +630,37 @@ switch ($method) {
                     echo json_encode($respuesta);
                 }
                 break;
+            case ($request === 'forgot/password'):
+                $handled = true;
+                //Se le pasara un email y un idiomaUsuario
+                $postBody = file_get_contents("php://input");
+                if($postBody == null || $postBody == ''){
+                    $respuesta->_400();
+                    $respuesta->message = 'No se ha encontrado el body';
+                    http_response_code($respuesta->code);
+                    echo json_encode($respuesta);
+                    break;
+                }
+                //Decodificar el body
+                $postBodyArray = json_decode($postBody, true);
+                if($postBodyArray['email'] == null || $postBodyArray['email'] == ''){
+                    $respuesta->_400();
+                    $respuesta->message = 'No se ha encontrado el email';
+                    http_response_code($respuesta->code);
+                    echo json_encode($respuesta);
+                    break;
+                }
+                $loginController = new LoginController($postBody);
+                $loginController->userPasswordRecover();
+                break;
+            case ($request === 'change/password'):
+                $handled = true;
+                //Se le pasara un email y un idiomaUsuario
+                $postBody = file_get_contents("php://input");
+                $loginController = new LoginController($postBody);
+                $postBodyArray = json_decode($postBody, true);
+                $loginController->changePasswordUser($postBodyArray);
+                break;
             case ($request === 'login'):
                 $handled = true;
                 $postBody = file_get_contents("php://input");
