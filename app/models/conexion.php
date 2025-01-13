@@ -28,7 +28,7 @@ class Conexion
     // Constructor privado
     private function __construct()
     {
-        try{
+        try {
             // Cargar el archivo .env desde la carpeta config
             $dotenv = Dotenv::createImmutable(__DIR__ . '/../../config');
             $dotenv->load();
@@ -36,7 +36,7 @@ class Conexion
             // Asignar los valores del .env a las propiedades estáticas
             self::$secret_key = $_ENV['SECRET_KEY'];
             self::$algorithm = $_ENV['ALGORITHM'];
-        }catch(Exception $e){
+        } catch (Exception $e) {
             echo "Error al cargar el archivo .env";
         }
 
@@ -140,32 +140,74 @@ class Conexion
     }
     // Método para obtener la conexión activa
     public function getConexion()
-{
-    // Verificar si existe o no la conexión
-    if (!($this->conexion instanceof mysqli)) {
-        // Intentar iniciar la conexión
-        $this->iniciarConexion();
-    } else {
-        // Ya tenemos un objeto mysqli, verificar su validez
-        if (!$this->conexion->ping()) {
-            // Si ping falla, intentar reconectar una vez
+    {
+        // Verificar si existe o no la conexión
+        if (!($this->conexion instanceof mysqli)) {
+            // Intentar iniciar la conexión
             $this->iniciarConexion();
+        } else {
+            // Ya tenemos un objeto mysqli, verificar su validez
+            if (!$this->conexion->ping()) {
+                // Si ping falla, intentar reconectar una vez
+                $this->iniciarConexion();
 
-            // Comprobar inmediatamente si ahora sí funciona
-            if (!$this->conexion instanceof mysqli || !$this->conexion->ping()) {
-                // Si seguimos sin poder hacer ping, lanzar excepción
-                throw new Exception("No se pudo restablecer la conexión a la base de datos.");
+                // Comprobar inmediatamente si ahora sí funciona
+                if (!$this->conexion instanceof mysqli || !$this->conexion->ping()) {
+                    // Si seguimos sin poder hacer ping, lanzar excepción
+                    throw new Exception("No se pudo restablecer la conexión a la base de datos.");
+                }
             }
         }
-    }
 
-    return $this->conexion;
-}
+        return $this->conexion;
+    }
 
     // Método para reemplazar y obtener la conexión actual
     public function setConexion($conexion)
     {
         $this->conexion = $conexion;
+    }
+
+    //crear jwt 1 hora
+    static public function jwtVolatil($id, $email)
+    {
+        $claveSecretaJWTVolatil = $_ENV['SECRET_KEY_VOLATIL']; //Esta clave es diferente a la clave de JWT normal
+        $algorithmJWTVolatil = $_ENV['ALGORITHM_VOLATIL']; //Este algoritmo es diferente al algoritmo de JWT normal
+        $time = time(); // Devuelve la fecha Unix actual
+        $token = array(
+            "iat" => $time, // Tiempo en que inicia el token
+            "exp" => $time + 600, // Tiempo en el que expira el token (600 segundos = 10 minutos)
+            "volatility" => true, // Marcar el token como volátil
+            "data" => [
+                "id" => $id,
+                "email" => $email
+            ]
+        );
+
+        $jwt = JWT::encode($token, $claveSecretaJWTVolatil, $algorithmJWTVolatil);
+
+        return $jwt;
+        //echo '<pre>'; print_r($jwt); echo '</pre>'; // Sirve para saber que nos devuelve el token
+    }
+
+    // Verificar JWT Volatil y si es volatil dejarlo inutilizado al primer uso del token
+    public static function verifyJwtVolatil($jwt)
+    {
+        try {
+            $claveSecretaJWTVolatil = $_ENV['SECRET_KEY_VOLATIL']; // Esta clave es diferente a la clave de JWT normal
+            $algorithmJWTVolatil = $_ENV['ALGORITHM_VOLATIL']; // Este algoritmo es diferente al algoritmo de JWT normal
+            $decoded = JWT::decode($jwt, new Key($claveSecretaJWTVolatil, $algorithmJWTVolatil));
+
+            // Verificamos si la propiedad 'volatility' existe y su valor
+            if (isset($decoded->volatility) && $decoded->volatility === true) {
+                return $decoded; // Si la propiedad 'volatility' es true, devolvemos true
+            } else {
+                return false; // Si no existe la propiedad o es false, devolvemos false
+            }
+        } catch (Exception $e) {
+            error_log("Error al verificar JWT Volatil: " . $e->getMessage());
+            return false; // Token inválido o expirado
+        }
     }
 
     //crear jwt 180 dias

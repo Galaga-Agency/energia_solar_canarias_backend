@@ -873,4 +873,40 @@ class UsuariosDB
             return false;
         }
     }
+    /**
+     * Cambiar la contraseña hasheada de un usuario por su ID
+     * @param int $id El ID del usuario
+     * @param string $password El nuevo password
+     * @return true|false El estado de la operación
+     */
+    public function putUserPassword($id,$password)
+    {
+        try {
+            $passwordHash = password_hash($password, PASSWORD_BCRYPT);
+            // Obtenemos la conexión
+            $conexion = Conexion::getInstance();
+            $conn = $conexion->getConexion();
+
+            // Consulta para reemplazar la password_hash
+            $sql = "UPDATE usuarios 
+                SET password_hash = ? 
+                WHERE usuario_id = ?";
+
+            $stmt = $conn->prepare($sql);
+            $stmt->bind_param('si', $passwordHash, $id); // 's' porque password_hash es string y 'i' porque usuario_id es entero
+            $stmt->execute();
+
+            // Validamos si hay cambios en la consulta
+            if ($stmt->execute()) {
+                $stmt->close();
+                return true;
+            } else {
+                $stmt->close();
+                return false;
+            }
+        } catch (Exception $e) {
+            error_log("Error al obtener password del usuario: " . $e->getMessage());
+            return null;
+        }
+    }
 }
