@@ -241,7 +241,7 @@ class Correo
                 $validezEn = htmlentities($validezEn);
 
                 // Enlace de recuperación (esto dependerá de tu sistema de backend, por ejemplo: tu URL de recuperación)
-                $urlRecuperacion = 'https://app-energiasolarcanarias.com/recuperar-contrasena?token=' . $tokenRecuperacion;
+                $urlRecuperacion = 'https://app-energiasolarcanarias.com/reset-password?token=' . $tokenRecuperacion;
 
                 if ($idiomaUsuario == 'es') {
                     $this->mail->Subject = 'Recuperación de Contraseña';
