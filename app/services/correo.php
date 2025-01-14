@@ -45,6 +45,7 @@ class Correo
                 $this->mail->Password = $this->password; // Contraseña de la cuenta de WorkMail
                 $this->mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS; // Usa SSL
                 $this->mail->Port = $this->port; // También puedes usar 587 para TLS
+                $this->mail->CharSet = 'UTF-8'; // Configuración para UTF-8
 
                 // Configuración del correo
                 $this->mail->setFrom('admin@app-energiasolarcanarias.com', 'Admin');
@@ -222,6 +223,7 @@ class Correo
                 $this->mail->Password = $this->password; // Contraseña de la cuenta de WorkMail
                 $this->mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS; // Usa SSL
                 $this->mail->Port = $this->port; // También puedes usar 587 para TLS
+                $this->mail->CharSet = 'UTF-8'; // Configuración para UTF-8
 
                 // Configuración del correo
                 $this->mail->setFrom('admin@app-energiasolarcanarias.com', 'Admin');
