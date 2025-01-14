@@ -18,6 +18,7 @@ require_once __DIR__ . '/../services/SolarEdgeService.php';
 require_once __DIR__ . '/../DBObjects/logsDB.php';
 require_once __DIR__ . '/../enums/Logs.php';
 require_once __DIR__ . '/../models/OpenMeteo.php';
+require_once __DIR__ . '/../utils/imagenes.php';
 
 
 $respuesta = new Respuesta;
@@ -65,7 +66,7 @@ $handled = false; // Bandera para indicar si la ruta fue manejada
 // Rutas y endpoints
 switch ($method) {
     case 'GET':
-        
+
         switch (true) {
             case (preg_match('/^plant\/alert/', $request, $matches) && isset($_GET['proveedor']) ? true : false):
                 $handled = true;
@@ -87,12 +88,12 @@ switch ($method) {
                                 echo json_encode($respuesta);
                                 break;
                             case $proveedores['VictronEnergy']:
-                                if(isset($_GET['siteId'])){
+                                if (isset($_GET['siteId'])) {
                                     $siteId = $_GET['siteId'];
                                     $pageIndex = isset($_GET['pageIndex']) ? $_GET['pageIndex'] : 1;
                                     $pageSize = isset($_GET['pageSize']) ? $_GET['pageSize'] : 200;
-                                    $apiControladorService->getSiteAlarms($siteId,$pageIndex,$pageSize);
-                                }else{
+                                    $apiControladorService->getSiteAlarms($siteId, $pageIndex, $pageSize);
+                                } else {
                                     $respuesta->_404();
                                     $respuesta->message = 'No se ha encontrado el siteId';
                                     http_response_code($respuesta->code);
@@ -634,7 +635,7 @@ switch ($method) {
                 $handled = true;
                 //Se le pasara un email y un idiomaUsuario
                 $postBody = file_get_contents("php://input");
-                if($postBody == null || $postBody == ''){
+                if ($postBody == null || $postBody == '') {
                     $respuesta->_400();
                     $respuesta->message = 'No se ha encontrado el body';
                     http_response_code($respuesta->code);
@@ -643,7 +644,7 @@ switch ($method) {
                 }
                 //Decodificar el body
                 $postBodyArray = json_decode($postBody, true);
-                if($postBodyArray['email'] == null || $postBodyArray['email'] == ''){
+                if ($postBodyArray['email'] == null || $postBodyArray['email'] == '') {
                     $respuesta->_400();
                     $respuesta->message = 'No se ha encontrado el email';
                     http_response_code($respuesta->code);
@@ -652,6 +653,20 @@ switch ($method) {
                 }
                 $loginController = new LoginController($postBody);
                 $loginController->userPasswordRecover();
+                break;
+            case ($request === 'usuario/imagen'):
+                $handled = true;
+                if ($authMiddleware->verificarTokenUsuarioActivo() != false) {
+                    // Obtener los datos del cuerpo de la solicitud, aunque no los necesitamos para la imagen
+                    // El archivo se recibe como parte de $_FILES, no de php://input
+                    $imagenes = new Imagenes();
+                    $imagenes->subirImagen();
+                } else {
+                    $respuesta->_403();
+                    $respuesta->message = 'El token no se puede authentificar con exito';
+                    http_response_code($respuesta->code);
+                    echo json_encode($respuesta);
+                }
                 break;
             case ($request === 'change/password'):
                 $handled = true;
@@ -851,6 +866,36 @@ switch ($method) {
 
     case 'DELETE':
         switch (true) {
+            case ($request === 'usuario/imagen'):
+                $handled = true;
+                if ($authMiddleware->verificarTokenUsuarioActivo() != false) {
+                    if ($authMiddleware->verificarAdmin()) {
+                        if (isset($_GET['imagen'])) {
+                            // Obtener los datos del cuerpo de la solicitud, aunque no los necesitamos para la imagen
+                            // El archivo se recibe como parte de $_FILES, no de php://input
+                            $imagenes = new Imagenes();
+                            $imagenes->borrarImagen($_GET['imagen']);
+                        } else {
+                            $imagenes = new Imagenes();
+                            //recoge el id del usuario por el token
+                            $idUser = $authMiddleware->obtenerIdUsuarioActivo();
+                            //borra la imagen del usuario
+                            $imagenes->borrarImagenUsuario($idUser);
+                        }
+                    } else {
+                        $imagenes = new Imagenes();
+                        //recoge el id del usuario por el token
+                        $idUser = $authMiddleware->obtenerIdUsuarioActivo();
+                        //borra la imagen del usuario
+                        $imagenes->borrarImagenUsuario($idUser);
+                    }
+                } else {
+                    $respuesta->_403();
+                    $respuesta->message = 'El token no se puede authentificar con exito';
+                    http_response_code($respuesta->code);
+                    echo json_encode($respuesta);
+                }
+                break;
             case ($request === 'usuarios/relacionar'  && isset($_GET['idplanta']) && isset($_GET['idusuario']) && isset($_GET['proveedor'])):
                 $handled = true;
                 if ($authMiddleware->verificarTokenUsuarioActivo() != false) {
