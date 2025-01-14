@@ -994,10 +994,11 @@ class UsuariosDB
         try {
             $conexion = Conexion::getInstance();
             $conn = $conexion->getConexion();
-
+            echo $path;
             $query = "UPDATE usuarios SET imagen = NULL WHERE imagen = ?";
             $stmt = $conn->prepare($query);
             $stmt->bind_param('s', $path);
+            echo $query;
             $result = $stmt->execute();
 
             $stmt->close();
