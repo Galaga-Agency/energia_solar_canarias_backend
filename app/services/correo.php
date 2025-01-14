@@ -108,10 +108,10 @@ class Correo
     {
         try {
             // Validar que los datos necesarios estén presentes
-            if (isset($dataUsuario['email']) && isset($dataUsuario['nombre']) && isset($dataUsuario['mensaje'])) {
+            if (isset($dataUsuario['email']) && isset($dataUsuario['mensaje'])) {
                 // Sanitizar los datos sin convertir caracteres UTF-8
                 $emailUsuario = filter_var($dataUsuario['email'], FILTER_SANITIZE_EMAIL);
-                $nombreUsuario = trim($dataUsuario['nombre']);
+                $nombreUsuario = isset($dataUsuario['nombre'])? $dataUsuario['nombre'] : '';
                 $mensajeUsuario = trim($dataUsuario['mensaje']);
 
                 // Configuración SMTP
@@ -210,9 +210,9 @@ class Correo
     public function recuperarContrasena($dataUsuario, $tokenRecuperacion, $idiomaUsuario = 'es')
     {
         try {
-            if (isset($dataUsuario['email']) && isset($dataUsuario['usuario_nombre'])) {
+            if (isset($dataUsuario['email'])) {
                 $emailUsuario = $dataUsuario['email'];
-                $nombreUsuario = $dataUsuario['usuario_nombre'];
+                $nombreUsuario = isset($dataUsuario['nombre'])? $dataUsuario['nombre'] : '';
 
                 // Configuración SMTP para Amazon WorkMail (puedes cambiar el proveedor SMTP si lo necesitas)
                 $this->mail->isSMTP();
