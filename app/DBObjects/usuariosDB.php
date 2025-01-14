@@ -123,7 +123,7 @@ class UsuariosDB
 
             $query = "SELECT 
                         usuarios.usuario_id,
-                        usuarios.nombre AS nombre,
+                        usuarios.nombre AS usuario_nombre,
                         usuarios.apellido,
                         usuarios.email,
                         usuarios.movil,
@@ -976,6 +976,28 @@ class UsuariosDB
             $query = "UPDATE usuarios SET imagen = ? WHERE usuario_id = ?";
             $stmt = $conn->prepare($query);
             $stmt->bind_param('si', $imagen, $id);
+            $result = $stmt->execute();
+
+            $stmt->close();
+            return $result; // Devuelve true si se ejecutó correctamente, false si no
+        } catch (Exception $e) {
+            error_log("Error al actualizar la imagen del usuario: " . $e->getMessage());
+            return false;
+        }
+    }
+    /**
+     * Poner en null todas las imagenes de los usuarios que tengan la imagen pasada por parametro
+     * @param int $id El ID del usuario
+     * @return true|false dependiendo si se ha modificado la imagen
+     */
+    public function deleteUserImageByPath($path){
+        try {
+            $conexion = Conexion::getInstance();
+            $conn = $conexion->getConexion();
+
+            $query = "UPDATE usuarios SET imagen = NULL WHERE imagen = ?";
+            $stmt = $conn->prepare($query);
+            $stmt->bind_param('s', $path);
             $result = $stmt->execute();
 
             $stmt->close();
