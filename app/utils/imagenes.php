@@ -112,7 +112,8 @@ class Imagenes
             if (unlink($rutaImagen)) {
                 //Eliminar la imagen de todos los usuarios que tengan la imagen
                 $usuariosDB = new UsuariosDB;
-                $usuariosDesrelacionador = $usuariosDB->deleteUserImageByPath($rutaImagen);
+                $rutaCompleta = $_SERVER['REQUEST_SCHEME'] . '://' . $_SERVER['HTTP_HOST'] . '/img/' . $rutaImagen;
+                $usuariosDesrelacionador = $usuariosDB->deleteUserImageByPath($rutaCompleta);
                 if ($usuariosDesrelacionador == false) {
                     // Si no se puede borrar el archivo
                     $this->respuesta->_500();
