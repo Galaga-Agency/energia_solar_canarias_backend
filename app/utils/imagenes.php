@@ -17,7 +17,7 @@ class Imagenes
     }
 
     // Método para subir la imagen
-    public function subirImagen()
+    public function subirImagen($userId)
     {
         // Verificamos si el archivo fue enviado correctamente
         if (isset($_FILES['imagen']) && $_FILES['imagen']['error'] === UPLOAD_ERR_OK) {
@@ -52,11 +52,28 @@ class Imagenes
                 $this->logsController->registrarLog(Logs::INFO, "El usuario subió una imagen: $nombreArchivoFinal");
                 // El archivo se ha subido correctamente
                 $rutaCompleta = $_SERVER['REQUEST_SCHEME'] . '://' . $_SERVER['HTTP_HOST'] . '/img/' . $nombreArchivoFinal;
-                $this->respuesta->success();
-                $this->respuesta->message = 'Imagen subida exitosamente';
-                $this->respuesta->data = ['path' => $rutaCompleta,
-                                          'nombrePath' => $nombreArchivoFinal]; // Ruta completa del archivo
-                echo json_encode($this->respuesta);
+
+                //relacionar la imagen con el usuario
+                $usuariosDB = new UsuariosDB;
+                $imagenLinkeada = $usuariosDB->putUserImage($userId, $rutaCompleta);
+                if ($imagenLinkeada == false) {
+                    //Eliminar la imagen creada en el servidor
+                    unlink($rutaDestino);
+                    // Si no se puede borrar el archivo
+                    $this->respuesta->_500();
+                    $this->respuesta->message = 'Hubo un error al guardar la imagen';
+                    http_response_code($this->respuesta->code);
+                    echo json_encode($this->respuesta);
+                    return;
+                } else {
+                    $this->respuesta->success();
+                    $this->respuesta->message = 'Imagen subida exitosamente';
+                    $this->respuesta->data = [
+                        'path' => $rutaCompleta,
+                        'nombrePath' => $nombreArchivoFinal
+                    ]; // Ruta completa del archivo
+                    echo json_encode($this->respuesta);
+                }
             } else {
                 // Ocurrió un error al mover el archivo
                 $this->respuesta->_500();
@@ -83,7 +100,7 @@ class Imagenes
         if (strpos(realpath($rutaImagen), realpath($this->carpetaDestino)) !== 0) {
             // Si la ruta no está dentro de la carpeta de imágenes, prevenimos el borrado
             $this->respuesta->_400();
-            $this->respuesta->message = 'Intento de acceso no autorizado a otro archivo';
+            $this->respuesta->message = 'Intento de acceso no autorizado a otro archivo o el archivo no existe';
             http_response_code($this->respuesta->code);
             echo json_encode($this->respuesta);
             return;
@@ -117,11 +134,21 @@ class Imagenes
     public function borrarImagenUsuario($idUser)
     {
         $usuariosDB = new UsuariosDB;
-        
+
         $imagen = $usuariosDB->getUserImage($idUser);
 
+        if ($imagen == false) {
+            $this->respuesta->_404();
+            $this->respuesta->message = 'El usuario no tiene ninguna foto de perfil';
+            http_response_code($this->respuesta->code);
+            echo json_encode($this->respuesta);
+            return;
+        }
+
         //dejar solo la imagen
-        $imagenNombre = explode("/", $imagen);
+        $imagenNombreArray = explode("/", $imagen);
+
+        $imagenNombre = $imagenNombreArray[count($imagenNombreArray) - 1];
 
         // Verificar que el archivo está dentro de la carpeta 'img/' (evitar ataques de manipulación de ruta)
         $rutaImagen = $this->carpetaDestino . $imagenNombre;
@@ -161,4 +188,3 @@ class Imagenes
         }
     }
 }
-?>
