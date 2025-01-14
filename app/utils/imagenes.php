@@ -110,10 +110,21 @@ class Imagenes
         if (file_exists($rutaImagen)) {
             // Intentamos borrar el archivo
             if (unlink($rutaImagen)) {
-                $this->logsController->registrarLog(Logs::INFO, "El usuario elimino una imagen: $imagenNombre");
-                $this->respuesta->success();
-                $this->respuesta->message = 'Imagen eliminada exitosamente';
-                echo json_encode($this->respuesta);
+                //Eliminar la imagen de todos los usuarios que tengan la imagen
+                $usuariosDB = new UsuariosDB;
+                $usuariosDesrelacionador = $usuariosDB->deleteUserImageByPath($rutaImagen);
+                if ($usuariosDesrelacionador == false) {
+                    // Si no se puede borrar el archivo
+                    $this->respuesta->_500();
+                    $this->respuesta->message = 'Hubo un error al desrelacionar la imagen de los usuarios';
+                    http_response_code($this->respuesta->code);
+                    echo json_encode($this->respuesta);
+                } else {
+                    $this->logsController->registrarLog(Logs::INFO, "El usuario elimino una imagen: $imagenNombre");
+                    $this->respuesta->success();
+                    $this->respuesta->message = 'Imagen eliminada exitosamente';
+                    echo json_encode($this->respuesta);
+                }
             } else {
                 // Si no se puede borrar el archivo
                 $this->respuesta->_500();
