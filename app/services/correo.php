@@ -88,6 +88,7 @@ class Correo
                 $respuesta = new Respuesta;
                 $respuesta->_500();
                 $respuesta->message = 'Error en el servicio correo: No se ha recibido en los datos del usuario ($dataUsuario) los datos necesarios para intentar enviar el correo electrónico con el token al usuario';
+                echo var_dump($dataUsuario);
                 return $respuesta;
             }
         } catch (Exception $e) {
