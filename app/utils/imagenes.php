@@ -199,4 +199,57 @@ class Imagenes
             echo json_encode($this->respuesta);
         }
     }
+
+    //metodo para recoger de la base de datos la imagen del usuario que se llame
+    public function obtenerImagenUsuario($idUser)
+    {
+        $usuariosDB = new UsuariosDB;
+        $imagen = $usuariosDB->getUserImage($idUser);
+
+        if ($imagen == false) {
+            $this->respuesta->_404();
+            $this->respuesta->message = 'El usuario no tiene ninguna foto de perfil';
+            http_response_code($this->respuesta->code);
+            echo json_encode($this->respuesta);
+            return;
+        }
+        //dejar solo la imagen
+        $imagenNombreArray = explode("/", $imagen);
+
+        $imagenNombre = $imagenNombreArray[count($imagenNombreArray) - 1];
+
+        $this->obtenerImagen($imagenNombre);
+    }
+
+
+    //Metodo para enviar la imagen en formato imagen
+    public function obtenerImagen($imagenNombre)
+    {
+        // Verificar que el archivo está dentro de la carpeta 'img/' (evitar ataques de manipulación de ruta)
+        $rutaImagen = $this->carpetaDestino . $imagenNombre;
+
+        // Aseguramos que la ruta esté dentro de la carpeta de imágenes
+        if (strpos(realpath($rutaImagen), realpath($this->carpetaDestino)) !== 0) {
+            // Si la ruta no está dentro de la carpeta de imágenes, prevenimos el acceso
+            $this->respuesta->_400();
+            $this->respuesta->message = 'Intento de acceso no autorizado a otro archivo';
+            http_response_code($this->respuesta->code);
+            echo json_encode($this->respuesta);
+            return;
+        }
+
+        // Verificamos si el archivo existe
+        if (file_exists($rutaImagen)) {
+            // Enviar la imagen con el tipo de contenido adecuado
+            $tipoArchivo = mime_content_type($rutaImagen);
+            header('Content-Type: ' . $tipoArchivo);
+            readfile($rutaImagen);
+        } else {
+            // Si el archivo no existe
+            $this->respuesta->_404();
+            $this->respuesta->message = 'La imagen no existe en el servidor';
+            http_response_code($this->respuesta->code);
+            echo json_encode($this->respuesta);
+        }
+    }
 }

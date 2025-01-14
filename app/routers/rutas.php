@@ -68,6 +68,36 @@ switch ($method) {
     case 'GET':
 
         switch (true) {
+            case ($request === 'usuario/imagen'):
+                $handled = true;
+                if ($authMiddleware->verificarTokenUsuarioActivo() != false) {
+                    if ($authMiddleware->verificarAdmin()) {
+                        if (isset($_GET['id'])) {
+                            // Obtener los datos del cuerpo de la solicitud, aunque no los necesitamos para la imagen
+                            // El archivo se recibe como parte de $_FILES, no de php://input
+                            $imagenes = new Imagenes();
+                            $imagenes->obtenerImagenUsuario($_GET['id']);
+                        } else {
+                            $imagenes = new Imagenes();
+                            //recoge el id del usuario por el token
+                            $idUser = $authMiddleware->obtenerIdUsuarioActivo();
+                            //borra la imagen del usuario
+                            $imagenes->obtenerImagenUsuario($idUser);
+                        }
+                    } else {
+                        $imagenes = new Imagenes();
+                        //recoge el id del usuario por el token
+                        $idUser = $authMiddleware->obtenerIdUsuarioActivo();
+                        //borra la imagen del usuario
+                        $imagenes->obtenerImagenUsuario($idUser);
+                    }
+                } else {
+                    $respuesta->_403();
+                    $respuesta->message = 'El token no se puede authentificar con exito';
+                    http_response_code($respuesta->code);
+                    echo json_encode($respuesta);
+                }
+                break;
             case (preg_match('/^plant\/alert/', $request, $matches) && isset($_GET['proveedor']) ? true : false):
                 $handled = true;
                 //Verificamos que existe el usuario CREADOR del token y sino manejamos el error dentro de la funcion
