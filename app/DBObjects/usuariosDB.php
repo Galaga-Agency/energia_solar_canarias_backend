@@ -379,7 +379,7 @@ class UsuariosDB
             // --------------------------------------------------
             $email         = $data['email']          ?? $usuario['email']; // Mantener el email actual si no viene
             $clase         = $data['clase']          ?? $usuario['clase']; // Mantener la clase actual si no viene
-            $nombre        = $data['nombre']         ?? $usuario['usuario_nombre']; // Mantener el nombre actual si no viene
+            $nombre        = $data['nombre']         ?? $usuario['nombre']; // Mantener el nombre actual si no viene
             $apellido      = $data['apellido']       ?? $usuario['apellido']; // Mantener el apellido actual si no viene
             $imagen        = $data['imagen']         ?? $usuario['imagen']; // Mantener la imagen actual si no viene
             $movil         = $data['movil']          ?? $usuario['movil']; // Mantener el móvil actual si no viene
