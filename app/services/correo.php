@@ -33,9 +33,9 @@ class Correo
     public function login($dataUsuario, $token, $idiomaUsuario = 'es')
     {
         try {
-            if (isset($dataUsuario['email']) && isset($dataUsuario['nombre']) && isset($dataUsuario['tokenLogin'])) {
+            if (isset($dataUsuario['email']) && isset($dataUsuario['tokenLogin'])) {
                 $emailUsuario = $dataUsuario['email'];
-                $nombreUsuario = $dataUsuario['nombre'];
+                $nombreUsuario = isset($dataUsuario['nombre'])? $dataUsuario['nombre'] : '';
 
                 // Configuración SMTP para Amazon WorkMail
                 $this->mail->isSMTP();
