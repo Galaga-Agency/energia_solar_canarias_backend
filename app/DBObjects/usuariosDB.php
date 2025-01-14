@@ -927,8 +927,9 @@ class UsuariosDB
             $stmt->execute();
 
             $imagen = false;
-            if ($stmt->affected_rows > 0) {
-                $imagen = true;
+            $result = $stmt->get_result();
+            if ($row = $result->fetch_assoc()) {
+                $imagen = $row['imagen'];
             }
 
             $stmt->close();
@@ -958,6 +959,29 @@ class UsuariosDB
             return $result; // Devuelve true si se ejecutó correctamente, false si no
         } catch (Exception $e) {
             error_log("Error al obtener la imagen del usuario: " . $e->getMessage());
+            return false;
+        }
+    }
+    /**
+     * Modificar la imagen de un usuario por su ID
+     * @param int $id El ID del usuario
+     * @return true|false dependiendo si se ha modificado la imagen
+     */
+    public function putUserImage($id, $imagen)
+    {
+        try {
+            $conexion = Conexion::getInstance();
+            $conn = $conexion->getConexion();
+
+            $query = "UPDATE usuarios SET imagen = ? WHERE usuario_id = ?";
+            $stmt = $conn->prepare($query);
+            $stmt->bind_param('si', $imagen, $id);
+            $result = $stmt->execute();
+
+            $stmt->close();
+            return $result; // Devuelve true si se ejecutó correctamente, false si no
+        } catch (Exception $e) {
+            error_log("Error al actualizar la imagen del usuario: " . $e->getMessage());
             return false;
         }
     }
