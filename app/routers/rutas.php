@@ -660,7 +660,8 @@ switch ($method) {
                     // Obtener los datos del cuerpo de la solicitud, aunque no los necesitamos para la imagen
                     // El archivo se recibe como parte de $_FILES, no de php://input
                     $imagenes = new Imagenes();
-                    $imagenes->subirImagen();
+                    $userId = $authMiddleware->obtenerIdUsuarioActivo();
+                    $imagenes->subirImagen($userId);
                 } else {
                     $respuesta->_403();
                     $respuesta->message = 'El token no se puede authentificar con exito';
