@@ -123,7 +123,7 @@ class UsuariosDB
 
             $query = "SELECT 
                         usuarios.usuario_id,
-                        usuarios.nombre AS usuario_nombre,
+                        usuarios.nombre AS nombre,
                         usuarios.apellido,
                         usuarios.email,
                         usuarios.movil,
@@ -176,7 +176,7 @@ class UsuariosDB
 
             $query = "SELECT
                         usuarios.usuario_id,
-                        usuarios.nombre AS usuario_nombre,
+                        usuarios.nombre AS nombre,
                         usuarios.apellido,
                         usuarios.email,
                         usuarios.movil,
@@ -879,7 +879,7 @@ class UsuariosDB
      * @param string $password El nuevo password
      * @return true|false El estado de la operación
      */
-    public function putUserPassword($id,$password)
+    public function putUserPassword($id, $password)
     {
         try {
             $passwordHash = password_hash($password, PASSWORD_BCRYPT);
@@ -907,6 +907,58 @@ class UsuariosDB
         } catch (Exception $e) {
             error_log("Error al obtener password del usuario: " . $e->getMessage());
             return null;
+        }
+    }
+    /**
+     * Obtener la imagen de un usuario por su ID
+     * @param int $id El ID del usuario
+     * @return string|null La URL de la imagen del usuario o null si no se encuentra
+     */
+    public function getUserImage($id)
+    {
+        try {
+            $conexion = Conexion::getInstance();
+            $conn = $conexion->getConexion();
+
+            $query = "SELECT imagen FROM usuarios WHERE usuario_id = ?";
+            $stmt = $conn->prepare($query);
+            $stmt->bind_param('i', $id);
+            $stmt->execute();
+            $stmt->execute();
+
+            $imagen = false;
+            if ($stmt->affected_rows > 0) {
+                $imagen = true;
+            }
+
+            $stmt->close();
+            return $imagen;
+        } catch (Exception $e) {
+            error_log("Error al obtener la imagen del usuario: " . $e->getMessage());
+            return false;
+        }
+    }
+    /**
+     * Eliminar la imagen de un usuario por su ID
+     * @param int $id El ID del usuario
+     * @return string|null La URL de la imagen del usuario o null si no se encuentra
+     */
+    public function deleteUserImage($id)
+    {
+        try {
+            $conexion = Conexion::getInstance();
+            $conn = $conexion->getConexion();
+
+            $query = "UPDATE usuarios SET imagen = NULL WHERE usuario_id = ?";
+            $stmt = $conn->prepare($query);
+            $stmt->bind_param('i', $id);
+            $result = $stmt->execute();
+
+            $stmt->close();
+            return $result; // Devuelve true si se ejecutó correctamente, false si no
+        } catch (Exception $e) {
+            error_log("Error al obtener la imagen del usuario: " . $e->getMessage());
+            return false;
         }
     }
 }
