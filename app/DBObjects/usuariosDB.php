@@ -123,7 +123,7 @@ class UsuariosDB
 
             $query = "SELECT 
                         usuarios.usuario_id,
-                        usuarios.nombre AS usuario_nombre,
+                        usuarios.nombre AS nombre,
                         usuarios.apellido,
                         usuarios.email,
                         usuarios.movil,
@@ -176,7 +176,7 @@ class UsuariosDB
 
             $query = "SELECT
                         usuarios.usuario_id,
-                        usuarios.nombre AS usuario_nombre,
+                        usuarios.nombre AS nombre,
                         usuarios.apellido,
                         usuarios.email,
                         usuarios.movil,
