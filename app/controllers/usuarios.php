@@ -130,12 +130,28 @@ class UsuariosController
         // Definir los valores predeterminados de paginación
         $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
         $limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 200;
+        $imagen = isset($_GET['imagen']) ? (int)$_GET['imagen'] : 0;
 
         // Instanciar el objeto de acceso a la base de datos
         $usuariosDB = new UsuariosDB();
 
         // Obtener usuarios con paginación
         $usuarios = $usuariosDB->getUsers($page, $limit);
+
+        //Verificamos que el administrador necesita las imagenes y se las pasamos codificadas
+        if ($imagen == 1) {
+            foreach ($usuarios as &$usuario) {
+            if (!empty($usuario['imagen'])) {
+                //aquí recogemos solo el nombre
+                $usuario['imagen'] = explode('/', $usuario['imagen']);
+                $usuario['imagen'] = end($usuario['imagen']);
+                $path = __DIR__ . '/../utils/img/' . $usuario['imagen'];
+                if (file_exists($path)) {
+                $usuario['imagen'] = base64_encode(file_get_contents($path));
+                }
+            }
+            }
+        }
 
         // Verificar si se obtuvo un resultado
         if ($usuarios !== false) {
