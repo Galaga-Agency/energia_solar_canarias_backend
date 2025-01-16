@@ -4,14 +4,31 @@ require_once __DIR__ . "/respuesta.php";
 require_once __DIR__ . "/../DBObjects/usuariosDB.php";
 require_once __DIR__ . "/../controllers/LogsController.php";
 
+use Dotenv\Dotenv;
+use Firebase\JWT\JWT;
+use Firebase\JWT\Key;
+
 class Imagenes
 {
     private $respuesta;
     private $logsController;
-    private $carpetaDestino = __DIR__ . '/img/'; // Definir la carpeta de destino
+    private $clave_secreta;
+    private $algorithm;
+    private $carpetaDestino = __DIR__ . '/img/';
 
     public function __construct()
     {
+        try {
+            // Cargar el archivo .env
+            $dotenv = Dotenv::createImmutable(__DIR__ . '/../../config');
+            $dotenv->load();
+
+            $this->clave_secreta = $_ENV['SECRET_KEY'];
+            $this->algorithm = $_ENV['ALGORITHM'];
+        } catch (Exception $e) {
+            echo "Error al cargar el archivo .env";
+        }
+
         $this->respuesta = new Respuesta;
         $this->logsController = new LogsController;
     }
@@ -89,7 +106,6 @@ class Imagenes
             echo json_encode($this->respuesta);
         }
     }
-
     // Método para borrar la imagen de la carpeta img
     public function borrarImagen($imagenNombre)
     {
@@ -200,7 +216,25 @@ class Imagenes
         }
     }
 
-    //metodo para recoger de la base de datos la imagen del usuario que se llame
+    // Función para generar una URL protegida para la imagen
+    public function generarUrlProtegida($usuario_id)
+    {
+        $clave_secreta_url = $this->clave_secreta; // Otra clave secreta para firmar la URL
+        $expiracion = time() + 3600; // La URL será válida por una hora
+
+        $datos = [
+            'usuario_id' => $usuario_id,
+            'expiracion' => $expiracion
+        ];
+
+        // Generar el token de la URL
+        $token_url = base64_encode(json_encode($datos) . '.' . hash_hmac('sha256', json_encode($datos), $clave_secreta_url));
+
+        // Retornar la URL protegida
+        return "https://app-energiasolarcanarias-backend.com/app/utils/obtener_imagen.php?token=$token_url";
+    }
+
+    // Método para obtener la imagen del usuario
     public function obtenerImagenUsuario($idUser)
     {
         $usuariosDB = new UsuariosDB;
@@ -213,24 +247,22 @@ class Imagenes
             echo json_encode($this->respuesta);
             return;
         }
-        //dejar solo la imagen
-        $imagenNombreArray = explode("/", $imagen);
 
+        // Extraer el nombre de la imagen
+        $imagenNombreArray = explode("/", $imagen);
         $imagenNombre = $imagenNombreArray[count($imagenNombreArray) - 1];
 
         $this->obtenerImagen($imagenNombre);
     }
 
-
-    //Metodo para enviar la imagen en formato imagen
+    // Método para obtener y devolver la imagen en formato adecuado
     public function obtenerImagen($imagenNombre)
     {
-        // Verificar que el archivo está dentro de la carpeta 'img/' (evitar ataques de manipulación de ruta)
+        // Verificar la ruta del archivo
         $rutaImagen = $this->carpetaDestino . $imagenNombre;
 
         // Aseguramos que la ruta esté dentro de la carpeta de imágenes
         if (strpos(realpath($rutaImagen), realpath($this->carpetaDestino)) !== 0) {
-            // Si la ruta no está dentro de la carpeta de imágenes, prevenimos el acceso
             $this->respuesta->_400();
             $this->respuesta->message = 'Intento de acceso no autorizado a otro archivo';
             http_response_code($this->respuesta->code);
@@ -238,18 +270,27 @@ class Imagenes
             return;
         }
 
-        // Verificamos si el archivo existe
+        // Verificar que el archivo exista
         if (file_exists($rutaImagen)) {
-            // Enviar la imagen con el tipo de contenido adecuado
             $tipoArchivo = mime_content_type($rutaImagen);
             header('Content-Type: ' . $tipoArchivo);
             readfile($rutaImagen);
         } else {
-            // Si el archivo no existe
             $this->respuesta->_404();
             $this->respuesta->message = 'La imagen no existe en el servidor';
             http_response_code($this->respuesta->code);
             echo json_encode($this->respuesta);
+        }
+    }
+
+    // Función para verificar el JWT
+    public function verificarJWT($jwt)
+    {
+        try {
+            $decoded = JWT::decode($jwt, new Key($this->clave_secreta, $this->algorithm));
+            return $decoded;
+        } catch (Exception $e) {
+            return null;
         }
     }
 }
