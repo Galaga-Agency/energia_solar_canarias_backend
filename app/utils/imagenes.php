@@ -7,6 +7,9 @@ require_once __DIR__ . "/../controllers/LogsController.php";
 use Dotenv\Dotenv;
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
+use Firebase\JWT\SignatureInvalidException;
+use Firebase\JWT\ExpiredException;
+use Firebase\JWT\BeforeValidException;
 
 class Imagenes
 {
@@ -284,13 +287,27 @@ class Imagenes
     }
 
     // Función para verificar el JWT
+    // Función para verificar el JWT
     public function verificarJWT($jwt)
     {
         try {
+            // Intentamos decodificar el JWT
             $decoded = JWT::decode($jwt, new Key($this->clave_secreta, $this->algorithm));
+
+            // Si se decodifica correctamente, retornar los datos
             return $decoded;
+        } catch (ExpiredException $e) {
+            // Si el token está expirado
+            return 'Token expirado: ' . $e->getMessage();
+        } catch (SignatureInvalidException $e) {
+            // Si la firma es inválida
+            return 'Firma inválida: ' . $e->getMessage();
+        } catch (BeforeValidException $e) {
+            // Si el token aún no es válido
+            return 'Token no válido aún: ' . $e->getMessage();
         } catch (Exception $e) {
-            return null;
+            // Para cualquier otro error
+            return 'Error al verificar el JWT: ' . $e->getMessage();
         }
     }
 }
