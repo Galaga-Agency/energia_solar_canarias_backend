@@ -1009,7 +1009,7 @@ class UsuariosDB
     /**
      * Poner en null todas las imagenes de los usuarios que tengan la imagen pasada por parametro
      * @param int $id El ID del usuario
-     * @return true|false dependiendo si se ha modificado la imagen
+     * @return array|false dependiendo si se ha modificado la imagen
      */
     public function getUsuariosAsociadosAPlantas($idUsuario,$nombreProveedor)
     {
