@@ -23,7 +23,7 @@ if (isset($_GET['token'])) {
         // El token es válido, proceder a obtener la imagen del usuario
         $usuario_id = $decoded->usuario_id;
         $usuariosDB = new UsuariosDB();
-        
+
         var_dump($usuario_id);
         // Obtener la ruta de la imagen del usuario
         $imagen = $usuariosDB->getUserImage($usuario_id);
@@ -39,9 +39,10 @@ if (isset($_GET['token'])) {
 
             if (file_exists($rutaImagen)) {
                 // Si la imagen existe, enviar la imagen con el tipo de contenido adecuado
-                $tipoArchivo = mime_content_type($rutaImagen);
-                header('Content-Type: ' . $tipoArchivo);
-                readfile($rutaImagen);
+                $finfo = finfo_open(FILEINFO_MIME_TYPE);
+                $tipoArchivo = finfo_file($finfo, $rutaImagen);
+                finfo_close($finfo);
+
                 exit;
             } else {
                 // Si la imagen no existe en el servidor
