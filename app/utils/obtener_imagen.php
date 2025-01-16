@@ -39,9 +39,10 @@ if (isset($_GET['token'])) {
 
             if (file_exists($rutaImagen)) {
                 // Si la imagen existe, enviar la imagen con el tipo de contenido adecuado
-                $tipoArchivo = mime_content_type($rutaImagen);
-                header('Content-Type: ' . $tipoArchivo);
-                readfile($rutaImagen);
+                //$tipoArchivo = mime_content_type($rutaImagen);
+                //header('Content-Type: ' . $tipoArchivo);
+                //readfile($rutaImagen);
+                echo $rutaImagen;
                 exit;
             } else {
                 // Si la imagen no existe en el servidor
