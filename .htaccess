@@ -31,6 +31,10 @@ Require all granted
     Require all granted
 </Files>
 
+<Files "obtener_imagen.php">
+    Require all granted
+</Files>
+
 <Files "webhookgithub.php">
     Require all granted
 </Files>
