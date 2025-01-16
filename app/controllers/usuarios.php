@@ -130,40 +130,16 @@ class UsuariosController
         // Definir los valores predeterminados de paginación
         $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
         $limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 200;
-        
+
         // Instanciar el objeto de acceso a la base de datos
         $usuariosDB = new UsuariosDB();
 
         // Obtener usuarios con paginación
         $usuarios = $usuariosDB->getUsers($page, $limit);
 
-        //Verificamos que el administrador necesita las imagenes y se las pasamos codificadas
-        foreach ($usuarios as &$usuario) {
-            if (!empty($usuario['imagen'])) {
-                // Aquí recogemos solo el nombre de la imagen
-                $usuario['imagen'] = explode('/', $usuario['imagen']);
-                $usuario['imagen'] = end($usuario['imagen']);
-                    
-                // Verificamos si la imagen existe en el sistema
-                $path = __DIR__ . '/../utils/img/' . $usuario['imagen'];
-
-                if (file_exists($path)) {
-                    // Aquí usamos el método generarUrlProtegida para generar la URL de acceso
-                    $imagenesController = new Imagenes();
-                    // Suponemos que el ID del usuario está almacenado en $usuario['id']
-                    $usuario['imagen'] = $imagenesController->generarUrlProtegida($usuario['usuario_id']);
-                } else {
-                        // Si la imagen no existe, podemos asignar un valor por defecto o mensaje de error
-                    $usuario['imagen'] = null;
-                }
-            } else {
-                // Si el usuario no tiene imagen, podemos asignar un valor por defecto o null
-                $usuario['imagen'] = null;
-            }
-        }
-
         // Verificar si se obtuvo un resultado
         if ($usuarios !== false) {
+            $this->pasarUrl($usuarios);
             $logsController->registrarLog(Logs::GET, "Se solicitan todos los usuarios");
             $paginacion = new Paginacion();
             $paginacion->success($usuarios);
@@ -263,6 +239,12 @@ class UsuariosController
             // Crear un nuevo usuario
             $result = $usuariosDB->insertUser($data);
         }
+
+        //recogemos el id del usuario nuevo
+        $IdusuarioCreado = $usuariosDB->getIdUserPorEmail($data['email']);
+
+        // Añadir el usuario_id al array de datos
+        $data['usuario_id'] = $IdusuarioCreado['usuario_id'];
 
         // Responder según el resultado
         if ($result) {
@@ -457,6 +439,34 @@ class UsuariosController
             $logsController->registrarLog(Logs::ERROR, "Error al obtener usuarios asociados a esta planta " . $e->getMessage());
             return false;
         }
+    }
+//
+    public function pasarUrl($usuarios){
+        //Verificamos que el administrador necesita las imagenes y se las pasamos codificadas
+        foreach ($usuarios as &$usuario) {
+            if (!empty($usuario['imagen'])) {
+                // Aquí recogemos solo el nombre de la imagen
+                $usuario['imagen'] = explode('/', $usuario['imagen']);
+                $usuario['imagen'] = end($usuario['imagen']);
+                    
+                // Verificamos si la imagen existe en el sistema
+                $path = __DIR__ . '/../utils/img/' . $usuario['imagen'];
+
+                if (file_exists($path)) {
+                    // Aquí usamos el método generarUrlProtegida para generar la URL de acceso
+                    $imagenesController = new Imagenes();
+                    // Suponemos que el ID del usuario está almacenado en $usuario['id']
+                    $usuario['imagen'] = $imagenesController->generarUrlProtegida($usuario['usuario_id']);
+                } else {
+                        // Si la imagen no existe, podemos asignar un valor por defecto o mensaje de error
+                    $usuario['imagen'] = null;
+                }
+            } else {
+                // Si el usuario no tiene imagen, podemos asignar un valor por defecto o null
+                $usuario['imagen'] = null;
+            }
+        }
+        return $usuarios;
     }
 }
 
