@@ -148,7 +148,7 @@ class UsuariosController
                     
                     // Verificamos si la imagen existe en el sistema
                     $path = __DIR__ . '/../utils/img/' . $usuario['imagen'];
-                    
+
                     if (file_exists($path)) {
                         // Aquí usamos el método generarUrlProtegida para generar la URL de acceso
                         $imagenesController = new Imagenes();
@@ -440,7 +440,7 @@ class UsuariosController
                             // Aquí usamos el método generarUrlProtegida para generar la URL de acceso
                             $imagenesController = new Imagenes();
                             // Suponemos que el ID del usuario está almacenado en $usuario['id']
-                            $usuario['imagen'] = $imagenesController->generarUrlProtegida($usuario['id']);
+                            $usuario['imagen'] = $imagenesController->generarUrlProtegida($usuario['usuario_id']);
                         } else {
                             // Si la imagen no existe, podemos asignar un valor por defecto o mensaje de error
                             $usuario['imagen'] = null;
