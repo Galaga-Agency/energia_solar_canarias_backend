@@ -59,7 +59,9 @@
       "limit": "limit",
       "limit_descripcion": "(opcional): Número máximo de usuarios a devolver (por defecto 200).",
       "respuesta_ejemplo": "Respuesta de Ejemplo",
-      "ejemplo_uso": "Ejemplo de Uso"
+      "ejemplo_uso": "Ejemplo de Uso",
+      "usuario_id":"Admin: Accede a la planta del siguiente usuario",
+      "plant_id":"Admin: Accede a los usuarios que tienen acceso a la siguiente planta"
     },
     "usuarios_post": {
       "titulo": "POST /usuarios",
@@ -113,7 +115,7 @@
     },
     "bearer_token": {
       "titulo_login": "POST /usuario/bearerToken",
-      "descripcion": "Este endpoint proporciona al usuario un token que no caduca o que caduca cuando el usuario quiera esto se utiliza para dar al usuario una posible implementación de nuestra api en su propio código",
+      "descripcion": "Este endpoint proporciona al usuario un token que no caduca o que caduca cuando el usuario quiera esto se utiliza para dar al usuario una posible implementación de nuestra api en su propio código, el funcionamiento del endpoint es el siguiente: se accedera al Bearer SECRET_TOKEN el cual creara o modificará el Token de autentificación, el token se creará si nunca a sido creado o se modificará si no es la primera vez que se crea y una vez creado se accedera a las peticiones con el siguiente encabezado Authorization: Token {{SECRET_TOKEN}}",
       "nombre_usuario": "(requerido): nombre del usuario",
       "password_usuario": "(requerido): contraseña del usuario"
     },
@@ -253,7 +255,9 @@
       "limit": "limit",
       "limit_descripcion": "(optional): Maximum number of users to return (default is 200).",
       "respuesta_ejemplo": "Example Response",
-      "ejemplo_uso": "Usage Example"
+      "ejemplo_uso": "Usage Example",
+      "usuario_id":"Admin: Access the plant of the following user.",
+      "plant_id":"Admin: Access users who have access to the next plant"
     },
     "usuarios_post": {
       "titulo": "POST /users",
@@ -307,7 +311,7 @@
     },
     "bearer_token": {
       "titulo_login": "POST /usuario/bearerToken",
-      "descripcion": "Este endpoint proporciona al usuario un token que no caduca o que caduca cuando el usuario quiera esto se utiliza para dar al usuario una posible implementación de nuestra api en su propio código",
+      "descripcion": "This endpoint provides the user with a token that either does not expire or expires whenever the user chooses. It is used to give the user a possible implementation of our API in their own code. The operation of the endpoint is as follows: access will be granted to the Bearer SECRET_TOKEN, which will create or modify the authentication token. The token will be created if it has never been created before, or it will be modified if it is not the first time being created. Once created, requests will be made with the following header: Authorization: Token {{SECRET_TOKEN}}.",
       "nombre_usuario": "(requerido): nombre del usuario",
       "password_usuario": "(requerido): contraseña del usuario"
     },

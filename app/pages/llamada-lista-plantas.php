@@ -13,6 +13,8 @@
             <li>GET <strong>proveedor</strong> <?php echo translate('get_detalles_planta.proveedor'); ?></li>
             <li>GET <strong>page</strong> <?php echo translate('usuarios_get.page_descripcion'); ?></li>
             <li>GET <strong>pageSize</strong> <?php echo translate('usuarios_get.limit_descripcion'); ?></li>
+            <li>GET <strong>usuarioId</strong> <?php echo translate('usuarios_get.usuario_id'); ?></li>
+            <li>GET <strong>plantId</strong> <?php echo translate('usuarios_get.plant_id'); ?></li>
         </ul>
         <h2 class="text-xl font-semibold <?php echo $theme === 'dark' ? 'text-gray-400' : 'text-gray-800'; ?> mb-2">
             <?php echo translate('usuarios_get.respuesta_ejemplo'); ?>
