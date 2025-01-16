@@ -271,7 +271,7 @@ class UsuariosController
         if ($result) {
             $logsController->registrarLog(Logs::POST, "Usuario creado o restaurado exitosamente: {$data['email']} por el administrador {$idUser}");
             $respuesta = new Respuesta();
-            $respuesta->success($result);
+            $respuesta->success($data);
             $respuesta->code = 201; // Código de creación exitosa
             $respuesta->message = "Usuario creado exitosamente.";
             echo json_encode($respuesta);
@@ -436,7 +436,7 @@ class UsuariosController
                         // Verificamos si la imagen existe en el sistema
                         $path = __DIR__ . '/../utils/img/' . $usuario['imagen'];
                         
-                        if (file_exists($path)) {
+                        if (file_exists($path)) { 
                             // Aquí usamos el método generarUrlProtegida para generar la URL de acceso
                             $imagenesController = new Imagenes();
                             // Suponemos que el ID del usuario está almacenado en $usuario['id']
