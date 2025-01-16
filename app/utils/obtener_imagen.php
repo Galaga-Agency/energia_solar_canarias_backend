@@ -24,9 +24,10 @@ if (isset($_GET['token'])) {
         $usuario_id = $decoded->usuario_id;
         $usuariosDB = new UsuariosDB();
         
+        echo $usuario_id;
         // Obtener la ruta de la imagen del usuario
         $imagen = $usuariosDB->getUserImage($usuario_id);
-        var_dump($imagen);
+
         if ($imagen) {
             // Extraer solo el nombre de la imagen desde la ruta
             $imagenNombreArray = explode("/", $imagen);
