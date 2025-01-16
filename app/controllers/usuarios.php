@@ -139,7 +139,7 @@ class UsuariosController
 
         // Verificar si se obtuvo un resultado
         if ($usuarios !== false) {
-            $this->pasarUrl($usuarios);
+            $usuarios = $this->pasarUrl($usuarios);
             $logsController->registrarLog(Logs::GET, "Se solicitan todos los usuarios");
             $paginacion = new Paginacion();
             $paginacion->success($usuarios);
@@ -411,11 +411,11 @@ class UsuariosController
                         // Aquí recogemos solo el nombre de la imagen
                         $usuario['imagen'] = explode('/', $usuario['imagen']);
                         $usuario['imagen'] = end($usuario['imagen']);
-                        
+
                         // Verificamos si la imagen existe en el sistema
                         $path = __DIR__ . '/../utils/img/' . $usuario['imagen'];
-                        
-                        if (file_exists($path)) { 
+
+                        if (file_exists($path)) {
                             // Aquí usamos el método generarUrlProtegida para generar la URL de acceso
                             $imagenesController = new Imagenes();
                             // Suponemos que el ID del usuario está almacenado en $usuario['id']
@@ -429,7 +429,7 @@ class UsuariosController
                         $usuario['imagen'] = null;
                     }
                 }
-                
+
                 return $result;
             } else {
                 $logsController->registrarLog(Logs::WARNING, "No se encontraron usuarios asociados a esta planta o a habido un error");
@@ -440,15 +440,16 @@ class UsuariosController
             return false;
         }
     }
-//
-    public function pasarUrl($usuarios){
+    //================ Esta funcion crea una url temporal que deja visualizar las imagenes del backend ==================//
+    public function pasarUrl($usuarios)
+    {
         //Verificamos que el administrador necesita las imagenes y se las pasamos codificadas
         foreach ($usuarios as &$usuario) {
             if (!empty($usuario['imagen'])) {
                 // Aquí recogemos solo el nombre de la imagen
                 $usuario['imagen'] = explode('/', $usuario['imagen']);
                 $usuario['imagen'] = end($usuario['imagen']);
-                    
+
                 // Verificamos si la imagen existe en el sistema
                 $path = __DIR__ . '/../utils/img/' . $usuario['imagen'];
 
@@ -458,7 +459,7 @@ class UsuariosController
                     // Suponemos que el ID del usuario está almacenado en $usuario['id']
                     $usuario['imagen'] = $imagenesController->generarUrlProtegida($usuario['usuario_id']);
                 } else {
-                        // Si la imagen no existe, podemos asignar un valor por defecto o mensaje de error
+                    // Si la imagen no existe, podemos asignar un valor por defecto o mensaje de error
                     $usuario['imagen'] = null;
                 }
             } else {
