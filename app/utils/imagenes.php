@@ -75,6 +75,21 @@ class Imagenes
 
                 //relacionar la imagen con el usuario
                 $usuariosDB = new UsuariosDB;
+
+                // Obtener la imagen anterior del usuario
+                $imagenAnterior = $usuariosDB->getUserImage($userId);
+                if ($imagenAnterior) {
+                    // Extraer el nombre de la imagen anterior
+                    $imagenAnteriorNombreArray = explode("/", $imagenAnterior);
+                    $imagenAnteriorNombre = end($imagenAnteriorNombreArray);
+                    $rutaImagenAnterior = $this->carpetaDestino . $imagenAnteriorNombre;
+
+                    // Borrar la imagen anterior si existe
+                    if (file_exists($rutaImagenAnterior)) {
+                        unlink($rutaImagenAnterior);
+                    }
+                }
+
                 $imagenLinkeada = $usuariosDB->putUserImage($userId, $rutaCompleta);
                 if ($imagenLinkeada == false) {
                     //Eliminar la imagen creada en el servidor
@@ -292,7 +307,6 @@ class Imagenes
         }
     }
 
-    // Función para verificar el JWT
     // Función para verificar el JWT
     public function verificarJWT($jwt)
     {
