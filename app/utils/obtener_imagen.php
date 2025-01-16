@@ -38,36 +38,61 @@ if (isset($_GET['token'])) {
             $rutaImagen = $carpetaDestino . $imagenNombre;
 
             if (file_exists($rutaImagen)) {
-                // Si la imagen existe, enviar la imagen con el tipo de contenido adecuado
+                // Si la imagen existe, preparar la respuesta en formato form-data
+
+                // Establecer el tipo de archivo de la imagen
                 $tipoArchivo = mime_content_type($rutaImagen);
-                header('Content-Type: ' . $tipoArchivo);
-                readfile($rutaImagen);
+
+                // Crear el encabezado para la respuesta multipart/form-data
+                header('Content-Type: multipart/form-data; boundary=--boundary');
+
+                // Enviar la imagen
+                echo "--boundary\r\n";
+                echo "Content-Disposition: form-data; name=\"image\"; filename=\"" . $imagenNombre . "\"\r\n";
+                echo "Content-Type: " . $tipoArchivo . "\r\n\r\n";
+                readfile($rutaImagen); // Imprimir el contenido del archivo
+
+                // Enviar un campo adicional con el mensaje
+                echo "\r\n--boundary\r\n";
+                echo "Content-Disposition: form-data; name=\"message\"\r\n\r\n";
+                echo "Imagen enviada correctamente\r\n";
+                echo "--boundary--"; // Fin del formulario
+
                 exit;
             } else {
                 // Si la imagen no existe en el servidor
-                $respuesta->_404();
-                $respuesta->message = 'La imagen no existe en el servidor';
-                http_response_code($respuesta->code);
-                echo json_encode($respuesta);
+                header('Content-Type: multipart/form-data; boundary=--boundary');
+                echo "--boundary\r\n";
+                echo "Content-Disposition: form-data; name=\"message\"\r\n\r\n";
+                echo "La imagen no existe en el servidor\r\n";
+                echo "--boundary--";
+                exit;
             }
         } else {
             // Si el usuario no tiene una imagen
-            $respuesta->_404();
-            $respuesta->message = 'El usuario no tiene una foto de perfil';
-            http_response_code($respuesta->code);
-            echo json_encode($respuesta);
+            header('Content-Type: multipart/form-data; boundary=--boundary');
+            echo "--boundary\r\n";
+            echo "Content-Disposition: form-data; name=\"message\"\r\n\r\n";
+            echo "El usuario no tiene una foto de perfil\r\n";
+            echo "--boundary--";
+            exit;
         }
     } else {
         // Si el token no es válido o ha expirado
-        $respuesta->_400();
-        $respuesta->message = 'Token no válido o expirado';
-        http_response_code($respuesta->code);
-        echo json_encode($respuesta);
+        header('Content-Type: multipart/form-data; boundary=--boundary');
+        echo "--boundary\r\n";
+        echo "Content-Disposition: form-data; name=\"message\"\r\n\r\n";
+        echo "Token no válido o expirado\r\n";
+        echo "--boundary--";
+        exit;
     }
 } else {
     // Si el parámetro 'token' no está presente en la URL
-    $respuesta->_400();
-    $respuesta->message = 'Token de acceso no proporcionado';
-    http_response_code($respuesta->code);
-    echo json_encode($respuesta);
+    header('Content-Type: multipart/form-data; boundary=--boundary');
+    echo "--boundary\r\n";
+    echo "Content-Disposition: form-data; name=\"message\"\r\n\r\n";
+    echo "Token de acceso no proporcionado\r\n";
+    echo "--boundary--";
+    exit;
 }
+?>
