@@ -165,6 +165,7 @@ class UsuariosController
         $usuariosDB = new UsuariosDB();
         $usuario = $usuariosDB->getUser($id);
         if ($usuario != false) {
+            $usuario = $this->pasarUrl($usuario);
             $logsController->registrarLog(Logs::GET, "Se solicita su mismo usuario");
             //quitamos la contraseña hasheada para enviar los datos
             if (isset($usuario[0]['password_hash'])) {
@@ -405,30 +406,7 @@ class UsuariosController
 
             if ($result != false) {
                 //Verificamos que el administrador necesita las imagenes y se las pasamos codificadas
-
-                foreach ($result as &$usuario) {
-                    if (!empty($usuario['imagen'])) {
-                        // Aquí recogemos solo el nombre de la imagen
-                        $usuario['imagen'] = explode('/', $usuario['imagen']);
-                        $usuario['imagen'] = end($usuario['imagen']);
-
-                        // Verificamos si la imagen existe en el sistema
-                        $path = __DIR__ . '/../utils/img/' . $usuario['imagen'];
-
-                        if (file_exists($path)) {
-                            // Aquí usamos el método generarUrlProtegida para generar la URL de acceso
-                            $imagenesController = new Imagenes();
-                            // Suponemos que el ID del usuario está almacenado en $usuario['id']
-                            $usuario['imagen'] = $imagenesController->generarUrlProtegida($usuario['usuario_id']);
-                        } else {
-                            // Si la imagen no existe, podemos asignar un valor por defecto o mensaje de error
-                            $usuario['imagen'] = null;
-                        }
-                    } else {
-                        // Si el usuario no tiene imagen, podemos asignar un valor por defecto o null
-                        $usuario['imagen'] = null;
-                    }
-                }
+                $result = $this->pasarUrl($result);
 
                 return $result;
             } else {
@@ -441,9 +419,11 @@ class UsuariosController
         }
     }
     //================ Esta funcion crea una url temporal que deja visualizar las imagenes del backend ==================//
-    public function pasarUrl($usuarios)
+    public function pasarUrl($data)
     {
-        //Verificamos que el administrador necesita las imagenes y se las pasamos codificadas
+        // Verificamos si $data es un solo usuario o una lista de usuarios
+        $usuarios = is_array($data) && isset($data[0]) ? $data : [$data];
+
         foreach ($usuarios as &$usuario) {
             if (!empty($usuario['imagen'])) {
                 // Aquí recogemos solo el nombre de la imagen
@@ -456,7 +436,7 @@ class UsuariosController
                 if (file_exists($path)) {
                     // Aquí usamos el método generarUrlProtegida para generar la URL de acceso
                     $imagenesController = new Imagenes();
-                    // Suponemos que el ID del usuario está almacenado en $usuario['id']
+                    // Suponemos que el ID del usuario está almacenado en $usuario['usuario_id']
                     $usuario['imagen'] = $imagenesController->generarUrlProtegida($usuario['usuario_id']);
                 } else {
                     // Si la imagen no existe, podemos asignar un valor por defecto o mensaje de error
@@ -467,7 +447,9 @@ class UsuariosController
                 $usuario['imagen'] = null;
             }
         }
-        return $usuarios;
+
+        // Si $data era un solo usuario, devolvemos el primer elemento del array
+        return is_array($data) && isset($data[0]) ? $usuarios : $usuarios[0];
     }
 }
 
