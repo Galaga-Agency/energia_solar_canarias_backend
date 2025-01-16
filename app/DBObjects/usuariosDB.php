@@ -990,21 +990,78 @@ class UsuariosDB
      * @param int $id El ID del usuario
      * @return true|false dependiendo si se ha modificado la imagen
      */
-    public function deleteUserImageByPath($path){
+    public function deleteUserImageByPath($path)
+    {
         try {
             $conexion = Conexion::getInstance();
             $conn = $conexion->getConexion();
-            echo $path;
             $query = "UPDATE usuarios SET imagen = NULL WHERE imagen = ?";
             $stmt = $conn->prepare($query);
             $stmt->bind_param('s', $path);
-            echo $query;
             $result = $stmt->execute();
-
             $stmt->close();
             return $result; // Devuelve true si se ejecutó correctamente, false si no
         } catch (Exception $e) {
             error_log("Error al actualizar la imagen del usuario: " . $e->getMessage());
+            return false;
+        }
+    }
+    /**
+     * Poner en null todas las imagenes de los usuarios que tengan la imagen pasada por parametro
+     * @param int $id El ID del usuario
+     * @return true|false dependiendo si se ha modificado la imagen
+     */
+    public function getUsuariosAsociadosAPlantas($idUsuario,$nombreProveedor)
+    {
+        try {
+            $conexion = Conexion::getInstance();
+            $conn = $conexion->getConexion();
+            //BINARY "hace que sql diferencie entre mayusculas y minusculas"
+            $query = "SELECT 
+                u.usuario_id, 
+                u.email, 
+                c.nombre AS clase_nombre,
+                u.nombre, 
+                u.apellido, 
+                u.imagen, 
+                u.movil, 
+                u.activo, 
+                u.eliminado, 
+                u.ultimo_login,
+                u.empresa, 
+                u.direccion, 
+                u.ciudad, 
+                u.codigo_postal, 
+                u.region_estado, 
+                u.pais, 
+                u.cif_nif 
+            FROM usuarios u
+            INNER JOIN plantas_asociadas pa ON pa.usuario_id = u.usuario_id
+            INNER JOIN proveedores p ON pa.proveedor_id = p.id
+            INNER JOIN clases c ON c.clase_id = u.clase_id
+            WHERE BINARY pa.planta_id = ?
+            AND p.nombre = ?;
+            ";
+
+            $stmt = $conn->prepare($query);
+            $stmt->bind_param('ss', $idUsuario,$nombreProveedor);
+            $stmt->execute();
+
+            // Obtener el resultado de la consulta
+            $result = $stmt->get_result();
+
+            // Comprobar si hay resultados
+            if ($result->num_rows > 0) {
+                // Obtener los datos en un array
+                $usuarios = $result->fetch_all(MYSQLI_ASSOC);
+                $stmt->close();
+                return $usuarios;  // Devuelve los datos obtenidos como un array
+            } else {
+                $stmt->close();
+                return false;  // Si no se encuentra ningún usuario asociado, devuelve false
+            }
+        } catch (Exception $e) {
+            error_log("Error no se ha podido acceder a las plantas de este usuario: " . $e->getMessage());
             return false;
         }
     }

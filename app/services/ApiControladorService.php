@@ -2,6 +2,7 @@
 require_once __DIR__ . '/../controllers/SolarEdgeController.php';
 require_once __DIR__ . '/../controllers/GoodWeController.php';
 require_once __DIR__ . '/../controllers/VictronEnergyController.php';
+require_once __DIR__ . '/../controllers/usuarios.php';
 require_once __DIR__ . '/../utils/respuesta.php';
 require_once __DIR__ . '/../DBObjects/plantasAsociadasDB.php';
 
@@ -1108,6 +1109,34 @@ class ApiControladorService
         }
 
         return $plants;
+    }
+    //===================== Estas funciones se utilizan para recoger datos de clientes en una planta ====================
+    public function getAllClientsPlanta($idPlanta,$nombreProveedor)
+    {
+        $respuesta = new Respuesta;
+        try {
+            $usuariosController = new UsuariosController;
+            $usuariosAsociados = $usuariosController->getUsuariosAsociadosAPlantas($idPlanta,$nombreProveedor);
+
+            if ($usuariosAsociados == false) {
+                $this->logsController->registrarLog(Logs::INFO, "No se encuentran usuarios asociados a la planta");
+                $respuesta->_404();
+                $respuesta->message = 'No se han encontrado usuarios para esta planta';
+                http_response_code(404);
+                echo json_encode($respuesta);
+                return;
+            }
+            
+            $respuesta->success($usuariosAsociados);
+            $this->logsController->registrarLog(Logs::INFO, "El administrador accede a las plantas del usuario");
+        } catch (Throwable $e) {
+            $this->logsController->registrarLog(Logs::ERROR, $e->getMessage() . "Error cogiendo las plantas del usuario");
+            $respuesta->_500();
+            $respuesta->message = "Error en el servidor de algún proveedor " . $e->getMessage();
+            http_response_code(500);
+        }
+        header('Content-Type: application/json');
+        echo json_encode($respuesta);
     }
     /**
      * Estas funciones se utilizan para mapear el codigo de status

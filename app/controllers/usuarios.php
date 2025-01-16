@@ -141,15 +141,15 @@ class UsuariosController
         //Verificamos que el administrador necesita las imagenes y se las pasamos codificadas
         if ($imagen == 1) {
             foreach ($usuarios as &$usuario) {
-            if (!empty($usuario['imagen'])) {
-                //aquí recogemos solo el nombre
-                $usuario['imagen'] = explode('/', $usuario['imagen']);
-                $usuario['imagen'] = end($usuario['imagen']);
-                $path = __DIR__ . '/../utils/img/' . $usuario['imagen'];
-                if (file_exists($path)) {
-                $usuario['imagen'] = base64_encode(file_get_contents($path));
+                if (!empty($usuario['imagen'])) {
+                    //aquí recogemos solo el nombre
+                    $usuario['imagen'] = explode('/', $usuario['imagen']);
+                    $usuario['imagen'] = end($usuario['imagen']);
+                    $path = __DIR__ . '/../utils/img/' . $usuario['imagen'];
+                    if (file_exists($path)) {
+                        $usuario['imagen'] = base64_encode(file_get_contents($path));
+                    }
                 }
-            }
             }
         }
 
@@ -326,9 +326,9 @@ class UsuariosController
                         http_response_code($respuesta->code);
                         echo json_encode($respuesta);
                     }
-                // Si no se envía el email, se actualiza el usuario sin actualizar el email
-                }else{
-                     // Llamar a la función para actualizar el usuario en la base de datos
+                    // Si no se envía el email, se actualiza el usuario sin actualizar el email
+                } else {
+                    // Llamar a la función para actualizar el usuario en la base de datos
                     $result = $usuariosDB->updateUser($id, $data);
                     if ($result) {
                         $logsController->registrarLog(Logs::PUT, "a modificado al usuario " . $id);
@@ -399,6 +399,28 @@ class UsuariosController
                 http_response_code($respuesta->code);
                 echo json_encode($respuesta);
             }
+        }
+    }
+    //llama a todos los usuarios relacionados con una planta
+    public function getUsuariosAsociadosAPlantas($idPlanta,$nombreProveedor)
+    {
+        try {
+            // Crear una instancia del controlador de logs
+            $logsController = new LogsController();
+            // Instancia de la base de datos
+            $usuariosDB = new UsuariosDB();
+
+            $result = $usuariosDB->getUsuariosAsociadosAPlantas($idPlanta,$nombreProveedor);
+
+            if ($result != false) {
+                return $result;
+            } else {
+                $logsController->registrarLog(Logs::WARNING, "No se encontraron usuarios asociados a esta planta o a habido un error");
+                return false;
+            }
+        } catch (Exception $e) {
+            $logsController->registrarLog(Logs::ERROR, "Error al obtener usuarios asociados a esta planta " . $e->getMessage());
+            return false;
         }
     }
 }
