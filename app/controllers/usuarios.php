@@ -402,7 +402,7 @@ class UsuariosController
         }
     }
     //llama a todos los usuarios relacionados con una planta
-    public function getUsuariosAsociadosAPlantas($idPlanta,$nombreProveedor)
+    public function getUsuariosAsociadosAPlantas($idPlanta, $nombreProveedor)
     {
         try {
             // Crear una instancia del controlador de logs
@@ -410,9 +410,22 @@ class UsuariosController
             // Instancia de la base de datos
             $usuariosDB = new UsuariosDB();
 
-            $result = $usuariosDB->getUsuariosAsociadosAPlantas($idPlanta,$nombreProveedor);
+            $result = $usuariosDB->getUsuariosAsociadosAPlantas($idPlanta, $nombreProveedor);
 
             if ($result != false) {
+                //Verificamos que el administrador necesita las imagenes y se las pasamos codificadas
+
+                foreach ($result as &$usuario) {
+                    if (!empty($usuario['imagen'])) {
+                        //aquí recogemos solo el nombre
+                        $usuario['imagen'] = explode('/', $usuario['imagen']);
+                        $usuario['imagen'] = end($usuario['imagen']);
+                        $path = __DIR__ . '/../utils/img/' . $usuario['imagen'];
+                        if (file_exists($path)) {
+                            $usuario['imagen'] = base64_encode(file_get_contents($path));
+                        }
+                    }
+                }
                 return $result;
             } else {
                 $logsController->registrarLog(Logs::WARNING, "No se encontraron usuarios asociados a esta planta o a habido un error");
