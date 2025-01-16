@@ -232,8 +232,15 @@ class Imagenes
         // Generar el token de la URL
         $token_url = JWT::encode($datos, $this->clave_secreta, $this->algorithm);
 
+        // Obtener el host actual
+        $host = $_SERVER['HTTP_HOST'];
+        // Añadir 'esc-backend' solo si estamos en localhost
+        if (strpos($host, 'localhost') !== false) {
+            $host .= "/esc-backend";
+        }
+
         // Retornar la URL protegida
-        return "https://app-energiasolarcanarias-backend.com/app/utils/obtener_imagen.php?token=$token_url";
+        return "http://$host/app/utils/obtener_imagen.php?token=$token_url";
     }
 
     // Método para obtener la imagen del usuario
