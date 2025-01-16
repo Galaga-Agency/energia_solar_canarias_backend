@@ -230,8 +230,9 @@ class Imagenes
             'expiracion' => $expiracion
         ];
 
+        $token_url = JWT::encode($datos, $this->clave_secreta, $this->algorithm);
         // Generar el token de la URL
-        $token_url = base64_encode(json_encode($datos) . '.' . hash_hmac('sha256', json_encode($datos), $clave_secreta_url));
+        //$token_url = base64_encode(json_encode($datos) . '.' . hash_hmac('sha256', json_encode($datos), $clave_secreta_url));
 
         // Retornar la URL protegida
         return "https://app-energiasolarcanarias-backend.com/app/utils/obtener_imagen.php?token=$token_url";
