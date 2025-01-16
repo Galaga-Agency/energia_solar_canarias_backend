@@ -485,7 +485,7 @@ switch ($method) {
                 //Verificamos que existe el usuario CREADOR del token y sino manejamos el error dentro de la funcion
                 if ($authMiddleware->verificarTokenUsuarioActivo() != false) {
                     $admin = $authMiddleware->verificarAdmin();
-                    if (isset($_GET['proveedor'])) {
+                    if (isset($_GET['proveedor']) && !isset($_GET['plantId'])) {
                         $apiControladorService = new ApiControladorService;
                         $page = isset($_GET['page']) ? $_GET['page'] : 1;
                         $pageSize = isset($_GET['pageSize']) ? $_GET['pageSize'] : 200;
@@ -533,9 +533,15 @@ switch ($method) {
                         if ($admin) {
                             $apiControladorService = new ApiControladorService();
                             if (isset($_GET['usuarioId'])) {
+                                //Solicitamos todas las plantas de un cliente 
                                 $usuarioId = $_GET['usuarioId'];
                                 $apiControladorService->getAllPlantsCliente($usuarioId);
-                            } else {
+                            } elseif(isset($_GET['plantId']) && isset($_GET['proveedor'])) {
+                                //Solicitamos todos los clientes de una planta
+                                $plantId = $_GET['plantId'];
+                                $nombreProveedor = $_GET['proveedor'];
+                                $apiControladorService->getAllClientsPlanta($plantId,$nombreProveedor);
+                            }else{
                                 $apiControladorService->getAllPlants();
                             }
                         } else {
