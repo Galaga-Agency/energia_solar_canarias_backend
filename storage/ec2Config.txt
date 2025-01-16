@@ -382,6 +382,71 @@ IncludeOptional conf.d/*.conf
     sudo systemctl restart vsftpd
     sudo systemctl restart httpd
 
+REINCIO DE LA APP GLIMFANS
+
+cd /var/www/html
+
+ls - la
+
+sudo rm -f .env
+sudo rm -f .eslintrc.json
+sudo rm -f .gitignore
+sudo rm -f .htaccess.sample
+sudo rm -f  README.md
+sudo rm -f artisan
+sudo rm -f composer.json
+sudo rm -f composer.lock
+sudo rm -f mix-manifest.json
+sudo rm -f package-lock.json
+sudo rm -f package.json
+sudo rm -f php-cs-fixer.php
+sudo rm -f webpack.mix.js
+sudo rm -rf Documentation
+sudo rm -rf public
+sudo rm -rf storage
+sudo rm -rf server.php
+sudo rm -rf resources
+sudo rm -rf routes
+sudo rm -rf database
+sudo rm -rf hooks
+sudo rm -rf lang
+sudo rm -rf config
+sudo rm -rf bootstrap
+sudo rm -rf app
+sudo rm -rf 'How to update'
+sudo rm -rf vendor
+
+sudo unzip codecanyon-ZLbFygI2-justfans-premium-content-creators-saas-platform.zip
+
+sudo mv /var/www/html/Script/* /var/www/html/ && sudo mv /var/www/html/Script/.* /var/www/html/
+
+sudo rm -rf /var/www/html/Script
+
+sudo systemctl restart httpd
+
+sudo chown -R apache:apache /var/www/html
+
+sudo chmod -R 775 /var/www/html
+
+sudo chmod g+s /var/www/html
+
+sudo chcon -R -t httpd_sys_content_t /var/www/html
+sudo chcon -R -t httpd_sys_rw_content_t /var/www/html
+
+sudo systemctl restart httpd
+
+ls -la
+
+
+
+
+
+
+
+
+
+
+
     
 
 
