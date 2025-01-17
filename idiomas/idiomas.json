@@ -30,7 +30,10 @@
       "proveedor_get": "GET Proveedores disponibles",
       "proveedor": "Proveedores",
       "get-alerts": "GET Alertas de las plantas",
-      "eliminar_relaciones": "DEL Eliminar relaciones a una planta"
+      "eliminar_relaciones": "DEL Eliminar relaciones a una planta",
+      "imagenes":"imagenes",
+      "post_imagenes":"POST imagenes",
+      "eliminar_imagenes":"DELETE imagenes"
     },
     "inicio": {
       "titulo": "Inicio",
@@ -60,8 +63,8 @@
       "limit_descripcion": "(opcional): Número máximo de usuarios a devolver (por defecto 200).",
       "respuesta_ejemplo": "Respuesta de Ejemplo",
       "ejemplo_uso": "Ejemplo de Uso",
-      "usuario_id":"Admin: Accede a la planta del siguiente usuario",
-      "plant_id":"Admin: Accede a los usuarios que tienen acceso a la siguiente planta"
+      "usuario_id": "Admin: Accede a la planta del siguiente usuario",
+      "plant_id": "Admin: Accede a los usuarios que tienen acceso a la siguiente planta"
     },
     "usuarios_post": {
       "titulo": "POST /usuarios",
@@ -193,6 +196,17 @@
       "pageIndex_descripcion": "Número de la paginación por defecto 1",
       "pageSize_descripcion": "Número de elementos por pagina por defecto 200",
       "proveedor": "(requerido):proveedor de la planta."
+    },
+    "subir_imagen": {
+      "titulo": "/usuario/imagen",
+      "descripcion": "Este endpoint es una llamada que sirve para subir al servidor la imagen y si no esta relacionada la imagen con el usuario en la base de datos lo relaciona y si existe en el usuario una relación con otra imagen entonces elimina del servidor la imagen y reemplaza la ruta por la nueva y la relaciona",
+      "cuerpo_solicitud": "form-data"
+    },
+    "eliminar_imagen": {
+      "titulo": "/usuario/imagen",
+      "descripcion": "Este endpoint es una llamada que sirve para eliminar la imagen de tu usuario y en el caso de los administradores podrán eliminar cualquier imagen que no sea apropiada para el usuario o que cree conflicto pasando el identificador del usuario por url",
+      "cuerpo_solicitud": "parametros por url",
+      "parametro_descripcion":"(Opcional) numero entero identificativo del usuario"
     }
   },
   "en": {
@@ -226,7 +240,10 @@
       "proveedor_get": "GET Available providers",
       "proveedor": "Suppliers",
       "get-alerts": "GET Alerts of plants",
-      "eliminar_relaciones": "DEL Delete relationships to a plant"
+      "eliminar_relaciones": "DEL Delete relationships to a plant",
+      "imagenes":"pictures",
+      "post_imagenes":"POST pictures",
+      "eliminar_imagenes":"DELETE pictures"
     },
     "inicio": {
       "titulo": "Home",
@@ -256,8 +273,8 @@
       "limit_descripcion": "(optional): Maximum number of users to return (default is 200).",
       "respuesta_ejemplo": "Example Response",
       "ejemplo_uso": "Usage Example",
-      "usuario_id":"Admin: Access the plant of the following user.",
-      "plant_id":"Admin: Access users who have access to the next plant"
+      "usuario_id": "Admin: Access the plant of the following user.",
+      "plant_id": "Admin: Access users who have access to the next plant"
     },
     "usuarios_post": {
       "titulo": "POST /users",
@@ -389,6 +406,17 @@
       "pageIndex_descripcion": "Page number, default is 1.",
       "pageSize_descripcion": "Number of items per page, default is 200.",
       "proveedor": "(required): Provider of the plant."
+    },
+    "subir_imagen": {
+      "titulo": "/usuario/imagen",
+      "descripcion": "This endpoint is a call used to upload the image to the server, and if the image is not already linked to the user in the database, it links it. If there is an existing image relationship for the user, it deletes the old image from the server, replaces the path with the new one, and links it.",
+      "cuerpo_solicitud": "form-data"
+    },
+    "eliminar_imagen": {
+      "titulo": "/usuario/imagen",
+      "descripcion": "This endpoint is a call used to delete the image of your user, and in the case of administrators, they can delete any inappropriate image for the user or that creates conflict by passing the user identifier in the URL.",
+      "cuerpo_solicitud": "parameters by URL",
+      "parametro_descripcion": "(Optional) integer identifier of the user"
     }
   }
 }
