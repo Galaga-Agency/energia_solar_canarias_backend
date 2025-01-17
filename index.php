@@ -160,6 +160,16 @@ $page = $_GET['page'] ?? 'inicio';
         </ul>
       </li>
       <li>
+        <button onclick="toggleSubmenu('imagenesSubmenu')" class="w-full text-left px-4 py-2 <?php echo $theme === 'dark' ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-blue-100'; ?> rounded focus:outline-none">
+          <?php echo translate('menu.imagenes') ?>
+        </button>
+        <ul id="imagenesSubmenu" class="ml-4 mt-2 space-y-1 hidden">
+          <li><a href="?page=subir-imagen" class="block px-4 py-2 <?php echo $theme === 'dark' ? 'text-gray-300 hover:bg-gray-600' : 'text-gray-600 hover:bg-blue-50'; ?> rounded"><?php echo translate('menu.post_imagenes') ?></a></li>
+          <li><a href="?page=eliminar-imagen" class="block px-4 py-2 <?php echo $theme === 'dark' ? 'text-gray-300 hover:bg-gray-600' : 'text-gray-600 hover:bg-blue-50'; ?> rounded"><?php echo translate('menu.eliminar_imagenes') ?></a></li>
+        </ul>
+      </li>
+      <li>
+      <li>
         <a href="?page=ayuda" class="block px-4 py-2 <?php echo $theme === 'dark' ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-blue-100'; ?> rounded"><?php echo translate('menu.ayuda') ?></a>
       </li>
       <li>
@@ -244,6 +254,12 @@ $page = $_GET['page'] ?? 'inicio';
         break;
       case 'eliminar-relaciones':
         include('./app/pages/eliminar-relaciones.php');
+        break;
+      case 'subir-imagen':
+        include('./app/pages/subir-imagen.php');
+        break;
+      case 'eliminar-imagen':
+        include('./app/pages/eliminar-imagen.php');
         break;
       default:
         echo "<h1 class='text-5xl font-bold text-center'>Página no encontrada</h1>";
