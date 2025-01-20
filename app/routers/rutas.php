@@ -109,7 +109,8 @@ switch ($method) {
                             case $proveedores['GoodWe']:
                                 $pageIndex = isset($_GET['pageIndex']) ? $_GET['pageIndex'] : 1;
                                 $pageSize = isset($_GET['pageSize']) ? $_GET['pageSize'] : 200;
-                                $apiControladorService->GetPowerStationWariningInfoByMultiCondition($pageIndex, $pageSize);
+                                $status = isset($_GET['status']) ? $_GET['status'] : 3;
+                                $apiControladorService->GetPowerStationWariningInfoByMultiCondition($pageIndex, $pageSize, $status);
                                 break;
                             case $proveedores['SolarEdge']:
                                 $respuesta->_404();
