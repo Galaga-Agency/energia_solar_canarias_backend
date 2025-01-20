@@ -185,14 +185,13 @@ class ApiControladorService
         echo json_encode($respuesta);
     }
 
-    public function GetPowerStationWariningInfoByMultiCondition($pageIndex = 1, $pageSize = 200)
+    public function GetPowerStationWariningInfoByMultiCondition($pageIndex = 1, $pageSize = 200, $status = 3)
     {
         $respuesta = new Respuesta;
         try {
-            $data = $this->getChartByPlantCuerpo();
 
             // Obtener datos de GoodWe
-            $goodWeResponse = $this->goodWeController->GetPowerStationWariningInfoByMultiCondition($pageIndex, $pageSize);
+            $goodWeResponse = $this->goodWeController->GetPowerStationWariningInfoByMultiCondition($pageIndex, $pageSize, $status);
             $goodWeData = json_decode($goodWeResponse, true);
 
             if ($goodWeData != null) {

@@ -107,11 +107,11 @@ class GoodWeController
      * @param string $powerStationId ID de la planta de energía
      * @return string
      */
-    public function GetPowerStationWariningInfoByMultiCondition($pageIndex = 1, $pageSize = 200)
+    public function GetPowerStationWariningInfoByMultiCondition($pageIndex = 1, $pageSize = 200, $status = 3)
     {
         $this->logsController->registrarLog(Logs::INFO, " accede a la api de GoodWe");
         // Llama al servicio para obtener los detalles de la planta
-        $result = $this->goodWeService->GetPowerStationWariningInfoByMultiCondition($pageIndex, $pageSize);
+        $result = $this->goodWeService->GetPowerStationWariningInfoByMultiCondition($pageIndex, $pageSize, $status);
         // Configura el tipo de contenido de la respuesta como JSON
         header('Content-Type: application/json');
         return json_encode($result);
