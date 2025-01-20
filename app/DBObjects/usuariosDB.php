@@ -381,7 +381,7 @@ class UsuariosDB
             $clase         = $data['clase']          ?? $usuario['clase']; // Mantener la clase actual si no viene
             $nombre        = $data['nombre']         ?? $usuario['nombre']; // Mantener el nombre actual si no viene
             $apellido      = $data['apellido']       ?? $usuario['apellido']; // Mantener el apellido actual si no viene
-            $imagen        = $data['imagen']         ?? $usuario['imagen']; // Mantener la imagen actual si no viene
+            //$imagen        = $data['imagen']         ?? $usuario['imagen']; // Mantener la imagen actual si no viene
             $movil         = $data['movil']          ?? $usuario['movil']; // Mantener el móvil actual si no viene
             $activo        = isset($data['activo']) ? (int)$data['activo'] : 1;
             $eliminado     = isset($data['eliminado']) ? (int)$data['eliminado'] : 0;
@@ -407,7 +407,6 @@ class UsuariosDB
                 clase_id = (SELECT clase_id FROM clases WHERE nombre = ?),
                 nombre = ?,
                 apellido = ?,
-                imagen = ?,
                 movil = ?,
                 activo = ?,
                 eliminado = ?,
@@ -427,13 +426,12 @@ class UsuariosDB
             // 5. Vincular parámetros (18 placeholders + 1 para el WHERE)
             // Tipos: s (string), i (int). El orden debe coincidir con el de la sentencia.
             $stmt->bind_param(
-                'sssssssiissssssssi',
+                'ssssssiissssssssi',
                 $email,     // s
                 $passwordHash,      // s
                 $clase,             // s
                 $nombre,            // s
                 $apellido,          // s
-                $imagen,            // s
                 $movil,             // s
                 $activo,            // i
                 $eliminado,         // i
