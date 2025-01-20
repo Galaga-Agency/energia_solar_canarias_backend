@@ -257,7 +257,7 @@ class GoodWeService
             "orgid" => "",
             "stationid" => "",
             "warninglevel" => 7,
-            "status" => "3",
+            "status" => "0",
             "starttime" => $fechaInicio,
             "endtime" => $fechaFin,
             "page_size" => $pageSize,
