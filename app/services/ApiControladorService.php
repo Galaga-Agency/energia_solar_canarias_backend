@@ -189,7 +189,6 @@ class ApiControladorService
     {
         $respuesta = new Respuesta;
         try {
-
             // Obtener datos de GoodWe
             $goodWeResponse = $this->goodWeController->GetPowerStationWariningInfoByMultiCondition($pageIndex, $pageSize, $status);
             $goodWeData = json_decode($goodWeResponse, true);
