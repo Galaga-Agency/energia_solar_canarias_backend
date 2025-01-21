@@ -227,7 +227,7 @@ class GoodWeService
     }
 
     //LLamada a todas las plantas en postman corresponde a la llamada POST GetPowerStationWariningInfoByMultiCondition
-    public function GetPowerStationWariningInfoByMultiCondition($pageIndex = 1, $pageSize = 200, $status)
+    public function GetPowerStationWariningInfoByMultiCondition($pageIndex = 1, $pageSize = 200, $status = 3)
     {
         $url = GoodWe::$url . "api/SmartOperateMaintenance/GetPowerStationWariningInfoByMultiCondition";
 
@@ -257,7 +257,7 @@ class GoodWeService
             "orgid" => "",
             "stationid" => "",
             "warninglevel" => 7,
-            "status" => '"'.$status.'"',
+            "status" => $status,
             "starttime" => $fechaInicio,
             "endtime" => $fechaFin,
             "page_size" => $pageSize,
