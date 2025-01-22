@@ -1114,17 +1114,7 @@ class ApiControladorService
         $respuesta = new Respuesta;
         try {
             $usuariosController = new UsuariosController;
-            $usuariosAsociados = $usuariosController->getUsuariosAsociadosAPlantas($idPlanta,$nombreProveedor);
-
-            if ($usuariosAsociados == false) {
-                $this->logsController->registrarLog(Logs::INFO, "No se encuentran usuarios asociados a la planta");
-                $respuesta->_404();
-                $respuesta->message = 'No se han encontrado usuarios para esta planta';
-                http_response_code(404);
-                echo json_encode($respuesta);
-                return;
-            }
-            
+            $usuariosAsociados = $usuariosController->getUsuariosAsociadosAPlantas($idPlanta,$nombreProveedor);  
             $respuesta->success($usuariosAsociados);
             $this->logsController->registrarLog(Logs::INFO, "El administrador accede a las plantas del usuario");
         } catch (Throwable $e) {
