@@ -523,7 +523,7 @@ switch ($method) {
                                 }
                                 break;
                             default:
-                                $respuesta->_404();
+                                $respuesta->success();
                                 $respuesta->message = 'No se ha encontrado el proveedor';
                                 http_response_code($respuesta->code);
                                 echo json_encode($respuesta);
