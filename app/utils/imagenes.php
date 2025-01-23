@@ -120,6 +120,11 @@ class Imagenes
             // Si no se encuentra el archivo o ocurre otro error
             $this->respuesta->_404();
             $this->respuesta->message = 'No se ha encontrado la imagen o hubo un error con la carga';
+            try{
+                var_dump( $_FILES['imagen']['error']);
+                }catch(Throwable $e){
+                    echo $e->getMessage();
+                }
             http_response_code($this->respuesta->code);
             echo json_encode($this->respuesta);
         }
@@ -171,11 +176,6 @@ class Imagenes
             // Si el archivo no existe
             $this->respuesta->_404();
             $this->respuesta->message = 'La imagen no existe en el servidor';
-            try{
-            var_dump( $_FILES['imagen']['error']);
-            }catch(Throwable $e){
-                echo $e->getMessage();
-            }
             http_response_code($this->respuesta->code);
             echo json_encode($this->respuesta);
         }
