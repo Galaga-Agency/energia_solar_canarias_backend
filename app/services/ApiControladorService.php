@@ -981,6 +981,7 @@ class ApiControladorService
         // Procesar datos de GoodWe
         foreach ($goodWeData as $goodWePlant) {
             $status = $this->mapGoodWeStatus($goodWePlant['data']['powercontrol_status'] ?? '');
+            echo $this->mapGoodWeStatus($goodWePlant['data']['list']['status'] ?? '');
             $plant = [
                 'id' => $goodWePlant['data']['info']['powerstation_id'] ?? null,
                 'name' => $goodWePlant['data']['info']['stationname'] ?? null,
