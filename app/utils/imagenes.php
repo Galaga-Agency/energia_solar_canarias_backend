@@ -121,7 +121,7 @@ class Imagenes
             $this->respuesta->_404();
             $this->respuesta->message = 'No se ha encontrado la imagen o hubo un error con la carga';
             try{
-                var_dump( $_FILES['imagen']['error']);
+                var_dump($_FILES['imagen']);
                 }catch(Throwable $e){
                     echo $e->getMessage();
                 }
