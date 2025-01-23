@@ -1017,7 +1017,7 @@ class ApiControladorService
             $address = implode(', ', array_filter($addressParts));
 
             $status = $this->mapSolarEdgeStatus($solarEdgePlant['details']['status'] ?? '');
-
+            echo json_encode($solarEdgePlant);
             $plant = [
                 'id' => $solarEdgePlant['details']['id'] ?? null,
                 'name' => $solarEdgePlant['details']['name'] ?? null,
