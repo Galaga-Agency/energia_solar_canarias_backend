@@ -40,7 +40,7 @@ class Imagenes
     public function subirImagen($userId)
     {
         // Verificamos si el archivo fue enviado correctamente
-        if (isset($_FILES['imagen']) /**&& $_FILES['imagen']['error'] === UPLOAD_ERR_OK **/) {
+        if (isset($_FILES['imagen']) && $_FILES['imagen']['error'] === UPLOAD_ERR_OK) {
 
             // Verificar si la carpeta de destino existe, si no la creamos
             if (!is_dir($this->carpetaDestino)) {
