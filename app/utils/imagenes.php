@@ -15,9 +15,6 @@ use Firebase\JWT\SignatureInvalidException;
 use Firebase\JWT\ExpiredException;
 use Firebase\JWT\BeforeValidException;
 
-echo ini_get('upload_max_filesize');
-echo ini_get('post_max_size');
-
 
 class Imagenes
 {
