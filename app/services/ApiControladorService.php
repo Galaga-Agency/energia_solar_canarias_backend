@@ -781,6 +781,7 @@ class ApiControladorService
                     // Obtener datos de SolarEdge
                     $solarEdgeResponse = $this->solarEdgeController->getSiteDetails($idPlanta);
                     $solarEdgeData = json_decode($solarEdgeResponse, true);
+                    var_dump($solarEdgeData);
                 } else {
                     $solarEdgeData = "";
                 }
@@ -789,6 +790,7 @@ class ApiControladorService
                     // Obtener datos de VictronEnergy
                     $victronEnergyResponse = $this->victronEnergyController->getSiteDetails($idPlanta);
                     $victronEnergyData = json_decode($victronEnergyResponse, true);
+                    var_dump($victronEnergyData);
                 }else{
                     $victronEnergyData = "";
                 }
