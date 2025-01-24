@@ -785,10 +785,20 @@ class ApiControladorService
                     $solarEdgeData = "";
                 }
 
+                if($proveedor == $proveedores['VictronEnergy']){
+                    // Obtener datos de VictronEnergy
+                    $victronEnergyResponse = $this->victronEnergyController->getSiteDetails($idPlanta);
+                    $victronEnergyData = json_decode($victronEnergyResponse, true);
+                }else{
+                    $victronEnergyData = "";
+                }
+
                 if ($proveedor == $proveedores['GoodWe']) {
                     $plants = $goodWeData;
                 } else if ($proveedor == $proveedores['SolarEdge']) {
                     $plants = $solarEdgeData;
+                } else if ($proveedor == $proveedor['VictronEnergy']){
+                    $plants = $victronEnergyData;
                 }
 
 
