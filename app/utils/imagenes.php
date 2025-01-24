@@ -126,7 +126,8 @@ class Imagenes
             $this->respuesta->_404();
             $this->respuesta->message = 'No se ha encontrado la imagen o hubo un error con la carga';
             try{
-                var_dump($_FILES['imagen']);
+                //Esto falla al ejecutarse en el servidor de producción algo del apache o del php.ini que no deja meter imagenes de mas de 2MB
+                //(var_dump($_FILES['imagen']);
                 }catch(Throwable $e){
                     echo $e->getMessage();
                 }
