@@ -793,8 +793,8 @@ class ApiControladorService
                 }else{
                     $victronEnergyData = "";
                 }
-                
-                $plants = "";
+
+                $plants = null;
 
                 if ($proveedor == $proveedores['GoodWe']) {
                     $plants = $goodWeData;
