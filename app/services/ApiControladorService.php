@@ -789,6 +789,12 @@ class ApiControladorService
                     // Obtener datos de VictronEnergy
                     $victronEnergyResponse = $this->victronEnergyController->getSiteDetails($idPlanta);
                     $victronEnergyData = $victronEnergyResponse;
+                    try{
+                        $victronEnergyData = json_decode($victronEnergyResponse, true);
+                        echo $victronEnergyData;
+                    }catch(Throwable $e){
+                        $victronEnergyData = json_encode($victronEnergyData);
+                    }
                 }else{
                     $victronEnergyData = "";
                 }
