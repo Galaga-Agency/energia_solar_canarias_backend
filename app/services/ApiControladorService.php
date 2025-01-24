@@ -788,7 +788,7 @@ class ApiControladorService
                 if($proveedor == $proveedores['VictronEnergy']){
                     // Obtener datos de VictronEnergy
                     $victronEnergyResponse = $this->victronEnergyController->getSiteDetails($idPlanta);
-                    $victronEnergyData = $victronEnergyResponse;
+                    $victronEnergyData = json_decode($victronEnergyResponse, true);
                 }else{
                     $victronEnergyData = "";
                 }
