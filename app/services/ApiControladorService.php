@@ -789,12 +789,6 @@ class ApiControladorService
                     // Obtener datos de VictronEnergy
                     $victronEnergyResponse = $this->victronEnergyController->getSiteDetails($idPlanta);
                     $victronEnergyData = $victronEnergyResponse;
-                    try{
-                        $victronEnergyData = json_decode($victronEnergyResponse, true);
-                        echo $victronEnergyData;
-                    }catch(Throwable $e){
-                        $victronEnergyData = json_encode($victronEnergyData);
-                    }
                 }else{
                     $victronEnergyData = "";
                 }
@@ -804,7 +798,7 @@ class ApiControladorService
                 } else if ($proveedor == $proveedores['SolarEdge']) {
                     $plants = $solarEdgeData;
                 } else if ($proveedor == $proveedor['VictronEnergy']){
-                    $plants = $victronEnergyData;
+                    $plants = is_array($victronEnergyData) ? $victronEnergyData : json_decode($victronEnergyData, true);
                 }
 
 
