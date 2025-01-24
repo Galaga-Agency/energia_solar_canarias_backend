@@ -787,9 +787,8 @@ class ApiControladorService
 
                 if($proveedor == $proveedores['VictronEnergy']){
                     // Obtener datos de VictronEnergy
-                    //$victronEnergyResponse = $this->victronEnergyController->getSiteDetails($idPlanta);
-                    //$victronEnergyData = $victronEnergyResponse;
-                    echo 'pasa';
+                    $victronEnergyResponse = $this->victronEnergyController->getSiteDetails($idPlanta);
+                    $victronEnergyData = $victronEnergyResponse;
                 }else{
                     $victronEnergyData = "";
                 }
@@ -800,8 +799,8 @@ class ApiControladorService
                     $plants = $goodWeData;
                 } else if ($proveedor == $proveedores['SolarEdge']) {
                     $plants = $solarEdgeData;
-                } else if ($proveedor == $proveedor['VictronEnergy']){
-                    //$plants = $victronEnergyData;
+                } else if ($proveedor == $proveedores['VictronEnergy']){
+                    $plants = $victronEnergyData;
                 }
 
 
@@ -809,11 +808,9 @@ class ApiControladorService
                     $this->logsController->registrarLog(Logs::INFO, "Se han solicitado las plantas del cliente");
                     // Verificar si los datos son un array o un string
                     if (is_array($plants)) {
-                        //$respuesta->success($plants);
-                        var_dump($plants);
+                        $respuesta->success($plants);
                     } else {
-                        var_dump($plants);
-                        //$respuesta->success(json_decode($plants));
+                        $respuesta->success(json_decode($plants));
                     }
                 } else {
                     $this->logsController->registrarLog(Logs::INFO, "No se han encontrado plantas");
