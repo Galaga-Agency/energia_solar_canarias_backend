@@ -264,15 +264,7 @@ switch ($method) {
                 $headers = getallheaders();
                 if (isset($headers['Authorization']) && preg_match('/Bearer\s(\S+)/', $headers['Authorization'], $matches)) {
                     if ($authMiddleware->verificarTokenUsuarioActivo() != false) {
-                        // Verificar si el usuario es administrador
-                        if ($authMiddleware->verificarAdmin()) {
-                            $authMiddleware->upsertApiAcceso();
-                        } else {
-                            $respuesta->_403();
-                            $respuesta->message = 'No tienes permisos para hacer esta consulta';
-                            http_response_code($respuesta->code);
-                            echo json_encode($respuesta);
-                        }
+                        $authMiddleware->upsertApiAcceso();
                     } else {
                         $respuesta->_403();
                         $respuesta->message = 'El token no se puede authentificar con exito';
@@ -537,12 +529,12 @@ switch ($method) {
                                 //Solicitamos todas las plantas de un cliente 
                                 $usuarioId = $_GET['usuarioId'];
                                 $apiControladorService->getAllPlantsCliente($usuarioId);
-                            } elseif(isset($_GET['plantId']) && isset($_GET['proveedor'])) {
+                            } elseif (isset($_GET['plantId']) && isset($_GET['proveedor'])) {
                                 //Solicitamos todos los clientes de una planta
                                 $plantId = $_GET['plantId'];
                                 $nombreProveedor = $_GET['proveedor'];
-                                $apiControladorService->getAllClientsPlanta($plantId,$nombreProveedor);
-                            }else{
+                                $apiControladorService->getAllClientsPlanta($plantId, $nombreProveedor);
+                            } else {
                                 $apiControladorService->getAllPlants();
                             }
                         } else {
