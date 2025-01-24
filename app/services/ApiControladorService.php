@@ -806,7 +806,8 @@ class ApiControladorService
                     $this->logsController->registrarLog(Logs::INFO, "Se han solicitado las plantas del cliente");
                     // Verificar si los datos son un array o un string
                     if (is_array($plants)) {
-                        $respuesta->success($plants);
+                        //$respuesta->success($plants);
+                        var_dump($plants);
                     } else {
                         var_dump($plants);
                         //$respuesta->success(json_decode($plants));
