@@ -808,11 +808,8 @@ class ApiControladorService
                     if (is_array($plants)) {
                         $respuesta->success($plants);
                     } else {
-                        try{
-                            $respuesta->success(json_decode($plants));
-                        }catch(Exception $e){
-                            $respuesta->success($plants);
-                        }
+                        var_dump($plants);
+                        //$respuesta->success(json_decode($plants));
                     }
                 } else {
                     $this->logsController->registrarLog(Logs::INFO, "No se han encontrado plantas");
