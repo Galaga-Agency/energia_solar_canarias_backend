@@ -418,7 +418,6 @@ class ApiControladorService
                 if(isset($data['overallstats']) && $data['overallstats'] == true){
                     $victronEnergyResponse = $this->victronEnergyController->getGraficoDetailsOverallstats($data);
                 }else{
-                    echo 'pasa';
                     $victronEnergyResponse = $this->victronEnergyController->getGraficoDetails($data);
                 }
                 $victronEnergyData = json_decode($victronEnergyResponse, true);
