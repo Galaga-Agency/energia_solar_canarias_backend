@@ -415,9 +415,10 @@ class ApiControladorService
 
             // Obtener datos de GoodWe
             if ($data != null) {
-                if($data['overallstats'] == true){
+                if(isset($data['overallstats']) && $data['overallstats'] == true){
                     $victronEnergyResponse = $this->victronEnergyController->getGraficoDetailsOverallstats($data);
                 }else{
+                    echo 'pasa';
                     $victronEnergyResponse = $this->victronEnergyController->getGraficoDetails($data);
                 }
                 $victronEnergyData = json_decode($victronEnergyResponse, true);
@@ -1210,16 +1211,12 @@ class ApiControladorService
         if ($id === null || $tipo === null || $fechaInicio === null || $fechaFin === null || $interval === null) {
             return null;
         }
-        echo $overallstats;
-        echo $tipo;
-        echo $id;
         // Si todo está presente, puedes proceder con el uso de las variables
         return [
             'id' => $id,
             'fechaInicio' => $fechaInicio,
             'fechaFin' => $fechaFin,
             'interval' => $interval,
-            'overallstats' => $overallstats,
             'type' => $tipo
         ];
     }
