@@ -44,6 +44,15 @@ class VictronEnergyController
         return json_encode($data);
     }
 
+    //Método para obtener los datos de un gráfico en concreto dependiendo del gráfico solicitado
+    public function getGraficoDetailsOverallstats($data)
+    {
+        $this->logsController->registrarLog(Logs::INFO, " accede a la api de VictronEnergy a un gráfico de tipo " . $data['type']);
+        $data = $this->victronEnergyService->getGraficoDetailsOverallstats($data['id'], $data['type']);
+        header('Content-Type: application/json');
+        return json_encode($data);
+    }
+
     //Método para obtener los datos de todas las plantas
     public function getSiteDetails($siteId)
     {

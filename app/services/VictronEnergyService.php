@@ -60,6 +60,17 @@ class VictronEnergyService {
         }
     }
 
+    //recoger el grafico de las plantas de Overallstats
+    public function getGraficoDetailsOverallstats($siteId,$type) {
+        $url = $this->victronEnergy->getUrl() . "installations/$siteId/overallstats?type=$type";
+        try {
+            $response = $this->httpClient->get($url, $this->header);
+            return json_decode($response);
+        } catch (Exception $e) {
+            return ['error' => $e->getMessage()];
+        }
+    }
+
     //Recoger datos detallados de la planta
     public function getSiteDetails($siteId) {
         $url = $this->victronEnergy->getUrl() . "users/". $this->victronEnergy->getIdInstallation() ."/installations?idSite=$siteId&extended=1";
