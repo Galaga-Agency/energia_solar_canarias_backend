@@ -415,7 +415,11 @@ class ApiControladorService
 
             // Obtener datos de GoodWe
             if ($data != null) {
-                $victronEnergyResponse = $this->victronEnergyController->getGraficoDetails($data);
+                if($data['overallstats'] == true){
+                    $victronEnergyResponse = $this->victronEnergyController->getGraficoDetailsOverallstats($data);
+                }else{
+                    $victronEnergyResponse = $this->victronEnergyController->getGraficoDetails($data);
+                }
                 $victronEnergyData = json_decode($victronEnergyResponse, true);
             } else {
                 $this->logsController->registrarLog(Logs::INFO, "No se han pasado los parametros correctos en VictronEnergy");
@@ -1190,19 +1194,32 @@ class ApiControladorService
         $id = isset($data['id']) ? $data['id'] : null;
         $tipo = isset($data['type']) ? $data['type'] : null;
         $interval = isset($data['interval']) ? $data['interval'] : null;
-        $fechaInicio = isset($data['fechaInicio']) ? $data['fechaInicio'] : $data['fechaInicio'];
-        $fechaFin = isset($data['fechaFin']) ? $data['fechaFin'] : $data['fechaFin'];
-
+        $fechaInicio = isset($data['fechaInicio']) ? $data['fechaInicio'] : null;
+        $fechaFin = isset($data['fechaFin']) ? $data['fechaFin'] : null;
+        $overallstats = isset($data['overallstats']) ? $data['overallstats'] : false;
+        
+        //si overallstats es true y tipo y id no son null se devuelve un array con los datos de tipo overallstats
+        if($overallstats === true && $tipo !== null && $id !== null){
+            return [
+                'id' => $id,
+                'overallstats' => $overallstats,
+                'type' => $tipo
+            ];
+        }
         // Si alguna de las claves no existe, retorna null
         if ($id === null || $tipo === null || $fechaInicio === null || $fechaFin === null || $interval === null) {
             return null;
         }
+        echo $overallstats;
+        echo $tipo;
+        echo $id;
         // Si todo está presente, puedes proceder con el uso de las variables
         return [
             'id' => $id,
             'fechaInicio' => $fechaInicio,
             'fechaFin' => $fechaFin,
             'interval' => $interval,
+            'overallstats' => $overallstats,
             'type' => $tipo
         ];
     }
