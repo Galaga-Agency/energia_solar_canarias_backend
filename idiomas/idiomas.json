@@ -166,6 +166,8 @@
       "parameters_list_interval_name": "interval",
       "parameters_list_interval_description": "Opcional, intervalo de tiempo para Victron Energy (e.g., \"15mins\", \"hours\", \"2hours\", \"days\", \"weeks\", \"months\", \"years\").",
       "parameters_list_type_name": "type",
+      "parameters_list_overallstats_name": "overallstats",
+      "parameters_list_overallstats_description": "true o false para mostrar el gráfico con las estadísticas generales",
       "parameters_list_type_description": "Opcional, tipo de datos para Victron Energy (e.g., \"venus\", \"live_feed\", \"consumption\", \"solar_yield\", \"kwh\", \"generator\", \"generator-runtime\", \"custom\", \"forecast\").",
       "response_example_title": "Respuesta de Ejemplo",
       "response_description": "Ejemplo de respuesta JSON con datos de consumo, producción y almacenamiento."
@@ -376,6 +378,8 @@
       "parameters_list_interval_name": "interval",
       "parameters_list_interval_description": "Optional, time interval for Victron Energy (e.g., \"15mins\", \"hours\", \"2hours\", \"days\", \"weeks\", \"months\", \"years\")",
       "parameters_list_type_name": "type",
+      "parameters_list_overallstats_name": "overallstats",
+      "parameters_list_overallstats_description": "true or false for show the graph with the overall stats",
       "parameters_list_type_description": "Optional, type of data for Victron Energy (e.g., \"venus\", \"live_feed\", \"consumption\", \"solar_yield\", \"kwh\", \"generator\", \"generator-runtime\", \"custom\", \"forecast\").",
       "response_example_title": "Example Response",
       "response_description": "Example of a JSON response with consumption, production, and storage data."
