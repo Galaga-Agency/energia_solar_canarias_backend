@@ -45,6 +45,12 @@
     <span class="text-blue-500">"fechaFin"</span>: <span class="text-yellow-500">"2024-11-25"</span>, <span class="text-green-500">// parametro opcional si no se le manda se le pasara la fecha de hoy a las 23:59:59</span>
     <span class="text-blue-500">"fechaInicio"</span>: <span class="text-yellow-500">"2024-11-24"</span> <span class="text-green-500">// parametro opcional si no se le manda se le pasara la fecha de hoy a las 00:00:00</span>
 }
+<span class="text-green-500">/* Grafica de Victron Energy overallstats */</span>
+{
+    <span class="text-blue-500">"id"</span>: <span class="text-yellow-500">"98081"</span>,
+    <span class="text-blue-500">"type"</span>: <span class="text-yellow-500">"venus"</span>, <span class="text-green-500">// venus live_feed consumption solar_yield kwh generator generator-runtime custom forecast</span>
+    <span class="text-blue-500">"overallstats"</span>: <span class="text-yellow-500">true</span>, <span class="text-green-500">// true or false</span>
+}
 </pre>
 
         <h2 class="text-xl font-semibold <?php echo $theme === 'dark' ? 'text-gray-400' : 'text-gray-800'; ?> mb-2">
@@ -157,6 +163,7 @@ curl -X POST "https://app-energiasolarcanarias-backend.com/plants/graficas?prove
             <li><strong><?php echo translate('post_graficas.parameters_list_range_name'); ?>:</strong> <?php echo translate('post_graficas.parameters_list_range_description'); ?></li>
             <li><strong><?php echo translate('post_graficas.parameters_list_interval_name'); ?>:</strong> <?php echo translate('post_graficas.parameters_list_interval_description'); ?></li>
             <li><strong><?php echo translate('post_graficas.parameters_list_type_name'); ?>:</strong> <?php echo translate('post_graficas.parameters_list_type_description'); ?></li>
+            <li><strong><?php echo translate('post_graficas.parameters_list_overallstats_name'); ?>:</strong> <?php echo translate('post_graficas.parameters_list_overallstats_description'); ?></li>
         </ul>
 
     </div>
