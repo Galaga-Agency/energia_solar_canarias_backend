@@ -13,6 +13,19 @@ class SolarEdgeService
         $this->httpClient = new HttpClient();
     }
 
+    public function BulkApiFleetEnergy($time, $startDate, $endDate, $arrayEnteros)
+    {
+        $url = $this->solarEdge->getUrl() . "sites/$arrayEnteros/energy?timeUnit=YEAR&startDate=$startDate&endDate=$endDate&api_key=" . $this->solarEdge->getApiKey();
+
+        try {
+            $response = $this->httpClient->get($url);
+            return json_decode($response, true);
+        } catch (Exception $e) {
+            return ['error' => $e->getMessage()];
+        }
+    }
+
+
     //Método que devuelve la grafica del consumo de bateria
     public function cargaBateriaSolarEdge($siteId, $startTime, $endTime)
     {

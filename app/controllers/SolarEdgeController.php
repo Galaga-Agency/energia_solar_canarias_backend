@@ -17,12 +17,42 @@ class SolarEdgeController
         $this->logsController = new LogsController();
     }
 
-    public function cargaBateriaSolarEdge($powerStationId,$startTime,$endTime)
+    public function BulkApiFleetEnergy($time, $startDate, $endDate, $arrayEnteros)
+    {
+        // Registrar log
+        $this->logsController->registrarLog(Logs::INFO, "Accede a la API SolarEdge para la carga de la bulk api fleet energy");
+
+        // Llamada a la API para obtener datos de energía
+        $data = $this->solarEdgeService->BulkApiFleetEnergy($time, $startDate, $endDate, $arrayEnteros);
+
+        // Verificar si la API devolvió una respuesta válida
+        if (!is_array($data) || !isset($data['sitesEnergy']) || !isset($data['sitesEnergy']['siteEnergyList'])) {
+            header('Content-Type: application/json');
+            echo json_encode([
+                "status" => false,
+                "code" => 400,
+                "message" => "La API no devolvió datos válidos. Respuesta recibida: " . json_encode($data, JSON_PRETTY_PRINT),
+                "data" => null
+            ]);
+            exit;
+        }
+
+        // Procesar los datos de energía
+        $result = $this->processEnergyData($data);
+
+        // Retornar la respuesta en JSON
+        header('Content-Type: application/json');
+        echo json_encode($result);
+        exit;
+    }
+
+
+    public function cargaBateriaSolarEdge($powerStationId, $startTime, $endTime)
     {
         // Registrar log
         $this->logsController->registrarLog(Logs::INFO, "Accede a la API SolarEdge para la carga de batería");
         //Recoger el inventario con una llamada a la api
-        $inventario = $this->solarEdgeService->cargaBateriaSolarEdge($powerStationId,$startTime,$endTime);
+        $inventario = $this->solarEdgeService->cargaBateriaSolarEdge($powerStationId, $startTime, $endTime);
         // Retornar la respuesta en JSON
         header('Content-Type: application/json');
         return json_encode($inventario);
@@ -329,5 +359,53 @@ class SolarEdgeController
             default:
                 return 'unknown';
         }
+    }
+
+    /**
+     * Procesa los datos de energía y genera el objeto de salida esperado.
+     */
+    private function processEnergyData($data)
+    {
+        $chartEnergy = [];
+        $totalEnergy = 0;
+        $numSites = 0;
+
+        // Se accede directamente a "sitesEnergy"
+        $siteEnergyList = $data['sitesEnergy']['siteEnergyList'];
+
+        // Contar sitios con datos válidos
+        foreach ($siteEnergyList as $site) {
+            if (!empty($site['energyValues']['values'])) {
+                $numSites++;
+            }
+        }
+
+        // Sumar los valores de energía por fecha
+        foreach ($siteEnergyList as $site) {
+            foreach ($site['energyValues']['values'] as $entry) {
+                $date = date("Y-m-d\TH:i:s\Z", strtotime($entry['date'])); // Formato UTC
+                $value = isset($entry['value']) ? floatval($entry['value']) : 0; // Null se convierte en 0
+
+                if (!isset($chartEnergy[$date])) {
+                    $chartEnergy[$date] = 0;
+                }
+                $chartEnergy[$date] += $value;
+                $totalEnergy += $value;
+            }
+        }
+
+        // Calcular rendimiento promedio
+        $averageYield = $numSites > 0 ? $totalEnergy / $numSites : 0;
+
+        return [
+            'energy' => round($totalEnergy / 1000, 3), // Convertir a kWh
+            'chartEnergy' => array_map(fn($v) => round($v / 1000, 3), $chartEnergy), // Convertir a kWh cada valor
+            'averageYield' => round($averageYield / 1000, 6), // Convertir a kWh
+            'prData' => [
+                'averagePr' => 0.0,  // No proporcionado en los datos de origen
+                'sitesWithPr' => 0,   // No proporcionado en los datos de origen
+                'isAllSitesHavePr' => false
+            ]
+        ];
     }
 }
