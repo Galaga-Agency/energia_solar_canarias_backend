@@ -69,6 +69,36 @@ class ApiControladorService
      * Estas funcion son genericas para genericas para SolarEdge
      * 
      */
+
+    public function BulkApiFleetEnergy($time,$startTime,$endTime,$arrayEnteros)
+    {
+        $respuesta = new Respuesta;
+        try {
+
+            $solarEdgeResponse = $this->solarEdgeController->BulkApiFleetEnergy($time,$startTime,$endTime,$arrayEnteros);
+
+            $solarEdgeData = json_decode($solarEdgeResponse);
+
+
+            if ($solarEdgeData != null) {
+                $respuesta->success($solarEdgeData);
+            } else {
+                $this->logsController->registrarLog(Logs::INFO, "No se han encontrado Datos en la petición o la peticion es nula");
+                $respuesta->_400($solarEdgeData);
+                $respuesta->message = "No se han encontrado Datos en la petición o la peticion es nula";
+                http_response_code(400);
+            }
+        } catch (Throwable $e) {
+            $this->logsController->registrarLog(Logs::ERROR, "Error del proveedor de SolarEdge: " . $e->getMessage());
+            $respuesta->_500();
+            $respuesta->message = "Error en el servidor de algun proveedor";
+            http_response_code(500);
+        }
+        // Devolver el resultado como JSON
+        header('Content-Type: application/json');
+        echo json_encode($respuesta);
+    }
+
     public function overviewSolarEdge($siteId)
     {
         $respuesta = new Respuesta;
