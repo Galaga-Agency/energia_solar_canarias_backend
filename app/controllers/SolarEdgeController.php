@@ -42,8 +42,7 @@ class SolarEdgeController
 
         // Retornar la respuesta en JSON
         header('Content-Type: application/json');
-        echo json_encode($result);
-        exit;
+        return json_encode($result);
     }
 
 
