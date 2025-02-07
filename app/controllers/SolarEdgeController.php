@@ -27,13 +27,7 @@ class SolarEdgeController
 
         // Verificar si la API devolvió una respuesta válida
         if (!is_array($data) || !isset($data['sitesEnergy']) || !isset($data['sitesEnergy']['siteEnergyList'])) {
-            header('Content-Type: application/json');
-            echo json_encode([
-                "status" => false,
-                "code" => 400,
-                "message" => "La API no devolvió datos válidos. Respuesta recibida: " . json_encode($data, JSON_PRETTY_PRINT),
-                "data" => null
-            ]);
+            return null;
             exit;
         }
 
