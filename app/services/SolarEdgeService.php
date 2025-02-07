@@ -15,7 +15,7 @@ class SolarEdgeService
 
     public function BulkApiFleetEnergy($time, $startDate, $endDate, $arrayEnteros)
     {
-        $url = $this->solarEdge->getUrl() . "sites/$arrayEnteros/energy?timeUnit=YEAR&startDate=$startDate&endDate=$endDate&api_key=" . $this->solarEdge->getApiKey();
+        $url = $this->solarEdge->getUrl() . "sites/$arrayEnteros/energy?timeUnit=$time&startDate=$startDate&endDate=$endDate&api_key=" . $this->solarEdge->getApiKey();
 
         try {
             $response = $this->httpClient->get($url);
