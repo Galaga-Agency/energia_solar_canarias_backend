@@ -68,57 +68,6 @@ switch ($method) {
     case 'GET':
 
         switch (true) {
-            case (preg_match('/^plants\/energy\/([\w-]+(?:,[\w-]+)*)$/', $request, $matches) && isset($_GET['proveedor']) ? true : false):
-                $handled = true;
-                $powerStationIds = isset($matches[1])? $matches[1]: "";
-                $body = file_get_contents("php://input");
-                $data = json_decode($body, true); // Decodificar JSON a un array asociativo
-                //Verificamos que existe el usuario CREADOR del token y sino manejamos el error dentro de la funcion
-                if ($authMiddleware->verificarTokenUsuarioActivo() != false) {
-                    if (isset($_GET['proveedor'])) {
-                        $apiControladorService = new ApiControladorService;
-                        $proveedor = $_GET['proveedor'];
-                        switch ($proveedor) {
-                            case $proveedores['GoodWe']:
-                                $respuesta->_404();
-                                $respuesta->message = 'El proveedor no tiene esta llamada';
-                                http_response_code($respuesta->code);
-                                echo json_encode($respuesta);
-                                break;
-                            case $proveedores['SolarEdge']:
-                                if(isset($data['time']) && isset($data['startTime']) && isset($data['endTime'])){
-                                    $time = $data['time'];
-                                    $startTime = $data['startTime'];
-                                    $endTime = $data['endTime'];
-                                    $apiControladorService->BulkApiFleetEnergy($time,$startTime,$endTime,$powerStationIds);
-                                }else{
-                                    $respuesta->_404();
-                                    $respuesta->message = 'Parametros faltantes en el body';
-                                    http_response_code($respuesta->code);
-                                    echo json_encode($respuesta);
-                                }
-                                break;
-                            case $proveedores['VictronEnergy']:
-                                $respuesta->_404();
-                                $respuesta->message = 'El proveedor no tiene esta llamada';
-                                http_response_code($respuesta->code);
-                                echo json_encode($respuesta);
-                                break;
-                            default:
-                                $respuesta->_404();
-                                $respuesta->message = 'El proveedor no es valido';
-                                http_response_code($respuesta->code);
-                                echo json_encode($respuesta);
-                                break;
-                        }
-                    }
-                } else {
-                    $respuesta->_403();
-                    $respuesta->message = 'El token no se puede authentificar con exito';
-                    http_response_code($respuesta->code);
-                    echo json_encode($respuesta);
-                }
-                break;
             case ($request === 'usuario/imagen'):
                 $handled = true;
                 if ($authMiddleware->verificarTokenUsuarioActivo() != false) {
@@ -613,6 +562,57 @@ switch ($method) {
 
     case 'POST':
         switch (true) {
+            case (preg_match('/^plants\/energy\/([\w-]+(?:,[\w-]+)*)$/', $request, $matches) && isset($_GET['proveedor']) ? true : false):
+                $handled = true;
+                $powerStationIds = isset($matches[1])? $matches[1]: "";
+                $body = file_get_contents("php://input");
+                $data = json_decode($body, true); // Decodificar JSON a un array asociativo
+                //Verificamos que existe el usuario CREADOR del token y sino manejamos el error dentro de la funcion
+                if ($authMiddleware->verificarTokenUsuarioActivo() != false) {
+                    if (isset($_GET['proveedor'])) {
+                        $apiControladorService = new ApiControladorService;
+                        $proveedor = $_GET['proveedor'];
+                        switch ($proveedor) {
+                            case $proveedores['GoodWe']:
+                                $respuesta->_404();
+                                $respuesta->message = 'El proveedor no tiene esta llamada';
+                                http_response_code($respuesta->code);
+                                echo json_encode($respuesta);
+                                break;
+                            case $proveedores['SolarEdge']:
+                                if(isset($data['time']) && isset($data['startTime']) && isset($data['endTime'])){
+                                    $time = $data['time'];
+                                    $startTime = $data['startTime'];
+                                    $endTime = $data['endTime'];
+                                    $apiControladorService->BulkApiFleetEnergy($time,$startTime,$endTime,$powerStationIds);
+                                }else{
+                                    $respuesta->_404();
+                                    $respuesta->message = 'Parametros faltantes en el body';
+                                    http_response_code($respuesta->code);
+                                    echo json_encode($respuesta);
+                                }
+                                break;
+                            case $proveedores['VictronEnergy']:
+                                $respuesta->_404();
+                                $respuesta->message = 'El proveedor no tiene esta llamada';
+                                http_response_code($respuesta->code);
+                                echo json_encode($respuesta);
+                                break;
+                            default:
+                                $respuesta->_404();
+                                $respuesta->message = 'El proveedor no es valido';
+                                http_response_code($respuesta->code);
+                                echo json_encode($respuesta);
+                                break;
+                        }
+                    }
+                } else {
+                    $respuesta->_403();
+                    $respuesta->message = 'El token no se puede authentificar con exito';
+                    http_response_code($respuesta->code);
+                    echo json_encode($respuesta);
+                }
+                break;
             case (preg_match('/^plant\/grafica\/bateria\/([\w-]+)$/', $request, $matches) && isset($_GET['proveedor']) ? true : false):
                 $handled = true;
                 $powerStationId = $matches[1];
