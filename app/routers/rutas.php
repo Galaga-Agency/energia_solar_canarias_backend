@@ -875,7 +875,24 @@ switch ($method) {
                     } else {
                         // El usuario nos tiene que mandar obligatoriamente el proveedor para que verifiquemos si tiene acceso a ese id
                         $apiController = new ApiControladorService();
-                        $apiController->getGraficasGoodWe();
+                        $proveedor = $_GET['proveedor'];
+                        switch ($proveedor) {
+                            case $proveedores['GoodWe']:
+                                $apiController->getGraficasGoodWe();
+                                break;
+                            case $proveedores['SolarEdge']:
+                                $apiController->getGraficasSolarEdge();
+                                break;
+                            case $proveedores['VictronEnergy']:
+                                $apiController->getGraficasVictronEnergy();
+                                break;
+                            default:
+                                $respuesta->_400();
+                                $respuesta->message = 'Proveedor no encontrado';
+                                http_response_code($respuesta->code);
+                                echo json_encode($respuesta);
+                                break;
+                        }
                     }
                 } else {
                     $respuesta->_403();
