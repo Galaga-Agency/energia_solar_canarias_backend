@@ -76,7 +76,7 @@ class Imagenes
             if (move_uploaded_file($rutaTemporal, $rutaDestino)) {
                 $this->logsController->registrarLog(Logs::INFO, "El usuario subió una imagen: $nombreArchivoFinal");
                 // El archivo se ha subido correctamente
-                $rutaCompleta = $_SERVER['REQUEST_SCHEME'] . '://' . $_SERVER['HTTP_HOST'] . '/img/' . $nombreArchivoFinal;
+                $rutaCompleta = $_SERVER['REQUEST_SCHEME'].'s' . '://' . $_SERVER['HTTP_HOST'] . '/img/' . $nombreArchivoFinal;
 
                 //relacionar la imagen con el usuario
                 $usuariosDB = new UsuariosDB;
