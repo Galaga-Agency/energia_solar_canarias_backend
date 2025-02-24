@@ -266,7 +266,7 @@ class Imagenes
         }
 
         // Retornar la URL protegida
-        return "https://$host/app/utils/obtener_imagen.php?token=$token_url";
+        return "http://$host/app/utils/obtener_imagen.php?token=$token_url";
     }
 
     // Método para obtener la imagen del usuario
