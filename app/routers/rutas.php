@@ -69,28 +69,6 @@ $handled = false; // Bandera para indicar si la ruta fue manejada
 switch ($method) {
     case 'GET':
         switch (true) {
-            case ($request === 'zoho/crearCliente'):
-                $handled = true;
-                if ($authMiddleware->verificarTokenUsuarioActivo() != false) {
-                    if ($authMiddleware->verificarAdmin()) {
-                        $zohoservice = new ZohoService();
-                        $zohoRespuesta = $zohoservice->getAccessToken();
-                        $respuesta->success($zohoRespuesta);
-                        echo json_encode($respuesta);
-                    } else {
-                        $respuesta->_403();
-                        $respuesta->message = 'No tienes permiso para realizar esta consulta';
-                        http_response_code($respuesta->code);
-                        echo json_encode($respuesta);
-                    }
-                } else {
-                    $respuesta->_403();
-                    $respuesta->message = 'El token no se puede authentificar con exito';
-                    http_response_code($respuesta->code);
-                    echo json_encode($respuesta);
-                }
-                break;
-
             case ($request === 'zoho/verificarToken'):
                 $handled = true;
                 if ($authMiddleware->verificarTokenUsuarioActivo() != false) {
@@ -607,6 +585,27 @@ switch ($method) {
 
     case 'POST':
         switch (true) {
+            case ($request === 'zoho/crearCliente'):
+                $handled = true;
+                if ($authMiddleware->verificarTokenUsuarioActivo() != false) {
+                    if ($authMiddleware->verificarAdmin()) {
+                        $zohoservice = new ZohoService();
+                        $zohoRespuesta = $zohoservice->crearCliente();
+                        $respuesta->success($zohoRespuesta);
+                        echo json_encode($respuesta);
+                    } else {
+                        $respuesta->_403();
+                        $respuesta->message = 'No tienes permiso para realizar esta consulta';
+                        http_response_code($respuesta->code);
+                        echo json_encode($respuesta);
+                    }
+                } else {
+                    $respuesta->_403();
+                    $respuesta->message = 'El token no se puede authentificar con exito';
+                    http_response_code($respuesta->code);
+                    echo json_encode($respuesta);
+                }
+                break;
             case (preg_match('/^plants\/energy\/([\w-]+(?:,[\w-]+)*)$/', $request, $matches) && isset($_GET['proveedor']) ? true : false):
                 $handled = true;
                 $powerStationIds = isset($matches[1])? $matches[1]: "";
@@ -1009,6 +1008,37 @@ switch ($method) {
 
     case 'DELETE':
         switch (true) {
+            case (preg_match('/zoho\/eliminarCliente\/(\d+)/', $request, $matches) ? true : false):
+                $handled = true;
+                $clienteId = $matches[1] ?? null; // Extraer el ID del cliente de la URL
+            
+                if (!$clienteId) {
+                    $respuesta->_400();
+                    $respuesta->message = 'ID de cliente requerido';
+                    http_response_code($respuesta->code);
+                    echo json_encode($respuesta);
+                    break;
+                }
+            
+                if ($authMiddleware->verificarTokenUsuarioActivo() != false) {
+                    if ($authMiddleware->verificarAdmin()) {
+                        $zohoService = new ZohoService();
+                        $zohoRespuesta = $zohoService->eliminarCliente($clienteId);
+                        $respuesta->success($zohoRespuesta);
+                        echo json_encode($respuesta);
+                    } else {
+                        $respuesta->_403();
+                        $respuesta->message = 'No tienes permiso para realizar esta consulta';
+                        http_response_code($respuesta->code);
+                        echo json_encode($respuesta);
+                    }
+                } else {
+                    $respuesta->_403();
+                    $respuesta->message = 'El token no se puede autenticar con éxito';
+                    http_response_code($respuesta->code);
+                    echo json_encode($respuesta);
+                }
+                break;            
             case ($request === 'usuario/imagen'):
                 $handled = true;
                 if ($authMiddleware->verificarTokenUsuarioActivo() != false) {

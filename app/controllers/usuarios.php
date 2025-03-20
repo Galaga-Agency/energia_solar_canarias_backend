@@ -4,6 +4,7 @@ require_once __DIR__ . "/../models/usuarios.php";
 require_once __DIR__ . "/../utils/respuesta.php";
 require_once __DIR__ . "/../middlewares/autenticacion.php";
 require_once __DIR__ . "/../controllers/LogsController.php";
+require_once __DIR__ . "/../services/ZohoService.php";
 
 
 class UsuariosController
@@ -186,6 +187,9 @@ class UsuariosController
 
     public function crearUser()
     {
+        // Crear una instancia del servicio de Zoho
+        $zohoService = new ZohoService();
+
         // Crear una instancia del controlador de logs
         $logsController = new LogsController();
 
@@ -249,6 +253,16 @@ class UsuariosController
 
         // Responder según el resultado
         if ($result) {
+            // Crear el usuario en Zoho
+            $resultCRM = $zohoService->crearCliente($data);
+            if (isset($resultCRM['error']) && $resultCRM['error'] == true) {
+                $logsController->registrarLog(Logs::ERROR, "Error al crear el usuario en Zoho: " . $resultCRM['message'] . "por el administrador {$idUser}");
+                $respuesta = new Respuesta();
+                $respuesta->_500($resultCRM);
+                $respuesta->message = "Error al crear el usuario en Zoho.";
+                echo json_encode($respuesta);
+                return;
+            }
             $logsController->registrarLog(Logs::POST, "Usuario creado o restaurado exitosamente: {$data['email']} por el administrador {$idUser}");
             $respuesta = new Respuesta();
             $respuesta->success($data);
@@ -359,6 +373,8 @@ class UsuariosController
 
     public function eliminarUser($id)
     {
+        // Crear una instancia del servicio de Zoho
+        $zohoService = new ZohoService();
         // Crear una instancia del controlador de logs
         $logsController = new LogsController();
         // Instancia de la base de datos
@@ -377,6 +393,15 @@ class UsuariosController
         }
         if (isset($result)) {
             if ($result) {
+                $resultCRM = $zohoService->eliminarCliente($id);
+                if (isset($resultCRM['error']) && $resultCRM['error'] == true) {
+                    $logsController->registrarLog(Logs::ERROR, "Error al eliminar el usuario en Zoho: " . $resultCRM['message']);
+                    $respuesta = new Respuesta();
+                    $respuesta->_500($resultCRM);
+                    $respuesta->message = "Error al eliminar el usuario en Zoho.";
+                    echo json_encode($respuesta);
+                    return;
+                }
                 $logsController->registrarLog(Logs::DELETE, "a eliminado al usuario" . $id);
                 $respuesta = new Respuesta();
                 $respuesta->success($result);

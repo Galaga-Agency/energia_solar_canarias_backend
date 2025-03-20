@@ -2,6 +2,7 @@
 require_once __DIR__ . "/../../vendor/autoload.php";
 require_once __DIR__ . "/../utils/HttpClient.php";
 require_once __DIR__ . "/../models/conexion.php";
+require_once __DIR__ . "/../controllers/ZohoController.php";
 
 use Dotenv\Dotenv;
 
@@ -21,10 +22,12 @@ class ZohoService
 
     private $httpClient;
     private $conexion;
+    private $zohoController;
 
     public function __construct()
     {
         $this->httpClient = new HttpClient();
+        $this->zohoController = new ZohoController();
         try {
             $this->conexion = Conexion::getInstance();
             // Cargar el archivo .env desde la carpeta config
@@ -90,6 +93,7 @@ class ZohoService
     {
         try {
             $conn = $this->conexion->getConexion();
+
             $query = "INSERT INTO `zoho_tokens`(`access_token`, `expires_in`, `token_type`, `scope`, `api_domain`, `refresh_token`) 
                       VALUES (?, ?, ?, ?, ?, ?)";
             
@@ -97,7 +101,6 @@ class ZohoService
             if (!$stmt) {
                 throw new Exception("Error en la preparación de la consulta: " . $conn->error);
             }
-
             // Vincular los parámetros
             $stmt->bind_param('sissss', $this->access_token, $this->expires_in, $this->token_type, $this->scope, $this->api_domain, self::$refresh_token);
             if (!$stmt->execute()) {
@@ -213,13 +216,14 @@ class ZohoService
         }
     }
 
-
-
-
-    /** 
-    public function createClient($data)
+    public function crearCliente($data = null)
     {
-        return $this->zohoController->createClient($data);
+        return $ClienteZoho = $this->zohoController->crearCliente($data);
+    }
+
+    public function eliminarCliente($clienteId = "")
+    {
+        return $ClienteZoho = $this->zohoController->eliminarCliente($clienteId);
     }
 
     /** 
