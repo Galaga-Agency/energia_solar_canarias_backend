@@ -39,6 +39,55 @@ class ZohoController
     }
 
     /**
+     * PUT
+     */
+
+    public function actualizarCliente($data)
+    {
+        if ($data === null || !is_array($data) || !isset($data['usuario_id'])) {
+            return json_encode(["error" => "Datos incompletos. Se requiere idApp para actualizar el cliente."]);
+        }
+
+        // Buscar cliente por idApp
+        $queryParams = ['criteria' => '(idApp:equals:' . $data['usuario_id'] . ')'];
+        $resultado = $this->enviarDatosZoho([], 'GET', 'Clientes', '', $queryParams);
+
+        if (!is_array($resultado) || !isset($resultado['data'][0]['id'])) {
+            return json_encode(["error" => "No se encontró ningún cliente en Zoho con el idApp: " . $data['idApp']]);
+        }
+
+        $zohoId = $resultado['data'][0]['id'];
+
+        // Construir campos del cliente y agregar el ID
+        $campos = $this->construirBodyZohoCreadoApp($data);
+        $campos["id"] = $zohoId;
+
+        $body = $this->construirBodyZohoCreadoApp($data);
+        $body["data"] = $body; // Establece el cuerpo dentro de la clave "data" correcta
+
+
+        // Enviar PUT con los nuevos datos
+        $respuestaPut = $this->enviarDatosZoho($body['data'], 'PUT', 'Clientes', $zohoId);
+
+        if (!is_array($respuestaPut)) {
+            return json_encode(["error" => "Error inesperado al comunicarse con Zoho."]);
+        }
+
+        if (isset($respuestaPut['status']) && $respuestaPut['status'] == "error") {
+            return ["error" => "Error al actualizar el cliente en Zoho: " . $respuestaPut['message']];
+        }
+
+        return [
+            "success" => true,
+            "message" => "Cliente actualizado correctamente en Zoho.",
+            "zohoId" => $zohoId,
+            "data" => $respuestaPut['data'][0]
+        ];
+    }
+
+
+
+    /**
      * DELETE
      */
     public function eliminarCliente($idApp)
@@ -87,7 +136,7 @@ class ZohoController
         return $data;
     }
 
-    //Estructura del body para enviar a Zoho (cliente) desde la app
+    //Estructura del body para enviar a Zoho (cliente) desde la app (POST y DELETE)
     private function construirBodyZohoCreadoApp($data)
     {
         $accountName = $data['nombre'] . " " . $data['apellido'];
@@ -106,6 +155,7 @@ class ZohoController
             ]
         ];
     }
+
 
     //Estructura del body para enviar a Zoho (cliente)
     private function construirBodyZoho($data)
@@ -142,10 +192,11 @@ class ZohoController
             // Construcción de la URL con el endpoint
             $url = $apiDomain . $this->routes[$endpoint];
 
-            // Agregar `extraPath` si se proporciona (por ejemplo, para DELETE)
+            // Agregar extraPath solo si es DELETE (o algún método que lo requiera explícitamente)
             if (!empty($extraPath)) {
                 $url .= '/' . $extraPath;
             }
+
 
             // Si es una petición GET y hay queryParams, los agregamos a la URL
             if ($method === 'GET' && !empty($queryParams)) {

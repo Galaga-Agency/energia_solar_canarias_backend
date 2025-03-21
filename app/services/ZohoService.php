@@ -89,6 +89,9 @@ class ZohoService
         }
     }
 
+    /**
+     * Insertar el token en la base de datos la primera vez
+     */
     public function insertZohoAccessToken()
     {
         try {
@@ -115,6 +118,9 @@ class ZohoService
         }
     }
 
+    /**
+     * Actualizar en la base de datos el token
+     */
     public function updateZohoAccessToken()
     {
         try {
@@ -151,6 +157,9 @@ class ZohoService
         return $this->expires_in > time();
     }
 
+    /**
+     * REFRESCAR TOKEN CUANDO ESTE EXPIRE Y METERLO EN LA BASE DE DATOS
+    */
     public function getAccessToken()
     {
         // Definir la estructura de respuesta por defecto
@@ -216,11 +225,24 @@ class ZohoService
         }
     }
 
+    //CRUD de clientes de App a Zoho
+    /**
+     * Crear un cliente desde la App a Zoho
+    */
     public function crearCliente($data = null)
     {
         return $ClienteZoho = $this->zohoController->crearCliente($data);
     }
-
+    /**
+     * Actualizar un cliente desde la App a Zoho
+    */
+    public function actualizarCliente($data = null)
+    {
+        return $ClienteZoho = $this->zohoController->actualizarCliente($data);
+    }
+    /**
+     * Eliminar un cliente desde la App a Zoho
+    */
     public function eliminarCliente($clienteId = "")
     {
         return $ClienteZoho = $this->zohoController->eliminarCliente($clienteId);
