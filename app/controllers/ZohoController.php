@@ -35,29 +35,40 @@ class ZohoController
             $body = $this->construirBodyZohoCreadoApp($data);
         }
 
-        var_dump($body);
-
         return $this->enviarDatosZoho($body, 'POST');
     }
 
     /**
      * DELETE
      */
-
-    public function deleteCliente($data = "")
+    public function eliminarCliente($idApp)
     {
-        if ($data == "") {
-            $data = $this->obtenerDatosRequest();
-            if (!$data) {
-                return json_encode(["error" => "Datos incompletos o inválidos"]);
-            }
-            $body = $this->construirBodyZoho($data);
-        } else {
-            $body = $this->construirBodyZohoCreadoApp($data);
+        if (!$idApp) {
+            return json_encode(["error" => "ID de cliente (idApp) requerido."]);
         }
 
-        return $this->enviarDatosZoho($body);
+        // Buscar el cliente en Zoho por idApp
+        $queryParams = ['criteria' => '(idApp:equals:' . $idApp . ')'];
+        $resultado = $this->enviarDatosZoho([], 'GET', 'Clientes', '', $queryParams);
+
+        // Validar si el cliente fue encontrado en Zoho
+        if (!isset($resultado['data'][0]['id'])) {
+            return json_encode(["error" => "No se encontró un cliente en Zoho con el idApp: " . $idApp]);
+        }
+
+        $zohoId = $resultado['data'][0]['id']; // Extraer el Zoho_ID del cliente
+
+        // Eliminar el cliente en Zoho usando su Zoho_ID
+        $deleteResponse = $this->enviarDatosZoho([], 'DELETE', 'Clientes', $zohoId);
+
+        // Verificar la respuesta de Zoho después de eliminar
+        if (isset($deleteResponse['error']) && $deleteResponse['error'] == true) {
+            return json_encode(["error" => "Error al eliminar el cliente en Zoho: " . $deleteResponse['message']]);
+        }
+
+        return ["success" => true, "message" => "Cliente eliminado correctamente en Zoho.", "zohoId" => $zohoId];
     }
+
 
     /**
      * Estas Funciones son reutilizables para toda clase de peticiones a Zoho
@@ -74,16 +85,6 @@ class ZohoController
         }
 
         return $data;
-    }
-
-    public function eliminarCliente($clienteId)
-    {
-        if (!$clienteId) {
-            return json_encode(["error" => "ID de cliente requerido"]);
-        }
-
-        // Llamar a la función genérica de envío con el ID en la URL
-        return $this->enviarDatosZoho([], 'DELETE', 'Clientes', $clienteId);
     }
 
     //Estructura del body para enviar a Zoho (cliente) desde la app
@@ -125,7 +126,7 @@ class ZohoController
     }
 
     //Funcion para enviar los datos a Zoho
-    private function enviarDatosZoho(array $body = [], string $method = 'POST', string $endpoint = 'Clientes', string $extraPath = '')
+    private function enviarDatosZoho(array $body = [], string $method = 'POST', string $endpoint = 'Clientes', string $extraPath = '', array $queryParams = [])
     {
         try {
             $zohoService = new ZohoService();
@@ -138,10 +139,17 @@ class ZohoController
             $accessToken = $accessTokenData['access_token'];
             $apiDomain = $accessTokenData['api_domain'];
 
-            // Construcción de la URL con el ID si es DELETE
+            // Construcción de la URL con el endpoint
             $url = $apiDomain . $this->routes[$endpoint];
-            if ($method === 'DELETE' && !empty($extraPath)) {
+
+            // Agregar `extraPath` si se proporciona (por ejemplo, para DELETE)
+            if (!empty($extraPath)) {
                 $url .= '/' . $extraPath;
+            }
+
+            // Si es una petición GET y hay queryParams, los agregamos a la URL
+            if ($method === 'GET' && !empty($queryParams)) {
+                $url .= '?' . http_build_query($queryParams);
             }
 
             $headers = [
@@ -157,8 +165,8 @@ class ZohoController
                 CURLOPT_HTTPHEADER     => $headers
             ]);
 
-            // Enviar cuerpo solo si es necesario
-            if (!empty($body) && $method === 'POST') {
+            // Enviar cuerpo solo si es POST o DELETE con datos
+            if (!empty($body) && in_array($method, ['POST', 'DELETE', 'PUT'])) {
                 curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($body, JSON_THROW_ON_ERROR));
             }
 
