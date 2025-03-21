@@ -384,7 +384,7 @@ switch ($method) {
                     echo json_encode($respuesta);
                 }
                 break;
-                // Nuevo caso para obtener los detalles de una planta por ID
+            // Nuevo caso para obtener los detalles de una planta por ID
             case (preg_match('/^plant\/power\/realtime\/([\w-]+)$/', $request, $matches) && isset($_GET['proveedor']) ? true : false):
                 $handled = true;
                 $powerStationId = $matches[1];
@@ -412,7 +412,7 @@ switch ($method) {
                     echo json_encode($respuesta);
                 }
                 break;
-                // Nuevo caso para obtener los detalles de una planta por ID
+            // Nuevo caso para obtener los detalles de una planta por ID
             case (preg_match('/^plants\/details\/([\w-]+)$/', $request, $matches) && isset($_GET['proveedor']) ? true : false):
                 $handled = true;
                 $powerStationId = $matches[1];
@@ -495,7 +495,7 @@ switch ($method) {
                     echo json_encode($respuesta);
                 }
                 break;
-                //Devuelve una lista de todas las plantas (Admin)
+            //Devuelve una lista de todas las plantas (Admin)
             case ($request === 'plants'):
                 $handled = true;
                 //Verificamos que existe el usuario CREADOR del token y sino manejamos el error dentro de la funcion
@@ -608,7 +608,7 @@ switch ($method) {
                 break;
             case (preg_match('/^plants\/energy\/([\w-]+(?:,[\w-]+)*)$/', $request, $matches) && isset($_GET['proveedor']) ? true : false):
                 $handled = true;
-                $powerStationIds = isset($matches[1])? $matches[1]: "";
+                $powerStationIds = isset($matches[1]) ? $matches[1] : "";
                 $body = file_get_contents("php://input");
                 $data = json_decode($body, true); // Decodificar JSON a un array asociativo
                 //Verificamos que existe el usuario CREADOR del token y sino manejamos el error dentro de la funcion
@@ -624,12 +624,12 @@ switch ($method) {
                                 echo json_encode($respuesta);
                                 break;
                             case $proveedores['SolarEdge']:
-                                if(isset($data['time']) && isset($data['startTime']) && isset($data['endTime'])){
+                                if (isset($data['time']) && isset($data['startTime']) && isset($data['endTime'])) {
                                     $time = $data['time'];
                                     $startTime = $data['startTime'];
                                     $endTime = $data['endTime'];
-                                    $apiControladorService->BulkApiFleetEnergy($time,$startTime,$endTime,$powerStationIds);
-                                }else{
+                                    $apiControladorService->BulkApiFleetEnergy($time, $startTime, $endTime, $powerStationIds);
+                                } else {
                                     $respuesta->_404();
                                     $respuesta->message = 'Parametros faltantes en el body';
                                     http_response_code($respuesta->code);
@@ -890,7 +890,7 @@ switch ($method) {
                     echo json_encode($respuesta);
                 }
                 break;
-                // Nuevo caso para obtener las graficas de la planta
+            // Nuevo caso para obtener las graficas de la planta
             case (preg_match('/^plants\/graficas$/', $request, $matches) && isset($_GET['proveedor'])):
                 $handled = true;
                 // Verificamos que el usuario esté autenticado y sea administrador
@@ -958,6 +958,43 @@ switch ($method) {
 
     case 'PUT':
         switch (true) {
+            case ($request === 'zoho/actualizarCliente'):
+                $handled = true;
+
+                if ($authMiddleware->verificarTokenUsuarioActivo() != false) {
+                    if ($authMiddleware->verificarAdmin()) {
+                        // Obtener los datos del body
+                        $jsonInput = file_get_contents("php://input");
+                        $data = json_decode($jsonInput, true);
+
+                        if (!$data) {
+                            $respuesta->_400();
+                            $respuesta->message = 'Datos JSON inválidos o vacíos.';
+                            http_response_code($respuesta->code);
+                            echo json_encode($respuesta);
+                            break;
+                        }
+
+                        // Ejecutar actualización en Zoho
+                        $zohoService = new ZohoService();
+                        $zohoRespuesta = $zohoService->actualizarCliente($data);
+
+                        $respuesta->success($zohoRespuesta);
+                        echo json_encode($respuesta);
+                    } else {
+                        $respuesta->_403();
+                        $respuesta->message = 'No tienes permiso para realizar esta consulta';
+                        http_response_code($respuesta->code);
+                        echo json_encode($respuesta);
+                    }
+                } else {
+                    $respuesta->_403();
+                    $respuesta->message = 'El token no se puede autenticar con éxito';
+                    http_response_code($respuesta->code);
+                    echo json_encode($respuesta);
+                }
+                break;
+
             case ($request === 'usuario'):
                 $handled = true;
                 //Verificamos que existe el usuario CREADOR del token y sino manejamos el error dentro de la funcion
@@ -1011,7 +1048,7 @@ switch ($method) {
             case (preg_match('/zoho\/eliminarCliente\/(\d+)/', $request, $matches) ? true : false):
                 $handled = true;
                 $clienteId = $matches[1] ?? null; // Extraer el ID del cliente de la URL
-            
+
                 if (!$clienteId) {
                     $respuesta->_400();
                     $respuesta->message = 'ID de cliente requerido';
@@ -1019,7 +1056,7 @@ switch ($method) {
                     echo json_encode($respuesta);
                     break;
                 }
-            
+
                 if ($authMiddleware->verificarTokenUsuarioActivo() != false) {
                     if ($authMiddleware->verificarAdmin()) {
                         $zohoService = new ZohoService();
@@ -1038,7 +1075,7 @@ switch ($method) {
                     http_response_code($respuesta->code);
                     echo json_encode($respuesta);
                 }
-                break;            
+                break;
             case ($request === 'usuario/imagen'):
                 $handled = true;
                 if ($authMiddleware->verificarTokenUsuarioActivo() != false) {
