@@ -85,6 +85,41 @@ class ZohoController
         ];
     }
 
+    public function actualizarId($clienteId, $idApp)
+    {
+        if (!$clienteId || !$idApp) {
+            return json_encode(["error" => "Faltan parámetros obligatorios: clienteId o idApp"]);
+        }
+
+        $body = [
+            "data" => [
+                [
+                    "id" => $clienteId,
+                    "idApp" => (string)$idApp
+                ]
+            ]
+        ];
+
+        // Enviar PUT con los nuevos datos
+        $respuestaPut = $this->enviarDatosZoho($body, 'PUT', 'Clientes');
+
+        if (!is_array($respuestaPut)) {
+            return json_encode(["error" => "Error inesperado al comunicarse con Zoho."]);
+        }
+
+        if (isset($respuestaPut['data'][0]['status']) && $respuestaPut['data'][0]['status'] === "error") {
+            return [
+                "error" => "Error al actualizar el cliente en Zoho: " . ($respuestaPut['data'][0]['message'] ?? 'Desconocido')
+            ];
+        }
+
+        return [
+            "success" => true,
+            "message" => "idApp actualizado correctamente en Zoho.",
+            "zohoId" => $clienteId,
+            "data" => $respuestaPut['data'][0]
+        ];
+    }
 
 
     /**
@@ -144,6 +179,7 @@ class ZohoController
             "data" => [
                 [
                     "Correo_electr_nico_1" => $data['email'],
+                    "origen" => $data['origen'] ?? "app",
                     "Account_Name" => $accountName ?? "",
                     "M_vil" => $data['movil'] ?? "",
                     "Empresa" => $data['empresa'],
