@@ -228,13 +228,18 @@ class ZohoService
     //CRUD de clientes de App a Zoho
     /**
      * Crear un cliente desde la App a Zoho
+     * Esta función se encarga de crear un cliente en Zoho CRM a partir de los datos
+     * que se envíen desde la App.
     */
     public function crearCliente($data = null)
     {
         return $ClienteZoho = $this->zohoController->crearCliente($data);
     }
+
     /**
      * Actualizar un cliente desde la App a Zoho
+     * Esta función se encarga de crear un cliente en Zoho CRM a partir de los datos
+     * que se envíen desde la App.
     */
     public function actualizarCliente($data = null)
     {
@@ -242,32 +247,11 @@ class ZohoService
     }
     /**
      * Eliminar un cliente desde la App a Zoho
+     * Esta función se encarga de crear un cliente en Zoho CRM a partir de los datos
+     * que se envíen desde la App.
     */
     public function eliminarCliente($clienteId = "")
     {
         return $ClienteZoho = $this->zohoController->eliminarCliente($clienteId);
     }
-
-    /** 
-
-    public function getLeads()
-    {
-        return $this->client->getLeads();
-    }
-
-    public function getLead($id)
-    {
-        return $this->client->getLead($id);
-    }
-
-    public function updateLead($id, $data)
-    {
-        return $this->client->updateLead($id, $data);
-    }
-
-    public function deleteLead($id)
-    {
-        return $this->client->deleteLead($id);
-    }
-     */
 }

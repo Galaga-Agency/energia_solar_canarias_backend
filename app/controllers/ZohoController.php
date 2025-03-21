@@ -136,7 +136,7 @@ class ZohoController
         return $data;
     }
 
-    //Estructura del body para enviar a Zoho (cliente) desde la app (POST y DELETE)
+    //Estructura del body para enviar a Zoho (cliente) desde la app (POST PUT y DELETE)
     private function construirBodyZohoCreadoApp($data)
     {
         $accountName = $data['nombre'] . " " . $data['apellido'];
@@ -157,7 +157,8 @@ class ZohoController
     }
 
 
-    //Estructura del body para enviar a Zoho (cliente)
+
+    //Estructura del body para enviar a Zoho (cliente) (SOLO PARA PRUEBAS POST desde POSTMAN)
     private function construirBodyZoho($data)
     {
         return [
