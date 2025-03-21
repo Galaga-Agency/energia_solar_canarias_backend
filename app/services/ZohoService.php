@@ -254,4 +254,14 @@ class ZohoService
     {
         return $ClienteZoho = $this->zohoController->eliminarCliente($clienteId);
     }
+
+    /**
+     * Actualizar el identificador de un cliente en Zoho
+     * Esta función se encarga de actualizar el idApp de un cliente en Zoho CRM a partir de los datos
+     * que se envíen desde la App.
+    */
+    public function actualizarId($clienteId = null, $idApp = null)
+    {
+        return $ClienteZoho = $this->zohoController->actualizarId($clienteId, $idApp);
+    }
 }
