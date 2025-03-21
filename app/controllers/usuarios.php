@@ -208,6 +208,10 @@ class UsuariosController
             return;
         }
 
+        if (!isset($data['origen'])) {
+            $data['origen'] = 'app';
+        }
+
         // Instancia de la base de datos
         $usuariosDB = new UsuariosDB();
 
@@ -253,6 +257,30 @@ class UsuariosController
 
         // Responder según el resultado
         if ($result) {
+            // Prevenir bucles infinitos si el usuario fue creado desde Zoho
+            if (isset($data['origen']) && $data['origen'] === 'crm' && isset($data['idApp']) && $data['idApp'] == '' || $data['idApp'] == null) {
+                $clienteId = $data['id'];
+                $idApp = $IdusuarioCreado['idApp'];
+                $resultCRM = $zohoService->actualizarId($clienteId, $idApp);
+                $logsController->registrarLog(Logs::INFO, "Usuario {$data['email']} creado desde CRM. No se reenvía a Zoho para evitar bucles.");
+                $respuesta = new Respuesta();
+                $respuesta->success($data);
+                $respuesta->code = 201;
+                $respuesta->message = "Usuario creado localmente desde Zoho (sin sincronización hacia CRM).";
+                echo json_encode($respuesta);
+                return;
+            }
+            // Prevenir bucles infinitos si el usuario fue creado desde Zoho
+            if (isset($data['origen']) && $data['origen'] === 'crm') {
+                $logsController->registrarLog(Logs::INFO, "Usuario {$data['email']} creado desde CRM. No se reenvía a Zoho para evitar bucles.");
+                $respuesta = new Respuesta();
+                $respuesta->success($data);
+                $respuesta->code = 201;
+                $respuesta->message = "Usuario creado localmente desde Zoho (sin sincronización hacia CRM).";
+                echo json_encode($respuesta);
+                return;
+            }
+
             // Crear el usuario en Zoho
             $resultCRM = $zohoService->crearCliente($data);
             if (isset($resultCRM['error']) && $resultCRM['error'] == true) {
@@ -277,7 +305,6 @@ class UsuariosController
             echo json_encode($respuesta);
         }
     }
-
 
     public function actualizarUser($id)
     {
