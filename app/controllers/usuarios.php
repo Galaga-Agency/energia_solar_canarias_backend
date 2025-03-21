@@ -281,6 +281,8 @@ class UsuariosController
 
     public function actualizarUser($id)
     {
+        // Crear una instancia del servicio de Zoho
+        $zohoService = new ZohoService();
         // Crear una instancia del controlador de logs
         $logsController = new LogsController();
         // Obtener el JSON desde el cuerpo de la solicitud
@@ -311,6 +313,16 @@ class UsuariosController
 
                         if ($result) {
                             $logsController->registrarLog(Logs::PUT, "a modificado al usuario " . $id);
+                            $data['usuario_id'] = $id;
+                            $resultCRM = $zohoService->actualizarCliente($data);
+                            if (isset($resultCRM['error']) && $resultCRM['error'] == true) {
+                                $logsController->registrarLog(Logs::ERROR, "Error al actualizar el usuario en Zoho: " . $resultCRM['message']);
+                                $respuesta = new Respuesta();
+                                $respuesta->_500($resultCRM);
+                                $respuesta->message = "Error al actualizar el usuario en Zoho.";
+                                echo json_encode($respuesta);
+                                return;
+                            }
                             $respuesta = new Respuesta();
                             $respuesta->success($result);
                             $respuesta->message = "Usuario actualizado exitosamente.";
@@ -337,6 +349,17 @@ class UsuariosController
                     // Llamar a la función para actualizar el usuario en la base de datos
                     $result = $usuariosDB->updateUser($id, $data);
                     if ($result) {
+                        //meter en el data el id del usuario
+                        $data['usuario_id'] = $id;
+                        $resultCRM = $zohoService->actualizarCliente($data);
+                        if (isset($resultCRM['error']) && $resultCRM['error'] == true) {
+                            $logsController->registrarLog(Logs::ERROR, "Error al actualizar el usuario en Zoho: " . $resultCRM['message']);
+                            $respuesta = new Respuesta();
+                            $respuesta->_500($resultCRM);
+                            $respuesta->message = "Error al actualizar el usuario en Zoho.";
+                            echo json_encode($respuesta);
+                            return;
+                        }
                         $logsController->registrarLog(Logs::PUT, "a modificado al usuario " . $id);
                         $respuesta = new Respuesta();
                         $respuesta->success($result);
