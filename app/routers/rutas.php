@@ -1009,6 +1009,41 @@ switch ($method) {
                     echo json_encode($respuesta);
                 }
                 break;
+            case ($request === 'usuarios'):
+                $handled = true;
+                $jsonInput = file_get_contents("php://input");
+                $data = json_decode($jsonInput, true);
+
+                if (!$data['idApp']) {
+                    $respuesta->_400();
+                    $respuesta->message = 'Datos JSON inválidos o vacíos.';
+                    http_response_code($respuesta->code);
+                    echo json_encode($respuesta);
+                    break;
+                }
+
+                // Extraer el ID del usuario desde la URL
+                $id = $data['idApp'];
+                //Verificamos que existe el usuario CREADOR del token y sino manejamos el error dentro de la funcion
+                if ($authMiddleware->verificarTokenUsuarioActivo()) {
+                    // Verificar si el usuario es administrador
+                    if ($authMiddleware->verificarAdmin()) {
+                        $usuarios = new UsuariosController;
+                        $usuarios->actualizarUser($id); // Pasar el ID al método de actualización
+                    } else {
+                        $respuesta->_403();
+                        $respuesta->message = 'No tienes permisos para hacer esta consulta';
+                        http_response_code($respuesta->code);
+                        echo json_encode($respuesta);
+                    }
+                } else {
+                    $respuesta->_403();
+                    $respuesta->message = 'El token no se puede authentificar con exito';
+                    http_response_code($respuesta->code);
+                    echo json_encode($respuesta);
+                }
+                break;
+
             case (preg_match('/^usuarios\/(\d+)$/', $request, $matches) ? true : false):
                 $handled = true;
                 // Extraer el ID del usuario desde la URL
