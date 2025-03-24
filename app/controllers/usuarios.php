@@ -345,15 +345,15 @@ class UsuariosController
                 if (isset($data['origen']) && $data['origen'] === 'crm') {
                     // Compara los datos con CRM (Zoho)
                     $resultCRM = $zohoService->obtenerCliente($id); // Método para obtener los datos del cliente en Zoho CRM
-                    if (isset($resultCRM['error']) && $resultCRM['error'] == true) {
+                    if (is_array($resultCRM) && isset($resultCRM['error']) && $resultCRM['error'] == true) {
                         $logsController->registrarLog(Logs::ERROR, "Error al obtener el usuario de Zoho: " . $resultCRM['message']);
                         $respuesta = new Respuesta();
                         $respuesta->_500($resultCRM);
                         $respuesta->message = "Error al obtener el usuario de Zoho.";
                         echo json_encode($respuesta);
                         return;
-                    }
-
+                    }      
+                    
                     // Comparar los datos del CRM con los datos en Zoho y la base de datos
                     if ($this->compararDatosCRMConBaseDatos($resultCRM['data'], $data)) {
                         $logsController->registrarLog(Logs::INFO, "No hay cambios en Zoho, los datos ya están actualizados.");

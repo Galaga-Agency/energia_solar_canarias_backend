@@ -60,11 +60,11 @@ class ZohoController
         }
 
         // Retornar los datos del cliente encontrado
-        return json_encode([
+        return [
             "success" => true,
             "message" => "Cliente encontrado exitosamente.",
             "data" => $resultado['data'][0]
-        ]);
+        ];
     }
 
 
