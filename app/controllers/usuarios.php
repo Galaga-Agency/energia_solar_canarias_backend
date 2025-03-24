@@ -342,6 +342,9 @@ class UsuariosController
             }
 
             if ($usuariosDB->verificarEstadoUsuario($id)) {
+                if (!isset($data['origen'])) {
+                    $data['origen'] = 'app';
+                }
                 if (isset($data['origen']) && $data['origen'] === 'crm') {
                     // Compara los datos con CRM (Zoho)
                     $resultCRM = $zohoService->obtenerCliente($id); // Método para obtener los datos del cliente en Zoho CRM
@@ -353,7 +356,7 @@ class UsuariosController
                         echo json_encode($respuesta);
                         return;
                     }      
-                    
+
                     // Comparar los datos del CRM con los datos en Zoho y la base de datos
                     if ($this->compararDatosCRMConBaseDatos($resultCRM['data'], $data)) {
                         $logsController->registrarLog(Logs::INFO, "No hay cambios en Zoho, los datos ya están actualizados.");
