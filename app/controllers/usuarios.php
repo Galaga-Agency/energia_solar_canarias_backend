@@ -258,26 +258,24 @@ class UsuariosController
         // Responder según el resultado
         if ($result) {
             // Prevenir bucles infinitos si el usuario fue creado desde Zoho
-            if (
-                isset($data['origen']) && $data['origen'] === 'crm' &&
-                (!isset($data['idApp']) || $data['idApp'] === '' || $data['idApp'] === null)
-            ) {
-                $clienteId = $data['id'];
-                $idApp = $IdusuarioCreado['idApp'];
-                $resultCRM = $zohoService->actualizarId($clienteId, $idApp);
-
-                $logsController->registrarLog(Logs::INFO, "Usuario {$data['email']} creado desde CRM sin idApp. Se ha actualizado el identificador.");
-
-                $respuesta = new Respuesta();
-                $respuesta->success($data);
-                $respuesta->code = 201;
-                $respuesta->message = "Usuario creado localmente desde Zoho y vinculado correctamente (idApp actualizado).";
-                echo json_encode($respuesta);
-                return;
-            }
-
-            // Prevenir bucles infinitos si el usuario fue creado desde Zoho
             if (isset($data['origen']) && $data['origen'] === 'crm') {
+                if (empty($data['idApp'])) {
+                    // Si idApp está vacío, actualizamos el identificador en Zoho
+                    $clienteId = $data['id'];
+                    $idApp = $IdusuarioCreado['idApp'];
+                    $resultCRM = $zohoService->actualizarId($clienteId, $idApp);
+
+                    $logsController->registrarLog(Logs::INFO, "Usuario {$data['email']} creado desde CRM sin idApp. Se ha actualizado el identificador.");
+
+                    $respuesta = new Respuesta();
+                    $respuesta->success($data);
+                    $respuesta->code = 201;
+                    $respuesta->message = "Usuario creado localmente desde Zoho y vinculado correctamente (idApp actualizado).";
+                    echo json_encode($respuesta);
+                    return;
+                }
+
+                // Si ya tiene un idApp, no se reenvía a Zoho para evitar bucles
                 $logsController->registrarLog(Logs::INFO, "Usuario {$data['email']} creado desde CRM. No se reenvía a Zoho para evitar bucles.");
                 $respuesta = new Respuesta();
                 $respuesta->success($data);
@@ -287,17 +285,22 @@ class UsuariosController
                 return;
             }
 
-            // Crear el usuario en Zoho
+            // Crear el usuario en Zoho si no fue creado desde CRM
             $resultCRM = $zohoService->crearCliente($data);
-            if (isset($resultCRM['error']) && $resultCRM['error'] == true) {
-                $logsController->registrarLog(Logs::ERROR, "Error al crear el usuario en Zoho: " . $resultCRM['message'] . "por el administrador {$idUser}");
+            if (isset($resultCRM['error']) && $resultCRM['error'] === true) {
+                $logsController->registrarLog(Logs::ERROR, "Error al crear el usuario en Zoho: " . $resultCRM['message'] . " por el administrador {$idUser}");
+
+                // Respuesta de error si la creación en Zoho falla
                 $respuesta = new Respuesta();
-                $respuesta->_500($resultCRM);
+                $respuesta->_500($resultCRM);  // Asumiendo que _500() maneja errores internos
                 $respuesta->message = "Error al crear el usuario en Zoho.";
                 echo json_encode($respuesta);
                 return;
             }
+
+            // Si la creación es exitosa
             $logsController->registrarLog(Logs::POST, "Usuario creado o restaurado exitosamente: {$data['email']} por el administrador {$idUser}");
+
             $respuesta = new Respuesta();
             $respuesta->success($data);
             $respuesta->code = 201; // Código de creación exitosa
