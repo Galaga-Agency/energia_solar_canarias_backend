@@ -262,7 +262,7 @@ class UsuariosController
                 if (empty($data['idApp'])) {
                     // Si idApp está vacío, actualizamos el identificador en Zoho
                     $clienteId = $data['id'];
-                    $idApp = $IdusuarioCreado['idApp'];
+                    $idApp = $IdusuarioCreado['usuario_id'];
                     $resultCRM = $zohoService->actualizarId($clienteId, $idApp);
 
                     $logsController->registrarLog(Logs::INFO, "Usuario {$data['email']} creado desde CRM sin idApp. Se ha actualizado el identificador.");
