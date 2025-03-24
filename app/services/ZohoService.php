@@ -264,4 +264,14 @@ class ZohoService
     {
         return $ClienteZoho = $this->zohoController->actualizarId($clienteId, $idApp);
     }
+
+    /**
+     * Obtener un cliente desde la App a Zoho
+     * Esta función se encarga de obtener un cliente en Zoho CRM a partir de los datos
+     * que se envíen desde la App.
+    */
+    public function obtenerCliente($clienteId = null)
+    {
+        return $ClienteZoho = $this->zohoController->obtenerCliente($clienteId);
+    }
 }
