@@ -261,7 +261,7 @@ class UsuariosController
             if (isset($data['origen']) && $data['origen'] === 'crm') {
                 if (empty($data['idApp'])) {
                     // Si idApp está vacío, actualizamos el identificador en Zoho
-                    $clienteId = $data['id'];
+                    $clienteId = isset($data['id']) ? $data['id'] : null;
                     $idApp = $IdusuarioCreado['usuario_id'];
                     $resultCRM = $zohoService->actualizarId($clienteId, $idApp);
 
