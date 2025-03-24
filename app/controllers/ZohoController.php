@@ -21,6 +21,54 @@ class ZohoController
      */
 
     /**
+     * GET
+     */
+    // Función para buscar el cliente por idApp en Zoho
+    private function buscarClientePorIdApp($idApp)
+    {
+        if (empty($idApp)) {
+            return ["error" => "Se requiere idApp para buscar el cliente."];
+        }
+
+        // Construir los parámetros de búsqueda
+        $queryParams = ['criteria' => '(idApp:equals:' . $idApp . ')'];
+        $resultado = $this->enviarDatosZoho([], 'GET', 'Clientes', '', $queryParams);
+
+        // Verificar si se encontró un cliente
+        if (!is_array($resultado) || !isset($resultado['data'][0]['id'])) {
+            return ["error" => "No se encontró ningún cliente en Zoho con el idApp: " . $idApp];
+        }
+
+        // Retornar el id del cliente encontrado
+        return $resultado['data'][0]['id'];
+    }
+
+    // Función para obtener el cliente desde Zoho CRM por idApp
+    public function obtenerCliente($idApp)
+    {
+        if (empty($idApp)) {
+            return json_encode(["error" => "Se requiere idApp para obtener los datos del cliente."]);
+        }
+
+        // Construir los parámetros de búsqueda
+        $queryParams = ['criteria' => '(idApp:equals:' . $idApp . ')'];
+        $resultado = $this->enviarDatosZoho([], 'GET', 'Clientes', '', $queryParams);
+
+        // Verificar si se encontró un cliente
+        if (!is_array($resultado) || !isset($resultado['data'][0]['id'])) {
+            return json_encode(["error" => "No se encontró ningún cliente en Zoho con el idApp: " . $idApp]);
+        }
+
+        // Retornar los datos del cliente encontrado
+        return json_encode([
+            "success" => true,
+            "message" => "Cliente encontrado exitosamente.",
+            "data" => $resultado['data'][0]
+        ]);
+    }
+
+
+    /**
      * POST
      */
     public function crearCliente($data = null)
@@ -42,47 +90,59 @@ class ZohoController
      * PUT
      */
 
-    public function actualizarCliente($data)
+    // Función para actualizar el cliente en Zoho
+    private function actualizarClienteEnZoho($data, $zohoId)
     {
-        if ($data === null || !is_array($data) || !isset($data['usuario_id'])) {
-            return json_encode(["error" => "Datos incompletos. Se requiere idApp para actualizar el cliente."]);
+        if (empty($zohoId)) {
+            return ["error" => "No se ha encontrado un id de cliente válido para actualizar."];
         }
 
-        // Buscar cliente por idApp
-        $queryParams = ['criteria' => '(idApp:equals:' . $data['usuario_id'] . ')'];
-        $resultado = $this->enviarDatosZoho([], 'GET', 'Clientes', '', $queryParams);
-
-        if (!is_array($resultado) || !isset($resultado['data'][0]['id'])) {
-            return json_encode(["error" => "No se encontró ningún cliente en Zoho con el idApp: " . $data['idApp']]);
-        }
-
-        $zohoId = $resultado['data'][0]['id'];
-
-        // Construir campos del cliente y agregar el ID
+        // Construir los campos del cliente con los datos proporcionados
         $campos = $this->construirBodyZohoCreadoApp($data);
-        $campos["id"] = $zohoId;
+        $campos["id"] = $zohoId;  // Agregar el ID al cuerpo de la solicitud
 
-        $body = $this->construirBodyZohoCreadoApp($data);
-        $body["data"] = $body; // Establece el cuerpo dentro de la clave "data" correcta
+        // Establecer el cuerpo de la solicitud en el formato adecuado para Zoho
+        $body = ["data" => $campos];
 
-
-        // Enviar PUT con los nuevos datos
+        // Enviar solicitud PUT para actualizar el cliente
         $respuestaPut = $this->enviarDatosZoho($body['data'], 'PUT', 'Clientes', $zohoId);
 
+        // Verificar respuesta de Zoho
         if (!is_array($respuestaPut)) {
-            return json_encode(["error" => "Error inesperado al comunicarse con Zoho."]);
+            return ["error" => "Error inesperado al comunicarse con Zoho."];
         }
 
+        // Verificar si hubo algún error en la respuesta de Zoho
         if (isset($respuestaPut['status']) && $respuestaPut['status'] == "error") {
             return ["error" => "Error al actualizar el cliente en Zoho: " . $respuestaPut['message']];
         }
 
+        // Retornar el éxito de la operación
         return [
             "success" => true,
             "message" => "Cliente actualizado correctamente en Zoho.",
             "zohoId" => $zohoId,
             "data" => $respuestaPut['data'][0]
         ];
+    }
+
+    // Función principal que usa las funciones anteriores para actualizar un cliente
+    public function actualizarCliente($data)
+    {
+        // Validar si se han pasado los datos necesarios
+        if ($data === null || !is_array($data) || !isset($data['usuario_id'])) {
+            return json_encode(["error" => "Datos incompletos. Se requiere idApp para actualizar el cliente."]);
+        }
+
+        // Buscar el cliente por idApp
+        $zohoId = $this->buscarClientePorIdApp($data['usuario_id']);
+        if (isset($zohoId['error'])) {
+            return json_encode($zohoId);  // Si hay un error, lo devolvemos
+        }
+
+        // Actualizar el cliente en Zoho
+        $resultado = $this->actualizarClienteEnZoho($data, $zohoId);
+        return json_encode($resultado);
     }
 
     public function actualizarId($clienteId, $idApp)

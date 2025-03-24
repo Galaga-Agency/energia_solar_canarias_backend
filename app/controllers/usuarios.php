@@ -340,75 +340,103 @@ class UsuariosController
                     return;
                 }
             }
-            if ($usuariosDB->verificarEstadoUsuario($id)) {
-                if (isset($data['email'])) {
-                    // Verificar si el email pertenece a otro usuario
-                    if (!$usuariosDB->comprobarUsuario($data['email']) || $usuariosDB->esMismoUsuario($id, $data['email'])) {
-                        // Llamar a la función para actualizar el usuario en la base de datos
-                        $result = $usuariosDB->updateUser($id, $data);
 
-                        if ($result) {
-                            $logsController->registrarLog(Logs::PUT, "a modificado al usuario " . $id);
-                            $data['usuario_id'] = $id;
-                            $resultCRM = $zohoService->actualizarCliente($data);
-                            if (isset($resultCRM['error']) && $resultCRM['error'] == true) {
-                                $logsController->registrarLog(Logs::ERROR, "Error al actualizar el usuario en Zoho: " . $resultCRM['message']);
-                                $respuesta = new Respuesta();
-                                $respuesta->_500($resultCRM);
-                                $respuesta->message = "Error al actualizar el usuario en Zoho.";
-                                echo json_encode($respuesta);
-                                return;
-                            }
-                            $respuesta = new Respuesta();
-                            $respuesta->success($result);
-                            $respuesta->message = "Usuario actualizado exitosamente.";
-                            http_response_code($respuesta->code);
-                            echo json_encode($respuesta);
-                        } else {
-                            $logsController->registrarLog(Logs::ERROR, "Error al actualizar el usuario. El correo electrónico ya está registrado en otro usuario. El correo es único y solo se puede cambiar a los usuarios que no tengan ese correo elctrónico. Si queremos cambiar el correo de un usuario a otro la manera de hacerlo sería dar de alta al usuario del correo y cambiarle el correo por ejemplo prueba_su_correo y luego cambiar el correo del otro usuario, así mantenemos registrado los datos del otro usuario para futuros cambios");
-                            $respuesta = new Respuesta();
-                            $respuesta->_409($result);
-                            $respuesta->message = "Error al actualizar el usuario. Este correo está registrado en otro usuario dado de baja para solucionar el error da de alta al usuario con ese correo y modificalo.";
-                            http_response_code($respuesta->code);
-                            echo json_encode($respuesta);
-                        }
-                    } else {
-                        $logsController->registrarLog(Logs::WARNING, "El email ya está registrado en otro usuario.");
+            if ($usuariosDB->verificarEstadoUsuario($id)) {
+                if (isset($data['origen']) && $data['origen'] === 'crm') {
+                    // Compara los datos con CRM (Zoho)
+                    $resultCRM = $zohoService->obtenerCliente($id); // Método para obtener los datos del cliente en Zoho CRM
+                    if (isset($resultCRM['error']) && $resultCRM['error'] == true) {
+                        $logsController->registrarLog(Logs::ERROR, "Error al obtener el usuario de Zoho: " . $resultCRM['message']);
                         $respuesta = new Respuesta();
-                        $respuesta->_409();
-                        $respuesta->message = "El email ya está registrado en otro usuario.";
+                        $respuesta->_500($resultCRM);
+                        $respuesta->message = "Error al obtener el usuario de Zoho.";
+                        echo json_encode($respuesta);
+                        return;
+                    }
+
+                    // Comparar los datos del CRM con los datos en Zoho y la base de datos
+                    if ($this->compararDatosCRMConBaseDatos($resultCRM['data'], $data)) {
+                        $logsController->registrarLog(Logs::INFO, "No hay cambios en Zoho, los datos ya están actualizados.");
+                        $respuesta = new Respuesta();
+                        $respuesta->success(true);
+                        $respuesta->message = "No hay cambios en Zoho.";
                         http_response_code($respuesta->code);
                         echo json_encode($respuesta);
-                    }
-                    // Si no se envía el email, se actualiza el usuario sin actualizar el email
-                } else {
-                    // Llamar a la función para actualizar el usuario en la base de datos
-                    $result = $usuariosDB->updateUser($id, $data);
-                    if ($result) {
-                        //meter en el data el id del usuario
-                        $data['usuario_id'] = $id;
-                        $resultCRM = $zohoService->actualizarCliente($data);
-                        if (isset($resultCRM['error']) && $resultCRM['error'] == true) {
-                            $logsController->registrarLog(Logs::ERROR, "Error al actualizar el usuario en Zoho: " . $resultCRM['message']);
+                        return;
+                    } else {
+                        // Si hay cambios, actualizar Zoho
+                        $data['usuario_id'] = $id;  // Asegurar que el id del usuario se pasa a Zoho
+                        $resultUpdateCRM = $zohoService->actualizarCliente($data);
+                        if (isset($resultUpdateCRM['error']) && $resultUpdateCRM['error'] == true) {
+                            $logsController->registrarLog(Logs::ERROR, "Error al actualizar el usuario en Zoho: " . $resultUpdateCRM['message']);
                             $respuesta = new Respuesta();
-                            $respuesta->_500($resultCRM);
+                            $respuesta->_500($resultUpdateCRM);
                             $respuesta->message = "Error al actualizar el usuario en Zoho.";
                             echo json_encode($respuesta);
                             return;
                         }
-                        $logsController->registrarLog(Logs::PUT, "a modificado al usuario " . $id);
+
+                        // Si se actualiza Zoho, entonces actualizar también la base de datos
+                        $result = $usuariosDB->updateUser($id, $data);
+                        if ($result) {
+                            $logsController->registrarLog(Logs::PUT, "Se actualizó el usuario en Zoho y en la base de datos " . $id);
+                            $respuesta = new Respuesta();
+                            $respuesta->success(true);
+                            $respuesta->message = "Usuario actualizado correctamente en Zoho y en la base de datos.";
+                            http_response_code($respuesta->code);
+                            echo json_encode($respuesta);
+                        } else {
+                            $logsController->registrarLog(Logs::ERROR, "Error al actualizar el usuario en la base de datos.");
+                            $respuesta = new Respuesta();
+                            $respuesta->_409();
+                            $respuesta->message = "Error al actualizar el usuario en la base de datos.";
+                            http_response_code($respuesta->code);
+                            echo json_encode($respuesta);
+                        }
+                    }
+                } else {
+                    // Si el origen es "app" o no está especificado
+                    $resultDB = $usuariosDB->getUser($id); // Obtener los datos actuales del usuario en la base de datos
+
+                    if ($this->compararDatosBaseConCRM($resultDB, $data)) {
+                        // Si los datos en la base de datos son iguales a los de Zoho, no hacer nada
+                        $logsController->registrarLog(Logs::INFO, "No hay cambios en la base de datos, los datos ya están actualizados.");
                         $respuesta = new Respuesta();
-                        $respuesta->success($result);
-                        $respuesta->message = "Usuario actualizado exitosamente.";
+                        $respuesta->success(true);
+                        $respuesta->message = "No hay cambios en la base de datos.";
                         http_response_code($respuesta->code);
                         echo json_encode($respuesta);
+                        return;
                     } else {
-                        $logsController->registrarLog(Logs::ERROR, "Error al actualizar el usuario. No se a podido registrar el cambio. El usuario a mandado datos erróneos que no se pueden actualizar. por ejemplo corchetes vacios sin ningun campo o campos que no existen en la base de datos");
-                        $respuesta = new Respuesta();
-                        $respuesta->_409($result);
-                        $respuesta->message = "Error al actualizar el usuario. No se a podido registrar el cambio.";
-                        http_response_code($respuesta->code);
-                        echo json_encode($respuesta);
+                        // Si los datos en la base de datos no coinciden con Zoho, actualizar Zoho
+                        $data['usuario_id'] = $id;  // Asegurar que el id del usuario se pasa a Zoho
+                        $resultUpdateCRM = $zohoService->actualizarCliente($data);
+                        if (isset($resultUpdateCRM['error']) && $resultUpdateCRM['error'] == true) {
+                            $logsController->registrarLog(Logs::ERROR, "Error al actualizar el usuario en Zoho: " . $resultUpdateCRM['message']);
+                            $respuesta = new Respuesta();
+                            $respuesta->_500($resultUpdateCRM);
+                            $respuesta->message = "Error al actualizar el usuario en Zoho.";
+                            echo json_encode($respuesta);
+                            return;
+                        }
+
+                        // Ahora actualizar la base de datos
+                        $result = $usuariosDB->updateUser($id, $data);
+                        if ($result) {
+                            $logsController->registrarLog(Logs::PUT, "Se actualizó el usuario en la base de datos y en Zoho " . $id);
+                            $respuesta = new Respuesta();
+                            $respuesta->success(true);
+                            $respuesta->message = "Usuario actualizado correctamente en la base de datos y Zoho.";
+                            http_response_code($respuesta->code);
+                            echo json_encode($respuesta);
+                        } else {
+                            $logsController->registrarLog(Logs::ERROR, "Error al actualizar el usuario en la base de datos.");
+                            $respuesta = new Respuesta();
+                            $respuesta->_409();
+                            $respuesta->message = "Error al actualizar el usuario en la base de datos.";
+                            http_response_code($respuesta->code);
+                            echo json_encode($respuesta);
+                        }
                     }
                 }
             } else {
@@ -429,6 +457,21 @@ class UsuariosController
             echo json_encode($respuesta);
         }
     }
+
+    // Método para comparar datos entre CRM y la base de datos
+    private function compararDatosCRMConBaseDatos($crmData, $dbData)
+    {
+        // Compara los datos del CRM con los datos de la base de datos
+        return $crmData == $dbData; // Lógica de comparación según el formato de los datos
+    }
+
+    // Método para comparar los datos de la base de datos con los del CRM
+    private function compararDatosBaseConCRM($dbData, $crmData)
+    {
+        // Compara los datos de la base de datos con los del CRM
+        return $dbData == $crmData; // Lógica de comparación según el formato de los datos
+    }
+
 
     public function eliminarUser($id)
     {
