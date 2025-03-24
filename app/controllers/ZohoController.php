@@ -101,7 +101,7 @@ class ZohoController
         ];
 
         // Enviar PUT con los nuevos datos
-        $respuestaPut = $this->enviarDatosZoho($body, 'PUT', 'Clientes');
+        $respuestaPut = $this->enviarDatosZoho($body, 'PUT', 'Clientes', $clienteId);
 
         if (!is_array($respuestaPut)) {
             return json_encode(["error" => "Error inesperado al comunicarse con Zoho."]);
