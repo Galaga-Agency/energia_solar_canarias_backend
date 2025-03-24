@@ -343,8 +343,10 @@ class UsuariosController
 
             if ($usuariosDB->verificarEstadoUsuario($id)) {
                 if (!isset($data['origen'])) {
-                    $data['origen'] = 'app';
+                    $data['origen'] = 'app'; // Si no se especifica, establecemos el origen como 'app' por defecto
                 }
+
+                // Si el origen es 'crm', significa que proviene de Zoho
                 if (isset($data['origen']) && $data['origen'] === 'crm') {
                     // Compara los datos con CRM (Zoho)
                     $resultCRM = $zohoService->obtenerCliente($id); // Método para obtener los datos del cliente en Zoho CRM
@@ -355,7 +357,7 @@ class UsuariosController
                         $respuesta->message = "Error al obtener el usuario de Zoho.";
                         echo json_encode($respuesta);
                         return;
-                    }      
+                    }
 
                     // Comparar los datos del CRM con los datos en Zoho y la base de datos
                     if ($this->compararDatosCRMConBaseDatos($resultCRM['data'], $data)) {
@@ -368,7 +370,10 @@ class UsuariosController
                         return;
                     } else {
                         // Si hay cambios, actualizar Zoho
-                        $data['usuario_id'] = $id;  // Asegurar que el id del usuario se pasa a Zoho
+                        // Aquí modificamos el origen a 'app' antes de enviar a Zoho para evitar bucles
+                        $data['origen'] = 'app';  // Marcar explícitamente que la actualización proviene de la app
+
+
                         $resultUpdateCRM = $zohoService->actualizarCliente($data);
                         if (isset($resultUpdateCRM['error']) && $resultUpdateCRM['error'] == true) {
                             $logsController->registrarLog(Logs::ERROR, "Error al actualizar el usuario en Zoho: " . $resultUpdateCRM['message']);
@@ -412,7 +417,9 @@ class UsuariosController
                         return;
                     } else {
                         // Si los datos en la base de datos no coinciden con Zoho, actualizar Zoho
-                        $data['usuario_id'] = $id;  // Asegurar que el id del usuario se pasa a Zoho
+                        // Aquí modificamos el origen a 'app' antes de enviar a Zoho para evitar bucles
+                        $data['origen'] = 'app'; // Aseguramos que el origen sea 'app' al actualizar Zoho
+
                         $resultUpdateCRM = $zohoService->actualizarCliente($data);
                         if (isset($resultUpdateCRM['error']) && $resultUpdateCRM['error'] == true) {
                             $logsController->registrarLog(Logs::ERROR, "Error al actualizar el usuario en Zoho: " . $resultUpdateCRM['message']);
