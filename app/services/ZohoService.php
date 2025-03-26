@@ -3,6 +3,7 @@ require_once __DIR__ . "/../../vendor/autoload.php";
 require_once __DIR__ . "/../utils/HttpClient.php";
 require_once __DIR__ . "/../models/conexion.php";
 require_once __DIR__ . "/../controllers/ZohoController.php";
+require_once __DIR__ . "/../services/ApiControladorService.php";
 
 use Dotenv\Dotenv;
 
@@ -274,4 +275,31 @@ class ZohoService
     {
         return $ClienteZoho = $this->zohoController->obtenerCliente($clienteId);
     }
+
+    /**
+     * 1. Obtener una planta de la aplicación de zoho Plantas sin los Clientes 
+     * y si existe el identificador de la planta entonces no crearla
+    */
+    public function actualizarDatosPlantas()
+    {
+        $apiControladorService = new  ApiControladorService;
+        //Recogemos todas las plantas que hay actualemente de los proveedores
+        $todasLasPlantas = $apiControladorService->getAllPlants(true);
+        //Recogemos todas las plantas que y las parseamos en datos que zoho reconozca validos
+        $plantasZoho = $this->zohoController->convertirPlantasFormatoZoho($todasLasPlantas);
+        //comprobamos que las plantas con idPlanta no esten ya creadas en zoho para evitar duplicados de plantas
+        $plantasComprobadas = $this->zohoController->comprobarIdPlantasExistentes($plantasZoho);
+        //actualizamos las plantas en zoho y devolvemos las plantas creadas
+        $plantasCreadas = $this->zohoController->crearTodasLasPlantasEnZoho($plantasComprobadas);
+        return $plantasCreadas;
+        //var_dump($todasLasPlantas);
+        //$plantasArray = $this->zohoController->sacarPlantasArray($clienteId);
+    }
+
+    /**
+     * 1. Obtener una planta de la aplicación de zoho Plantas
+     * 2. El cliente que se obtiene se le hace un filtro para sacar los ids en la tabla intermedia  Plantas_X_Clientes
+     * 3. se hace un filtro con el cliente para saber cual es el cliente con la idApp y se saca el id de zoho de ese cliente Accounts
+     * 4. se relaciona el cliente con la planta
+    */
 }
