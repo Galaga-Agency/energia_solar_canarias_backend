@@ -69,6 +69,28 @@ $handled = false; // Bandera para indicar si la ruta fue manejada
 switch ($method) {
     case 'GET':
         switch (true) {
+            case ($request === 'zoho/actualizarDatosPlantas'):
+                $handled = true;
+                if ($authMiddleware->verificarTokenUsuarioActivo() != false) {
+                    if ($authMiddleware->verificarAdmin()) {
+                        $zohoservice = new ZohoService();
+                        $zohoRespuesta = $zohoservice->actualizarDatosPlantas();
+                        $respuesta->success($zohoRespuesta);
+                        echo json_encode($respuesta);
+                    } else {
+                        $respuesta->_403();
+                        $respuesta->message = 'No tienes permiso para realizar esta consulta';
+                        http_response_code($respuesta->code);
+                        echo json_encode($respuesta);
+                    }
+                } else {
+                    $respuesta->_403();
+                    $respuesta->message = 'El token no se puede authentificar con exito';
+                    http_response_code($respuesta->code);
+                    echo json_encode($respuesta);
+                }
+                break;
+
             case ($request === 'zoho/verificarToken'):
                 $handled = true;
                 if ($authMiddleware->verificarTokenUsuarioActivo() != false) {
@@ -1212,7 +1234,7 @@ switch ($method) {
                     $respuesta->message = "Falta el campo 'idApp' en la solicitud.";
                     http_response_code($respuesta->code);
                     echo json_encode($respuesta);
-                    return;
+                    return; 
                 }
                 //Verificamos que existe el usuario CREADOR del token y sino manejamos el error dentro de la funcion
                 if ($authMiddleware->verificarTokenUsuarioActivo() != false) {
