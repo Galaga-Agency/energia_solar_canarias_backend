@@ -26,7 +26,7 @@ class ApiControladorService
      * Estas funcion son genericas para todos los proveedores
      * 
      */
-    public function getAllPlants()
+    public function getAllPlants($devolver = false)
     {
         $respuesta = new Respuesta;
         try {
@@ -44,6 +44,10 @@ class ApiControladorService
 
             $plants = $this->processPlants($goodWeData, $solarEdgeData, $victronEnergyData);
 
+            //si devolver es true entonces devolvemos todas las plantas para que podamos hacer nuestros calculos o otras cosas
+            if ($devolver) {
+                return $plants;
+            }
 
             if ($plants != null) {
                 $this->logsController->registrarLog(Logs::INFO, "Se han encontrado las plantas");

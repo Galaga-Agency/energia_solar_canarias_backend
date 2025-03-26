@@ -12,7 +12,11 @@ class ZohoController
         // Constructor
         //array con todas las rutas de zoho
         $this->routes = [
-            "Clientes" => "/crm/v2/Accounts"
+            "Clientes" => "/crm/v2/Accounts",
+            'Plantas'  => '/crm/v2/Plantas',
+            'Plantas/search' => '/crm/v2/Plantas/search',
+            'Plantas/acciones/insertar' => '/crm/v2/Plantas/actions/insert',
+            'bulk/api' => '/crm/bulk/v2/write'
         ];
     }
 
@@ -67,6 +71,28 @@ class ZohoController
         ];
     }
 
+    //Funcion que obtiene las plantas que no existen del array de plantas y nos las devuelve
+    public function comprobarIdPlantasExistentes(array $plantasZoho): array
+    {
+        $plantasFiltradas = [];
+
+        foreach ($plantasZoho as $planta) {
+            $queryParams = [
+                'criteria' => '(idPlanta:equals:' . $planta['idPlanta'] . ')'
+            ];
+
+            $respuesta = $this->enviarDatosZoho([], 'GET', 'Plantas/search', '', $queryParams);
+
+            // Si no se encuentra ninguna planta, la añadimos para crear
+            if (!isset($respuesta['data'][0]['id'])) {
+                $plantasFiltradas[] = $planta;
+            }
+        }
+
+        return $plantasFiltradas;
+    }
+
+
 
     /**
      * POST
@@ -85,6 +111,82 @@ class ZohoController
 
         return $this->enviarDatosZoho($body, 'POST');
     }
+
+    public function crearTodasLasPlantasEnZoho(array $plantasAInsertar): array
+    {
+        $creadas = [];
+        $batchSize = 100;
+        $chunks = array_chunk($plantasAInsertar, $batchSize);
+
+        $csvDir = __DIR__ . '/plantasCSV';
+        if (!is_dir($csvDir)) {
+            mkdir($csvDir, 0777, true);
+        }
+
+        foreach ($chunks as $index => $grupo) {
+            $csvPath = "$csvDir/plantas_batch_$index.csv";
+            $zipPath = "$csvDir/plantas_batch_$index.zip";
+
+            $this->guardarCSV($grupo, $csvPath);
+
+            // Crear ZIP
+            $zip = new ZipArchive();
+            if ($zip->open($zipPath, ZipArchive::CREATE) === true) {
+                $zip->addFile($csvPath, basename($csvPath));
+                $zip->close();
+            } else {
+                $creadas[] = [
+                    'grupo' => $grupo,
+                    'error' => 'No se pudo crear el archivo ZIP.'
+                ];
+                continue;
+            }
+
+            // Subir ZIP
+            $fileId = $this->subirArchivoZipZoho($zipPath);
+
+            if (!$fileId) {
+                $creadas[] = [
+                    'grupo' => $grupo,
+                    'error' => 'Error al subir el archivo ZIP a Zoho.'
+                ];
+                continue;
+            }
+
+            $body = [
+                "operation" => "insert",
+                "resource" => [
+                    [
+                        "type" => "data",
+                        "module" => "Plantas",
+                        "file_id" => $fileId
+                    ]
+                ]
+            ];
+
+            $respuesta = $this->enviarBulkInsertZoho($body);
+
+            if (isset($respuesta['status']) && $respuesta['status'] === 'success') {
+                $creadas[] = [
+                    "grupo" => $grupo,
+                    "job_id" => $respuesta['details']['id'],
+                    "estado" => "pendiente"
+                ];
+            } else {
+                $creadas[] = [
+                    "grupo" => $grupo,
+                    "error" => $respuesta['message'] ?? 'Error desconocido'
+                ];
+            }
+
+            unlink($csvPath);
+            unlink($zipPath);
+        }
+
+        return $creadas;
+    }
+
+
 
     /**
      * PUT
@@ -218,6 +320,9 @@ class ZohoController
      * Estas Funciones son reutilizables para toda clase de peticiones a Zoho
      */
 
+    /**
+     * CONSTRUIR CUERPO DE PETICIONES
+     */
     // Funcion que recoge el objeto JSON de las peticiones POST
     private function obtenerDatosRequest()
     {
@@ -271,6 +376,52 @@ class ZohoController
             ]
         ];
     }
+
+    //Estructura del body para enviar a zoho
+    public function convertirPlantasFormatoZoho(array $plantas): array
+    {
+        $resultado = [];
+
+        foreach ($plantas as $planta) {
+            $resultado[] = [
+                "Name" => $planta["name"] ?? "",
+                "direccion" => $planta["address"] ?? "",
+                "capacidad" => $planta["capacity"] ?? "",
+                "estado" => $planta["status"] ?? "",
+                "tipo" => $planta["type"] ?? "",
+                "latitud" => $planta["latitude"] ?? "",
+                "longitud" => $planta["longitude"] ?? "",
+                "Organizaci_n" => $planta["organization"] ?? "",
+                "idPlanta" => $planta["id"], // Tu identificador interno para evitar duplicados
+                "moneda" => "Euro" //Por defecto
+            ];
+        }
+
+        return $resultado;
+    }
+
+    /**
+     * Funciones para manejar CSV
+     */
+
+    private function guardarCSV(array $datos, string $rutaArchivo): void
+    {
+        $f = fopen($rutaArchivo, 'w');
+
+        // Escribir cabeceras
+        if (!empty($datos)) {
+            fputcsv($f, array_keys($datos[0]));
+        }
+
+        // Escribir contenido
+        foreach ($datos as $fila) {
+            fputcsv($f, $fila);
+        }
+
+        fclose($f);
+    }
+
+
 
     //Funcion para enviar los datos a Zoho
     private function enviarDatosZoho(array $body = [], string $method = 'POST', string $endpoint = 'Clientes', string $extraPath = '', array $queryParams = [])
@@ -338,6 +489,92 @@ class ZohoController
             }
 
             return $decodedResponse;
+        } catch (Exception $e) {
+            return ['error' => true, 'message' => $e->getMessage()];
+        }
+    }
+
+    private function subirArchivoZipZoho(string $zipPath)
+    {
+        try {
+            $zohoService = new ZohoService();
+            $accessTokenData = $zohoService->getAccessToken();
+
+            if (!isset($accessTokenData['access_token'])) {
+                throw new Exception("Error obteniendo el token de acceso de Zoho.");
+            }
+
+            $accessToken = $accessTokenData['access_token'];
+            $zgid = '20103897680'; // Reemplaza si cambia tu zgid
+            $url = 'https://content.zohoapis.eu/crm/v2/upload';
+
+            $file = new CURLFile($zipPath, 'application/zip', basename($zipPath));
+
+            $postFields = [
+                'file' => $file
+            ];
+
+            $headers = [
+                "Authorization: Zoho-oauthtoken $accessToken",
+                "X-CRM-ORG: $zgid",
+                "feature: bulk-write"
+            ];
+
+            $ch = curl_init();
+            curl_setopt_array($ch, [
+                CURLOPT_URL => $url,
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_POST => true,
+                CURLOPT_HTTPHEADER => $headers,
+                CURLOPT_POSTFIELDS => $postFields
+            ]);
+
+            $response = curl_exec($ch);
+            curl_close($ch);
+
+            $respuesta = json_decode($response, true);
+
+            if (isset($respuesta['details']['file_id'])) {
+                return $respuesta['details']['file_id'];
+            }
+
+            return false;
+        } catch (Exception $e) {
+            return false;
+        }
+    }
+
+    //Funcion para enviar datos a la bulk api
+    private function enviarBulkInsertZoho(array $body): array
+    {
+        try {
+            $zohoService = new ZohoService();
+            $accessTokenData = $zohoService->getAccessToken();
+
+            if (!isset($accessTokenData['access_token'])) {
+                throw new Exception("Error obteniendo el token de acceso de Zoho.");
+            }
+
+            $accessToken = $accessTokenData['access_token'];
+            $url = 'https://www.zohoapis.eu/crm/bulk/v2/write';
+
+            $headers = [
+                "Authorization: Zoho-oauthtoken $accessToken",
+                "Content-Type: application/json"
+            ];
+
+            $ch = curl_init($url);
+            curl_setopt_array($ch, [
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_POST           => true,
+                CURLOPT_HTTPHEADER     => $headers,
+                CURLOPT_POSTFIELDS     => json_encode($body, JSON_THROW_ON_ERROR)
+            ]);
+
+            $response = curl_exec($ch);
+            curl_close($ch);
+
+            return json_decode($response, true);
         } catch (Exception $e) {
             return ['error' => true, 'message' => $e->getMessage()];
         }
