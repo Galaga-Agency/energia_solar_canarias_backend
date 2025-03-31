@@ -370,6 +370,7 @@ class ZohoController
                     "M_vil" => $data['M_vil'] ?? "",
                     "Empresa" => $data['Empresa'],
                     "Poblaci_n" => $data['Poblaci_n'] ?? "",
+                    "clase" => $data['admin'] ?? "",
                     "NIF" => $data['NIF'] ?? "",
                     "Record_Image" => $data['Record_Image'] ?? ""
                 ]
@@ -393,6 +394,7 @@ class ZohoController
                 "longitud" => $planta["longitude"] ?? "",
                 "Organizaci_n" => $planta["organization"] ?? "",
                 "idPlanta" => $planta["id"], // Tu identificador interno para evitar duplicados
+                "clase" => $planta["admin"],
                 "moneda" => "Euro" //Por defecto
             ];
         }
