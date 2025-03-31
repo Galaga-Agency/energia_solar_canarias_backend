@@ -233,6 +233,12 @@ class UsuariosDB
             // Generar el hash de la contraseña
             $passwordHash = password_hash($data['password'], PASSWORD_BCRYPT);
 
+            if(isset($data['clase']) && $data['clase']  == 1 || isset($data['clase']) && $data['clase']  == "admin"){
+                $data['clase'] = "admin";
+            }else if(isset($data['clase']) && $data['clase']  == 2 || isset($data['clase']) && $data['clase']  == "usuario"){
+                $data['clase'] = "usuario";
+            }
+
             // Para cada campo opcional, asignamos null si no está en $data:
             // (El operador null coalesce ?? permite asignar un valor por defecto si no existe la clave en $data)
             $clase          = $data['clase']          ?? 'usuario'; // Clase por defecto
@@ -373,6 +379,12 @@ class UsuariosDB
             }
 
             $usuario = $this->getUser($id);
+
+            if(isset($data['clase']) && $data['clase']  == 1 || isset($data['clase']) && $data['clase']  == "admin"){
+                $data['clase'] = "admin";
+            }else if(isset($data['clase']) && $data['clase']  == 2 || isset($data['clase']) && $data['clase']  == "usuario"){
+                $data['clase'] = "usuario";
+            }
 
             // --------------------------------------------------
             // 3. Asignar los campos opcionales con ?? null
