@@ -353,7 +353,7 @@ class ZohoController
                     "origen" => $data['origen'] ?? "app",
                     "Account_Name" => $accountName ?? "",
                     "M_vil" => $data['movil'] ?? "",
-                    "Empresa" => $data['empresa'],
+                    "Empresa" => $data['empresa'] ?? "",
                     "Poblaci_n" => $data['ciudad'] ?? "",
                     "NIF" => $data['cif_nif'] ?? "",
                     "Record_Image" => $data['imagen'] ?? "",
