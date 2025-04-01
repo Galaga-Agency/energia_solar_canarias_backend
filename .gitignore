@@ -4,3 +4,4 @@ config/smtp.json
 config/jwt.env
 config/.env
 img/
+webhook_data.txt

@@ -967,6 +967,43 @@ switch ($method) {
                     echo json_encode($respuesta);
                 }
                 break;
+                case ($request === 'zoho/imprimirWebhook'):
+                    $handled = true;
+                    if ($authMiddleware->verificarTokenUsuarioActivo() != false) {
+                        if ($authMiddleware->verificarAdmin()) {
+                            // Obtén el contenido del webhook que llega en formato JSON
+                            $webhookData = file_get_contents('php://input');
+            
+                            // Decodifica el JSON para que puedas trabajar con él si es necesario
+                            $decodedData = json_decode($webhookData, true);
+            
+                            // Define la ruta del archivo donde quieres guardar los datos
+                            $file = 'webhook_data.txt';
+            
+                            // Abre el archivo para escribir (en modo de escritura, lo que crea o sobrescribe el archivo)
+                            $handle = fopen($file, 'w');
+            
+                            if ($handle) {
+                                    // Guarda los datos en el archivo en formato JSON
+                                fwrite($handle, json_encode($decodedData, JSON_PRETTY_PRINT));
+                                fclose($handle); // Cierra el archivo después de escribir
+                                echo 'Webhook recibido y guardado correctamente.';
+                            } else {
+                                echo 'Error al intentar guardar el archivo.';
+                            }
+                        } else {
+                            $respuesta->_403();
+                            $respuesta->message = 'No tienes permiso para realizar esta consulta';
+                            http_response_code($respuesta->code);
+                            echo json_encode($respuesta);
+                        }
+                    } else {
+                        $respuesta->_403();
+                        $respuesta->message = 'El token no se puede authentificar con exito';
+                        http_response_code($respuesta->code);
+                        echo json_encode($respuesta);
+                    }
+                    break;
 
             default:
                 $handled = true;
@@ -975,44 +1012,6 @@ switch ($method) {
                 http_response_code($respuesta->code);
                 echo json_encode($respuesta);
                 break;
-        }
-        break;
-
-    case ($request === 'zoho/imprimirWebhook'):
-        $handled = true;
-        if ($authMiddleware->verificarTokenUsuarioActivo() != false) {
-            if ($authMiddleware->verificarAdmin()) {
-                // Obtén el contenido del webhook que llega en formato JSON
-                $webhookData = file_get_contents('php://input');
-
-                // Decodifica el JSON para que puedas trabajar con él si es necesario
-                $decodedData = json_decode($webhookData, true);
-
-                // Define la ruta del archivo donde quieres guardar los datos
-                $file = 'webhook_data.txt';
-
-                // Abre el archivo para escribir (en modo de escritura, lo que crea o sobrescribe el archivo)
-                $handle = fopen($file, 'w');
-
-                if ($handle) {
-                        // Guarda los datos en el archivo en formato JSON
-                    fwrite($handle, json_encode($decodedData, JSON_PRETTY_PRINT));
-                    fclose($handle); // Cierra el archivo después de escribir
-                    echo 'Webhook recibido y guardado correctamente.';
-                } else {
-                    echo 'Error al intentar guardar el archivo.';
-                }
-            } else {
-                $respuesta->_403();
-                $respuesta->message = 'No tienes permiso para realizar esta consulta';
-                http_response_code($respuesta->code);
-                echo json_encode($respuesta);
-            }
-        } else {
-            $respuesta->_403();
-            $respuesta->message = 'El token no se puede authentificar con exito';
-            http_response_code($respuesta->code);
-            echo json_encode($respuesta);
         }
         break;
 
