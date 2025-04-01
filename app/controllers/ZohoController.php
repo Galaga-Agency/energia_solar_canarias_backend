@@ -339,7 +339,13 @@ class ZohoController
     //Estructura del body para enviar a Zoho (cliente) desde la app (POST PUT y DELETE)
     private function construirBodyZohoCreadoApp($data)
     {
-        $accountName = $data['nombre'] . " " . $data['apellido'];
+        if(isset($data['nombre']) && isset($data['apellido'])){
+            $accountName = $data['nombre'] . " " . $data['apellido'];
+        }elseif(isset($data['nombre'])){
+            $accountName = $data['nombre'];
+        }elseif(isset($data['apellido'])){
+            $accountName = $data['apellido'];
+        }
         return [
             "data" => [
                 [
@@ -365,7 +371,7 @@ class ZohoController
         return [
             "data" => [
                 [
-                    "Correo_electr_nico_1" => $data['Correo_electr_nico_1'],
+                    "Correo_electr_nico_1" => $data['Correo_electr_nico_1'] ?? "",
                     "Account_Name" => $data['Account_Name'] ?? "",
                     "M_vil" => $data['M_vil'] ?? "",
                     "Empresa" => $data['Empresa'],
