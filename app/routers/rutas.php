@@ -1316,9 +1316,10 @@ switch ($method) {
 
             case (preg_match('/^usuarios\/(\d+)$/', $request, $matches) ? true : false):
                 $handled = true;
+                $usuarios = new UsuariosController;
                 if(isset($_GET['idApp'])){
                     $id = $_GET['idApp'];
-                }else{
+                }elseif(isset($matches[1])){
                     // Extraer el ID del usuario desde la URL
                     $id = $matches[1];
                 }
@@ -1326,7 +1327,6 @@ switch ($method) {
                 if ($authMiddleware->verificarTokenUsuarioActivo() != false) {
                     // Verificar si el usuario es administrador
                     if ($authMiddleware->verificarAdmin()) {
-                        $usuarios = new UsuariosController;
                         $usuarios->eliminarUser($id); // Pasar el ID al método de actualización
                     } else {
                         $respuesta->_403();
