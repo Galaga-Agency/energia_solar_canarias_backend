@@ -302,17 +302,20 @@ class ZohoController
             return json_encode(["error" => "No se encontró un cliente en Zoho con el idApp: " . $idApp]);
         }
 
-        $zohoId = $resultado['data'][0]['id']; // Extraer el Zoho_ID del cliente
+        // Verificar si la búsqueda devuelve exactamente un solo cliente
+        if (count($resultado['data']) == 1) {
+            $zohoId = $resultado['data'][0]['id']; // Extraer el Zoho_ID del cliente
+            $deleteResponse = $this->enviarDatosZoho([], 'DELETE', 'Clientes', $zohoId);
 
-        // Eliminar el cliente en Zoho usando su Zoho_ID
-        $deleteResponse = $this->enviarDatosZoho([], 'DELETE', 'Clientes', $zohoId);
+            if (isset($deleteResponse['error']) && $deleteResponse['error'] == true) {
+                return json_encode(["error" => "Error al eliminar el cliente en Zoho: " . $deleteResponse['message']]);
+            }
 
-        // Verificar la respuesta de Zoho después de eliminar
-        if (isset($deleteResponse['error']) && $deleteResponse['error'] == true) {
-            return json_encode(["error" => "Error al eliminar el cliente en Zoho: " . $deleteResponse['message']]);
+            return ["success" => true, "message" => "Cliente eliminado correctamente en Zoho.", "zohoId" => $zohoId];
+        } else {
+            // Si más de un cliente se encuentra con el mismo idApp, logueamos el problema
+            return json_encode(["error" => "Se encontraron múltiples clientes con el mismo idApp: " . $idApp]);
         }
-
-        return ["success" => true, "message" => "Cliente eliminado correctamente en Zoho.", "zohoId" => $zohoId];
     }
 
 
@@ -339,11 +342,11 @@ class ZohoController
     //Estructura del body para enviar a Zoho (cliente) desde la app (POST PUT y DELETE)
     private function construirBodyZohoCreadoApp($data)
     {
-        if(isset($data['nombre']) && isset($data['apellido'])){
+        if (isset($data['nombre']) && isset($data['apellido'])) {
             $accountName = $data['nombre'] . " " . $data['apellido'];
-        }elseif(isset($data['nombre'])){
+        } elseif (isset($data['nombre'])) {
             $accountName = $data['nombre'];
-        }elseif(isset($data['apellido'])){
+        } elseif (isset($data['apellido'])) {
             $accountName = $data['apellido'];
         }
         return [
