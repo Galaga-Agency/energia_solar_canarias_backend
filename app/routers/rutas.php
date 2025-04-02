@@ -1316,38 +1316,11 @@ switch ($method) {
 
             case (preg_match('/^usuarios\/(\d+)$/', $request, $matches) ? true : false):
                 $handled = true;
-                // Extraer el ID del usuario desde la URL
-                $id = $matches[1];
-                //Verificamos que existe el usuario CREADOR del token y sino manejamos el error dentro de la funcion
-                if ($authMiddleware->verificarTokenUsuarioActivo() != false) {
-                    // Verificar si el usuario es administrador
-                    if ($authMiddleware->verificarAdmin()) {
-                        $usuarios = new UsuariosController;
-                        $usuarios->eliminarUser($id); // Pasar el ID al método de actualización
-                    } else {
-                        $respuesta->_403();
-                        $respuesta->message = 'No tienes permisos para hacer esta consulta';
-                        http_response_code($respuesta->code);
-                        echo json_encode($respuesta);
-                    }
-                } else {
-                    $respuesta->_403();
-                    $respuesta->message = 'El token no se puede authentificar con exito';
-                    http_response_code($respuesta->code);
-                    echo json_encode($respuesta);
-                }
-                break;
-            case ($request === 'usuarios'):
-                $handled = true;
-                // Verificamos que se haya enviado el JSON y que contenga el campo idApp
-                if (isset($_GET['idApp'])) {
-                    $id = $_GET['idApp'];  // Extraemos el idApp desde el JSON
-                } else {
-                    $respuesta->_400();
-                    $respuesta->message = "Falta el campo 'idApp' en la solicitud.";
-                    http_response_code($respuesta->code);
-                    echo json_encode($respuesta);
-                    return;
+                if(isset($_GET['idApp'])){
+                    $id = $_GET['idApp'];
+                }else{
+                    // Extraer el ID del usuario desde la URL
+                    $id = $matches[1];
                 }
                 //Verificamos que existe el usuario CREADOR del token y sino manejamos el error dentro de la funcion
                 if ($authMiddleware->verificarTokenUsuarioActivo() != false) {
@@ -1368,7 +1341,6 @@ switch ($method) {
                     echo json_encode($respuesta);
                 }
                 break;
-
             default:
                 $handled = true;
                 $respuesta->_400();
