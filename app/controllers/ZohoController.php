@@ -1,14 +1,16 @@
 <?php
+require_once __DIR__ . "/../services/ZohoService.php";
 
 use PhpParser\Node\Expr\Cast\String_;
 
 class ZohoController
 {
-
+    private $logsController;
     private $routes;
 
     public function __construct()
     {
+        $logsController = new LogsController();
         // Constructor
         //array con todas las rutas de zoho
         $this->routes = [
@@ -31,6 +33,7 @@ class ZohoController
     private function buscarClientePorIdApp($idApp)
     {
         if (empty($idApp)) {
+            $this->logsController->registrarLog(Logs::ERROR, "Se requiere idApp para buscar el cliente.");
             return ["error" => "Se requiere idApp para buscar el cliente."];
         }
 
@@ -40,9 +43,11 @@ class ZohoController
 
         // Verificar si se encontró un cliente
         if (!is_array($resultado) || !isset($resultado['data'][0]['id'])) {
+            $this->logsController->registrarLog(Logs::ERROR, "No se encontró ningún cliente en Zoho con el idApp: " . $idApp);
             return ["error" => "No se encontró ningún cliente en Zoho con el idApp: " . $idApp];
         }
 
+        $this->logsController->registrarLog(Logs::INFO, "Se a encontrado el cliente en zoho con id " . $idApp . " id de zoho: " . $resultado['data'][0]['id']);
         // Retornar el id del cliente encontrado
         return $resultado['data'][0]['id'];
     }
@@ -51,6 +56,7 @@ class ZohoController
     public function obtenerCliente($idApp)
     {
         if (empty($idApp)) {
+            $this->logsController->registrarLog(Logs::ERROR, "Se requiere idApp para obtener los datos del cliente.");
             return json_encode(["error" => "Se requiere idApp para obtener los datos del cliente."]);
         }
 
@@ -60,9 +66,11 @@ class ZohoController
 
         // Verificar si se encontró un cliente
         if (!is_array($resultado) || !isset($resultado['data'][0]['id'])) {
+            $this->logsController->registrarLog(Logs::ERROR, "No se encontró ningún cliente en Zoho con el idApp: " . $idApp);
             return json_encode(["error" => "No se encontró ningún cliente en Zoho con el idApp: " . $idApp]);
         }
 
+        $this->logsController->registrarLog(Logs::INFO, "Cliente encontrado exitosamente." . $idApp);
         // Retornar los datos del cliente encontrado
         return [
             "success" => true,
