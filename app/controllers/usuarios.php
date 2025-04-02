@@ -256,9 +256,10 @@ class UsuariosController
         $data['usuario_id'] = $IdusuarioCreado['usuario_id'];
 
         // Responder según el resultado
-        if ($result) {
+        if (isset($result)) {
+            $logsController->registrarLog(Logs::INFO, "El usuario se a creado en la App correctamente");
             // Prevenir bucles infinitos si el usuario fue creado desde Zoho
-            if (isset($data['origen']) && $data['origen'] === 'crm') {
+            if (isset($data['origen']) && $data['origen'] == 'crm') {
                 if (empty($data['idApp'])) {
                     // Si idApp está vacío, actualizamos el identificador en Zoho
                     $clienteId = isset($data['id']) ? $data['id'] : null;
@@ -492,7 +493,7 @@ class UsuariosController
         // Instancia de la base de datos
         $usuariosDB = new UsuariosDB();
         if ($usuariosDB->verificarEstadoUsuario($id)) {
-
+            $logsController->registrarLog(Logs::WARNING, "El usuario " . $id ." se ha eliminado");
             // Llamar a la función para realizar el borrado lógico
             $result = $usuariosDB->borrarUser($id);
         } else {
