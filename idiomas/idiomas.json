@@ -259,11 +259,11 @@
       "datos_api_descripcion": "Request plants if you are a client, or associate plants with clients if you are an administrator. This section explains how you can fetch data from the API.",
       "mas_funcionalidades": "Coming soon...",
       "clases": "Clases",
-      "clases_descripcion": "Este endpoint gestiona las diferentes clases de usuario que existen en el sistema. Las clases definen el nivel de permisos y acceso que los usuarios tienen dentro de la aplicación, como administrador o usuario regular. Este endpoint permite visualizar, crear y actualizar clases.",
+      "clases_descripcion": "This endpoint manages the different user roles that exist in the system. The roles define the level of permissions and access that users have within the application, such as administrator or regular user. This endpoint allows for viewing, creating, and updating roles.",
       "logs": "Logs",
-      "logs_descriopcion": "Este endpoint proporciona acceso a los registros de actividad del sistema. Los logs incluyen información sobre las acciones realizadas por los usuarios, los errores ocurridos y otros eventos relevantes. Es útil para la supervisión y auditoría del sistema.",
+      "logs_descriopcion": "This endpoint provides access to the system's activity logs. The logs include information about actions performed by users, errors that occurred, and other relevant events. It is useful for system monitoring and auditing.",
       "proveedores": "Proveedores",
-      "proveedores_descripcion": "Este endpoint gestiona la información de los proveedores conectados a la plataforma. Los proveedores pueden ser sistemas externos de energía. Permite consultar los datos de los proveedores, así como integrarlos o actualizarlos."
+      "proveedores_descripcion": "This endpoint manages the information of the providers connected to the platform. Providers can be external energy systems. It allows for querying provider data, as well as integrating or updating them."
     },
     "usuarios_get": {
       "titulo": "GET /users",
