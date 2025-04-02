@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . "/../services/ZohoService.php";
+require_once __DIR__ . "/LogsController.php";
 
 use PhpParser\Node\Expr\Cast\String_;
 
