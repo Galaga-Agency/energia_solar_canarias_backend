@@ -80,26 +80,39 @@ class ZohoController
         ];
     }
 
-    //Funcion que obtiene las plantas que no existen del array de plantas y nos las devuelve
+    // Función que obtiene las plantas que no existen del array de plantas y nos las devuelve
     public function comprobarIdPlantasExistentes(array $plantasZoho): array
     {
+        $this->logsController->registrarLog(Logs::INFO, "Iniciando comprobación de plantas existentes en Zoho. Total recibidas: " . count($plantasZoho));
         $plantasFiltradas = [];
 
         foreach ($plantasZoho as $planta) {
+            $this->logsController->registrarLog(Logs::INFO, "Comprobando existencia de planta con idPlanta: " . $planta['idPlanta']);
+
             $queryParams = [
                 'criteria' => '(idPlanta:equals:' . $planta['idPlanta'] . ')'
             ];
 
             $respuesta = $this->enviarDatosZoho([], 'GET', 'Plantas/search', '', $queryParams);
 
+            if (isset($respuesta['error']) && $respuesta['error']) {
+                $this->logsController->registrarLog(Logs::ERROR, "Error al consultar la planta con idPlanta " . $planta['idPlanta'] . ": " . $respuesta['message']);
+                continue;
+            }
+
             // Si no se encuentra ninguna planta, la añadimos para crear
             if (!isset($respuesta['data'][0]['id'])) {
+                $this->logsController->registrarLog(Logs::INFO, "Planta no encontrada en Zoho: " . $planta['idPlanta']);
                 $plantasFiltradas[] = $planta;
+            } else {
+                $this->logsController->registrarLog(Logs::INFO, "Planta ya existe en Zoho con id: " . $respuesta['data'][0]['id']);
             }
         }
 
+        $this->logsController->registrarLog(Logs::INFO, "Proceso completado. Plantas nuevas detectadas: " . count($plantasFiltradas));
         return $plantasFiltradas;
     }
+
 
 
 
@@ -108,19 +121,36 @@ class ZohoController
      */
     public function crearCliente($data = null)
     {
+        $this->logsController->registrarLog(Logs::INFO, "Inicio del proceso de creación de cliente en Zoho.");
+
         if ($data === null) {
+            $this->logsController->registrarLog(Logs::INFO, "No se recibieron datos por parámetro. Intentando obtenerlos desde la petición.");
             $data = $this->obtenerDatosRequest();
+
             if (!$data) {
+                $this->logsController->registrarLog(Logs::ERROR, "Datos incompletos o inválidos en la petición.");
                 return json_encode(["error" => "Datos incompletos o inválidos"]);
             }
+
+            $this->logsController->registrarLog(Logs::INFO, "Datos obtenidos correctamente desde la petición. Construyendo body para Zoho (modo POSTMAN).");
             $body = $this->construirBodyZoho($data);
         } else {
+            $this->logsController->registrarLog(Logs::INFO, "Datos recibidos directamente por parámetro. Construyendo body para Zoho (modo App).");
             $body = $this->construirBodyZohoCreadoApp($data);
         }
 
-        return $this->enviarDatosZoho($body, 'POST');
-    }
+        $this->logsController->registrarLog(Logs::INFO, "Enviando datos del nuevo cliente a Zoho.");
+        $respuesta = $this->enviarDatosZoho($body, 'POST');
 
+        if (isset($respuesta['error']) && $respuesta['error']) {
+            $this->logsController->registrarLog(Logs::ERROR, "Error al crear cliente en Zoho: " . $respuesta['message']);
+        } else {
+            $this->logsController->registrarLog(Logs::INFO, "Cliente creado exitosamente en Zoho.");
+        }
+
+        return $respuesta;
+    }
+    
     public function crearTodasLasPlantasEnZoho(array $plantasAInsertar): array
     {
         $creadas = [];
