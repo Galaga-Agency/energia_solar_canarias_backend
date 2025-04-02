@@ -348,6 +348,7 @@ class UsuariosController
         // Obtener el JSON desde el cuerpo de la solicitud
         $postBody = file_get_contents("php://input");
         $data = json_decode($postBody, true); // Decodificar el JSON en un array asociativo
+        $data['usuario_id'] = $id;
         $usuariosDB = new UsuariosDB();
 
         // Validar que los datos requeridos existan en el JSON
