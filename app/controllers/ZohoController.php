@@ -11,7 +11,7 @@ class ZohoController
 
     public function __construct()
     {
-        $logsController = new LogsController();
+        $this->logsController = new LogsController();
         // Constructor
         //array con todas las rutas de zoho
         $this->routes = [
