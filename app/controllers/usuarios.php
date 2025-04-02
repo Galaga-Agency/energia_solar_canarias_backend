@@ -199,7 +199,7 @@ class UsuariosController
         $data = json_decode($postBody, true); // Decodificar el JSON en un array asociativo
 
         // Log: Solicitud recibida
-        $logsController->registrarLog(Logs::INFO, "Solicitud recibida para crear un usuario. Datos: " . json_encode($data));
+        $logsController->registrarLog(Logs::INFO, "Solicitud recibida para crear un usuario. Datos: ");
 
         // Validar que los datos requeridos existan en el JSON
         if (!isset($data['email'], $data['password'], $data['clase'])) {
