@@ -198,6 +198,9 @@ class UsuariosController
 
         $data = json_decode($postBody, true); // Decodificar el JSON en un array asociativo
 
+        // Log: Solicitud recibida
+        $logsController->registrarLog(Logs::INFO, "Solicitud recibida para crear un usuario. Datos: " . json_encode($data));
+
         // Validar que los datos requeridos existan en el JSON
         if (!isset($data['email'], $data['password'], $data['clase'])) {
             $logsController->registrarLog(Logs::WARNING, "Datos incompletos en el JSON de la solicitud.");
@@ -210,6 +213,7 @@ class UsuariosController
 
         if (!isset($data['origen'])) {
             $data['origen'] = 'app';
+            $logsController->registrarLog(Logs::INFO, "Origen no especificado, se asigna 'app' como valor por defecto.");
         }
 
         // Instancia de la base de datos
@@ -225,6 +229,9 @@ class UsuariosController
             return;
         }
 
+        // Log: Clase verificada
+        $logsController->registrarLog(Logs::INFO, "Clase verificada: {$data['clase']}.");
+
         // Verificar si el email ya está registrado
         if ($usuariosDB->comprobarUsuario($data['email'])) {
             $logsController->registrarLog(Logs::WARNING, "Intento de creación con email existente: {$data['email']}");
@@ -239,25 +246,32 @@ class UsuariosController
         $authMiddleware = new Autenticacion();
         $idUser = $authMiddleware->obtenerIdUsuarioActivo();
 
+        // Log: Usuario autenticado
+        $logsController->registrarLog(Logs::INFO, "Usuario autenticado. ID del usuario activo: {$idUser}");
+
         // Obtener el ID del usuario por email si ya existe en estado eliminado
         $idUsuarioPorEmail = $usuariosDB->getIdUserPorEmail($data['email']);
         if ($idUsuarioPorEmail && $usuariosDB->usuarioEliminado($idUsuarioPorEmail)) {
             // Restaurar usuario eliminado
             $result = $usuariosDB->updateUser($idUsuarioPorEmail['usuario_id'], $data);
+            $logsController->registrarLog(Logs::INFO, "Usuario eliminado encontrado, restaurado: {$data['email']}");
         } else {
             // Crear un nuevo usuario
             $result = $usuariosDB->insertUser($data);
+            $logsController->registrarLog(Logs::INFO, "Nuevo usuario creado: {$data['email']}");
         }
 
-        //recogemos el id del usuario nuevo
+        // Recogemos el id del usuario nuevo
         $IdusuarioCreado = $usuariosDB->getIdUserPorEmail($data['email']);
 
         // Añadir el usuario_id al array de datos
         $data['usuario_id'] = $IdusuarioCreado['usuario_id'];
 
+        // Log: Usuario creado localmente
+        $logsController->registrarLog(Logs::INFO, "El usuario se ha creado correctamente en la App. ID del usuario creado: {$data['usuario_id']}");
+
         // Responder según el resultado
         if (isset($result)) {
-            $logsController->registrarLog(Logs::INFO, "El usuario se a creado en la App correctamente");
             // Prevenir bucles infinitos si el usuario fue creado desde Zoho
             // Si el origen es 'crm' y ya existe un idApp, no intentamos re-crearlo
             if (isset($data['origen']) && $data['origen'] == 'crm') {
@@ -291,7 +305,6 @@ class UsuariosController
                 return;
             }
 
-
             // Crear el usuario en Zoho si no fue creado desde CRM
             $resultCRM = $zohoService->crearCliente($data);
             if (isset($resultCRM['error']) && $resultCRM['error'] === true) {
@@ -305,22 +318,26 @@ class UsuariosController
                 return;
             }
 
-            // Si la creación es exitosa
-            $logsController->registrarLog(Logs::POST, "Usuario creado o restaurado exitosamente: {$data['email']} por el administrador {$idUser}");
+            // Log: Usuario creado exitosamente en Zoho
+            $logsController->registrarLog(Logs::INFO, "Usuario creado exitosamente en Zoho: {$data['email']}");
 
+            // Respuesta de éxito
             $respuesta = new Respuesta();
             $respuesta->success($data);
-            $respuesta->code = 201; // Código de creación exitosa
-            $respuesta->message = "Usuario creado exitosamente.";
+            $respuesta->code = 201;
+            $respuesta->message = "Usuario creado exitosamente y sincronizado con Zoho.";
             echo json_encode($respuesta);
-        } else {
-            $logsController->registrarLog(Logs::ERROR, "Error al crear el usuario: {$data['email']} por el administrador {$idUser}");
-            $respuesta = new Respuesta();
-            $respuesta->_500();
-            $respuesta->message = "Error al crear el usuario.";
-            echo json_encode($respuesta);
+            return;
         }
+
+        // Log: Error general si no se pudo crear el usuario
+        $logsController->registrarLog(Logs::ERROR, "Error al intentar crear el usuario: {$data['email']}");
+        $respuesta = new Respuesta();
+        $respuesta->_500();
+        $respuesta->message = "Error al crear el usuario.";
+        echo json_encode($respuesta);
     }
+
 
     public function actualizarUser($id)
     {
