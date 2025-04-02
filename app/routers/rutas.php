@@ -968,25 +968,45 @@ switch ($method) {
                 }
                 break;
                 case ($request === 'zoho/imprimirWebhook'):
-                    $handled = true;
+                    $handled = true;     
                     if ($authMiddleware->verificarTokenUsuarioActivo() != false) {
                         if ($authMiddleware->verificarAdmin()) {
-                            // Obtén el contenido del webhook que llega en formato JSON
+                            // Obtener los parámetros de la URL
+                            $queryParams = $_GET;
+                            
+                            // Obtener las cabeceras de la solicitud
+                            $headers = getallheaders();
+                            
+                            // Obtener el cuerpo del webhook
                             $webhookData = file_get_contents('php://input');
-            
-                            // Decodifica el JSON para que puedas trabajar con él si es necesario
+                            
+                            // Decodificar el JSON del cuerpo
                             $decodedData = json_decode($webhookData, true);
-            
+                
+                            // Imprimir todos los detalles en el log o como respuesta
+                            error_log("Detalles del Webhook:");
+                            error_log("URL: " . $_SERVER['REQUEST_URI']);
+                            error_log("Parámetros de la URL: " . print_r($queryParams, true));
+                            error_log("Cabeceras: " . print_r($headers, true));
+                            error_log("Cuerpo del Webhook (JSON): " . $webhookData);
+                            error_log("Datos Decodificados: " . print_r($decodedData, true));
+                
                             // Define la ruta del archivo donde quieres guardar los datos
                             $file = 'webhook_data.txt';
-            
+                            
                             // Abre el archivo para escribir (en modo de escritura, lo que crea o sobrescribe el archivo)
                             $handle = fopen($file, 'w');
-            
+                            
                             if ($handle) {
-                                    // Guarda los datos en el archivo en formato JSON
-                                fwrite($handle, json_encode($decodedData, JSON_PRETTY_PRINT));
+                                // Guarda los datos en el archivo en formato JSON
+                                fwrite($handle, json_encode([
+                                    'headers' => $headers,
+                                    'queryParams' => $queryParams,
+                                    'body' => $decodedData
+                                ], JSON_PRETTY_PRINT));
+                                
                                 fclose($handle); // Cierra el archivo después de escribir
+                                
                                 echo 'Webhook recibido y guardado correctamente.';
                             } else {
                                 echo 'Error al intentar guardar el archivo.';
@@ -1004,7 +1024,6 @@ switch ($method) {
                         echo json_encode($respuesta);
                     }
                     break;
-
             default:
                 $handled = true;
                 $respuesta->_400();
