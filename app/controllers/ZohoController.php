@@ -150,7 +150,7 @@ class ZohoController
 
         return $respuesta;
     }
-    
+
     public function crearTodasLasPlantasEnZoho(array $plantasAInsertar): array
     {
         $creadas = [];
@@ -382,7 +382,7 @@ class ZohoController
     private function construirBodyZohoCreadoApp($data)
     {
         if (isset($data['nombre']) && isset($data['apellido'])) {
-            $accountName = $data['nombre'] . " " . $data['apellido'];
+            $accountName = $data['nombre'];
         } elseif (isset($data['nombre'])) {
             $accountName = $data['nombre'];
         } elseif (isset($data['apellido'])) {
