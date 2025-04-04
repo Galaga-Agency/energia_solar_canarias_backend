@@ -31,9 +31,10 @@
       "proveedor": "Proveedores",
       "get-alerts": "GET Alertas de las plantas",
       "eliminar_relaciones": "DEL Eliminar relaciones a una planta",
-      "imagenes":"imagenes",
-      "post_imagenes":"POST imagenes",
-      "eliminar_imagenes":"DELETE imagenes"
+      "imagenes": "imagenes",
+      "post_imagenes": "POST imagenes",
+      "eliminar_imagenes": "DELETE imagenes",
+      "politica-privacidad": "Política de privacidad"
     },
     "inicio": {
       "titulo": "Inicio",
@@ -208,7 +209,35 @@
       "titulo": "/usuario/imagen",
       "descripcion": "Este endpoint es una llamada que sirve para eliminar la imagen de tu usuario y en el caso de los administradores podrán eliminar cualquier imagen que no sea apropiada para el usuario o que cree conflicto pasando el identificador del usuario por url",
       "cuerpo_solicitud": "parametros por url",
-      "parametro_descripcion":"(Opcional) numero entero identificativo del usuario"
+      "parametro_descripcion": "(Opcional) numero entero identificativo del usuario"
+    },
+    "politica-privacidad": {
+      "title": "Política de Privacidad",
+      "intro": "Esta aplicación es propiedad de Energía Solar Canarias y ha sido desarrollada por Galaga Agency. Esta política de privacidad explica cómo se recopilan, utilizan y protegen tus datos personales cuando utilizas nuestra aplicación.",
+      "responsable": "1. Responsable del tratamiento",
+      "responsable_text": "El responsable del tratamiento de tus datos es Energía Solar Canarias. Puedes contactar con nosotros en ",
+      "datos_recogidos": "2. Datos que recopilamos",
+      "datos_lista": [
+        "Nombre completo",
+        "Dirección de correo electrónico",
+        "Número de teléfono",
+        "Dirección física",
+        "Fotografías, firmas o vídeos enviados desde la app",
+        "Datos técnicos como dirección IP e ID del dispositivo"
+      ],
+      "finalidad": "3. Finalidad del tratamiento",
+      "finalidad_text": "Utilizamos tus datos únicamente para gestionar la relación comercial contigo: seguimiento de solicitudes, gestión de clientes, y contacto a través de nuestro CRM (Zoho). No usamos tus datos con fines publicitarios ni los compartimos con terceros ajenos a la prestación del servicio.",
+      "tracking": "4. No realizamos seguimiento (tracking)",
+      "tracking_text": "Esta app no realiza rastreo de usuarios en el sentido definido por Apple (seguimiento con fines publicitarios o creación de perfiles entre aplicaciones). Por tanto, no se muestra el cuadro de App Tracking Transparency.",
+      "conservacion": "5. Conservación de datos",
+      "conservacion_text": "Conservamos tus datos el tiempo necesario para cumplir con las finalidades mencionadas o para cumplir obligaciones legales.",
+      "derechos": "6. Derechos del usuario",
+      "derechos_text": "Puedes ejercer tus derechos de acceso, rectificación, cancelación y oposición (ARCO) escribiendo a ",
+      "seguridad": "7. Seguridad",
+      "seguridad_text": "Aplicamos medidas de seguridad adecuadas para proteger tus datos personales, incluyendo cifrado de comunicaciones y almacenamiento seguro a través de Zoho.",
+      "ultima_actualizacion": "Última actualización: abril de 2025",
+      "cookies": "8. Uso de cookies",
+      "cookies_text": "Esta aplicación o su backend puede utilizar cookies técnicas de sesión y autenticación para asegurar el correcto funcionamiento del sistema. No se utilizan cookies con fines publicitarios ni se realiza análisis de comportamiento entre sitios. Al utilizar esta aplicación, aceptas el uso limitado de cookies técnicas necesarias para prestar el servicio."
     }
   },
   "en": {
@@ -243,9 +272,12 @@
       "proveedor": "Suppliers",
       "get-alerts": "GET Alerts of plants",
       "eliminar_relaciones": "DEL Delete relationships to a plant",
-      "imagenes":"pictures",
-      "post_imagenes":"POST pictures",
-      "eliminar_imagenes":"DELETE pictures"
+      "imagenes": "pictures",
+      "post_imagenes": "POST pictures",
+      "eliminar_imagenes": "DELETE pictures",
+      "politica-privacidad": "Privacy policy",
+      "cookies": "8. Uso de cookies",
+      "cookies_text": "Esta aplicación o su backend puede utilizar cookies técnicas de sesión y autenticación para asegurar el correcto funcionamiento del sistema. No se utilizan cookies con fines publicitarios ni se realiza análisis de comportamiento entre sitios. Al utilizar esta aplicación, aceptas el uso limitado de cookies técnicas necesarias para prestar el servicio."
     },
     "inicio": {
       "titulo": "Home",
@@ -421,6 +453,34 @@
       "descripcion": "This endpoint is a call used to delete the image of your user, and in the case of administrators, they can delete any inappropriate image for the user or that creates conflict by passing the user identifier in the URL.",
       "cuerpo_solicitud": "parameters by URL",
       "parametro_descripcion": "(Optional) integer identifier of the user"
+    },
+    "politica-privacidad": {
+      "title": "Privacy Policy",
+      "intro": "This application is owned by Energía Solar Canarias and has been developed by Galaga Agency. This privacy policy explains how your personal data is collected, used, and protected when you use our application.",
+      "responsable": "1. Data Controller",
+      "responsable_text": "The data controller is Energía Solar Canarias. You can contact us at ",
+      "datos_recogidos": "2. Data We Collect",
+      "datos_lista": [
+        "Full name",
+        "Email address",
+        "Phone number",
+        "Physical address",
+        "Photos, signatures or videos sent from the app",
+        "Technical data such as IP address and device ID"
+      ],
+      "finalidad": "3. Purpose of Data Processing",
+      "finalidad_text": "We use your data only to manage the business relationship with you: tracking requests, managing clients, and contacting you via our CRM (Zoho). We do not use your data for advertising purposes or share it with third parties unrelated to the service.",
+      "tracking": "4. No Tracking",
+      "tracking_text": "This app does not track users in the sense defined by Apple (for advertising purposes or cross-app profiling). Therefore, the App Tracking Transparency prompt is not shown.",
+      "conservacion": "5. Data Retention",
+      "conservacion_text": "We retain your data for as long as necessary to fulfill the purposes mentioned or to comply with legal obligations.",
+      "derechos": "6. User Rights",
+      "derechos_text": "You can exercise your rights to access, rectify, erase, or object (ARCO rights) by writing to ",
+      "seguridad": "7. Security",
+      "seguridad_text": "We apply appropriate security measures to protect your personal data, including encrypted communications and secure storage via Zoho.",
+      "ultima_actualizacion": "Last updated: April 2025",
+      "cookies": "8. Use of Cookies",
+      "cookies_text": "This application or its backend may use technical session and authentication cookies to ensure proper system functionality. No cookies are used for advertising purposes, and no behavioral tracking across websites is performed. By using this application, you accept the limited use of technical cookies required to provide the service."
     }
   }
 }
