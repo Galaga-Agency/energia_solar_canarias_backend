@@ -173,6 +173,9 @@ $page = $_GET['page'] ?? 'inicio';
         <a href="?page=ayuda" class="block px-4 py-2 <?php echo $theme === 'dark' ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-blue-100'; ?> rounded"><?php echo translate('menu.ayuda') ?></a>
       </li>
       <li>
+        <a href="?page=politica-privacidad" class="block px-4 py-2 <?php echo $theme === 'dark' ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-blue-100'; ?> rounded"><?php echo translate('menu.politica-privacidad') ?></a>
+      </li>
+      <li>
         <label href="?page=ayuda" class="block px-4 py-2 <?php echo $theme === 'dark' ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-blue-100'; ?>"><?php echo translate('menu.idiomas') ?></label>
       </li>
       <li>
@@ -260,6 +263,9 @@ $page = $_GET['page'] ?? 'inicio';
         break;
       case 'eliminar-imagen':
         include('./app/pages/eliminar-imagen.php');
+        break;
+      case 'politica-privacidad':
+        include('./app/pages/politica-privacidad.php');
         break;
       default:
         echo "<h1 class='text-5xl font-bold text-center'>Página no encontrada</h1>";
