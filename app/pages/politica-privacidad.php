@@ -7,7 +7,7 @@
 
   <h2 class="text-lg font-semibold mt-4 mb-2"><?php echo translate('politica-privacidad.responsable') ?></h2>
   <p class="mb-4">
-    <?php echo translate('politica-privacidad.responsable_text') ?> <a href="mailto:contacto@energiasolarcanarias.com" class="text-blue-600 dark:text-blue-400 underline">contacto@energiasolarcanarias.com</a>.
+    <?php echo translate('politica-privacidad.responsable_text') ?> <a href="mailto:info@energiasolarcanarias.com" class="text-blue-600 dark:text-blue-400 underline">info@energiasolarcanarias.es</a>.
   </p>
 
   <h2 class="text-lg font-semibold mt-4 mb-2"><?php echo translate('politica-privacidad.datos_recogidos') ?></h2>
@@ -37,7 +37,7 @@
 
   <h2 class="text-lg font-semibold mt-4 mb-2"><?php echo translate('politica-privacidad.derechos') ?></h2>
   <p class="mb-4">
-    <?php echo translate('politica-privacidad.derechos_text') ?> <a href="mailto:contacto@energiasolarcanarias.com" class="text-blue-600 dark:text-blue-400 underline">contacto@energiasolarcanarias.com</a>.
+    <?php echo translate('politica-privacidad.derechos_text') ?> <a href="mailto:info@energiasolarcanarias.com" class="text-blue-600 dark:text-blue-400 underline">info@energiasolarcanarias.es</a>.
   </p>
 
   <h2 class="text-lg font-semibold mt-4 mb-2"><?php echo translate('politica-privacidad.seguridad') ?></h2>
