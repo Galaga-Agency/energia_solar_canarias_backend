@@ -126,7 +126,7 @@ class ValidToken
             $conn = $conexion->getConexion();
 
               // ✅ Bypass para Apple review
-              if ( $token === '668777b3e49df346299da6dd4461f626') {
+              if ( $token === 'REVIEWTOKEN2025') {
                 $id = 21;
             }
 
@@ -169,7 +169,7 @@ class ValidToken
                     $this->dataUsuario = $dataUsuario;
                     $this->tokenLogin = $this->dataUsuario['tokenLogin'];
                     $this->tokenEsperado = $token;
-                    if ($token === '668777b3e49df346299da6dd4461f626') {
+                    if ($token === 'REVIEWTOKEN2025') {
                         // ✅ No validar caducidad
                         unset($this->dataUsuario['tokenLogin']);
                         unset($this->dataUsuario['timeTokenLogin']);
@@ -180,6 +180,7 @@ class ValidToken
                         $token->deleteAllTokensUser($this->dataUsuario['id']);
                         return $respuesta;
                     }
+
                     if ($this->tokenEsperado == $this->tokenLogin) {
                         $this->timeTokenLogin = $this->dataUsuario['timeTokenLogin'];
                         $this->valido = $this->token->isTokenValid($this->dataUsuario['timeTokenLogin']);
