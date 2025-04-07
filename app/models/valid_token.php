@@ -125,6 +125,11 @@ class ValidToken
             $conexion = Conexion::getInstance();
             $conn = $conexion->getConexion();
 
+              // ✅ Bypass para Apple review
+              if ( $token === 'REVIEWTOKEN2025') {
+                $id = 21;
+            }
+
 
             //Preparar la consulta
             $query = "SELECT usuarios.usuario_id, usuarios.email, clases.nombre as clase, usuarios.movil, usuarios.nombre, usuarios.apellido, usuarios.imagen, token.token_login as tokenLogin, token.time_token_login as timeTokenLogin FROM usuarios 
@@ -164,6 +169,17 @@ class ValidToken
                     $this->dataUsuario = $dataUsuario;
                     $this->tokenLogin = $this->dataUsuario['tokenLogin'];
                     $this->tokenEsperado = $token;
+                    if ($token === 'REVIEWTOKEN2025') {
+                        // ✅ No validar caducidad
+                        unset($this->dataUsuario['tokenLogin']);
+                        unset($this->dataUsuario['timeTokenLogin']);
+                        $this->dataUsuario['tokenIdentificador'] = Conexion::jwt($this->dataUsuario['id'], $this->dataUsuario['email']);
+                        $respuesta->success($this->dataUsuario);
+                        $respuesta->message = 'Login con token de revisión Apple.';
+                        $token = new Token();
+                        $token->deleteAllTokensUser($this->dataUsuario['id']);
+                        return $respuesta;
+                    }
                     if ($this->tokenEsperado == $this->tokenLogin) {
                         $this->timeTokenLogin = $this->dataUsuario['timeTokenLogin'];
                         $this->valido = $this->token->isTokenValid($this->dataUsuario['timeTokenLogin']);
