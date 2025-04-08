@@ -166,6 +166,7 @@ class ValidToken
                         $dataUsuario['tokenLogin'] = $row['tokenLogin'];
                         $dataUsuario['timeTokenLogin'] = $row['timeTokenLogin'];
                     }
+                    
                     $this->dataUsuario = $dataUsuario;
                     $this->tokenLogin = $this->dataUsuario['tokenLogin'];
                     $this->tokenEsperado = $token;
