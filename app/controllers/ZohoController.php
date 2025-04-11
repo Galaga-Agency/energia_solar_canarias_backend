@@ -417,12 +417,13 @@ class ZohoController
             $data = [
                 "data" => [
                     [
+                        "id" => $zohoId, 
                         "crear_cliente" => false
                     ]
                 ]
             ];
     
-            $deleteResponse = $this->enviarDatosZoho($data['data'], 'PUT', 'Clientes', $zohoId);
+            $deleteResponse = $this->enviarDatosZoho($data, 'PUT', 'Clientes', $zohoId);
 
             if (isset($deleteResponse['error']) && $deleteResponse['error'] == true) {
                 return json_encode(["error" => "Error al eliminar el cliente en Zoho: " . $deleteResponse['message']]);
