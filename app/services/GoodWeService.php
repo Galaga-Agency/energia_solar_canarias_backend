@@ -170,7 +170,30 @@ class GoodWeService
         $rangos = $this->precioService->getPreciosPersonalizadosPorPlanta($plantId, "goodwe");
 
         if (empty($rangos)) {
-            return [];
+            return ["planta_id" => $plantId,
+            "moneda" => "EUR",
+            "status" => "No hay historial de precio en esta planta",
+            "total" => array_merge([
+                "fecha_inicio" => "0000-00-00",
+                "fecha_final" => "0000-00-00",
+                "energia_kwh" => 0,
+                "ingreso" => 0,
+                "ahorro" => 0
+            ]),
+                "mes_actual" => array_merge([
+                "fecha_inicio" => "0000-00-00",
+                "fecha_final" => "0000-00-00",
+                "energia_kwh" => 0,
+                "ingreso" => 0,
+                "ahorro" => 0
+                ]),
+            "hoy" => array_merge([
+                "fecha_inicio" => "0000-00-00",
+                "fecha_final" => "0000-00-00",
+                "energia_kwh" => 0,
+                "ingreso" => 0,
+                "ahorro" => 0
+            ])];
         }
 
         // Determinar la fecha de inicio más antigua
