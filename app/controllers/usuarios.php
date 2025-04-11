@@ -562,7 +562,7 @@ class UsuariosController
                 }
                 $logsController->registrarLog(Logs::DELETE, "a eliminado al usuario" . $id);
                 $respuesta = new Respuesta();
-                $respuesta->success($result);
+                $respuesta->success($resultCRM);
                 $respuesta->message = "Usuario eliminado.";
                 http_response_code($respuesta->code);
                 echo json_encode($respuesta);
