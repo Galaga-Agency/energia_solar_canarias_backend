@@ -409,7 +409,7 @@ class ZohoController
         $jsonInput = file_get_contents('php://input');
         $data = json_decode($jsonInput, true);
 
-        if (!$data || !isset($data['Correo_electr_nico_1'])) {
+        if (!$data || !isset($data['email'])) {
             return null;
         }
 
@@ -419,24 +419,20 @@ class ZohoController
     //Estructura del body para enviar a Zoho (cliente) desde la app (POST PUT y DELETE)
     private function construirBodyZohoCreadoApp($data)
     {
-        if (isset($data['nombre']) && isset($data['apellido'])) {
-            $accountName = $data['nombre'];
-        } elseif (isset($data['nombre'])) {
-            $accountName = $data['nombre'];
-        } elseif (isset($data['apellido'])) {
-            $accountName = $data['apellido'];
-        }
         return [
             "data" => [
                 [
-                    "Correo_electr_nico_1" => $data['email'],
+                    "email" => $data['email'],
                     "origen" => $data['origen'] ?? "app",
-                    "Account_Name" => $accountName ?? "",
-                    "Phone" => $data['movil'] ?? "",
-                    "Empresa" => $data['empresa'] ?? "",
+                    "Account_Name" => $data['nombre'] ?? "",
+                    "apellido" => $data['apellido'] ?? "",
+                    "movil" => $data['movil'] ?? "",
+                    "activo" => $data['activo'] ?? "",
+                    "ultimo_login" => $data['ultimo_login'] ?? "",
+                    "empresa" => $data['empresa'] ?? "",
                     "Poblaci_n" => $data['ciudad'] ?? "",
                     "NIF" => $data['cif_nif'] ?? "",
-                    "Record_Image" => $data['imagen'] ?? "",
+                    "imagen" => $data['imagen'] ?? "",
                     "idApp" => $data['usuario_id'] . "" // Convertir a string
                 ]
             ]
@@ -451,14 +447,14 @@ class ZohoController
         return [
             "data" => [
                 [
-                    "Correo_electr_nico_1" => $data['Correo_electr_nico_1'] ?? "",
+                    "email" => $data['email'] ?? "",
                     "Account_Name" => $data['Account_Name'] ?? "",
-                    "M_vil" => $data['M_vil'] ?? "",
-                    "Empresa" => $data['Empresa'],
+                    "movil" => $data['movil'] ?? "",
+                    "empresa" => $data['empresa'],
                     "Poblaci_n" => $data['Poblaci_n'] ?? "",
-                    "clase" => $data['clase'] ?? "",
+                    "clase_name" => $data['clase_name'] ?? "",
                     "NIF" => $data['NIF'] ?? "",
-                    "Record_Image" => $data['Record_Image'] ?? ""
+                    "imagen" => $data['imagen'] ?? ""
                 ]
             ]
         ];
