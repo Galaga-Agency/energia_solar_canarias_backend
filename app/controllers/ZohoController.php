@@ -18,6 +18,7 @@ class ZohoController
             "Clientes" => "/crm/v2/Accounts",
             'Plantas'  => '/crm/v2/Plantas',
             'Plantas/search' => '/crm/v2/Plantas/search',
+            'Historial_de_precios/search' => '/crm/v2/Historial_de_precios/search',
             'Plantas/acciones/insertar' => '/crm/v2/Plantas/actions/insert',
             'bulk/api' => '/crm/bulk/v2/write'
         ];
@@ -225,7 +226,44 @@ class ZohoController
         return $creadas;
     }
 
+    public function obtenerListadoDePrecios($planta, $proveedor)
+    {
+        $queryParams = [
+            'criteria' => '((idPlanta:equals:' . $planta . ')and(Organizaci_n:equals:' . $proveedor . '))'
+        ];
 
+        $respuesta = $this->enviarDatosZoho([], 'GET', 'Plantas/search', '', $queryParams);
+
+        if (isset($respuesta['error']) && $respuesta['error']) {
+            $this->logsController->registrarLog(Logs::ERROR, "Error al consultar la planta con idPlanta " . $planta . ": " . $respuesta['message']);
+            return null;
+        }
+
+        //Prueba para que imprima el nombre del cliente
+        //echo json_encode($respuesta['data'][0]['Name']);
+
+        //Comprobamos que el nombre existe
+        if (!isset($respuesta['data'][0]['id'])) {
+            return null;
+        }
+
+        $queryParams = [
+            'criteria' => '((Planta:equals:' . $respuesta['data'][0]['id'] . '))'
+        ];
+
+        $respuesta = $this->enviarDatosZoho([], 'GET', 'Historial_de_precios/search', '', $queryParams);
+
+        //Prueba para saber si hace la consulta bien
+        //echo json_encode($queryParams);
+        //echo json_encode($respuesta);
+
+        if (isset($respuesta['error']) && $respuesta['error']) {
+            $this->logsController->registrarLog(Logs::ERROR, "Error al consultar la planta con idPlanta " . $planta . ": " . $respuesta['message']);
+            return null;
+        }
+
+        return $respuesta;
+    }
 
     /**
      * PUT

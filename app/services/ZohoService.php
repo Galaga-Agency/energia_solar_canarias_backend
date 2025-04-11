@@ -302,4 +302,37 @@ class ZohoService
      * 3. se hace un filtro con el cliente para saber cual es el cliente con la idApp y se saca el id de zoho de ese cliente Accounts
      * 4. se relaciona el cliente con la planta
     */
+    public function obtenerListadoDePrecios($plantId,$proveedor){
+        $listadoDePrecios = $this->zohoController->obtenerListadoDePrecios($plantId,$proveedor);
+        $paresarPrecios = $this->parsearListaDePrecios($listadoDePrecios);
+        return $paresarPrecios;
+    }
+
+    public function parsearListaDePrecios($listadoDePrecios){
+        if($listadoDePrecios == null || $listadoDePrecios == ""){
+            return null;
+        }
+        // Array donde se almacenarán los nuevos precios procesados
+        $nuevoListadoDePrecios = [];
+        if(!isset($listadoDePrecios['data'])){
+            return null;
+        }
+        //echo json_encode($listadoDePrecios);
+        // Iterar sobre el listado de precios recibido
+        foreach($listadoDePrecios['data'] as $key => $value){ 
+            // Agregar la estructura con los datos requeridos para cada precio
+            $nuevoListadoDePrecios[] = [
+                'precio' => $value['precio'],
+                'precio_ahorro' => $value['precio_ahorro'],
+                'fecha_inicio' => $value['fecha_inicio'],
+                'fecha_final' => $value['fecha_final'],
+                'planta_id' => $value['planta_id'],
+                'proveedor' => $value['proveedor'],
+                'moneda' => $value['moneda']
+            ];
+        }
+        
+        // Devolver el nuevo listado de precios
+        return $nuevoListadoDePrecios;
+    }    
 }
