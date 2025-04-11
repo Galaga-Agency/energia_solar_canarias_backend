@@ -518,4 +518,136 @@ class SolarEdgeService
             return ['error' => $e->getMessage()];
         }
     }
+    private function minFecha(array $rangos): string
+    {
+        return min(array_column($rangos, 'fecha_inicio'));
+    }
+
+    /**
+     * ===========================================================================================
+     * Todas estas funciones son para sacar el cálculo de la energía real del cliente en SolarEdge
+     * ===========================================================================================
+     */
+
+    //Esta función devuelve el precio y el ahorro de la planta que le corresponde
+    public function getEstadisticasEnergiaSolarEdge($rangos, $plantaId)
+    {
+        //Verificamos que rangos sea valido
+        if($rangos == null){
+            return null;
+        }
+        $apiKey = $this->solarEdge->getApiKey();
+        $hoy = date('Y-m-d');
+        $inicioMes = date('Y-m-01');
+        $agrupadoPorPlanta = [];
+
+        // Agrupamos todos los rangos por planta
+        foreach ($rangos as $rango) {
+            $agrupadoPorPlanta[$plantaId]['moneda'] = $rango['moneda'];
+            $agrupadoPorPlanta[$plantaId]['rangos'][] = $rango;
+        }
+
+        $resultados = [];
+
+        foreach ($agrupadoPorPlanta as $plantaId => $datosPlanta) {
+            $moneda = $datosPlanta['moneda'];
+            $rangos = $datosPlanta['rangos'];
+
+            $total = $this->calcularPeriodoPorRangos($plantaId, $rangos, $apiKey, $this->minFecha($rangos), $hoy);
+            $mesActual = $this->calcularPeriodoPorRangos($plantaId, $rangos, $apiKey, $inicioMes, $hoy);
+            $hoyDatos = $this->calcularPeriodoPorRangos($plantaId, $rangos, $apiKey, $hoy, $hoy);
+
+            $resultados[] = [
+                'planta_id' => $plantaId,
+                'moneda' => $moneda,
+                'total' => array_merge(['fecha_inicio' => $this->minFecha($rangos), 'fecha_final' => $hoy], $total),
+                'mes_actual' => array_merge(['fecha_inicio' => $inicioMes, 'fecha_final' => $hoy], $mesActual),
+                'hoy' => array_merge(['fecha_inicio' => $hoy, 'fecha_final' => $hoy], $hoyDatos),
+            ];
+        }
+
+        return $resultados;
+    }
+    //Hace el cálculo de Rangos de precio real del cliente
+    private function calcularPeriodoPorRangos($plantId, array $rangos, $apiKey, $fechaInicio, $fechaFinal)
+    {
+        $energiaTotal = 0;
+        $ingresoTotal = 0;
+        $ahorroTotal = 0;
+
+        foreach ($rangos as $rango) {
+            // Si no hay solapamiento, saltamos
+            $inicio = max($fechaInicio, $rango['fecha_inicio']);
+            $fin = min($fechaFinal, $rango['fecha_final'] ?: $fechaFinal);
+
+            if ($inicio > $fin) continue;
+
+            $energiaWh = $this->consultarEnergiaTotal($plantId, $inicio, $fin, $apiKey);
+            $energiaKwh = $energiaWh / 1000;
+            $energiaTotal += $energiaKwh;
+            $ingresoTotal += $energiaKwh * $rango['precio'];
+            $ahorroTotal += $energiaKwh * $rango['precio_ahorro'];
+        }
+
+        return [
+            'energia_kwh' => round($energiaTotal, 2),
+            'ingreso' => round($ingresoTotal, 2),
+            'ahorro' => round($ahorroTotal, 2)
+        ];
+    }
+    // 👇 Esta función ya está lista para dividir por años si hace falta
+    private function consultarEnergiaTotal($plantId, $startDate, $endDate, $apiKey)
+    {
+        $totalWh = 0;
+        $subrangos = $this->dividirPorAnios($startDate, $endDate);
+
+        foreach ($subrangos as $rango) {
+            $url = "https://monitoringapi.solaredge.com/site/$plantId/energy"
+                . "?timeUnit=DAY"
+                . "&startDate={$rango['start']}"
+                . "&endDate={$rango['end']}"
+                . "&api_key=$apiKey";
+
+            $response = file_get_contents($url);
+            $data = json_decode($response, true);
+
+            if (isset($data['energy']['values'])) {
+                foreach ($data['energy']['values'] as $punto) {
+                    $totalWh += $punto['value'] ?? 0;
+                }
+            }
+        }
+
+        return $totalWh;
+    }
+    //Prepara la aplicación por si hay rangos de mas de 1 año
+    private function dividirPorAnios(string $start, string $end): array
+    {
+        $startDate = new DateTime($start);
+        $endDate = new DateTime($end);
+
+        $rangos = [];
+
+        while ($startDate <= $endDate) {
+            $endOfYear = (clone $startDate)->modify('+1 year -1 day');
+            if ($endOfYear > $endDate) {
+                $endOfYear = $endDate;
+            }
+
+            $rangos[] = [
+                'start' => $startDate->format('Y-m-d'),
+                'end' => $endOfYear->format('Y-m-d')
+            ];
+
+            $startDate = (clone $endOfYear)->modify('+1 day');
+        }
+
+        return $rangos;
+    }
+    
+    /**
+     * ===========================================================================================
+     * //////////ACABAN LAS FUNCIONES DE CALCULO DE ENERGÍA EN TIEMPO REAL DEL CLIENTE////////////
+     * ===========================================================================================
+     */
 }
