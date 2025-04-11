@@ -257,6 +257,15 @@ class ZohoService
     }
 
     /**
+     * Desactiva la propiedad de zoho App Crear Cliente
+     * Esta función se encarga de eliminar el App Crear Cliente por lo que se da a entender que no existe mas en la app
+    */
+    public function appCrearClienteFalse($clienteId = "")
+    {
+        return $ClienteZoho = $this->zohoController->appCrearClienteFalse($clienteId);
+    }
+
+    /**
      * Actualizar el identificador de un cliente en Zoho
      * Esta función se encarga de actualizar el idApp de un cliente en Zoho CRM a partir de los datos
      * que se envíen desde la App.
