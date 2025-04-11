@@ -534,8 +534,31 @@ class SolarEdgeService
     {
         //Verificamos que rangos sea valido
         if($rangos == null){
-            return null;
-        }
+            return ["planta_id" => $plantaId,
+                    "moneda" => "EUR",
+                    "status" => "No hay historial de precio en esta planta",
+                    "total" => array_merge([
+                        "fecha_inicio" => "0000-00-00",
+                        "fecha_final" => "0000-00-00",
+                        "energia_kwh" => 0,
+                        "ingreso" => 0,
+                        "ahorro" => 0
+                    ]),
+                        "mes_actual" => array_merge([
+                        "fecha_inicio" => "0000-00-00",
+                        "fecha_final" => "0000-00-00",
+                        "energia_kwh" => 0,
+                        "ingreso" => 0,
+                        "ahorro" => 0
+                        ]),
+                    "hoy" => array_merge([
+                        "fecha_inicio" => "0000-00-00",
+                        "fecha_final" => "0000-00-00",
+                        "energia_kwh" => 0,
+                        "ingreso" => 0,
+                        "ahorro" => 0
+                    ])];
+                }
         $apiKey = $this->solarEdge->getApiKey();
         $hoy = date('Y-m-d');
         $inicioMes = date('Y-m-01');
