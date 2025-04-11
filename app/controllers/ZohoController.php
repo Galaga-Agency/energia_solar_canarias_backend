@@ -395,6 +395,46 @@ class ZohoController
         }
     }
 
+    public function appCrearClienteFalse($idApp)
+    {
+        if (!$idApp) {
+            return json_encode(["error" => "ID de cliente (idApp) requerido."]);
+        }
+
+        // Buscar el cliente en Zoho por idApp
+        $queryParams = ['criteria' => '(idApp:equals:' . $idApp . ')'];
+        $resultado = $this->enviarDatosZoho([], 'GET', 'Clientes', '', $queryParams);
+
+        // Validar si el cliente fue encontrado en Zoho
+        if (!isset($resultado['data'][0]['id'])) {
+            return json_encode(["error" => "No se encontró un cliente en Zoho con el idApp: " . $idApp]);
+        }
+
+        // Verificar si la búsqueda devuelve exactamente un solo cliente
+        if (count($resultado['data']) == 1) {
+            $zohoId = $resultado['data'][0]['id']; // Extraer el Zoho_ID del cliente
+            
+            $data = [
+                "data" => [
+                    [
+                        "crear_cliente" => false
+                    ]
+                ]
+            ];
+    
+            $deleteResponse = $this->enviarDatosZoho($data['data'], 'PUT', 'Clientes', $zohoId);
+
+            if (isset($deleteResponse['error']) && $deleteResponse['error'] == true) {
+                return json_encode(["error" => "Error al eliminar el cliente en Zoho: " . $deleteResponse['message']]);
+            }
+
+            return ["success" => true, "message" => "Cliente eliminado correctamente en Zoho.", "zohoId" => $zohoId];
+        } else {
+            // Si más de un cliente se encuentra con el mismo idApp, logueamos el problema
+            return json_encode(["error" => "Se encontraron múltiples clientes con el mismo idApp: " . $idApp]);
+        }
+    }
+
 
     /**
      * Estas Funciones son reutilizables para toda clase de peticiones a Zoho
