@@ -529,6 +529,9 @@ class UsuariosController
         }
         if (isset($result)) {
             if ($result) {
+                /* 
+                //A PETICION DEL CLIENTE SI EL USUARIO SE ELIMINA DEL LADO DE LA APLICACIÓN SEGUIRA EN CRM
+
                 $resultCRM = $zohoService->eliminarCliente($id);
                 if (isset($resultCRM['error']) && $resultCRM['error'] == true) {
                     $logsController->registrarLog(Logs::ERROR, "Error al eliminar el usuario en Zoho: " . $resultCRM['message']);
@@ -544,6 +547,7 @@ class UsuariosController
                 $respuesta->message = "Usuario eliminado.";
                 http_response_code($respuesta->code);
                 echo json_encode($respuesta);
+                */
             } else {
                 $logsController->registrarLog(Logs::ERROR, "Error al eliminar el usuario." . $id);
                 $respuesta = new Respuesta();
