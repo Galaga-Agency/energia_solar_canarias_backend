@@ -2,23 +2,31 @@
 
 class ZohoClient{
     private $id;
-    private $Correo_electr_nico_1;
+    private $ultimo_login;
+    private $clase_name;
+    private $apellido;
+    private $activo;
+    private $email;
     private $Account_Name;
-    private $Record_Image;
-    private $M_vil;
-    private $Empresa;
+    private $imagen;
+    private $movil;
+    private $empresa;
     private $Poblaci_n;
     private $NIF;
 
-    public function __construct($id = "", $Correo_electr_nico_1 = "", $Account_Name = "", $Record_Image = "", $M_vil = "", $Empresa = "", $Poblaci_n = "", $NIF = "") {
+    public function __construct($id = "", $email = "", $Account_Name = "", $imagen = "", $movil = "", $empresa = "", $Poblaci_n = "", $NIF = "", $ultimo_login = "", $clase_name = "", $apellido = "", $activo = "") {
         $this->id = $id;
-        $this->Correo_electr_nico_1 = $Correo_electr_nico_1;
+        $this->email = $email;
         $this->Account_Name = $Account_Name;
-        $this->Record_Image = $Record_Image;
-        $this->M_vil = $M_vil;
-        $this->Empresa = $Empresa;
+        $this->imagen = $imagen;
+        $this->movil = $movil;
+        $this->empresa = $empresa;
         $this->Poblaci_n = $Poblaci_n;
         $this->NIF = $NIF;
+        $this->activo = $activo;
+        $this->apellido = $apellido;
+        $this->clase_name = $clase_name;
+        $this->ultimo_login = $ultimo_login;
     }
     // Getters y Setters
     public function getId() {
@@ -29,12 +37,12 @@ class ZohoClient{
         $this->id = $id;
     }
 
-    public function getCorreoElectronico1() {
-        return $this->Correo_electr_nico_1;
+    public function getEmail() {
+        return $this->email;
     }
 
-    public function setCorreoElectronico1($Correo_electr_nico_1) {
-        $this->Correo_electr_nico_1 = $Correo_electr_nico_1;
+    public function setEmail($email) {
+        $this->email = $email;
     }
 
     public function getAccountName() {
@@ -45,28 +53,28 @@ class ZohoClient{
         $this->Account_Name = $Account_Name;
     }
 
-    public function getRecordImage() {
-        return $this->Record_Image;
+    public function getImagen() {
+        return $this->imagen;
     }
 
-    public function setRecordImage($Record_Image) {
-        $this->Record_Image = $Record_Image;
+    public function setImagen($imagen) {
+        $this->imagen = $imagen;
     }
 
     public function getMovil() {
-        return $this->M_vil;
+        return $this->movil;
     }
 
-    public function setMovil($M_vil) {
-        $this->M_vil = $M_vil;
+    public function setMovil($movil) {
+        $this->movil = $movil;
     }
 
-    public function getEmpresa() {
-        return $this->Empresa;
+    public function getempresa() {
+        return $this->empresa;
     }
 
-    public function setEmpresa($Empresa) {
-        $this->Empresa = $Empresa;
+    public function setempresa($empresa) {
+        $this->empresa = $empresa;
     }
 
     public function getPoblacion() {
@@ -83,5 +91,50 @@ class ZohoClient{
 
     public function setNIF($NIF) {
         $this->NIF = $NIF;
+    }
+    public function getActivo() {
+        return $this->activo;
+    }
+
+    public function setActivo($activo) {
+        $this->activo = $activo;
+    }
+    public function getClaseName() {
+        return $this->clase_name;
+    }
+
+    public function setClaseName($clase_name) {
+        $this->clase_name = $clase_name;
+    }
+    public function getApellido() {
+        return $this->apellido;
+    }
+
+    public function setApellido($apellido) {
+        $this->apellido = $apellido;
+    }
+    public function getUltimoLogin() {
+        return $this->ultimo_login;
+    }
+
+    public function setUltimoLogin($ultimo_login) {
+        $this->ultimo_login = $ultimo_login;
+    }
+
+    //Patron de diseño build pattern que se declara algo así
+    /**
+     * $cliente = (new ZohoClientBuilder())
+     *->setId("456")
+     *->setCorreoElectronico1("juan@example.com")
+     *->setApellido("Pérez")
+     *->setMovil("654321987")
+     *->build();
+     */
+    public function build() {
+        return new ZohoClient(
+            $this->id, $this->email, $this->Account_Name, $this->imagen,
+            $this->movil, $this->empresa, $this->Poblaci_n, $this->NIF,
+            $this->ultimo_login, $this->clase_name, $this->apellido, $this->activo
+        );
     }
 }
