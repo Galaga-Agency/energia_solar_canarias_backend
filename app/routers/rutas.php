@@ -443,14 +443,14 @@ switch ($method) {
                 if ($authMiddleware->verificarTokenUsuarioActivo() != false) {
                     if ($authMiddleware->verificarAdmin()) {
                         // Instanciar el controlador de plantas y obtener detalles
-                        $solarEdgeController = new ApiControladorService();
-                        $solarEdgeController->getSiteDetail($powerStationId, $proveedor);
+                        $apiControladorService = new ApiControladorService();
+                        $apiControladorService->getSiteDetail($powerStationId, $proveedor);
                     } else {
                         // El usuario nos tiene que mandar obligatoriamente el proveedor para que verifiquemos si tiene acceso a ese id
                         $idUsuario = $authMiddleware->obtenerIdUsuarioActivo();
                         $proveedor = $_GET['proveedor'];
-                        $solarEdgeController = new ApiControladorService();
-                        $solarEdgeController->getSiteDetailCliente($idUsuario, $powerStationId, $proveedor);
+                        $apiControladorService = new ApiControladorService();
+                        $apiControladorService->getSiteDetailCliente($idUsuario, $powerStationId, $proveedor);
                     }
                 } else {
                     $respuesta->_403();
@@ -607,6 +607,29 @@ switch ($method) {
 
     case 'POST':
         switch (true) {
+            case ($request === 'zoho/historialprecios' && isset($_GET['plantId']) && isset($_GET['proveedor'])):
+                $handled = true;
+                $plantId = $_GET['plantId'];
+                $proveedor = $_GET['proveedor'];
+                if ($authMiddleware->verificarTokenUsuarioActivo() != false) {
+                    if ($authMiddleware->verificarAdmin()) {
+                        $zohoservice = new ZohoService();
+                        $zohoRespuesta = $zohoservice->obtenerListadoDePrecios($plantId,$proveedor);
+                        $respuesta->success($zohoRespuesta);
+                        echo json_encode($respuesta);
+                    } else {
+                        $respuesta->_403();
+                        $respuesta->message = 'No tienes permiso para realizar esta consulta';
+                        http_response_code($respuesta->code);
+                        echo json_encode($respuesta);
+                    }
+                } else {
+                    $respuesta->_403();
+                    $respuesta->message = 'El token no se puede authentificar con exito';
+                    http_response_code($respuesta->code);
+                    echo json_encode($respuesta);
+                }
+                break;
             case ($request === 'zoho/crearCliente'):
                 $handled = true;
                 if ($authMiddleware->verificarTokenUsuarioActivo() != false) {
@@ -889,6 +912,59 @@ switch ($method) {
                     echo json_encode($respuesta);
                 }
                 break;
+            //Cada planta tiene su precio por lo que no necesitamos al usuario solo la planta  
+            case ($request === 'totalrealprice' && isset($_GET['plantId']) && isset($_GET['proveedor']) ? true : false):
+                $handled = true;
+                if ($authMiddleware->verificarTokenUsuarioActivo() != false) {
+                    // Verificar que los campos existen
+                    if (isset($_GET['plantId']) && isset($_GET['proveedor'])) {
+                        $plantId = $_GET['plantId'];
+                        $proveedor = $_GET['proveedor'];
+                        $respuesta = new Respuesta;
+                        //declaramos la variable a null para evitar problemas de declaración
+                        $realPrice = null;
+                        switch ($proveedor) {
+                            case $proveedor == $proveedores['GoodWe']:
+                                $goodweController = new GoodWeController;
+                                $realPrice = json_decode($goodweController->getPlantRealPrice($plantId));
+                                break;
+                            case $proveedor == $proveedores['SolarEdge']:
+                                $solarEdgeController = new SolarEdgeController;
+                                $realPrice = json_decode($solarEdgeController->getPlantRealPrice($plantId));
+                                break;
+                            case $proveedor == $proveedores['VictronEnergy']:
+                                $victronEnergyController = new VictronEnergyController;
+                                $realPrice = json_decode($victronEnergyController->getPlantRealPrice($plantId));
+                                break;
+                            default:
+                                $realPrice = null;
+                                break;
+                        }
+                        if($realPrice != null){
+                            $respuesta->success($realPrice);
+                            http_response_code($respuesta->code);
+                            echo json_encode($respuesta);
+                        }else{
+                            $respuesta->_404($realPrice);
+                            $respuesta->message = 'No se han encontrado datos o la planta o el proveedor no existe';
+                            http_response_code($respuesta->code);
+                            echo json_encode($respuesta);
+                        break;
+                        }
+                    } else {
+                        $respuesta->_404();
+                        $respuesta->message = 'No existe el identificador de la planta o el nombre del proveedor';
+                        http_response_code($respuesta->code);
+                        echo json_encode($respuesta);
+                        break;
+                    }
+                } else {
+                    $respuesta->_403();
+                    $respuesta->message = 'El token no se puede authentificar con exito';
+                    http_response_code($respuesta->code);
+                    echo json_encode($respuesta);
+                }
+                break;
             case ($request === 'usuarios/relacionar'  && isset($_GET['idplanta']) && isset($_GET['idusuario']) && isset($_GET['proveedor'])):
                 $handled = true;
                 if ($authMiddleware->verificarTokenUsuarioActivo() != false) {
@@ -967,63 +1043,63 @@ switch ($method) {
                     echo json_encode($respuesta);
                 }
                 break;
-                case ($request === 'zoho/imprimirWebhook'):
-                    $handled = true;     
-                    if ($authMiddleware->verificarTokenUsuarioActivo() != false) {
-                        if ($authMiddleware->verificarAdmin()) {
-                            // Obtener los parámetros de la URL
-                            $queryParams = $_GET;
-                            
-                            // Obtener las cabeceras de la solicitud
-                            $headers = getallheaders();
-                            
-                            // Obtener el cuerpo del webhook
-                            $webhookData = file_get_contents('php://input');
-                            
-                            // Decodificar el JSON del cuerpo
-                            $decodedData = json_decode($webhookData, true);
-                
-                            // Imprimir todos los detalles en el log o como respuesta
-                            error_log("Detalles del Webhook:");
-                            error_log("URL: " . $_SERVER['REQUEST_URI']);
-                            error_log("Parámetros de la URL: " . print_r($queryParams, true));
-                            error_log("Cabeceras: " . print_r($headers, true));
-                            error_log("Cuerpo del Webhook (JSON): " . $webhookData);
-                            error_log("Datos Decodificados: " . print_r($decodedData, true));
-                
-                            // Define la ruta del archivo donde quieres guardar los datos
-                            $file = 'webhook_data.txt';
-                            
-                            // Abre el archivo para escribir (en modo de escritura, lo que crea o sobrescribe el archivo)
-                            $handle = fopen($file, 'w');
-                            
-                            if ($handle) {
-                                // Guarda los datos en el archivo en formato JSON
-                                fwrite($handle, json_encode([
-                                    'headers' => $headers,
-                                    'queryParams' => $queryParams,
-                                    'body' => $decodedData
-                                ], JSON_PRETTY_PRINT));
-                                
-                                fclose($handle); // Cierra el archivo después de escribir
-                                
-                                echo 'Webhook recibido y guardado correctamente.';
-                            } else {
-                                echo 'Error al intentar guardar el archivo.';
-                            }
+            case ($request === 'zoho/imprimirWebhook'):
+                $handled = true;
+                if ($authMiddleware->verificarTokenUsuarioActivo() != false) {
+                    if ($authMiddleware->verificarAdmin()) {
+                        // Obtener los parámetros de la URL
+                        $queryParams = $_GET;
+
+                        // Obtener las cabeceras de la solicitud
+                        $headers = getallheaders();
+
+                        // Obtener el cuerpo del webhook
+                        $webhookData = file_get_contents('php://input');
+
+                        // Decodificar el JSON del cuerpo
+                        $decodedData = json_decode($webhookData, true);
+
+                        // Imprimir todos los detalles en el log o como respuesta
+                        error_log("Detalles del Webhook:");
+                        error_log("URL: " . $_SERVER['REQUEST_URI']);
+                        error_log("Parámetros de la URL: " . print_r($queryParams, true));
+                        error_log("Cabeceras: " . print_r($headers, true));
+                        error_log("Cuerpo del Webhook (JSON): " . $webhookData);
+                        error_log("Datos Decodificados: " . print_r($decodedData, true));
+
+                        // Define la ruta del archivo donde quieres guardar los datos
+                        $file = 'webhook_data.txt';
+
+                        // Abre el archivo para escribir (en modo de escritura, lo que crea o sobrescribe el archivo)
+                        $handle = fopen($file, 'w');
+
+                        if ($handle) {
+                            // Guarda los datos en el archivo en formato JSON
+                            fwrite($handle, json_encode([
+                                'headers' => $headers,
+                                'queryParams' => $queryParams,
+                                'body' => $decodedData
+                            ], JSON_PRETTY_PRINT));
+
+                            fclose($handle); // Cierra el archivo después de escribir
+
+                            echo 'Webhook recibido y guardado correctamente.';
                         } else {
-                            $respuesta->_403();
-                            $respuesta->message = 'No tienes permiso para realizar esta consulta';
-                            http_response_code($respuesta->code);
-                            echo json_encode($respuesta);
+                            echo 'Error al intentar guardar el archivo.';
                         }
                     } else {
                         $respuesta->_403();
-                        $respuesta->message = 'El token no se puede authentificar con exito';
+                        $respuesta->message = 'No tienes permiso para realizar esta consulta';
                         http_response_code($respuesta->code);
                         echo json_encode($respuesta);
                     }
-                    break;
+                } else {
+                    $respuesta->_403();
+                    $respuesta->message = 'El token no se puede authentificar con exito';
+                    http_response_code($respuesta->code);
+                    echo json_encode($respuesta);
+                }
+                break;
             default:
                 $handled = true;
                 $respuesta->_400();
@@ -1037,21 +1113,21 @@ switch ($method) {
     case 'PUT':
         switch (true) {
             case ($request === 'zoho/imprimirWebhook'):
-                $handled = true;     
+                $handled = true;
                 if ($authMiddleware->verificarTokenUsuarioActivo() != false) {
                     if ($authMiddleware->verificarAdmin()) {
                         // Obtener los parámetros de la URL
                         $queryParams = $_GET;
-                        
+
                         // Obtener las cabeceras de la solicitud
                         $headers = getallheaders();
-                        
+
                         // Obtener el cuerpo del webhook
                         $webhookData = file_get_contents('php://input');
-                        
+
                         // Decodificar el JSON del cuerpo
                         $decodedData = json_decode($webhookData, true);
-            
+
                         // Imprimir todos los detalles en el log o como respuesta
                         error_log("Detalles del Webhook:");
                         error_log("URL: " . $_SERVER['REQUEST_URI']);
@@ -1059,13 +1135,13 @@ switch ($method) {
                         error_log("Cabeceras: " . print_r($headers, true));
                         error_log("Cuerpo del Webhook (JSON): " . $webhookData);
                         error_log("Datos Decodificados: " . print_r($decodedData, true));
-            
+
                         // Define la ruta del archivo donde quieres guardar los datos
                         $file = 'webhook_data.txt';
-                        
+
                         // Abre el archivo para escribir (en modo de escritura, lo que crea o sobrescribe el archivo)
                         $handle = fopen($file, 'w');
-                        
+
                         if ($handle) {
                             // Guarda los datos en el archivo en formato JSON
                             fwrite($handle, json_encode([
@@ -1073,9 +1149,9 @@ switch ($method) {
                                 'queryParams' => $queryParams,
                                 'body' => $decodedData
                             ], JSON_PRETTY_PRINT));
-                            
+
                             fclose($handle); // Cierra el archivo después de escribir
-                            
+
                             echo 'Webhook recibido y guardado correctamente.';
                         } else {
                             echo 'Error al intentar guardar el archivo.';
@@ -1221,16 +1297,16 @@ switch ($method) {
                     if ($authMiddleware->verificarAdmin()) {
                         // Obtener los parámetros de la URL
                         $queryParams = $_GET;
-                        
+
                         // Obtener las cabeceras de la solicitud
                         $headers = getallheaders();
-                        
+
                         // Obtener el cuerpo del webhook
                         $webhookData = file_get_contents('php://input');
-                        
+
                         // Decodificar el JSON del cuerpo
                         $decodedData = json_decode($webhookData, true);
-            
+
                         // Imprimir todos los detalles en el log o como respuesta
                         error_log("Detalles del Webhook:");
                         error_log("URL: " . $_SERVER['REQUEST_URI']);
@@ -1238,13 +1314,13 @@ switch ($method) {
                         error_log("Cabeceras: " . print_r($headers, true));
                         error_log("Cuerpo del Webhook (JSON): " . $webhookData);
                         error_log("Datos Decodificados: " . print_r($decodedData, true));
-            
+
                         // Define la ruta del archivo donde quieres guardar los datos
                         $file = 'webhook_data.txt';
-                        
+
                         // Abre el archivo para escribir (en modo de escritura, lo que crea o sobrescribe el archivo)
                         $handle = fopen($file, 'w');
-                        
+
                         if ($handle) {
                             // Guarda los datos en el archivo en formato JSON
                             fwrite($handle, json_encode([
@@ -1252,9 +1328,9 @@ switch ($method) {
                                 'queryParams' => $queryParams,
                                 'body' => $decodedData
                             ], JSON_PRETTY_PRINT));
-                            
+
                             fclose($handle); // Cierra el archivo después de escribir
-                            
+
                             echo 'Webhook recibido y guardado correctamente.';
                         } else {
                             echo 'Error al intentar guardar el archivo.';
@@ -1376,7 +1452,7 @@ switch ($method) {
 
                 // Extraer el ID del usuario desde la URL
                 $id = $matches[1];
-                
+
                 //Verificamos que existe el usuario CREADOR del token y sino manejamos el error dentro de la funcion
                 if ($authMiddleware->verificarTokenUsuarioActivo() != false) {
                     // Verificar si el usuario es administrador

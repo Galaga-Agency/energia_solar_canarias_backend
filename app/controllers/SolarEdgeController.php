@@ -10,11 +10,13 @@ class SolarEdgeController
 {
     private $solarEdgeService;
     private $logsController;
+    private $precioService;
 
     public function __construct()
     {
         $this->solarEdgeService = new SolarEdgeService();
         $this->logsController = new LogsController();
+        $this->precioService = new PrecioService();
     }
 
     public function BulkApiFleetEnergy($time, $startDate, $endDate, $arrayEnteros)
@@ -318,6 +320,18 @@ class SolarEdgeController
             $this->logsController->registrarLog(Logs::ERROR, "Error al obtener datos de SolarEdge: " . $e->getMessage());
             return json_encode(['error' => 'No se pudieron obtener los datos'], JSON_PRETTY_PRINT);
         }
+    }
+
+    //Método para obtener los precios reales de la planta a partir de los datos de zoho
+    public function getPlantRealPrice($siteId)
+    {
+        $this->logsController->registrarLog(Logs::INFO, " accede a la api de solarEdge precio real de planta de solarEdge");
+        // Obtener los precios personalizados de la planta desde el historial de precios de zoho
+        $rangos = $this->precioService->getPreciosPersonalizadosPorPlanta($siteId, "solaredge");
+        //Obtenemos los datos de la planta desde el servicio de SolarEdge y personalizamos los precios
+        $data = $this->solarEdgeService->getEstadisticasEnergiaSolarEdge($rangos, $siteId);
+        header('Content-Type: application/json');
+        return json_encode($data);
     }
 
     public function overviewSolarEdge($siteId)

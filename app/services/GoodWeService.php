@@ -1,6 +1,9 @@
 <?php
 require_once __DIR__ . '/../utils/HttpClient.php';
 require_once __DIR__ . '/../models/GoodWe.php';
+require_once __DIR__ . '/../controllers/ProveedoresController.php';
+require_once __DIR__ . '/../DBObjects/proveedoresDB.php';
+require_once __DIR__ . '/../services/PrecioService.php';
 
 
 class GoodWeService
@@ -8,12 +11,16 @@ class GoodWeService
     private $goodWe;
     private $httpClient;
     private $proveedoresController;
+    private $precioService;
+    private $proveedoresDB;
 
     public function __construct()
     {
         $this->goodWe = new GoodWeTokenAuthentified();
         $this->httpClient = new HttpClient();
         $this->proveedoresController = new ProveedoresController();
+        $this->proveedoresDB = new ProveedoresDB();
+        $this->precioService = new PrecioService();
     }
 
     //Llamada en tiempo real a la energia que genera la planta, en postman corresponde con la llamada POST GetPowerFlow
@@ -86,9 +93,9 @@ class GoodWeService
     //Llamada que se hace para construir el grafico de la planta en postman corresponde con la llamada POST GetPlantPowerChart
     public function GetChartByPlant($data)
     {
-        if ($data['full_script']) {
+        if (isset($data['full_script']) && $data['full_script']) {
             $url = GoodWe::$url . "api/v2/Charts/GetPlantPowerChart";
-            if(isset($data['chartIndexId'])){
+            if (isset($data['chartIndexId'])) {
                 unset($data['chartIndexId']);
             }
         } else {
@@ -150,6 +157,144 @@ class GoodWeService
         } catch (Exception $e) {
             return ['error' => $e->getMessage()];
         }
+    }
+
+    public function getRealIncomeStats($plantId)
+    {
+        $today = new DateTime();
+        $fechaHoy = $today->format('Y-m-d');
+        $fechaInicioMes = $today->format('Y-m-01');
+        $fechaFinMes = $today->format('Y-m-t');
+
+        // Obtener rangos de precios personalizados
+        $rangos = $this->precioService->getPreciosPersonalizadosPorPlanta($plantId, "goodwe");
+
+        if (empty($rangos)) {
+            return [];
+        }
+
+        // Determinar la fecha de inicio más antigua
+        $fechaInicioPlanta = null;
+        foreach ($rangos as $rango) {
+            $fechaInicio = $rango['fecha_inicio'];
+            if ($fechaInicioPlanta === null || strtotime($fechaInicio) < strtotime($fechaInicioPlanta)) {
+                $fechaInicioPlanta = $fechaInicio;
+            }
+        }
+
+        // Recorrer hacia atrás en bloques de 30 días
+        $fechaLimite = new DateTime($fechaHoy);
+        $datosAcumulados = [];
+
+        while (true) {
+            $data = [
+                'id' => $plantId,
+                'date' => $fechaLimite->format('Y-m-d'),
+                'range' => '2',
+                'chartIndexId' => '3',
+                'isDetailFull' => false
+            ];
+
+            $energiaData = $this->GetChartByPlant($data);
+            $datosAcumulados[] = $energiaData;
+
+            $fechaLimite->modify('-30 days');
+
+            if ($fechaLimite < new DateTime($fechaInicioPlanta)) {
+                break;
+            }
+        }
+
+        // Inicializar totales
+        $totalEnergia = $totalIngreso = $totalAhorro = 0;
+        $mesEnergia = $mesIngreso = $mesAhorro = 0;
+        $hoyEnergia = $hoyIngreso = $hoyAhorro = 0;
+
+        // Procesar los datos acumulados
+        $fechaInicioPlantaObj = new DateTime($fechaInicioPlanta);
+
+        foreach ($datosAcumulados as $respuesta) {
+            if (!isset($respuesta['data']['lines'])) continue;
+
+            foreach ($respuesta['data']['lines'] as $linea) {
+                if (!isset($linea['xy'])) continue;
+
+                foreach ($linea['xy'] as $punto) {
+                    $fechaPunto = $punto['x'];
+                    $valor = $punto['y'];
+
+                    if ($valor === null) continue;
+
+                    $fechaPuntoObj = new DateTime($fechaPunto);
+                    if ($fechaPuntoObj < $fechaInicioPlantaObj) continue;
+
+                    $rangoPrecio = $this->obtenerPrecioPorFecha($fechaPunto, $rangos, $fechaInicioPlanta);
+
+                    if ($linea['name'] === 'PVGeneration') {
+                        $totalEnergia += $valor;
+                        $totalIngreso += $valor * $rangoPrecio['precio'];
+                        $totalAhorro += $valor * $rangoPrecio['precio_ahorro'];
+
+                        if ($fechaPunto >= $fechaInicioMes && $fechaPunto <= $fechaFinMes) {
+                            $mesEnergia += $valor;
+                            $mesIngreso += $valor * $rangoPrecio['precio'];
+                            $mesAhorro += $valor * $rangoPrecio['precio_ahorro'];
+                        }
+
+                        if ($fechaPunto === $fechaHoy) {
+                            $hoyEnergia += $valor;
+                            $hoyIngreso += $valor * $rangoPrecio['precio'];
+                            $hoyAhorro += $valor * $rangoPrecio['precio_ahorro'];
+                        }
+                    }
+                }
+            }
+        }
+
+
+        // Devolver resultado final
+        return [
+            'planta_id' => (int) $plantId,
+            'moneda' => 'EUR', // puedes cambiarlo si algún rango lo especifica
+            'total' => [
+                'fecha_inicio' => $fechaInicioPlanta,
+                'fecha_final' => $fechaHoy,
+                'energia_kwh' => round($totalEnergia, 2),
+                'ingreso' => round($totalIngreso, 2),
+                'ahorro' => round($totalAhorro, 2)
+            ],
+            'mes_actual' => [
+                'fecha_inicio' => $fechaInicioMes,
+                'fecha_final' => $fechaFinMes,
+                'energia_kwh' => round($mesEnergia, 2),
+                'ingreso' => round($mesIngreso, 2),
+                'ahorro' => round($mesAhorro, 2)
+            ],
+            'hoy' => [
+                'fecha_inicio' => $fechaHoy,
+                'fecha_final' => $fechaHoy,
+                'energia_kwh' => round($hoyEnergia, 2),
+                'ingreso' => round($hoyIngreso, 2),
+                'ahorro' => round($hoyAhorro, 2)
+            ]
+        ];
+    }
+
+
+
+    private function obtenerPrecioPorFecha($fechaPunto, $rangos, $fechaInicioPlanta)
+    {
+        if ($fechaPunto < $fechaInicioPlanta) return 0;
+
+        foreach ($rangos as $rango) {
+            $inicio = $rango['fecha_inicio'];
+            $fin = $rango['fecha_final'] ?? date('Y-m-d');
+            if ($fechaPunto >= $inicio && $fechaPunto <= $fin) {
+                return $rango;
+            }
+        }
+
+        return 0;
     }
 
     //LLamada a todas las plantas en postman corresponde a la llamada POST Todas plantas
@@ -251,7 +396,7 @@ class GoodWeService
         $fechaFin = date('m/d/Y') . ' 23:59:59';
         $fechaInicio = date('m/d/Y', strtotime('-1 month +1 day')) . ' 00:00:00';
 
-        $data =[
+        $data = [
             "adcode" => "",
             "township" => "",
             "orgid" => "",
@@ -448,12 +593,11 @@ class GoodWeService
     {
         $url = GoodWe::$url . "api/v1/Common/CrossLogin";
 
-        // Datos de la solicitud en el cuerpo
         $data = [
             'account' => GoodWe::$account,
             'pwd' => GoodWe::$pwd
         ];
-        // Headers
+
         $headers = [
             'Content-Type: application/json',
             'Token: ' . json_encode([
@@ -464,31 +608,48 @@ class GoodWeService
         ];
 
         try {
-            // Realiza la solicitud POST con los datos y encabezados
             $response = $this->httpClient->post($url, $headers, json_encode($data));
-
-            // Decodifica la respuesta JSON
             $responseData = json_decode($response, true);
 
-            // Verifica si la respuesta es exitosa y contiene los datos necesarios
             if (isset($responseData['hasError']) && $responseData['hasError'] === false && isset($responseData['data'])) {
-                $token = isset($responseData['data']['token']) ? $responseData['data']['token'] : '';
-                $timestamp = isset($responseData['data']['timestamp']) ? $responseData['data']['timestamp'] : '';
+                $token = $responseData['data']['token'] ?? '';
+                $expires_at = $responseData['data']['timestamp'] ?? '';
 
-                $this->proveedoresController->setTokenProveedor('GoodWe', $token, '', $timestamp);
-                $proveedor = $this->proveedoresController->getTokenProveedor('GoodWe');
+                // Verificar si ya hay token en la DB
+                $tokenId = $this->proveedoresDB->verificarTokenProveedor('GoodWe');
+
+                $ok = false;
+                if ($tokenId) {
+                    $ok = $this->proveedoresDB->actualizarToken($tokenId, $token, '', $expires_at);
+                } else {
+                    $ok = $this->proveedoresDB->insertarTokenYAsociar('GoodWe', $token, '', $expires_at);
+                }
+
+                if (!$ok) {
+                    error_log("Error al guardar el token en la base de datos.");
+                }
+
+                // ✅ ACTUALIZAR OBJETO goodWe
+                $this->goodWe->setUid($responseData['data']['uid'] ?? '');
+                $this->goodWe->setTimestamp($expires_at);
+                $this->goodWe->setToken($token);
+
+                // ✅ Devolver tokenData completo
                 return [
-                    'uid' => isset($responseData['data']['uid']) ? $responseData['data']['uid'] : '',
-                    'timestamp' => isset($proveedor['expires_at']) ? $proveedor['expires_at'] : '',
-                    'token' => isset($proveedor['tokenAuth']) ? $proveedor['tokenAuth'] : '',
-                    'client' => isset($responseData['data']['client']) ? $responseData['data']['client'] : '',
-                    'version' => isset($responseData['data']['version']) ? $responseData['data']['version'] : '',
-                    'language' => isset($responseData['data']['language']) ? $responseData['data']['language'] : ''
+                    'uid' => $responseData['data']['uid'] ?? '',
+                    'timestamp' => $expires_at,
+                    'token' => $token,
+                    'token_renovation' => '',
+                    'expires_at' => $expires_at,
+                    'client' => $responseData['data']['client'] ?? 'ios',
+                    'version' => $responseData['data']['version'] ?? 'v2.1.0',
+                    'language' => $responseData['data']['language'] ?? 'en'
                 ];
             } else {
                 throw new Exception("Login fallido: " . ($responseData['msg'] ?? 'Error desconocido'));
             }
         } catch (Exception $e) {
+            error_log("Error en crossLogin: " . $e->getMessage());
             return ['error' => $e->getMessage()];
         }
     }

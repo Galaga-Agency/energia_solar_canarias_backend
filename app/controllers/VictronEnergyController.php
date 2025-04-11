@@ -1,5 +1,7 @@
 <?php
 require_once __DIR__ . '/../services/VictronEnergyService.php';
+require_once __DIR__ . '/../services/PrecioService.php';
+
 /**
  * @param $siteId = el id de la planta
  * @param $startDate = la fecha de inicio
@@ -10,11 +12,13 @@ class VictronEnergyController
 {
     private $victronEnergyService;
     private $logsController;
+    private $precioService;
 
     public function __construct()
     {
         $this->victronEnergyService = new VictronEnergyService();
         $this->logsController = new LogsController();
+        $this->precioService = new PrecioService();
     }
 
     //Método para obtener las alertas de la planta
@@ -76,6 +80,16 @@ class VictronEnergyController
     {
         $this->logsController->registrarLog(Logs::INFO, " accede a la api de VictronEnergy todas las plantas");
         $data = $this->victronEnergyService->getAllPlants($page, $pageSize);
+        header('Content-Type: application/json');
+        return json_encode($data);
+    }
+
+    //Método para obtener los datos de todas las plantas
+    public function getPlantRealPrice($plantId)
+    {
+        $this->logsController->registrarLog(Logs::INFO, " accede a la api de VictronEnergy precio de la planta real " . $plantId);
+        $rangos = $this->precioService->getPreciosPersonalizadosPorPlanta($plantId, 'victronenergy');
+        $data = $this->victronEnergyService->getEstadisticasEnergiaVictron($rangos, $plantId);
         header('Content-Type: application/json');
         return json_encode($data);
     }

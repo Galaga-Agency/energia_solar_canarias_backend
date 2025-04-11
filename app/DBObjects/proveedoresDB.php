@@ -151,6 +151,7 @@ class ProveedoresDB {
     
             return true; // Actualización exitosa
         } catch (Exception $e) {
+            echo $e->getMessage();
             error_log("Error en actualizarToken: " . $e->getMessage());
             return false;
         }
