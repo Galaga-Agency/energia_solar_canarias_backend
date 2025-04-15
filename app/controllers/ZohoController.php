@@ -334,7 +334,8 @@ class ZohoController
             "data" => [
                 [
                     "id" => $clienteId,
-                    "idApp" => (string)$idApp
+                    "idApp" => (string)$idApp,
+                    "borrar_cliente" => false,
                 ]
             ]
         ];
@@ -413,21 +414,23 @@ class ZohoController
         // Verificar si la búsqueda devuelve exactamente un solo cliente
         if (count($resultado['data']) == 1) {
             $zohoId = $resultado['data'][0]['id']; // Extraer el Zoho_ID del cliente
-            
+
             $data = [
                 "data" => [
                     [
-                        "id" => $zohoId, 
-                        "crear_cliente" => false
+                        "id" => $zohoId,
+                        "crear_cliente" => false,
                     ]
                 ]
             ];
-    
+
             $deleteResponse = $this->enviarDatosZoho($data, 'PUT', 'Clientes', $zohoId);
 
             if (isset($deleteResponse['error']) && $deleteResponse['error'] == true) {
                 return json_encode(["error" => "Error al eliminar el cliente en Zoho: " . $deleteResponse['message']]);
             }
+
+            echo var_dump($deleteResponse);
 
             return ["success" => true, "message" => "Cliente eliminado correctamente en Zoho.", "zohoId" => $zohoId];
         } else {
