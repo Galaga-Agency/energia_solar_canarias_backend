@@ -428,10 +428,10 @@ class ZohoController
             $deleteResponse = $this->enviarDatosZoho($data, 'PUT', 'Clientes', $zohoId);
 
             if (isset($deleteResponse['error']) && $deleteResponse['error'] == true) {
-                return json_encode(["error" => "Error al eliminar el cliente en Zoho: " . $deleteResponse]);
+                return json_encode(["error" => "Error al eliminar el cliente en Zoho: " . $deleteResponse['message']]);
             }
 
-            return ["success" => true, "message" => "Cliente eliminado correctamente en Zoho.", "zohoId" => $zohoId];
+            return ["success" => true, "message" => "Cliente eliminado correctamente en Zoho.", "zohoId" => $zohoId, "respuestaZoho" => $deleteResponse];
         } else {
             // Si más de un cliente se encuentra con el mismo idApp, logueamos el problema
             return json_encode(["error" => "Se encontraron múltiples clientes con el mismo idApp: " . $idApp]);
