@@ -253,7 +253,9 @@ class ZohoService
      */
     public function eliminarCliente($clienteId = "")
     {
+        /*
         return $ClienteZoho = $this->zohoController->eliminarCliente($clienteId);
+        */
     }
 
     /**
