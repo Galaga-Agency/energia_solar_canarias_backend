@@ -614,7 +614,7 @@ switch ($method) {
                 if ($authMiddleware->verificarTokenUsuarioActivo() != false) {
                     if ($authMiddleware->verificarAdmin()) {
                         $zohoservice = new ZohoService();
-                        $zohoRespuesta = $zohoservice->obtenerListadoDePrecios($plantId,$proveedor);
+                        $zohoRespuesta = $zohoservice->obtenerListadoDePrecios($plantId, $proveedor);
                         $respuesta->success($zohoRespuesta);
                         echo json_encode($respuesta);
                     } else {
@@ -940,16 +940,16 @@ switch ($method) {
                                 $realPrice = null;
                                 break;
                         }
-                        if($realPrice != null){
+                        if ($realPrice != null) {
                             $respuesta->success($realPrice);
                             http_response_code($respuesta->code);
                             echo json_encode($respuesta);
-                        }else{
+                        } else {
                             $respuesta->_404($realPrice);
                             $respuesta->message = 'No se han encontrado datos o la planta o el proveedor no existe';
                             http_response_code($respuesta->code);
                             echo json_encode($respuesta);
-                        break;
+                            break;
                         }
                     } else {
                         $respuesta->_404();
