@@ -335,8 +335,6 @@ class ZohoController
                 [
                     "id" => $clienteId,
                     "idApp" => (string)$idApp,
-                    "crear_cliente" => false,
-                    "borrar_cliente" => false,
                 ]
             ]
         ];
@@ -421,8 +419,6 @@ class ZohoController
                 "data" => [
                     [
                         "id" => $zohoId,
-                        "crear_cliente" => false,
-                        "borrar_cliente" => false,
                     ]
                 ]
             ];
