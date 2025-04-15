@@ -54,7 +54,7 @@ class ZohoService
 
             // Consulta SQL para obtener el token actual
             $query = "SELECT `access_token`, `expires_in`, `token_type`, `scope`, `api_domain` FROM `zoho_tokens` WHERE `refresh_token` = ? LIMIT 1";
-            
+
             $stmt = $conn->prepare($query);
             if (!$stmt) {
                 throw new Exception("Error en la preparación de la consulta: " . $conn->error);
@@ -70,7 +70,7 @@ class ZohoService
             $token_type = null;
             $scope = null;
             $api_domain = null;
-            
+
             $stmt->bind_result($access_token, $expires_in, $token_type, $scope, $api_domain);
             if ($stmt->fetch()) {
                 // Guardar los datos del token
@@ -100,7 +100,7 @@ class ZohoService
 
             $query = "INSERT INTO `zoho_tokens`(`access_token`, `expires_in`, `token_type`, `scope`, `api_domain`, `refresh_token`) 
                       VALUES (?, ?, ?, ?, ?, ?)";
-            
+
             $stmt = $conn->prepare($query);
             if (!$stmt) {
                 throw new Exception("Error en la preparación de la consulta: " . $conn->error);
@@ -131,7 +131,7 @@ class ZohoService
             $query = "UPDATE `zoho_tokens` 
                       SET `access_token` = ?, `expires_in` = ?, `token_type` = ?, `scope` = ?, `api_domain` = ? 
                       WHERE `refresh_token` = ?";
-            
+
             $stmt = $conn->prepare($query);
             if (!$stmt) {
                 throw new Exception("Error en la preparación de la consulta: " . $conn->error);
@@ -160,7 +160,7 @@ class ZohoService
 
     /**
      * REFRESCAR TOKEN CUANDO ESTE EXPIRE Y METERLO EN LA BASE DE DATOS
-    */
+     */
     public function getAccessToken()
     {
         // Definir la estructura de respuesta por defecto
@@ -231,7 +231,7 @@ class ZohoService
      * Crear un cliente desde la App a Zoho
      * Esta función se encarga de crear un cliente en Zoho CRM a partir de los datos
      * que se envíen desde la App.
-    */
+     */
     public function crearCliente($data = null)
     {
         return $ClienteZoho = $this->zohoController->crearCliente($data);
@@ -241,7 +241,7 @@ class ZohoService
      * Actualizar un cliente desde la App a Zoho
      * Esta función se encarga de crear un cliente en Zoho CRM a partir de los datos
      * que se envíen desde la App.
-    */
+     */
     public function actualizarCliente($data = null)
     {
         return $ClienteZoho = $this->zohoController->actualizarCliente($data);
@@ -250,7 +250,7 @@ class ZohoService
      * Eliminar un cliente desde la App a Zoho
      * Esta función se encarga de crear un cliente en Zoho CRM a partir de los datos
      * que se envíen desde la App.
-    */
+     */
     public function eliminarCliente($clienteId = "")
     {
         return $ClienteZoho = $this->zohoController->eliminarCliente($clienteId);
@@ -259,7 +259,7 @@ class ZohoService
     /**
      * Desactiva la propiedad de zoho App Crear Cliente
      * Esta función se encarga de eliminar el App Crear Cliente por lo que se da a entender que no existe mas en la app
-    */
+     */
     public function appCrearClienteFalse($clienteId = "")
     {
         return $ClienteZoho = $this->zohoController->appCrearClienteFalse($clienteId);
@@ -269,7 +269,7 @@ class ZohoService
      * Actualizar el identificador de un cliente en Zoho
      * Esta función se encarga de actualizar el idApp de un cliente en Zoho CRM a partir de los datos
      * que se envíen desde la App.
-    */
+     */
     public function actualizarId($clienteId = null, $idApp = null)
     {
         return $ClienteZoho = $this->zohoController->actualizarId($clienteId, $idApp);
@@ -279,7 +279,7 @@ class ZohoService
      * Obtener un cliente desde la App a Zoho
      * Esta función se encarga de obtener un cliente en Zoho CRM a partir de los datos
      * que se envíen desde la App.
-    */
+     */
     public function obtenerCliente($clienteId = null)
     {
         return $ClienteZoho = $this->zohoController->obtenerCliente($clienteId);
@@ -288,7 +288,7 @@ class ZohoService
     /**
      * 1. Obtener una planta de la aplicación de zoho Plantas sin los Clientes 
      * y si existe el identificador de la planta entonces no crearla
-    */
+     */
     public function actualizarDatosPlantas()
     {
         $apiControladorService = new  ApiControladorService;
@@ -310,25 +310,27 @@ class ZohoService
      * 2. El cliente que se obtiene se le hace un filtro para sacar los ids en la tabla intermedia  Plantas_X_Clientes
      * 3. se hace un filtro con el cliente para saber cual es el cliente con la idApp y se saca el id de zoho de ese cliente Accounts
      * 4. se relaciona el cliente con la planta
-    */
-    public function obtenerListadoDePrecios($plantId,$proveedor){
-        $listadoDePrecios = $this->zohoController->obtenerListadoDePrecios($plantId,$proveedor);
+     */
+    public function obtenerListadoDePrecios($plantId, $proveedor)
+    {
+        $listadoDePrecios = $this->zohoController->obtenerListadoDePrecios($plantId, $proveedor);
         $paresarPrecios = $this->parsearListaDePrecios($listadoDePrecios);
         return $paresarPrecios;
     }
 
-    public function parsearListaDePrecios($listadoDePrecios){
-        if($listadoDePrecios == null || $listadoDePrecios == ""){
+    public function parsearListaDePrecios($listadoDePrecios)
+    {
+        if ($listadoDePrecios == null || $listadoDePrecios == "") {
             return null;
         }
         // Array donde se almacenarán los nuevos precios procesados
         $nuevoListadoDePrecios = [];
-        if(!isset($listadoDePrecios['data'])){
+        if (!isset($listadoDePrecios['data'])) {
             return null;
         }
         //echo json_encode($listadoDePrecios);
         // Iterar sobre el listado de precios recibido
-        foreach($listadoDePrecios['data'] as $key => $value){ 
+        foreach ($listadoDePrecios['data'] as $key => $value) {
             // Agregar la estructura con los datos requeridos para cada precio
             $nuevoListadoDePrecios[] = [
                 'precio' => $value['precio'],
@@ -340,8 +342,8 @@ class ZohoService
                 'moneda' => $value['moneda']
             ];
         }
-        
+
         // Devolver el nuevo listado de precios
         return $nuevoListadoDePrecios;
-    }    
+    }
 }
