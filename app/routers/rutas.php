@@ -1363,7 +1363,9 @@ switch ($method) {
                 if ($authMiddleware->verificarTokenUsuarioActivo() != false) {
                     if ($authMiddleware->verificarAdmin()) {
                         $zohoService = new ZohoService();
+                        /*
                         $zohoRespuesta = $zohoService->eliminarCliente($clienteId);
+                        */
                         $respuesta->success($zohoRespuesta);
                         echo json_encode($respuesta);
                     } else {
