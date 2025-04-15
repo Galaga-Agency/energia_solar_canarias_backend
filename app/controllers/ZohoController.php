@@ -365,6 +365,7 @@ class ZohoController
     /**
      * DELETE
      */
+    /*
     public function eliminarCliente($idApp)
     {
         if (!$idApp) {
@@ -395,7 +396,7 @@ class ZohoController
             return json_encode(["error" => "Se encontraron múltiples clientes con el mismo idApp: " . $idApp]);
         }
     }
-
+    */
     public function appCrearClienteFalse($idApp)
     {
         if (!$idApp) {
@@ -412,7 +413,7 @@ class ZohoController
         }
 
         // Verificar si la búsqueda devuelve exactamente un solo cliente
-        if (count($resultado['data']) == 1) {
+        if (isset($resultado['data'])) {
             $zohoId = $resultado['data'][0]['id']; // Extraer el Zoho_ID del cliente
 
             $data = [
