@@ -1418,7 +1418,7 @@ switch ($method) {
                     // Verificar si el usuario es administrador
                     if ($authMiddleware->verificarAdmin()) {
                         $idPlanta = RequestHelper::getParam('idplanta');
-                        $idUsuario = RequestHelper::getParam('idusuario');
+                        $idUsuario = RequestHelper::getParam('idusuario') ?? null;
                         $idProveedor = RequestHelper::getParam('proveedor');
                         $usuarios = new UsuariosController;
                         $usuarios->desrelacionarUsers($idUsuario, $idPlanta, $idProveedor);
