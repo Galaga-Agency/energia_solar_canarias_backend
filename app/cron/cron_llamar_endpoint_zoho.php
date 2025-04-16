@@ -1,6 +1,6 @@
 <?php
 
-require_once __DIR__ . '/../../config/vendor/autoload.php'; // Ajustá si tu composer está en otra ruta
+require_once __DIR__ . '/../../vendor/autoload.php';
 
 use Dotenv\Dotenv;
 
