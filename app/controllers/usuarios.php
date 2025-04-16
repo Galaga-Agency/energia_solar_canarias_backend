@@ -213,6 +213,7 @@ class UsuariosController
 
         if (!isset($data['origen'])) {
             $data['origen'] = 'app';
+            $data['Usuario_en_la_app'] = 'Activo';
             $logsController->registrarLog(Logs::INFO, "Origen no especificado, se asigna 'app' como valor por defecto.");
         }
 
