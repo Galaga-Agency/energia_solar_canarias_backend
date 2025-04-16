@@ -4,6 +4,7 @@ require_once __DIR__ . "/../utils/HttpClient.php";
 require_once __DIR__ . "/../models/conexion.php";
 require_once __DIR__ . "/../controllers/ZohoController.php";
 require_once __DIR__ . "/../services/ApiControladorService.php";
+require_once __DIR__ . "/../controllers/LogsController.php";
 
 use Dotenv\Dotenv;
 
@@ -24,11 +25,13 @@ class ZohoService
     private $httpClient;
     private $conexion;
     private $zohoController;
+    private $logsController;
 
     public function __construct()
     {
         $this->httpClient = new HttpClient();
         $this->zohoController = new ZohoController();
+        $this->logsController = new LogsController();
         try {
             $this->conexion = Conexion::getInstance();
             // Cargar el archivo .env desde la carpeta config
@@ -293,6 +296,8 @@ class ZohoService
      */
     public function actualizarDatosPlantas()
     {
+        $horaActual = date('Y-m-d H:i:s');
+        $this->logsController->registrarLog(Logs::INFO, "Registrando todas las plantas en zoho a las [$horaActual]");
         $apiControladorService = new  ApiControladorService;
         //Recogemos todas las plantas que hay actualemente de los proveedores
         $todasLasPlantas = $apiControladorService->getAllPlants(true);
@@ -302,6 +307,7 @@ class ZohoService
         $plantasComprobadas = $this->zohoController->comprobarIdPlantasExistentes($plantasZoho);
         //actualizamos las plantas en zoho y devolvemos las plantas creadas
         $plantasCreadas = $this->zohoController->crearTodasLasPlantasEnZoho($plantasComprobadas);
+        $this->logsController->registrarLog(Logs::INFO, "Todas las plantas registradas con éxito en zoho a las [$horaActual]");
         return $plantasCreadas;
         //var_dump($todasLasPlantas);
         //$plantasArray = $this->zohoController->sacarPlantasArray($clienteId);
