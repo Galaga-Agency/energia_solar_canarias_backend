@@ -84,6 +84,8 @@ class UsuariosController
             echo json_encode($respuesta);
             return;
         }
+        /*
+        Comprobar que el usuario existe en la base de datos, en caso de zoho no es necesario y tampoco con el nuevo flujo solo 1 planta tiene 1 usuario
         if (!$usuariosDB->verificarEstadoUsuario($idUsuario)) {
             $logsController->registrarLog(Logs::WARNING, "El usuario que se intenta desrelacionar no existe en la base de datos o a sido eliminado");
             $respuesta = new Respuesta();
@@ -93,6 +95,7 @@ class UsuariosController
             echo json_encode($respuesta);
             return;
         }
+        */
         if ($usuariosDB->comprobarUsuarioAsociadoPlanta($idUsuario, $idPlanta, $idProveedor)) {
 
             $usuario = $usuariosDB->desrelacionarUsers($idPlanta, $idUsuario, $idProveedor);

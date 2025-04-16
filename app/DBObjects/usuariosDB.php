@@ -777,17 +777,21 @@ class UsuariosDB
             if (!is_numeric($idProveedor)) {
                 $idProveedor = $this->obtenerIdProveedorPorNombre($idProveedor, $conn);
                 if ($idProveedor === false) {
-                    // No se encontró el proveedor
                     return false;
                 }
             }
 
-            // Consulta para verificar si el usuario está asociado a la planta con ese proveedor
-            $query = "SELECT * FROM plantas_asociadas WHERE planta_id = ? AND usuario_id = ? AND proveedor_id = ?";
-            $stmt = $conn->prepare($query);
-
-            // Asumiendo que planta_id, usuario_id e idProveedor son enteros
-            $stmt->bind_param('sii', $plantaId, $usuarioId, $idProveedor);
+            if ($usuarioId !== null) {
+                // Si se proporciona usuario, se incluye en la condición
+                $query = "SELECT * FROM plantas_asociadas WHERE planta_id = ? AND usuario_id = ? AND proveedor_id = ?";
+                $stmt = $conn->prepare($query);
+                $stmt->bind_param('iii', $plantaId, $usuarioId, $idProveedor);
+            } else {
+                // Si no se proporciona usuario, se omite esa condición
+                $query = "SELECT * FROM plantas_asociadas WHERE planta_id = ? AND proveedor_id = ?";
+                $stmt = $conn->prepare($query);
+                $stmt->bind_param('ii', $plantaId, $idProveedor);
+            }
 
             $stmt->execute();
             $result = $stmt->get_result();
@@ -801,6 +805,7 @@ class UsuariosDB
             return false;
         }
     }
+
 
     /**
      * Obtener el ID del proveedor a partir de su nombre.
