@@ -419,6 +419,7 @@ class ZohoController
                 "data" => [
                     [
                         "id" => $zohoId,
+                        "Usuario_en_la_app" => "Inactivo"
                     ]
                 ]
             ];
@@ -495,7 +496,8 @@ class ZohoController
                     "Poblaci_n" => $data['Poblaci_n'] ?? "",
                     "clase_name" => $data['clase_name'] ?? "",
                     "NIF" => $data['NIF'] ?? "",
-                    "imagen" => $data['imagen'] ?? ""
+                    "imagen" => $data['imagen'] ?? "",
+                    "Usuario_en_la_app" => $data['Usuario_en_la_app'] ?? ""
                 ]
             ]
         ];
