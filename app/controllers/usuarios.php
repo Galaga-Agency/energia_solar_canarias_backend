@@ -68,7 +68,7 @@ class UsuariosController
         }
     }
 
-    public function desrelacionarUsers($idUsuario, $idPlanta, $idProveedor)
+    public function desrelacionarUsers($idUsuario = null, $idPlanta, $idProveedor)
     {
         // Crear una instancia del controlador de logs
         $logsController = new LogsController();
