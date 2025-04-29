@@ -22,6 +22,7 @@ require_once __DIR__ . '/../utils/imagenes.php';
 
 require_once __DIR__ . '/../services/ZohoService.php';
 
+require_once __DIR__ . '/../helpers/RequestHelper.php';
 
 $respuesta = new Respuesta;
 $authMiddleware = new Autenticacion;
@@ -614,7 +615,7 @@ switch ($method) {
                 if ($authMiddleware->verificarTokenUsuarioActivo() != false) {
                     if ($authMiddleware->verificarAdmin()) {
                         $zohoservice = new ZohoService();
-                        $zohoRespuesta = $zohoservice->obtenerListadoDePrecios($plantId,$proveedor);
+                        $zohoRespuesta = $zohoservice->obtenerListadoDePrecios($plantId, $proveedor);
                         $respuesta->success($zohoRespuesta);
                         echo json_encode($respuesta);
                     } else {
@@ -940,16 +941,16 @@ switch ($method) {
                                 $realPrice = null;
                                 break;
                         }
-                        if($realPrice != null){
+                        if ($realPrice != null) {
                             $respuesta->success($realPrice);
                             http_response_code($respuesta->code);
                             echo json_encode($respuesta);
-                        }else{
+                        } else {
                             $respuesta->_404($realPrice);
                             $respuesta->message = 'No se han encontrado datos o la planta o el proveedor no existe';
                             http_response_code($respuesta->code);
                             echo json_encode($respuesta);
-                        break;
+                            break;
                         }
                     } else {
                         $respuesta->_404();
@@ -965,14 +966,14 @@ switch ($method) {
                     echo json_encode($respuesta);
                 }
                 break;
-            case ($request === 'usuarios/relacionar'  && isset($_GET['idplanta']) && isset($_GET['idusuario']) && isset($_GET['proveedor'])):
+            case ($request === 'usuarios/relacionar'):
                 $handled = true;
                 if ($authMiddleware->verificarTokenUsuarioActivo() != false) {
                     // Verificar si el usuario es administrador
                     if ($authMiddleware->verificarAdmin()) {
-                        $idPlanta = $_GET['idplanta'];
-                        $idUsuario = $_GET['idusuario'];
-                        $idProveedor = $_GET['proveedor'];
+                        $idPlanta = RequestHelper::getParam('idplanta');
+                        $idUsuario = RequestHelper::getParam('idusuario');
+                        $idProveedor = RequestHelper::getParam('proveedor');
                         $usuarios = new UsuariosController;
                         $usuarios->relacionarUsers($idUsuario, $idPlanta, $idProveedor);
                     } else {
@@ -1363,7 +1364,9 @@ switch ($method) {
                 if ($authMiddleware->verificarTokenUsuarioActivo() != false) {
                     if ($authMiddleware->verificarAdmin()) {
                         $zohoService = new ZohoService();
+                        /*
                         $zohoRespuesta = $zohoService->eliminarCliente($clienteId);
+                        */
                         $respuesta->success($zohoRespuesta);
                         echo json_encode($respuesta);
                     } else {
@@ -1409,14 +1412,14 @@ switch ($method) {
                     echo json_encode($respuesta);
                 }
                 break;
-            case ($request === 'usuarios/relacionar'  && isset($_GET['idplanta']) && isset($_GET['idusuario']) && isset($_GET['proveedor'])):
+            case ($request === 'usuarios/relacionar'):
                 $handled = true;
                 if ($authMiddleware->verificarTokenUsuarioActivo() != false) {
                     // Verificar si el usuario es administrador
                     if ($authMiddleware->verificarAdmin()) {
-                        $idPlanta = $_GET['idplanta'];
-                        $idUsuario = $_GET['idusuario'];
-                        $idProveedor = $_GET['proveedor'];
+                        $idPlanta = RequestHelper::getParam('idplanta');
+                        $idUsuario = RequestHelper::getParam('idusuario') ?? null;
+                        $idProveedor = RequestHelper::getParam('proveedor');
                         $usuarios = new UsuariosController;
                         $usuarios->desrelacionarUsers($idUsuario, $idPlanta, $idProveedor);
                     } else {

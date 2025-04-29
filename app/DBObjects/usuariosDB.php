@@ -65,46 +65,49 @@ class UsuariosDB
      * @param string $proveedor El nombre del proveedor
      * @return bool true en caso de éxito o false en caso de error
      */
-    public function desrelacionarUsers($idPlanta, $idUsuario, $idProveedor)
+    public function desrelacionarUsers($idPlanta, $idUsuario = null, $idProveedor)
     {
         try {
             $conexion = Conexion::getInstance();
             $conn = $conexion->getConexion();
 
-            // Si idProveedor no es numérico, buscar su ID en la base de datos
+            // Si idProveedor no es numérico, buscar su ID por nombre
             if (!is_numeric($idProveedor)) {
                 $idProveedor = $this->obtenerIdProveedorPorNombre($idProveedor, $conn);
                 if ($idProveedor == false) {
-                    // Si no encontramos el ID del proveedor, devolvemos false
                     return false;
                 }
             }
 
-            $query = "DELETE FROM `plantas_asociadas` WHERE planta_id = ? AND proveedor_id = ? AND usuario_id = ?;";
+            // Base del query
+            $query = "DELETE FROM `plantas_asociadas` WHERE planta_id = ? AND proveedor_id = ?";
+
+            // Agregar condición por usuario si se proporciona
+            if ($idUsuario !== null) {
+                $query .= " AND usuario_id = ?";
+            }
+
             $stmt = $conn->prepare($query);
             if (!$stmt) {
                 throw new Exception("Error en la preparación de la consulta: " . $conn->error);
             }
 
-            $stmt->bind_param('iii', $idPlanta, $idProveedor, $idUsuario);
+            // Bind de parámetros según si hay idUsuario o no
+            if ($idUsuario !== null) {
+                $stmt->bind_param('iii', $idPlanta, $idProveedor, $idUsuario);
+            } else {
+                $stmt->bind_param('ii', $idPlanta, $idProveedor);
+            }
 
             if (!$stmt->execute()) {
                 throw new Exception("Error en la ejecución de la consulta: " . $stmt->error);
             }
 
-            // Verificar si se eliminaron filas
-            if ($stmt->affected_rows === 0) {
-                // No se ha eliminado ningún dato
-                $stmt->close();
-                return false;
-            }
-
-            // Cierra la consulta
             $stmt->close();
 
             return true;
         } catch (Exception $e) {
-            error_log("Error al desrelacionar usuario y planta: " . $e->getMessage());
+            error_log("Error al desrelacionar usuarios de planta: " . $e->getMessage());
             return false;
         }
     }
@@ -233,9 +236,9 @@ class UsuariosDB
             // Generar el hash de la contraseña
             $passwordHash = password_hash($data['password'], PASSWORD_BCRYPT);
 
-            if(isset($data['clase']) && $data['clase']  == 1 || isset($data['clase']) && $data['clase']  == "admin"){
+            if (isset($data['clase']) && $data['clase']  == 1 || isset($data['clase']) && $data['clase']  == "admin") {
                 $data['clase'] = "admin";
-            }else if(isset($data['clase']) && $data['clase']  == 2 || isset($data['clase']) && $data['clase']  == "usuario"){
+            } else if (isset($data['clase']) && $data['clase']  == 2 || isset($data['clase']) && $data['clase']  == "usuario") {
                 $data['clase'] = "usuario";
             }
 
@@ -380,9 +383,9 @@ class UsuariosDB
 
             $usuario = $this->getUser($id);
 
-            if(isset($data['clase']) && $data['clase']  == 1 || isset($data['clase']) && $data['clase']  == "admin"){
+            if (isset($data['clase']) && $data['clase']  == 1 || isset($data['clase']) && $data['clase']  == "admin") {
                 $data['clase'] = "admin";
-            }else if(isset($data['clase']) && $data['clase']  == 2 || isset($data['clase']) && $data['clase']  == "usuario"){
+            } else if (isset($data['clase']) && $data['clase']  == 2 || isset($data['clase']) && $data['clase']  == "usuario") {
                 $data['clase'] = "usuario";
             }
 
@@ -774,17 +777,21 @@ class UsuariosDB
             if (!is_numeric($idProveedor)) {
                 $idProveedor = $this->obtenerIdProveedorPorNombre($idProveedor, $conn);
                 if ($idProveedor === false) {
-                    // No se encontró el proveedor
                     return false;
                 }
             }
 
-            // Consulta para verificar si el usuario está asociado a la planta con ese proveedor
-            $query = "SELECT * FROM plantas_asociadas WHERE planta_id = ? AND usuario_id = ? AND proveedor_id = ?";
-            $stmt = $conn->prepare($query);
-
-            // Asumiendo que planta_id, usuario_id e idProveedor son enteros
-            $stmt->bind_param('sii', $plantaId, $usuarioId, $idProveedor);
+            if ($usuarioId !== null) {
+                // Si se proporciona usuario, se incluye en la condición
+                $query = "SELECT * FROM plantas_asociadas WHERE planta_id = ? AND usuario_id = ? AND proveedor_id = ?";
+                $stmt = $conn->prepare($query);
+                $stmt->bind_param('iii', $plantaId, $usuarioId, $idProveedor);
+            } else {
+                // Si no se proporciona usuario, se omite esa condición
+                $query = "SELECT * FROM plantas_asociadas WHERE planta_id = ? AND proveedor_id = ?";
+                $stmt = $conn->prepare($query);
+                $stmt->bind_param('ii', $plantaId, $idProveedor);
+            }
 
             $stmt->execute();
             $result = $stmt->get_result();
@@ -798,6 +805,7 @@ class UsuariosDB
             return false;
         }
     }
+
 
     /**
      * Obtener el ID del proveedor a partir de su nombre.
@@ -1021,7 +1029,7 @@ class UsuariosDB
      * @param int $id El ID del usuario
      * @return array|false dependiendo si se ha modificado la imagen
      */
-    public function getUsuariosAsociadosAPlantas($idUsuario,$nombreProveedor)
+    public function getUsuariosAsociadosAPlantas($idUsuario, $nombreProveedor)
     {
         try {
             $conexion = Conexion::getInstance();
@@ -1054,7 +1062,7 @@ class UsuariosDB
             ";
 
             $stmt = $conn->prepare($query);
-            $stmt->bind_param('ss', $idUsuario,$nombreProveedor);
+            $stmt->bind_param('ss', $idUsuario, $nombreProveedor);
             $stmt->execute();
 
             // Obtener el resultado de la consulta
