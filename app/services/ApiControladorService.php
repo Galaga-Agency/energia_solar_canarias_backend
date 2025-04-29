@@ -219,7 +219,7 @@ class ApiControladorService
         echo json_encode($respuesta);
     }
 
-    public function GetPowerStationWariningInfoByMultiCondition($pageIndex = 1, $pageSize = 200, $status = 3)
+    public function GetPowerStationWariningInfoByMultiCondition($pageIndex = 1, $pageSize = 2000, $status = 3)
     {
         $respuesta = new Respuesta;
         try {
@@ -576,7 +576,7 @@ class ApiControladorService
      * Estas funciones se utilizan para obtener los datos de Todas las plantas de cada proveedor
      * 
      */
-    public function getAllPlantsGoodWe($page = 1, $pageSize = 200)
+    public function getAllPlantsGoodWe($page = 1, $pageSize = 2000)
     {
         $respuesta = new Paginacion();
         try {
@@ -607,7 +607,7 @@ class ApiControladorService
         header('Content-Type: application/json');
         echo json_encode($respuesta);
     }
-    public function getAllPlantsSolarEdge($page = 1, $pageSize = 200)
+    public function getAllPlantsSolarEdge($page = 1, $pageSize = 2000)
     {
         $respuesta = new Paginacion();
         try {
@@ -638,7 +638,7 @@ class ApiControladorService
         header('Content-Type: application/json');
         echo json_encode($respuesta);
     }
-    public function getAllPlantsVictronEnergy($page = 1, $pageSize = 200)
+    public function getAllPlantsVictronEnergy($page = 1, $pageSize = 2000)
     {
         $respuesta = new Paginacion();
         try {
