@@ -28,14 +28,27 @@ class UsuariosDB
                 $idProveedor = $this->obtenerIdProveedorPorNombre($idProveedor, $conn);
                 if ($idProveedor == false) {
                     // Si no encontramos el ID del proveedor, devolvemos false
-                    return false;
+                    return false; // No se encontró el proveedor
                 }
             }
 
+            // Eliminar asociaciones anteriores de esta planta
+            $deleteQuery = "DELETE FROM plantas_asociadas WHERE planta_id = ?";
+            $deleteStmt = $conn->prepare($deleteQuery);
+            if (!$deleteStmt) {
+                throw new Exception("Error en la preparación del DELETE: " . $conn->error);
+            }
+            $deleteStmt->bind_param('i', $idPlanta);
+            if (!$deleteStmt->execute()) {
+                throw new Exception("Error al ejecutar DELETE: " . $deleteStmt->error);
+            }
+            $deleteStmt->close();
+
+            // Insertar nueva asociación
             $query = "INSERT INTO plantas_asociadas(usuario_id, planta_id, proveedor_id) VALUES (?, ?, ?)";
             $stmt = $conn->prepare($query);
             if (!$stmt) {
-                throw new Exception("Error en la preparación de la consulta: " . $conn->error);
+                throw new Exception("Error en la preparación del INSERT: " . $conn->error);
             }
 
             // Vincula los parámetros: 'i' para enteros (usuario y planta) y 's' para string (proveedor)
@@ -43,7 +56,7 @@ class UsuariosDB
 
             // Ejecuta la consulta
             if (!$stmt->execute()) {
-                throw new Exception("Error en la ejecución de la consulta: " . $stmt->error);
+                throw new Exception("Error en la ejecución del INSERT: " . $stmt->error);
                 return false;
             }
 
