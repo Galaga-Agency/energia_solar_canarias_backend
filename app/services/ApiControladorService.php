@@ -678,9 +678,9 @@ class ApiControladorService
 
             if ($plantasAsociadas == false) {
                 $this->logsController->registrarLog(Logs::INFO, "No se encuentran plantas del cliente");
-                $respuesta->_404();
+                $respuesta->success();
                 $respuesta->message = 'No se han encontrado plantas para este usuario';
-                http_response_code(404);
+                http_response_code(200);
                 echo json_encode($respuesta);
                 return;
             }
