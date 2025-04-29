@@ -334,7 +334,7 @@ class ZohoController
             "data" => [
                 [
                     "id" => $clienteId,
-                    "idApp" => (string)$idApp
+                    "idApp" => (string)$idApp,
                 ]
             ]
         ];
@@ -364,6 +364,7 @@ class ZohoController
     /**
      * DELETE
      */
+    /*
     public function eliminarCliente($idApp)
     {
         if (!$idApp) {
@@ -394,7 +395,7 @@ class ZohoController
             return json_encode(["error" => "Se encontraron múltiples clientes con el mismo idApp: " . $idApp]);
         }
     }
-
+    */
     public function appCrearClienteFalse($idApp)
     {
         if (!$idApp) {
@@ -411,25 +412,25 @@ class ZohoController
         }
 
         // Verificar si la búsqueda devuelve exactamente un solo cliente
-        if (count($resultado['data']) == 1) {
+        if (isset($resultado['data'])) {
             $zohoId = $resultado['data'][0]['id']; // Extraer el Zoho_ID del cliente
-            
+
             $data = [
                 "data" => [
                     [
-                        "id" => $zohoId, 
-                        "crear_cliente" => false
+                        "id" => $zohoId,
+                        "Usuario_en_la_app" => "Inactivo"
                     ]
                 ]
             ];
-    
+
             $deleteResponse = $this->enviarDatosZoho($data, 'PUT', 'Clientes', $zohoId);
 
             if (isset($deleteResponse['error']) && $deleteResponse['error'] == true) {
                 return json_encode(["error" => "Error al eliminar el cliente en Zoho: " . $deleteResponse['message']]);
             }
 
-            return ["success" => true, "message" => "Cliente eliminado correctamente en Zoho.", "zohoId" => $zohoId];
+            return ["success" => true, "message" => "Cliente eliminado correctamente en Zoho.", "zohoId" => $zohoId, "respuestaZoho" => $deleteResponse];
         } else {
             // Si más de un cliente se encuentra con el mismo idApp, logueamos el problema
             return json_encode(["error" => "Se encontraron múltiples clientes con el mismo idApp: " . $idApp]);
@@ -495,7 +496,8 @@ class ZohoController
                     "Poblaci_n" => $data['Poblaci_n'] ?? "",
                     "clase_name" => $data['clase_name'] ?? "",
                     "NIF" => $data['NIF'] ?? "",
-                    "imagen" => $data['imagen'] ?? ""
+                    "imagen" => $data['imagen'] ?? "",
+                    "Usuario_en_la_app" => $data['Usuario_en_la_app'] ?? ""
                 ]
             ]
         ];

@@ -68,7 +68,7 @@ class UsuariosController
         }
     }
 
-    public function desrelacionarUsers($idUsuario, $idPlanta, $idProveedor)
+    public function desrelacionarUsers($idUsuario = null, $idPlanta, $idProveedor)
     {
         // Crear una instancia del controlador de logs
         $logsController = new LogsController();
@@ -84,6 +84,8 @@ class UsuariosController
             echo json_encode($respuesta);
             return;
         }
+        /*
+        Comprobar que el usuario existe en la base de datos, en caso de zoho no es necesario y tampoco con el nuevo flujo solo 1 planta tiene 1 usuario
         if (!$usuariosDB->verificarEstadoUsuario($idUsuario)) {
             $logsController->registrarLog(Logs::WARNING, "El usuario que se intenta desrelacionar no existe en la base de datos o a sido eliminado");
             $respuesta = new Respuesta();
@@ -93,6 +95,7 @@ class UsuariosController
             echo json_encode($respuesta);
             return;
         }
+        */
         if ($usuariosDB->comprobarUsuarioAsociadoPlanta($idUsuario, $idPlanta, $idProveedor)) {
 
             $usuario = $usuariosDB->desrelacionarUsers($idPlanta, $idUsuario, $idProveedor);
@@ -213,6 +216,7 @@ class UsuariosController
 
         if (!isset($data['origen'])) {
             $data['origen'] = 'app';
+            $data['Usuario_en_la_app'] = 'Activo';
             $logsController->registrarLog(Logs::INFO, "Origen no especificado, se asigna 'app' como valor por defecto.");
         }
 
