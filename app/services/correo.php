@@ -43,7 +43,7 @@ class Correo
                 $this->mail->SMTPAuth = true;
                 $this->mail->Username = $this->username; // Tu correo de WorkMail
                 $this->mail->Password = $this->password; // Contraseña de la cuenta de WorkMail
-                $this->mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS; // Usa SSL
+                $this->mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS; // Usa SSL
                 $this->mail->Port = $this->port; // También puedes usar 587 para TLS
                 $this->mail->CharSet = 'UTF-8'; // Configuración para UTF-8
 
@@ -121,7 +121,7 @@ class Correo
                 $this->mail->SMTPAuth = true;
                 $this->mail->Username = $this->username; // Usuario SMTP
                 $this->mail->Password = $this->password; // Contraseña SMTP
-                $this->mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS; // SSL
+                $this->mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS; // SSL
                 $this->mail->Port = $this->port; // Puerto
                 $this->mail->CharSet = 'UTF-8'; // Configuración para UTF-8
 
@@ -221,7 +221,7 @@ class Correo
                 $this->mail->SMTPAuth = true;
                 $this->mail->Username = $this->username; // Tu correo de WorkMail
                 $this->mail->Password = $this->password; // Contraseña de la cuenta de WorkMail
-                $this->mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS; // Usa SSL
+                $this->mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS; // Usa SSL
                 $this->mail->Port = $this->port; // También puedes usar 587 para TLS
                 $this->mail->CharSet = 'UTF-8'; // Configuración para UTF-8
 

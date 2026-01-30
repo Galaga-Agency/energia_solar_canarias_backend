@@ -1,3 +1,5 @@
+<?php ob_start(); ?>
+<?php ob_start(); ?>
 <?php
 // Mostrar errores en pantalla
 //ini_set('display_errors', 1); // Activar la visualización de errores
@@ -1533,3 +1535,9 @@ if (!$handled) {
     $respuesta->message = 'La ruta solicitada no existe en esta API.';
     echo json_encode($respuesta);
 }
+
+// --- production config ---
+ini_set("display_errors", 0);
+error_reporting(0);
+// -------------------------
+
