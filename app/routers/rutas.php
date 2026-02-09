@@ -55,6 +55,12 @@ if (strpos($request, $baseDir) === 0) {
     $request = substr($request, strlen($baseDir));
     $request = trim($request, '/'); // Elimina cualquier barra adicional al inicio o final
 }
+
+// Si la petición es a la raíz con ?page=, redirigir a index.php (documentación)
+if (empty($request) && isset($_GET['page'])) {
+    require_once __DIR__ . '/../../index.php';
+    exit;
+}
 $conexion = Conexion::getInstance();
 $conn = $conexion->getConexion();
 if ($conn == null) {
