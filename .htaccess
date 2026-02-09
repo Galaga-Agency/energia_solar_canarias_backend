@@ -1,5 +1,8 @@
 RewriteEngine On
 
+# Asegurar que index.php sea el archivo por defecto
+DirectoryIndex index.php
+
 # PERMITIR LISTADO DE DIRECTORIOS EN storage/img_screens_frontend
 RewriteCond %{REQUEST_URI} ^/storage/img_screens_frontend/
 RewriteRule ^ - [L]
@@ -70,6 +73,10 @@ RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteCond %{REQUEST_FILENAME}.php -f
 RewriteRule ^(.*?)/?$ $1.php [L,QSA]
+
+# Redirigir peticiones a la raíz con ?page= a index.php
+RewriteCond %{QUERY_STRING} ^page= [NC]
+RewriteRule ^/?$ index.php [L,QSA]
 
 #Redirigir todo lo demás a rutas.php para manejo de rutas en la API
 RewriteCond %{REQUEST_FILENAME} !-f
