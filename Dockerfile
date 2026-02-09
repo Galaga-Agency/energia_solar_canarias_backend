@@ -5,9 +5,10 @@ RUN a2enmod rewrite headers
 # Enable .htaccess support
 RUN sed -i '/<Directory \/var\/www\/>/,/<\/Directory>/ s/AllowOverride None/AllowOverride All/' /etc/apache2/apache2.conf
 
-RUN apt-get update && apt-get install -y unzip git && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y unzip git libpng-dev libjpeg-dev libfreetype6-dev && rm -rf /var/lib/apt/lists/*
 
-RUN docker-php-ext-install mysqli pdo pdo_mysql
+RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install mysqli pdo pdo_mysql gd
 
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
