@@ -1,9 +1,8 @@
-
 <div class="flex flex-col md:flex-row justify-between">
     <!-- Descripción del Endpoint -->
     <div class="w-full md:w-7/12 p-4">
         <h1 class="text-3xl font-bold <?php echo $theme === 'dark' ? 'text-blue-400' : 'text-blue-600'; ?> mb-4">
-        GET /proveedores
+            GET /proveedores
         </h1>
         <p class="<?php echo $theme === 'dark' ? 'text-gray-300' : 'text-gray-700'; ?> mb-4">
             <?php echo translate('proveedores.descripcion'); ?>
@@ -37,14 +36,13 @@
                 <?php echo translate('usuarios_get.ejemplo_uso'); ?>
             </h2>
             <pre class="text-sm overflow-auto mb-4">
-curl -X GET "https://app-energiasolarcanarias-backend.com/proveedores" \
+curl -X GET "https://app-backend.energiasolarcanarias.com/proveedores" \
 -H "Authorization: Bearer tu_token_de_acceso"
             </pre>
             <button
                 class="absolute top-2 right-2 <?php echo $theme === 'dark' ? 'bg-blue-400 hover:bg-blue-500' : 'bg-blue-600 hover:bg-blue-700'; ?> text-white px-3 py-1 rounded transition"
-                onclick="copiarCodigo()"
-            >
-            <?php echo translate('copiar'); ?>
+                onclick="copiarCodigo()">
+                <?php echo translate('copiar'); ?>
             </button>
         </div>
     </div>
@@ -52,7 +50,7 @@ curl -X GET "https://app-energiasolarcanarias-backend.com/proveedores" \
 
 <script>
     function copiarCodigo() {
-        const codigo = `curl -X GET "https://app-energiasolarcanarias-backend.com/proveedores" \
+        const codigo = `curl -X GET "https://app-backend.energiasolarcanarias.com/proveedores" \
 -H "Authorization: Bearer tu_token_de_acceso"`;
         navigator.clipboard.writeText(codigo).then(() => {
             alert('Código copiado al portapapeles');

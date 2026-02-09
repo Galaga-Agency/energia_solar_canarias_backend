@@ -8,7 +8,7 @@ clase: admin
 movil: 691667081
 nombre: soporte
 apellido: Galaga
-imagen: https://app-energiasolarcanarias-backend.com/public/uploads/img_usuarios/paisaje.webp
+imagen: https://app-backend.energiasolarcanarias.com/public/uploads/img_usuarios/paisaje.webp
 activo: 1
 tokenLogin: null
 timeTokenLogin: null
@@ -26,7 +26,7 @@ clase: cliente
 movil: 645521246
 nombre: Thomas
 apellido: Augot
-imagen: https://app-energiasolarcanarias-backend.com/public/uploads/img_usuarios/paisaje2.jpg
+imagen: https://app-backend.energiasolarcanarias.com/public/uploads/img_usuarios/paisaje2.jpg
 activo: 1
 tokenLogin: null
 timeTokenLogin: null
