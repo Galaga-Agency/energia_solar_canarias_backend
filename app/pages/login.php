@@ -48,7 +48,7 @@
             <div class="<?php echo $theme === 'dark' ? 'bg-gray-900 text-gray-300' : 'bg-gray-800 text-white'; ?> rounded-lg p-4 relative">
                 <h2 class="text-lg font-semibold mb-2"><?php echo translate('login.ejemplo_uso_login'); ?></h2>
                 <pre class="text-sm overflow-auto mb-4">
-curl -X POST "https://app-energiasolarcanarias-backend.com/login" \
+curl -X POST "https://app-backend.energiasolarcanarias.com/login" \
 -H "Content-Type: application/json" \
 -d '{
   "email": "ejemplo@galagaagency.com",
@@ -113,7 +113,7 @@ curl -X POST "https://app-energiasolarcanarias-backend.com/login" \
             <div class="<?php echo $theme === 'dark' ? 'bg-gray-900 text-gray-300' : 'bg-gray-800 text-white'; ?> rounded-lg p-4 relative">
                 <h2 class="text-lg font-semibold mb-2"><?php echo translate('login.ejemplo_uso_token'); ?></h2>
                 <pre class="text-sm overflow-auto mb-4">
-curl -X POST "https://app-energiasolarcanarias-backend.com/token" \
+curl -X POST "https://app-backend.energiasolarcanarias.com/token" \
 -H "Content-Type: application/json" \
 -d '{
   "id": 1,

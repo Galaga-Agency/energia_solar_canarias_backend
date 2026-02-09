@@ -10,7 +10,7 @@
         <h2 class="text-xl font-semibold <?php echo $theme === 'dark' ? 'text-gray-400' : 'text-gray-800'; ?> mb-2">
             <?php echo translate('eliminar_imagen.cuerpo_solicitud'); ?>
         </h2>
-        
+
         <p class="<?php echo $theme === 'dark' ? 'text-gray-300' : 'text-gray-700'; ?> mb-4">
             <strong>id: </strong><?php echo translate('eliminar_imagen.parametro_descripcion'); ?>
         </p>
@@ -34,14 +34,13 @@
                 <?php echo translate('eliminar_imagen.respuesta_ejemplo'); ?>
             </h2>
             <pre class="text-sm overflow-auto mb-4">
-curl -X DELETE "https://app-energiasolarcanarias-backend.com/usuario/imagen" \
+curl -X DELETE "https://app-backend.energiasolarcanarias.com/usuario/imagen" \
 -H "Authorization: Bearer tu_token_de_acceso" \
             </pre>
             <button
                 class="absolute top-2 right-2 <?php echo $theme === 'dark' ? 'bg-blue-400 hover:bg-blue-500' : 'bg-blue-600 hover:bg-blue-700'; ?> text-white px-3 py-1 rounded transition"
-                onclick="copiarCodigo()"
-            >
-            <?php echo translate('copiar'); ?>
+                onclick="copiarCodigo()">
+                <?php echo translate('copiar'); ?>
             </button>
         </div>
     </div>
@@ -49,7 +48,7 @@ curl -X DELETE "https://app-energiasolarcanarias-backend.com/usuario/imagen" \
 
 <script>
     function copiarCodigo() {
-        const codigo = `curl -X DELETE "https://app-energiasolarcanarias-backend.com/usuario/imagen" \\
+        const codigo = `curl -X DELETE "https://app-backend.energiasolarcanarias.com/usuario/imagen" \\
 -H "Authorization: Bearer tu_token_de_acceso" \\
 -d '{"id_usuario": "12345"}'`; // Opcional
         navigator.clipboard.writeText(codigo).then(() => {
