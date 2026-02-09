@@ -36,14 +36,13 @@
                 <?php echo translate('usuarios_post.respuesta_ejemplo'); ?>
             </h2>
             <pre class="text-sm overflow-auto mb-4">
-curl -X DELETE "https://app-energiasolarcanarias-backend.com/usuarios/relacionar?idplanta=1851069&idusuario=20&proveedor=1" \
+curl -X DELETE "https://app-backend.energiasolarcanarias.com/usuarios/relacionar?idplanta=1851069&idusuario=20&proveedor=1" \
 -H "Authorization: Bearer tu_token_de_acceso"
             </pre>
             <button
                 class="absolute top-2 right-2 <?php echo $theme === 'dark' ? 'bg-blue-400 hover:bg-blue-500' : 'bg-blue-600 hover:bg-blue-700'; ?> text-white px-3 py-1 rounded transition"
-                onclick="copiarCodigo()"
-            >
-            <?php echo translate('copiar'); ?>
+                onclick="copiarCodigo()">
+                <?php echo translate('copiar'); ?>
             </button>
         </div>
     </div>
@@ -51,7 +50,7 @@ curl -X DELETE "https://app-energiasolarcanarias-backend.com/usuarios/relacionar
 
 <script>
     function copiarCodigo() {
-        const codigo = `curl -X DELETE "https://app-energiasolarcanarias-backend.com/usuarios/relacionar?idplanta=1851069&idusuario=20&proveedor=1" \\
+        const codigo = `curl -X DELETE "https://app-backend.energiasolarcanarias.com/usuarios/relacionar?idplanta=1851069&idusuario=20&proveedor=1" \\
 -H "Authorization: Bearer tu_token_de_acceso"`;
         navigator.clipboard.writeText(codigo).then(() => {
             alert('Código copiado al portapapeles');

@@ -35,7 +35,7 @@ $theme = isset($_SESSION['theme']) ? $_SESSION['theme'] : 'light';
         <div class="<?php echo $theme === 'dark' ? 'bg-gray-900 text-gray-300' : 'bg-gray-800 text-white'; ?> rounded-lg p-4 relative">
             <h2 class="text-lg font-semibold mb-2">Ejemplo de Uso</h2>
             <pre class="text-sm overflow-auto mb-4">
-curl -X DELETE "https://app-energiasolarcanarias-backend.com/usuarios/1" \
+curl -X DELETE "https://app-backend.energiasolarcanarias.com/usuarios/1" \
 -H "Authorization: Bearer tu_token_de_acceso"
             </pre>
             <button
@@ -49,7 +49,7 @@ curl -X DELETE "https://app-energiasolarcanarias-backend.com/usuarios/1" \
 
 <script>
     function copiarCodigo() {
-        const codigo = `curl -X DELETE "https://app-energiasolarcanarias-backend.com/usuarios/1" \\
+        const codigo = `curl -X DELETE "https://app-backend.energiasolarcanarias.com/usuarios/1" \\
 -H "Authorization: Bearer tu_token_de_acceso"`;
         navigator.clipboard.writeText(codigo).then(() => {
             alert('Código copiado al portapapeles');

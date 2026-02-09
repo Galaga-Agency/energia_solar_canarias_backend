@@ -25,7 +25,7 @@
     <span class="text-blue-500">"code"</span>: <span class="text-yellow-500">200</span>,
     <span class="text-blue-500">"message"</span>: <span class="text-green-500">"Imagen subida con éxito"</span>,
     <span class="text-blue-500">"data"</span>: {
-        <span class="text-blue-500">"imagen_url"</span>: <span class="text-green-500">"https://app-energiasolarcanarias-backend.com/uploads/archivo.jpg"</span>
+        <span class="text-blue-500">"imagen_url"</span>: <span class="text-green-500">"https://app-backend.energiasolarcanarias.com/uploads/archivo.jpg"</span>
     }
 }
         </pre>
@@ -38,15 +38,14 @@
                 <?php echo translate('subir_imagen.respuesta_ejemplo'); ?>
             </h2>
             <pre class="text-sm overflow-auto mb-4">
-curl -X POST "https://app-energiasolarcanarias-backend.com/usuario/imagen" \
+curl -X POST "https://app-backend.energiasolarcanarias.com/usuario/imagen" \
 -H "Authorization: Bearer tu_token_de_acceso" \
 -F "imagen=@archivo.jpg"
             </pre>
             <button
                 class="absolute top-2 right-2 <?php echo $theme === 'dark' ? 'bg-blue-400 hover:bg-blue-500' : 'bg-blue-600 hover:bg-blue-700'; ?> text-white px-3 py-1 rounded transition"
-                onclick="copiarCodigo()"
-            >
-            <?php echo translate('copiar'); ?>
+                onclick="copiarCodigo()">
+                <?php echo translate('copiar'); ?>
             </button>
         </div>
     </div>
@@ -54,7 +53,7 @@ curl -X POST "https://app-energiasolarcanarias-backend.com/usuario/imagen" \
 
 <script>
     function copiarCodigo() {
-        const codigo = `curl -X POST "https://app-energiasolarcanarias-backend.com/usuario/imagen" \\
+        const codigo = `curl -X POST "https://app-backend.energiasolarcanarias.com/usuario/imagen" \\
 -H "Authorization: Bearer tu_token_de_acceso" \\
 -F "imagen=@archivo.jpg"`;
         navigator.clipboard.writeText(codigo).then(() => {

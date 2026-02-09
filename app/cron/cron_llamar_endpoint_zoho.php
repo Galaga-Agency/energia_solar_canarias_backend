@@ -10,7 +10,7 @@ use Dotenv\Dotenv;
 $dotenv = Dotenv::createImmutable(__DIR__ . '/../../config');
 $dotenv->load();
 
-$url = 'https://app-energiasolarcanarias-backend.com/zoho/actualizarDatosPlantas';
+$url = 'https://app-backend.energiasolarcanarias.com/zoho/actualizarDatosPlantas';
 $token = $_ENV['TOKEN_SOPORTE'] ?? null;
 
 if (!$token) {
