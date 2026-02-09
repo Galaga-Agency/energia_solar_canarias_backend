@@ -132,7 +132,7 @@
                 <?php echo translate('usuarios_post.respuesta_ejemplo'); ?>
             </h2>
             <pre class="text-sm overflow-auto mb-4">
-curl -X POST "https://app-energiasolarcanarias-backend.com/plants/graficas?proveedor=solaredge" \
+curl -X POST "https://app-backend.energiasolarcanarias.com/plants/graficas?proveedor=solaredge" \
 -H "Authorization: Bearer tu_token_de_acceso" \
 -H "Content-Type: application/json" \
 -d '{
@@ -173,7 +173,7 @@ curl -X POST "https://app-energiasolarcanarias-backend.com/plants/graficas?prove
 
 <script>
     function copiarCodigo() {
-        const codigo = `curl -X POST "https://app-energiasolarcanarias-backend.com/plants/graficas?proveedor=solaredge" \
+        const codigo = `curl -X POST "https://app-backend.energiasolarcanarias.com/plants/graficas?proveedor=solaredge" \
 -H "Authorization: Bearer tu_token_de_acceso" \
 -H "Content-Type: application/json" \
 -d '{

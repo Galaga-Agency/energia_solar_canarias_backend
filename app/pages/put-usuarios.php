@@ -1,4 +1,3 @@
-
 <div class="flex flex-col md:flex-row justify-between">
     <!-- Descripción del Endpoint -->
     <div class="w-full md:w-7/12">
@@ -57,7 +56,7 @@
                 <?php echo translate('usuarios_post.ejemplo_uso'); ?>
             </h2>
             <pre class="text-sm overflow-auto mb-4">
-curl -X PUT "https://app-energiasolarcanarias-backend.com/usuarios/1" \
+curl -X PUT "https://app-backend.energiasolarcanarias.com/usuarios/1" \
 -H "Content-Type: application/json" \
 -H "Authorization: Bearer tu_token_de_acceso" \
 -d '{
@@ -74,9 +73,8 @@ curl -X PUT "https://app-energiasolarcanarias-backend.com/usuarios/1" \
             </pre>
             <button
                 class="absolute top-2 right-2 <?php echo $theme === 'dark' ? 'bg-blue-400 hover:bg-blue-500' : 'bg-blue-600 hover:bg-blue-700'; ?> text-white px-3 py-1 rounded transition"
-                onclick="copiarCodigo()"
-            >
-            <?php echo translate('copiar'); ?>
+                onclick="copiarCodigo()">
+                <?php echo translate('copiar'); ?>
             </button>
         </div>
     </div>
@@ -84,7 +82,7 @@ curl -X PUT "https://app-energiasolarcanarias-backend.com/usuarios/1" \
 
 <script>
     function copiarCodigo() {
-        const codigo = `curl -X PUT "https://app-energiasolarcanarias-backend.com/usuarios/1" \\
+        const codigo = `curl -X PUT "https://app-backend.energiasolarcanarias.com/usuarios/1" \\
 -H "Content-Type: application/json" \\
 -H "Authorization: Bearer tu_token_de_acceso" \\
 -d '{

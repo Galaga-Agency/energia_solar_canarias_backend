@@ -35,7 +35,7 @@ class Correo
         try {
             if (isset($dataUsuario['email']) && isset($dataUsuario['tokenLogin'])) {
                 $emailUsuario = $dataUsuario['email'];
-                $nombreUsuario = isset($dataUsuario['nombre'])? $dataUsuario['nombre'] : '';
+                $nombreUsuario = isset($dataUsuario['nombre']) ? $dataUsuario['nombre'] : '';
 
                 // Configuración SMTP para Amazon WorkMail
                 $this->mail->isSMTP();
@@ -64,10 +64,10 @@ class Correo
 
                 if ($idiomaUsuario == 'es') {
                     $this->mail->Subject = 'Token';
-                    $this->message = '<p style="font-size: 20px; color: black; text-align: center;">' . $textoEspanolHtml . '</p><p style="font-size: 20px; color: black; text-align: center;"><b>' . $token . '</b></p><p style="font-size: 20px; color: black; text-align: center;">' . $validezEs . '</p><div style="display: flex; width: 100%; justify-content: center; align-items: center;"><img src="https://app-energiasolarcanarias-backend.com/public/assets/img/logo.png" style="width: 260px;"></div>';
+                    $this->message = '<p style="font-size: 20px; color: black; text-align: center;">' . $textoEspanolHtml . '</p><p style="font-size: 20px; color: black; text-align: center;"><b>' . $token . '</b></p><p style="font-size: 20px; color: black; text-align: center;">' . $validezEs . '</p><div style="display: flex; width: 100%; justify-content: center; align-items: center;"><img src="https://app-backend.energiasolarcanarias.com/public/assets/img/logo.png" style="width: 260px;"></div>';
                 } else {
                     $this->mail->Subject = 'Token';
-                    $this->message = '<p style="font-size: 20px; color: black; text-align: center;">' . $textoEnglishlHtml . '</p><p style="font-size: 20px; color: black; text-align: center;"><b>' . $token . '</b></p><p style="font-size: 20px; color: black; text-align: center;">' . $validezEn . '</p><div style="display: flex; width: 100%; justify-content: center; align-items: center;"><img src="https://app-energiasolarcanarias-backend.com/public/assets/img/logo.png" style="width: 260px;"></div>';
+                    $this->message = '<p style="font-size: 20px; color: black; text-align: center;">' . $textoEnglishlHtml . '</p><p style="font-size: 20px; color: black; text-align: center;"><b>' . $token . '</b></p><p style="font-size: 20px; color: black; text-align: center;">' . $validezEn . '</p><div style="display: flex; width: 100%; justify-content: center; align-items: center;"><img src="https://app-backend.energiasolarcanarias.com/public/assets/img/logo.png" style="width: 260px;"></div>';
                 }
 
                 $this->mail->Body = $this->message;
@@ -112,7 +112,7 @@ class Correo
             if (isset($dataUsuario['email']) && isset($dataUsuario['mensaje'])) {
                 // Sanitizar los datos sin convertir caracteres UTF-8
                 $emailUsuario = filter_var($dataUsuario['email'], FILTER_SANITIZE_EMAIL);
-                $nombreUsuario = isset($dataUsuario['nombre'])? $dataUsuario['nombre'] : '';
+                $nombreUsuario = isset($dataUsuario['nombre']) ? $dataUsuario['nombre'] : '';
                 $mensajeUsuario = trim($dataUsuario['mensaje']);
 
                 // Configuración SMTP
@@ -213,7 +213,7 @@ class Correo
         try {
             if (isset($dataUsuario['email'])) {
                 $emailUsuario = $dataUsuario['email'];
-                $nombreUsuario = isset($dataUsuario['nombre'])? $dataUsuario['nombre'] : '';
+                $nombreUsuario = isset($dataUsuario['nombre']) ? $dataUsuario['nombre'] : '';
 
                 // Configuración SMTP para Amazon WorkMail (puedes cambiar el proveedor SMTP si lo necesitas)
                 $this->mail->isSMTP();
@@ -248,10 +248,10 @@ class Correo
 
                 if ($idiomaUsuario == 'es') {
                     $this->mail->Subject = 'Recuperación de Contraseña';
-                    $this->message = '<p style="font-size: 20px; color: black; text-align: center;">' . $textoEspanolHtml . '</p><p style="font-size: 20px; color: black; text-align: center;"><b>' . $urlRecuperacion . '</b></p><p style="font-size: 20px; color: black; text-align: center;">' . $validezEs . '</p><div style="display: flex; width: 100%; justify-content: center; align-items: center;"><img src="https://app-energiasolarcanarias-backend.com/public/assets/img/logo.png" style="width: 260px;"></div>';
+                    $this->message = '<p style="font-size: 20px; color: black; text-align: center;">' . $textoEspanolHtml . '</p><p style="font-size: 20px; color: black; text-align: center;"><b>' . $urlRecuperacion . '</b></p><p style="font-size: 20px; color: black; text-align: center;">' . $validezEs . '</p><div style="display: flex; width: 100%; justify-content: center; align-items: center;"><img src="https://app-backend.energiasolarcanarias.com/public/assets/img/logo.png" style="width: 260px;"></div>';
                 } else {
                     $this->mail->Subject = 'Password Recovery';
-                    $this->message = '<p style="font-size: 20px; color: black; text-align: center;">' . $textoEnglishlHtml . '</p><p style="font-size: 20px; color: black; text-align: center;"><b>' . $urlRecuperacion . '</b></p><p style="font-size: 20px; color: black; text-align: center;">' . $validezEn . '</p><div style="display: flex; width: 100%; justify-content: center; align-items: center;"><img src="https://app-energiasolarcanarias-backend.com/public/assets/img/logo.png" style="width: 260px;"></div>';
+                    $this->message = '<p style="font-size: 20px; color: black; text-align: center;">' . $textoEnglishlHtml . '</p><p style="font-size: 20px; color: black; text-align: center;"><b>' . $urlRecuperacion . '</b></p><p style="font-size: 20px; color: black; text-align: center;">' . $validezEn . '</p><div style="display: flex; width: 100%; justify-content: center; align-items: center;"><img src="https://app-backend.energiasolarcanarias.com/public/assets/img/logo.png" style="width: 260px;"></div>';
                 }
 
                 $this->mail->Body = $this->message;
