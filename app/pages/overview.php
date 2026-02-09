@@ -65,7 +65,7 @@
                 <?php echo translate('usuarios_get.ejemplo_uso'); ?>
             </h2>
             <pre class="text-sm overflow-auto mb-4">
-curl -X GET "https://app-energiasolarcanarias-backend.com/plant/overview/34324?proveedor=solaredge" \
+curl -X GET "https://app-backend.energiasolarcanarias.com/plant/overview/34324?proveedor=solaredge" \
 -H "Authorization: Bearer tu_token_de_acceso"
             </pre>
             <button
@@ -79,7 +79,7 @@ curl -X GET "https://app-energiasolarcanarias-backend.com/plant/overview/34324?p
 
 <script>
     function copiarCodigo() {
-        const codigo = `curl -X GET "https://app-energiasolarcanarias-backend.com/plant/overview/34324?proveedor=solaredge" \
+        const codigo = `curl -X GET "https://app-backend.energiasolarcanarias.com/plant/overview/34324?proveedor=solaredge" \
 -H "Authorization: Bearer tu_token_de_acceso"`;
         navigator.clipboard.writeText(codigo).then(() => {
             alert('Código copiado al portapapeles');

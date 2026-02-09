@@ -55,7 +55,7 @@
                 <?php echo translate('usuarios_post.respuesta_ejemplo'); ?>
             </h2>
             <pre class="text-sm overflow-auto mb-4">
-curl -X POST "https://app-energiasolarcanarias-backend.com/usuarios" \
+curl -X POST "https://app-backend.energiasolarcanarias.com/usuarios" \
 -H "Content-Type: application/json" \
 -H "Authorization: Bearer tu_token_de_acceso" \
 -d '{
@@ -72,9 +72,8 @@ curl -X POST "https://app-energiasolarcanarias-backend.com/usuarios" \
             </pre>
             <button
                 class="absolute top-2 right-2 <?php echo $theme === 'dark' ? 'bg-blue-400 hover:bg-blue-500' : 'bg-blue-600 hover:bg-blue-700'; ?> text-white px-3 py-1 rounded transition"
-                onclick="copiarCodigo()"
-            >
-            <?php echo translate('copiar'); ?>
+                onclick="copiarCodigo()">
+                <?php echo translate('copiar'); ?>
             </button>
         </div>
     </div>
@@ -82,7 +81,7 @@ curl -X POST "https://app-energiasolarcanarias-backend.com/usuarios" \
 
 <script>
     function copiarCodigo() {
-        const codigo = `curl -X POST "https://app-energiasolarcanarias-backend.com/usuarios" \\
+        const codigo = `curl -X POST "https://app-backend.energiasolarcanarias.com/usuarios" \\
 -H "Content-Type: application/json" \\
 -H "Authorization: Bearer tu_token_de_acceso" \\
 -d '{
