@@ -58,6 +58,7 @@ if (strpos($request, $baseDir) === 0) {
 
 // Si la petición es a la raíz con ?page=, redirigir a index.php (documentación)
 if (empty($request) && isset($_GET['page'])) {
+    chdir(__DIR__ . '/../../');
     require_once __DIR__ . '/../../index.php';
     exit;
 }
