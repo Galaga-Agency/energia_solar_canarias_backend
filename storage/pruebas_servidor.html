@@ -1,119 +1,121 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Pruebas de la APIREST</title>
-</head>
+  </head>
 
-<body>
+  <body>
     <h1>PRUEBAS DE LA APIREST</h1>
-</body>
-<script>
-    
-                //VALIDAR TOKEN
-        
-                const tokenRequest = (json) => {
-                return new Promise((resolve, reject) => {
-                    fetch('https://app-energiasolarcanarias-backend.com/token', {
-                        method: 'POST',
-                        body: json,
-                    })
-                        .then(response => {
-                            // Verificar si el estado de la respuesta no es exitoso (códigos 4xx o 5xx)
-                            if (!response.ok) {
-                                // Verificar si fue un error de la API
-                                //Intentar obtener el cuerpo de la respuesta como JSON
-                                return response.clone().json().then(errorData => {
-                                    errorPersonalizado = {
-                                        status: 'error',
-                                        code: response.status,
-                                        message: errorData.message || 'Error desconocido',
-                                        errors: errorData
-                                    };
-                                    resolve(errorPersonalizado);
-                                })
-                                    .catch(() => {
-                                        // Si no es posible parsear el cuerpo como JSON, obtenerlo como texto
-                                        return response.text().then(errorText => {
-                                            errorPersonalizado = {
-                                                status: 'error',
-                                                code: response.status,
-                                                message: errorText || 'Error desconocido',
-                                                errors: errorText
-                                            };
-                                            resolve(errorPersonalizado);
-                                        });
-                                    });
-                            }
-                            return response.clone().json().then(data => {
-                                resolve(data);
-                            })
-                                .catch(() => {
-                                    // Si no es posible parsear el cuerpo como JSON, obtenerlo como texto
-                                    return response.text().then(errorText => {
-                                        errorPersonalizado = {
-                                            status: 'error',
-                                            code: response.status,
-                                            message: errorText || 'Error desconocido',
-                                            errors: errorText
-                                        };
-                                        resolve(errorPersonalizado);
-                                    });
-                                });
-                        })
-                        .catch(error => {
-                            // Verificar si el error fue de red
-                            if (error.message === 'Failed to fetch') {
-                                errorPersonalizado = {
-                                    status: 'error',
-                                    code: 0,
-                                    message: 'Error de red: No se pudo conectar con el servidor.',
-                                    errors: error
-                                };
-                                resolve(errorPersonalizado);
-                            } else {
-                                // Errores de otra naturaleza
-                                errorPersonalizado = {
-                                    status: 'error',
-                                    code: response.status,
-                                    message: errorData.message || 'Error desconocido',
-                                    errors: error
-                                };
-                                resolve(errorPersonalizado);
-                            }
-                        });
+  </body>
+  <script>
+    //VALIDAR TOKEN
+
+    const tokenRequest = (json) => {
+      return new Promise((resolve, reject) => {
+        fetch("https://app-backend.energiasolarcanarias.com/token", {
+          method: "POST",
+          body: json,
+        })
+          .then((response) => {
+            // Verificar si el estado de la respuesta no es exitoso (códigos 4xx o 5xx)
+            if (!response.ok) {
+              // Verificar si fue un error de la API
+              //Intentar obtener el cuerpo de la respuesta como JSON
+              return response
+                .clone()
+                .json()
+                .then((errorData) => {
+                  errorPersonalizado = {
+                    status: "error",
+                    code: response.status,
+                    message: errorData.message || "Error desconocido",
+                    errors: errorData,
+                  };
+                  resolve(errorPersonalizado);
                 })
+                .catch(() => {
+                  // Si no es posible parsear el cuerpo como JSON, obtenerlo como texto
+                  return response.text().then((errorText) => {
+                    errorPersonalizado = {
+                      status: "error",
+                      code: response.status,
+                      message: errorText || "Error desconocido",
+                      errors: errorText,
+                    };
+                    resolve(errorPersonalizado);
+                  });
+                });
             }
-        
-            const validarToken = async (object) => {
-                json = JSON.stringify(object),
-                    response = await tokenRequest(json);
-                if (response.status == "error") {
-                    //Lógica para manejar una respuesta de error
-                    console.error(response);
-                    console.error(response.message);
-                } else {
-                    //Lógica para manejar una respuesta exitosa
-                    console.log(response);
-                    console.log(response.message);
-                }
+            return response
+              .clone()
+              .json()
+              .then((data) => {
+                resolve(data);
+              })
+              .catch(() => {
+                // Si no es posible parsear el cuerpo como JSON, obtenerlo como texto
+                return response.text().then((errorText) => {
+                  errorPersonalizado = {
+                    status: "error",
+                    code: response.status,
+                    message: errorText || "Error desconocido",
+                    errors: errorText,
+                  };
+                  resolve(errorPersonalizado);
+                });
+              });
+          })
+          .catch((error) => {
+            // Verificar si el error fue de red
+            if (error.message === "Failed to fetch") {
+              errorPersonalizado = {
+                status: "error",
+                code: 0,
+                message: "Error de red: No se pudo conectar con el servidor.",
+                errors: error,
+              };
+              resolve(errorPersonalizado);
+            } else {
+              // Errores de otra naturaleza
+              errorPersonalizado = {
+                status: "error",
+                code: response.status,
+                message: errorData.message || "Error desconocido",
+                errors: error,
+              };
+              resolve(errorPersonalizado);
             }
-        
-            tokenData = {
-                id: 1,
-                token: "93634423feb0329044d5a1df2d7fc211",
-            };
-        
-            validarToken(tokenData);
+          });
+      });
+    };
 
+    const validarToken = async (object) => {
+      ((json = JSON.stringify(object)), (response = await tokenRequest(json)));
+      if (response.status == "error") {
+        //Lógica para manejar una respuesta de error
+        console.error(response);
+        console.error(response.message);
+      } else {
+        //Lógica para manejar una respuesta exitosa
+        console.log(response);
+        console.log(response.message);
+      }
+    };
 
-/*
+    tokenData = {
+      id: 1,
+      token: "93634423feb0329044d5a1df2d7fc211",
+    };
+
+    validarToken(tokenData);
+
+    /*
     //USUARIO API 1
     const loginRequest = (json) => {
         return new Promise((resolve, reject) => {
-            fetch('https://app-energiasolarcanarias-backend.com/login', {
+            fetch('https://app-backend.energiasolarcanarias.com/login', {
                 method: 'POST',
                 body: json,
                 headers: {
@@ -216,7 +218,7 @@
     //USUARIO API 2
     const loginRequest = (json) => {
         return new Promise((resolve, reject) => {
-            fetch('https://app-energiasolarcanarias-backend.com/usuarios/360', {
+            fetch('https://app-backend.energiasolarcanarias.com/usuarios/360', {
                 method: 'GET',
                 //body: json,
                 headers: {
@@ -313,7 +315,5 @@
 
     login(userData);
     */
-
-</script>
-
+  </script>
 </html>
