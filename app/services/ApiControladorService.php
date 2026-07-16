@@ -234,56 +234,6 @@ class ApiControladorService
         echo json_encode($respuesta);
     }
 
-    public function getSiteAlarmsSungrow($siteId, $pageIndex = 1, $pageSize = 200)
-    {
-        $respuesta = new Respuesta;
-        try {
-            $sungrowResponse = $this->sungrowController->getSiteAlarms($siteId, $pageIndex, $pageSize);
-            $sungrowData = json_decode($sungrowResponse, true);
-
-            if ($sungrowData != null && !isset($sungrowData['error'])) {
-                $this->logsController->registrarLog(Logs::INFO, "se han encontrado las alarmas en Sungrow");
-                $respuesta->success($sungrowData);
-            } else {
-                $this->logsController->registrarLog(Logs::INFO, "No se han encontrado alarmas en Sungrow");
-                $respuesta->_400($sungrowData);
-                $respuesta->message = "No se han encontrado alarmas";
-                http_response_code(400);
-            }
-        } catch (Throwable $e) {
-            $this->logsController->registrarLog(Logs::ERROR, $e->getMessage() . "Error en el servidor de Sungrow");
-            $respuesta->_500();
-            $respuesta->message = "Error en el servidor de algun proveedor";
-            http_response_code(500);
-        }
-        header('Content-Type: application/json');
-        echo json_encode($respuesta);
-    }
-    public function getBenefitsSungrow($powerStationId)
-    {
-        $respuesta = new Respuesta;
-        try {
-            $sungrowResponse = $this->sungrowController->getPlantPowerBenefits($powerStationId);
-            $sungrowData = json_decode($sungrowResponse, true);
-
-            if ($sungrowData != null && !isset($sungrowData['error'])) {
-                $this->logsController->registrarLog(Logs::INFO, "se han encontrado los beneficios de Sungrow");
-                $respuesta->success($sungrowData);
-            } else {
-                $this->logsController->registrarLog(Logs::INFO, "no se han encontrado los beneficios de Sungrow");
-                $respuesta->_400($sungrowData);
-                $respuesta->message = "No se han encontrado Beneficios o la peticion es nula";
-                http_response_code(400);
-            }
-        } catch (Throwable $e) {
-            $this->logsController->registrarLog(Logs::ERROR, "Error del proveedor de Sungrow: " . $e->getMessage());
-            $respuesta->_500();
-            $respuesta->message = "Error en el servidor de algun proveedor";
-            http_response_code(500);
-        }
-        header('Content-Type: application/json');
-        echo json_encode($respuesta);
-    }
     public function GetPowerStationWariningInfoByMultiCondition($pageIndex = 1, $pageSize = 2000, $status = 3)
     {
         $respuesta = new Respuesta;
@@ -318,32 +268,6 @@ class ApiControladorService
      * 
      */
     //VictronEnergy
-    public function getSiteEquipoVictronEnergy($siteId)
-    {
-        $respuesta = new Respuesta;
-        try {
-            $victronEnergyResponse = $this->victronEnergyController->getSiteEquipo($siteId);
-            $victronEnergyData = json_decode($victronEnergyResponse);
-
-            if ($victronEnergyData != null) {
-                $this->logsController->registrarLog(Logs::INFO, "se ha encontrado el inventario de VictronEnergy");
-                $respuesta->success($victronEnergyData);
-            } else {
-                $this->logsController->registrarLog(Logs::INFO, "no se ha encontrado el inventario de VictronEnergy");
-                $respuesta->_400($victronEnergyData);
-                $respuesta->message = "no se ha encontrado el inventario de VictronEnergy";
-                http_response_code(400);
-            }
-        } catch (Throwable $e) {
-            $this->logsController->registrarLog(Logs::ERROR, "Error del proveedor de VictronEnergy: " . $e->getMessage());
-            $respuesta->_500($e->getMessage());
-            $respuesta->message = "Error en el servidor de algun proveedor";
-            http_response_code(500);
-        }
-        // Devolver el resultado como JSON
-        header('Content-Type: application/json');
-        echo json_encode($respuesta);
-    }
     //SolarEdge
     public function inventarioSolarEdge($siteId)
     {
@@ -372,31 +296,6 @@ class ApiControladorService
         echo json_encode($respuesta);
     }
     //Sungrow
-    public function getInventarioSungrow($powerStationId)
-    {
-        $respuesta = new Respuesta;
-        try {
-            $sungrowResponse = $this->sungrowController->getInventario($powerStationId);
-            $sungrowData = json_decode($sungrowResponse, true);
-
-            if ($sungrowData != null && !isset($sungrowData['error'])) {
-                $this->logsController->registrarLog(Logs::INFO, "se ha encontrado el inventario de Sungrow");
-                $respuesta->success($sungrowData);
-            } else {
-                $this->logsController->registrarLog(Logs::INFO, "no se ha encontrado el inventario de Sungrow");
-                $respuesta->_400($sungrowData);
-                $respuesta->message = "no se ha encontrado el inventario de Sungrow";
-                http_response_code(400);
-            }
-        } catch (Throwable $e) {
-            $this->logsController->registrarLog(Logs::ERROR, "Error del proveedor de Sungrow: " . $e->getMessage());
-            $respuesta->_500($e->getMessage());
-            $respuesta->message = "Error en el servidor de algun proveedor";
-            http_response_code(500);
-        }
-        header('Content-Type: application/json');
-        echo json_encode($respuesta);
-    }
     //GoodWe
     public function GetInverterAllPoint($powerStationId)
     {
@@ -425,40 +324,6 @@ class ApiControladorService
         echo json_encode($respuesta);
     }
 
-    /**
-     * 
-     * Estas funciones se utilizan para obtener los beneficios de las plantas de todos los proveedores que lo permitan
-     * 
-     */
-    public function getBenefitsSolarEdge($powerStationId)
-    {
-        $respuesta = new Respuesta;
-        try {
-
-            $solarEdgeResponse = $this->solarEdgeController->getPlantPowerBenefits($powerStationId);
-
-            $solarEdgeData = json_decode($solarEdgeResponse);
-
-
-            if ($solarEdgeData != null) {
-                $this->logsController->registrarLog(Logs::INFO, "se han encontrado los beneficios de SolarEdge");
-                $respuesta->success($solarEdgeData);
-            } else {
-                $this->logsController->registrarLog(Logs::INFO, "no se han encontrado los beneficios de SolarEdge");
-                $respuesta->_400($solarEdgeData);
-                $respuesta->message = "No se han encontrado Beneficios o la peticion es nula";
-                http_response_code(400);
-            }
-        } catch (Throwable $e) {
-            $this->logsController->registrarLog(Logs::ERROR, "Error del proveedor de SolarEdge: " . $e->getMessage());
-            $respuesta->_500();
-            $respuesta->message = "Error en el servidor de algun proveedor";
-            http_response_code(500);
-        }
-        // Devolver el resultado como JSON
-        header('Content-Type: application/json');
-        echo json_encode($respuesta);
-    }
     /**
      * 
      * Estas funciones se utilizan para obtener los datos de las gráficas de todos los proveedores
@@ -645,119 +510,6 @@ class ApiControladorService
         echo json_encode($respuesta);
     }
     /**
-     *
-     * Estas funciones se utilizan para obtener los datos en tiempo real de todos los proveedores
-     *
-     */
-    public function getPlantPowerRealtimeSolarEdge($powerStationId)
-    {
-        $respuesta = new Respuesta;
-        try {
-
-            $solarEdgeResponse = $this->solarEdgeController->getPlantPowerRealtime($powerStationId);
-
-            $solarEdgeData = json_decode($solarEdgeResponse);
-
-
-            if ($solarEdgeData != null) {
-                $this->logsController->registrarLog(Logs::INFO, "se han encontrado las gráficas de SolarEdge");
-                $respuesta->success($solarEdgeData);
-            } else {
-                $this->logsController->registrarLog(Logs::INFO, "no se han encontrado las gráficas de SolarEdge");
-                $respuesta->_400($solarEdgeData);
-                $respuesta->message = "No se han encontrado graficas de SolarEdge";
-                http_response_code(400);
-            }
-        } catch (Throwable $e) {
-            $this->logsController->registrarLog(Logs::ERROR, "Error del proveedor de SolarEdge: " . $e->getMessage());
-            $respuesta->_500();
-            $respuesta->message = "Error en el servidor de algun proveedor";
-            http_response_code(500);
-        }
-        // Devolver el resultado como JSON
-        header('Content-Type: application/json');
-        echo json_encode($respuesta);
-    }
-    public function getPlantPowerRealtimeGoodwe($powerStationId)
-    {
-        $respuesta = new Respuesta;
-        try {
-            // Obtener datos de GoodWe
-            $goodWeResponse = $this->goodWeController->getPlantPowerRealtime($powerStationId);
-            $goodWeData = json_decode($goodWeResponse, true);
-
-            if ($goodWeData != null) {
-                $this->logsController->registrarLog(Logs::INFO, "se han encontrado las plantas en GoodWe");
-                $respuesta->success($goodWeData);
-            } else {
-                $this->logsController->registrarLog(Logs::INFO, "No se han encontrado plantas en GoodWe");
-                $respuesta->_400($goodWeData);
-                $respuesta->message = "No se han encontrado plantas";
-                http_response_code(400);
-            }
-        } catch (Throwable $e) {
-            $this->logsController->registrarLog(Logs::ERROR, $e->getMessage() . "Error en el servidor de GoodWe");
-            $respuesta->_500();
-            $respuesta->message = "Error en el servidor de algun proveedor";
-            http_response_code(500);
-        }
-        // Devolver el resultado como JSON
-        header('Content-Type: application/json');
-        echo json_encode($respuesta);
-    }
-    public function getPlantPowerRealtimeVictronEnergy($powerStationId)
-    {
-        $respuesta = new Respuesta;
-        try {
-            // Obtener datos de GoodWe
-            $victronEnergyResponse = $this->victronEnergyController->getSiteRealtime($powerStationId);
-            $victronEnergyData = json_decode($victronEnergyResponse, true);
-
-            if ($victronEnergyData != null) {
-                $this->logsController->registrarLog(Logs::INFO, "se han encontrado las plantas en GoodWe");
-                $respuesta->success($victronEnergyData);
-            } else {
-                $this->logsController->registrarLog(Logs::INFO, "No se han encontrado plantas en GoodWe");
-                $respuesta->_400($victronEnergyData);
-                $respuesta->message = "No se han encontrado plantas";
-                http_response_code(400);
-            }
-        } catch (Throwable $e) {
-            $this->logsController->registrarLog(Logs::ERROR, $e->getMessage() . "Error en el servidor de GoodWe");
-            $respuesta->_500();
-            $respuesta->message = "Error en el servidor de algun proveedor";
-            http_response_code(500);
-        }
-        // Devolver el resultado como JSON
-        header('Content-Type: application/json');
-        echo json_encode($respuesta);
-    }
-    public function getPlantPowerRealtimeSungrow($powerStationId)
-    {
-        $respuesta = new Respuesta;
-        try {
-            $sungrowResponse = $this->sungrowController->getPlantPowerRealtime($powerStationId);
-            $sungrowData = json_decode($sungrowResponse, true);
-
-            if ($sungrowData != null) {
-                $this->logsController->registrarLog(Logs::INFO, "se han encontrado los datos en tiempo real de Sungrow");
-                $respuesta->success($sungrowData);
-            } else {
-                $this->logsController->registrarLog(Logs::INFO, "No se han encontrado datos en tiempo real en Sungrow");
-                $respuesta->_400($sungrowData);
-                $respuesta->message = "No se han encontrado datos en tiempo real";
-                http_response_code(400);
-            }
-        } catch (Throwable $e) {
-            $this->logsController->registrarLog(Logs::ERROR, $e->getMessage() . "Error en el servidor de Sungrow");
-            $respuesta->_500();
-            $respuesta->message = "Error en el servidor de algun proveedor";
-            http_response_code(500);
-        }
-        header('Content-Type: application/json');
-        echo json_encode($respuesta);
-    }
-    /**
      * Traduce un error de Sigenergy a nuestra respuesta y lo emite. Devuelve true si
      * habia error (y por tanto ya no hay que seguir), false si la respuesta era buena.
      *
@@ -797,96 +549,8 @@ class ApiControladorService
         return true;
     }
 
-    public function getInventarioSigenergy($powerStationId)
-    {
-        $respuesta = new Respuesta;
-        try {
-            $sigenergyResponse = $this->sigenergyController->getInventario($powerStationId);
-            $sigenergyData = json_decode($sigenergyResponse, true);
 
-            if ($this->fallaSigenergy($respuesta, $sigenergyData)) return;
 
-            if ($sigenergyData != null && !isset($sigenergyData['error'])) {
-                $this->logsController->registrarLog(Logs::INFO, "se ha encontrado el inventario de Sigenergy");
-                $respuesta->success($sigenergyData);
-            } else {
-                $this->logsController->registrarLog(Logs::INFO, "no se ha encontrado el inventario de Sigenergy");
-                $respuesta->_400($sigenergyData);
-                $respuesta->message = "no se ha encontrado el inventario de Sigenergy";
-                http_response_code(400);
-            }
-        } catch (Throwable $e) {
-            $this->logsController->registrarLog(Logs::ERROR, "Error del proveedor de Sigenergy: " . $e->getMessage());
-            $respuesta->_500($e->getMessage());
-            $respuesta->message = "Error en el servidor de algun proveedor";
-            http_response_code(500);
-        }
-        header('Content-Type: application/json');
-        echo json_encode($respuesta);
-    }
-
-    /**
-     * Incidencias de una planta de Sigenergy.
-     *
-     * OJO: no son las alarmas push de Sigenergy (esas solo llegan por MQTT), sino lo
-     * que se deduce del estado de los equipos. La respuesta lo indica con
-     * `alarmas_en_tiempo_real: false`. Ver SigenergyService::getSiteAlarms.
-     */
-    public function getSiteAlarmsSigenergy($siteId, $pageIndex = 1, $pageSize = 200)
-    {
-        $respuesta = new Respuesta;
-        try {
-            $sigenergyResponse = $this->sigenergyController->getSiteAlarms($siteId, $pageIndex, $pageSize);
-            $sigenergyData = json_decode($sigenergyResponse, true);
-
-            if ($this->fallaSigenergy($respuesta, $sigenergyData)) return;
-
-            if ($sigenergyData != null && !isset($sigenergyData['error'])) {
-                $this->logsController->registrarLog(Logs::INFO, "se han encontrado las alertas de Sigenergy");
-                $respuesta->success($sigenergyData);
-            } else {
-                $this->logsController->registrarLog(Logs::INFO, "no se han encontrado las alertas de Sigenergy");
-                $respuesta->_400($sigenergyData);
-                $respuesta->message = "no se han encontrado las alertas de Sigenergy";
-                http_response_code(400);
-            }
-        } catch (Throwable $e) {
-            $this->logsController->registrarLog(Logs::ERROR, "Error del proveedor de Sigenergy: " . $e->getMessage());
-            $respuesta->_500($e->getMessage());
-            $respuesta->message = "Error en el servidor de algun proveedor";
-            http_response_code(500);
-        }
-        header('Content-Type: application/json');
-        echo json_encode($respuesta);
-    }
-
-    public function getPlantPowerRealtimeSigenergy($powerStationId)
-    {
-        $respuesta = new Respuesta;
-        try {
-            $sigenergyResponse = $this->sigenergyController->getPlantPowerRealtime($powerStationId);
-            $sigenergyData = json_decode($sigenergyResponse, true);
-
-            if ($this->fallaSigenergy($respuesta, $sigenergyData)) return;
-
-            if ($sigenergyData != null) {
-                $this->logsController->registrarLog(Logs::INFO, "se han encontrado los datos en tiempo real de Sigenergy");
-                $respuesta->success($sigenergyData);
-            } else {
-                $this->logsController->registrarLog(Logs::INFO, "No se han encontrado datos en tiempo real en Sigenergy");
-                $respuesta->_400($sigenergyData);
-                $respuesta->message = "No se han encontrado datos en tiempo real";
-                http_response_code(400);
-            }
-        } catch (Throwable $e) {
-            $this->logsController->registrarLog(Logs::ERROR, $e->getMessage() . "Error en el servidor de Sigenergy");
-            $respuesta->_500();
-            $respuesta->message = "Error en el servidor de algun proveedor";
-            http_response_code(500);
-        }
-        header('Content-Type: application/json');
-        echo json_encode($respuesta);
-    }
     /**
      *
      * Estas funciones se utilizan para obtener los datos de Todas las plantas de cada proveedor

@@ -17,6 +17,7 @@ require_once __DIR__ . '/../controllers/GoodWeController.php';
 require_once __DIR__ . '/../controllers/SungrowController.php';
 require_once __DIR__ . '/../controllers/SigenergyController.php';
 require_once __DIR__ . '/../services/ApiControladorService.php';
+require_once __DIR__ . '/../services/ProveedorApiService.php';
 require_once __DIR__ . '/../services/GoodWeService.php';
 require_once __DIR__ . '/../services/SolarEdgeService.php';
 require_once __DIR__ . '/../services/SungrowService.php';
@@ -164,81 +165,43 @@ switch ($method) {
                 //Verificamos que existe el usuario CREADOR del token y sino manejamos el error dentro de la funcion
                 if ($authMiddleware->verificarTokenUsuarioActivo() != false) {
                     if (isset($_GET['proveedor'])) {
-                        $apiControladorService = new ApiControladorService;
                         $proveedor = $_GET['proveedor'];
                         // Admin -> cualquier planta. Usuario normal -> solo las suyas.
                         // Aqui la planta va en `siteId`; la rama de GoodWe no lleva id
                         // (devuelve las alarmas de TODO el parque) y se controla aparte.
                         if (isset($_GET['siteId']) && !$authMiddleware->puedeVerPlanta($_GET['siteId'], $proveedor)) break;
-                        switch ($proveedor) {
-                            case $proveedores['GoodWe']:
-                                // OJO: sin siteId, esto lista las alarmas de TODAS las
-                                // plantas de GoodWe. Solo para admin hasta que se
-                                // filtren por las plantas del usuario.
-                                if (!$authMiddleware->verificarAdmin()) {
-                                    $respuesta->_403();
-                                    $respuesta->message = 'No tienes permisos para hacer esta consulta';
-                                    http_response_code($respuesta->code);
-                                    echo json_encode($respuesta);
-                                    break;
-                                }
-                                $pageIndex = isset($_GET['pageIndex']) ? $_GET['pageIndex'] : 1;
-                                $pageSize = isset($_GET['pageSize']) ? $_GET['pageSize'] : 200;
-                                $status = isset($_GET['status']) ? $_GET['status'] : 3;
-                                $apiControladorService->GetPowerStationWariningInfoByMultiCondition($pageIndex, $pageSize, $status);
-                                break;
-                            case $proveedores['SolarEdge']:
-                                $respuesta->_404();
-                                $respuesta->message = 'No hay Alertas en la planta de SolarEdge';
+                        // GoodWe es el unico cuyo endpoint de alarmas NO acepta una
+                        // planta: devuelve las de TODO el parque filtradas por estado.
+                        // Por eso no esta en el contrato (ver GoodWeAdaptador) y se
+                        // atiende aparte, y solo para admin: darselas a un cliente seria
+                        // ensenarle alarmas de instalaciones ajenas.
+                        if ($proveedor === $proveedores['GoodWe']) {
+                            if (!$authMiddleware->verificarAdmin()) {
+                                $respuesta->_403();
+                                $respuesta->message = 'No tienes permisos para hacer esta consulta';
                                 http_response_code($respuesta->code);
                                 echo json_encode($respuesta);
                                 break;
-                            case $proveedores['VictronEnergy']:
-                                if (isset($_GET['siteId'])) {
-                                    $siteId = $_GET['siteId'];
-                                    $pageIndex = isset($_GET['pageIndex']) ? $_GET['pageIndex'] : 1;
-                                    $pageSize = isset($_GET['pageSize']) ? $_GET['pageSize'] : 200;
-                                    $apiControladorService->getSiteAlarms($siteId, $pageIndex, $pageSize);
-                                } else {
-                                    $respuesta->_404();
-                                    $respuesta->message = 'No se ha encontrado el siteId';
-                                    http_response_code($respuesta->code);
-                                    echo json_encode($respuesta);
-                                }
-                                break;
-                            case $proveedores['Sungrow']:
-                                if (isset($_GET['siteId'])) {
-                                    $siteId = $_GET['siteId'];
-                                    $pageIndex = isset($_GET['pageIndex']) ? $_GET['pageIndex'] : 1;
-                                    $pageSize = isset($_GET['pageSize']) ? $_GET['pageSize'] : 200;
-                                    $apiControladorService->getSiteAlarmsSungrow($siteId, $pageIndex, $pageSize);
-                                } else {
-                                    $respuesta->_404();
-                                    $respuesta->message = 'No se ha encontrado el siteId';
-                                    http_response_code($respuesta->code);
-                                    echo json_encode($respuesta);
-                                }
-                                break;
-                            case $proveedores['Sigenergy']:
-                                if (isset($_GET['siteId'])) {
-                                    $siteId = $_GET['siteId'];
-                                    $pageIndex = isset($_GET['pageIndex']) ? $_GET['pageIndex'] : 1;
-                                    $pageSize = isset($_GET['pageSize']) ? $_GET['pageSize'] : 200;
-                                    $apiControladorService->getSiteAlarmsSigenergy($siteId, $pageIndex, $pageSize);
-                                } else {
-                                    $respuesta->_404();
-                                    $respuesta->message = 'No se ha encontrado el siteId';
-                                    http_response_code($respuesta->code);
-                                    echo json_encode($respuesta);
-                                }
-                                break;
-                            default:
-                                $respuesta->_404();
-                                $respuesta->message = 'El proveedor no es valido';
-                                http_response_code($respuesta->code);
-                                echo json_encode($respuesta);
-                                break;
+                            }
+                            $pageIndex = isset($_GET['pageIndex']) ? $_GET['pageIndex'] : 1;
+                            $pageSize = isset($_GET['pageSize']) ? $_GET['pageSize'] : 200;
+                            $status = isset($_GET['status']) ? $_GET['status'] : 3;
+                            (new ApiControladorService)->GetPowerStationWariningInfoByMultiCondition($pageIndex, $pageSize, $status);
+                            break;
                         }
+
+                        // El resto SI son por planta, asi que el siteId es obligatorio.
+                        if (!isset($_GET['siteId'])) {
+                            $respuesta->_404();
+                            $respuesta->message = 'No se ha encontrado el siteId';
+                            http_response_code($respuesta->code);
+                            echo json_encode($respuesta);
+                            break;
+                        }
+                        $pageIndex = isset($_GET['pageIndex']) ? $_GET['pageIndex'] : 1;
+                        $pageSize = isset($_GET['pageSize']) ? $_GET['pageSize'] : 200;
+                        // Quien no tenga alertas (SolarEdge) lo dice el mismo -> 404.
+                        (new ProveedorApiService)->alertas($proveedor, $_GET['siteId'], (int) $pageIndex, (int) $pageSize);
                     }
                 } else {
                     $respuesta->_403();
@@ -253,33 +216,12 @@ switch ($method) {
                 //Verificamos que existe el usuario CREADOR del token y sino manejamos el error dentro de la funcion
                 if ($authMiddleware->verificarTokenUsuarioActivo() != false) {
                     if (isset($_GET['proveedor'])) {
-                        $apiControladorService = new ApiControladorService;
                         $proveedor = $_GET['proveedor'];
                         // Admin -> cualquier planta. Usuario normal -> solo las suyas.
                         if (!$authMiddleware->puedeVerPlanta($powerStationId, $proveedor)) break;
-                        switch ($proveedor) {
-                            case $proveedores['GoodWe']:
-                                $apiControladorService->GetInverterAllPoint($powerStationId);
-                                break;
-                            case $proveedores['SolarEdge']:
-                                $apiControladorService->inventarioSolarEdge($powerStationId);
-                                break;
-                            case $proveedores['VictronEnergy']:
-                                $apiControladorService->getSiteEquipoVictronEnergy($powerStationId);
-                                break;
-                            case $proveedores['Sungrow']:
-                                $apiControladorService->getInventarioSungrow($powerStationId);
-                                break;
-                            case $proveedores['Sigenergy']:
-                                $apiControladorService->getInventarioSigenergy($powerStationId);
-                                break;
-                            default:
-                                $respuesta->_404();
-                                $respuesta->message = 'El proveedor no es valido';
-                                http_response_code($respuesta->code);
-                                echo json_encode($respuesta);
-                                break;
-                        }
+                        // Sin switch: el registro resuelve el proveedor y el contrato
+                        // dice como se pide el inventario. Ver ProveedorApiService.
+                        (new ProveedorApiService)->inventario($proveedor, $powerStationId);
                     }
                 } else {
                     $respuesta->_403();
@@ -294,33 +236,12 @@ switch ($method) {
                 //Verificamos que existe el usuario CREADOR del token y sino manejamos el error dentro de la funcion
                 if ($authMiddleware->verificarTokenUsuarioActivo() != false) {
                     if (isset($_GET['proveedor'])) {
-                        $apiControladorService = new ApiControladorService;
                         $proveedor = $_GET['proveedor'];
                         // Admin -> cualquier planta. Usuario normal -> solo las suyas.
                         if (!$authMiddleware->puedeVerPlanta($powerStationId, $proveedor)) break;
-                        switch ($proveedor) {
-                            case $proveedores['GoodWe']:
-                                $respuesta->_404();
-                                $respuesta->message = 'No hay beneficios en la planta de GoodWe';
-                                http_response_code($respuesta->code);
-                                echo json_encode($respuesta);
-                                break;
-                            case $proveedores['SolarEdge']:
-                                $apiControladorService->overviewSolarEdge($powerStationId);
-                                break;
-                            case $proveedores['VictronEnergy']:
-                                $respuesta->_404();
-                                $respuesta->message = 'No hay beneficios en la planta de VictronEnergy';
-                                http_response_code($respuesta->code);
-                                echo json_encode($respuesta);
-                                break;
-                            default:
-                                $respuesta->_404();
-                                $respuesta->message = 'El proveedor no es valido';
-                                http_response_code($respuesta->code);
-                                echo json_encode($respuesta);
-                                break;
-                        }
+                        // Sin switch: quien no ofrezca resumen lo dice el mismo y sale
+                        // un 404. Ver ProveedorApiService y ProveedorBase.
+                        (new ProveedorApiService)->resumen($proveedor, $powerStationId);
                     }
                 } else {
                     $respuesta->_403();
@@ -335,36 +256,11 @@ switch ($method) {
                 //Verificamos que existe el usuario CREADOR del token y sino manejamos el error dentro de la funcion
                 if ($authMiddleware->verificarTokenUsuarioActivo() != false) {
                     if (isset($_GET['proveedor'])) {
-                        $apiControladorService = new ApiControladorService;
                         $proveedor = $_GET['proveedor'];
                         // Admin -> cualquier planta. Usuario normal -> solo las suyas.
                         if (!$authMiddleware->puedeVerPlanta($powerStationId, $proveedor)) break;
-                        switch ($proveedor) {
-                            case $proveedores['GoodWe']:
-                                $respuesta->_404();
-                                $respuesta->message = 'No hay beneficios en la planta de GoodWe';
-                                http_response_code($respuesta->code);
-                                echo json_encode($respuesta);
-                                break;
-                            case $proveedores['SolarEdge']:
-                                $apiControladorService->getBenefitsSolarEdge($powerStationId);
-                                break;
-                            case $proveedores['VictronEnergy']:
-                                $respuesta->_404();
-                                $respuesta->message = 'No hay beneficios en la planta de VictronEnergy';
-                                http_response_code($respuesta->code);
-                                echo json_encode($respuesta);
-                                break;
-                            case $proveedores['Sungrow']:
-                                $apiControladorService->getBenefitsSungrow($powerStationId);
-                                break;
-                            default:
-                                $respuesta->_404();
-                                $respuesta->message = 'El proveedor no es valido';
-                                http_response_code($respuesta->code);
-                                echo json_encode($respuesta);
-                                break;
-                        }
+                        // Sin switch: quien no ofrezca beneficios lo dice el mismo.
+                        (new ProveedorApiService)->beneficios($proveedor, $powerStationId);
                     }
                 } else {
                     $respuesta->_403();
@@ -486,28 +382,8 @@ switch ($method) {
                 if ($authMiddleware->verificarTokenUsuarioActivo() != false) {
                     // Admin -> cualquier planta. Usuario normal -> solo las suyas.
                     if (!$authMiddleware->puedeVerPlanta($powerStationId, $proveedor)) break;
-                    switch ($proveedor) {
-                        case $proveedores['GoodWe']:
-                            $goodWe = new ApiControladorService;
-                            $goodWe->getPlantPowerRealtimeGoodwe($powerStationId);
-                            break;
-                        case $proveedores['SolarEdge']:
-                            $solarEdge = new ApiControladorService;
-                            $solarEdge->getPlantPowerRealtimeSolarEdge($powerStationId);
-                            break;
-                        case $proveedores['VictronEnergy']:
-                            $victronEnergy = new ApiControladorService;
-                            $victronEnergy->getPlantPowerRealtimeVictronEnergy($powerStationId);
-                            break;
-                        case $proveedores['Sungrow']:
-                            $sungrow = new ApiControladorService;
-                            $sungrow->getPlantPowerRealtimeSungrow($powerStationId);
-                            break;
-                        case $proveedores['Sigenergy']:
-                            $sigenergy = new ApiControladorService;
-                            $sigenergy->getPlantPowerRealtimeSigenergy($powerStationId);
-                            break;
-                    }
+                    // Sin switch: lo resuelve el registro. Ver ProveedorApiService.
+                    (new ProveedorApiService)->tiempoReal($proveedor, $powerStationId);
                 } else {
                     $respuesta->_403();
                     $respuesta->message = 'El token no se puede authentificar con exito';
