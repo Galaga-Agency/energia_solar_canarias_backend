@@ -53,6 +53,10 @@ services:
       # el que instala la imagen (evita problemas de permisos/plataforma).
       - ./:/var/www/html
       - /var/www/html/vendor
+      # CORS para poder abrir el frontend local (Next en :3000) contra este
+      # backend. Solo aqui: produccion despliega con git pull y sus cabeceras las
+      # pone el vhost del VPS. Ver docker/cors-dev.conf.
+      - ./docker/cors-dev.conf:/etc/apache2/conf-enabled/cors-dev.conf:ro
     networks:
       - esc_net
 
