@@ -26,6 +26,11 @@ RUN cd /var/www/html && composer install --no-dev --optimize-autoloader
 RUN chown -R www-data:www-data /var/www/html \
     && chmod -R 755 /var/www/html
 
+# El entrypoint aplica las migraciones pendientes antes de levantar Apache, para que
+# un despliegue no dependa de que alguien se acuerde de hacerlo a mano.
+RUN chmod +x /var/www/html/docker/entrypoint.sh
+
 EXPOSE 80
 
+ENTRYPOINT ["/var/www/html/docker/entrypoint.sh"]
 CMD ["apache2-foreground"]
