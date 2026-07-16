@@ -4,9 +4,25 @@ Cambios de esquema que se aplican **encima** del volcado base.
 
 El esquema base sale de `db_init/esc_dump.sql`, que MySQL importa al primer arranque. Lo de aquí son los cambios posteriores. **No construye la base desde cero**: hay migraciones con claves foráneas a tablas del volcado (`proveedor_oauth` → `proveedores`), así que contra una base vacía fallan. El orden siempre es: volcado primero, migraciones después.
 
-## Se aplican solas
+## Se aplican al ARRANCAR el contenedor
 
-El contenedor de la app las aplica al arrancar (`docker/entrypoint.sh`), antes de levantar Apache. No hay que acordarse de nada al desplegar.
+El contenedor de la app las aplica al arrancar (`docker/entrypoint.sh`), antes de levantar Apache.
+
+**Ojo con esto al desplegar: se aplican al arrancar, no al actualizar el código.** `webhookgithub.php` solo hace `git pull`; no reinicia ni reconstruye nada, así que por sí solo **no aplica ninguna migración**. Un despliegue que solo tire del webhook puede dejar el código nuevo contra el esquema viejo, y eso rompe en silencio: sin la tabla `api_cache`, Sigenergy responde 400 en *todas* las llamadas.
+
+Que el `git pull` cambie algo o no depende de cómo esté montado el compose del VPS (que no está en este repo):
+
+- **Si monta el directorio del proyecto como volumen**, el pull cambia el código al instante sin pasar por el entrypoint. Es el caso peligroso: código nuevo, esquema viejo, sin aviso.
+- **Si usa la imagen construida**, el pull no cambia nada hasta reconstruir, porque el `Dockerfile` hace `COPY . /var/www/html/`.
+
+En los dos casos el despliegue tiene que terminar levantando el contenedor de nuevo:
+
+```bash
+git pull
+docker compose up -d --build app   # --build si el codigo va dentro de la imagen
+```
+
+Si no quieres depender de eso, aplícalas a mano antes (ver más abajo): son idempotentes y se pueden lanzar las veces que haga falta.
 
 Si una migración falla, **el contenedor no arranca**. Es a propósito: es preferible un despliegue que se cae de forma evidente a uno que levanta con el esquema a medias y va fallando por sitios raros. Sin la tabla `api_cache`, por ejemplo, Sigenergy responde 400 en *todas* las llamadas — y eso no es obvio mirando el log de Apache.
 
