@@ -36,6 +36,63 @@ class Autenticacion
             "usuario" => "scope2"
         ];
     }
+    /**
+     * Lee una cabecera sin distinguir mayusculas de minusculas.
+     *
+     * Los nombres de cabecera son case-insensitive (RFC 7230 §3.2), pero aqui se
+     * leian con $headers['Authorization'] literal. Con curl y con el navegador por
+     * HTTP/1.1 llega asi y colaba; en cuanto delante hay algo que normaliza a
+     * minusculas, el token deja de verse y la respuesta es un 403 que parece de
+     * credenciales pero es de mayusculas. Pasa con cualquier proxy en Node (por
+     * ejemplo el rewrite de Next para desarrollo) y, sobre todo, HTTP/2 OBLIGA a
+     * que los nombres vayan en minusculas.
+     *
+     * @return string|null El valor, o null si la cabecera no viene.
+     */
+    public static function cabecera($nombre)
+    {
+        foreach (self::cabeceras() as $clave => $valor) {
+            if (strcasecmp($clave, $nombre) === 0) {
+                return $valor;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * getallheaders() no existe fuera de Apache (php-fpm, CLI), asi que se
+     * reconstruye desde $_SERVER. Estaba copiado dentro de dos metodos y definia la
+     * funcion global sobre la marcha; aqui esta una sola vez.
+     */
+    private static function cabeceras()
+    {
+        if (function_exists('getallheaders')) {
+            $h = getallheaders();
+            if (is_array($h)) return $h;
+        }
+        $headers = [];
+        foreach ($_SERVER as $nombre => $valor) {
+            if (substr($nombre, 0, 5) === 'HTTP_') {
+                $headers[str_replace(' ', '-', ucwords(strtolower(str_replace('_', ' ', substr($nombre, 5)))))] = $valor;
+            }
+        }
+        return $headers;
+    }
+
+    /**
+     * Saca el token de la cabecera Authorization segun su esquema.
+     * @param string $esquema 'Bearer' (JWT de usuario) o 'Token' (API key).
+     * @return string|false
+     */
+    private static function tokenDeAutorizacion($esquema)
+    {
+        $auth = self::cabecera('Authorization');
+        if ($auth && preg_match('/' . $esquema . '\s(\S+)/', $auth, $m)) {
+            return $m[1];
+        }
+        return false;
+    }
+
     //Getter y setter de apiScope
     public function getApiScope()
     {
@@ -88,11 +145,7 @@ class Autenticacion
 
     public function getAuthApiScope()
     {
-        $headers = getallheaders();
-        if (isset($headers['Authorization']) && preg_match('/Token\s(\S+)/', $headers['Authorization'], $matches)) {
-            return $matches[1];
-        }
-        return false;
+        return self::tokenDeAutorizacion('Token');
     }
 
     /**
@@ -101,26 +154,7 @@ class Autenticacion
      */
     public function getAuthToken()
     {
-        if (!function_exists('getallheaders')) {
-            function getallheaders()
-            {
-                $headers = [];
-                foreach ($_SERVER as $name => $value) {
-                    if (substr($name, 0, 5) == 'HTTP_') {
-                        $headers[str_replace(' ', '-', ucwords(strtolower(str_replace('_', ' ', substr($name, 5)))))] = $value;
-                    }
-                }
-                return $headers;
-            }
-        }        
-        $headers = getallheaders();
-        $authHeader = isset($headers['Authorization']) ? $headers['Authorization'] : null;
-
-        if ($authHeader && preg_match('/Bearer\s(\S+)/', $authHeader, $matches)) {
-            return $matches[1]; // Devuelve el token extraído
-        }
-
-        return false; // Si el encabezado no es válido o no existe
+        return self::tokenDeAutorizacion('Bearer');
     }
 
     /**
@@ -129,23 +163,7 @@ class Autenticacion
      */
     public function getBearerToken()
     {
-        if (!function_exists('getallheaders')) {
-            function getallheaders()
-            {
-                $headers = [];
-                foreach ($_SERVER as $name => $value) {
-                    if (substr($name, 0, 5) == 'HTTP_') {
-                        $headers[str_replace(' ', '-', ucwords(strtolower(str_replace('_', ' ', substr($name, 5)))))] = $value;
-                    }
-                }
-                return $headers;
-            }
-        }        
-        $headers = getallheaders();
-        if (isset($headers['Authorization']) && preg_match('/Bearer\s(\S+)/', $headers['Authorization'], $matches)) {
-            return $matches[1];
-        }
-        return false;
+        return self::tokenDeAutorizacion('Bearer');
     }
     /**
      * Verificar si el usuario es administrador y tiene un token válido
@@ -219,11 +237,9 @@ class Autenticacion
 
     public function verificarTokenUsuarioActivo()
     {
-        $headers = getallheaders();
-        if(isset($headers['Authorization']) && preg_match('/Bearer\s(\S+)/', $headers['Authorization'], $matches)){
-        $jwtToken = $this->getBearerToken();
-        }else if(isset($headers['Authorization']) && preg_match('/Token\s(\S+)/', $headers['Authorization'], $matches)){
-        $authToken = $this->getAuthApiScope();
+        $jwtToken = $this->getBearerToken() ?: null;
+        if (!$jwtToken) {
+            $authToken = $this->getAuthApiScope() ?: null;
         }
 
         if (isset($jwtToken)) {

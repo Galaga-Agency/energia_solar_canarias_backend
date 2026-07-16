@@ -273,8 +273,7 @@ switch ($method) {
             case (preg_match('/^usuario\/bearerToken/', $request, $matches) ? true : false):
                 $handled = true;
                 //Verificamos que existe el usuario CREADOR del token y sino manejamos el error dentro de la funcion
-                $headers = getallheaders();
-                if (isset($headers['Authorization']) && preg_match('/Bearer\s(\S+)/', $headers['Authorization'], $matches)) {
+                if ($authMiddleware->getBearerToken()) {
                     if ($authMiddleware->verificarTokenUsuarioActivo() != false) {
                         $authMiddleware->upsertApiAcceso();
                     } else {
@@ -1556,4 +1555,3 @@ if (!$handled) {
 ini_set("display_errors", 0);
 error_reporting(0);
 // -------------------------
-
