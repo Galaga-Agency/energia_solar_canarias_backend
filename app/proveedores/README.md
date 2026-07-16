@@ -63,11 +63,13 @@ No hay que tocar el router ni la fachada. Ese es el objetivo.
 
 `/plants` no es solo de lectura. Un cron nocturno llama a `zoho/actualizarDatosPlantas`, que hace `getAllPlants(true)` y **crea las plantas en el Zoho CRM real**. Lo que salga de `processPlants` acaba en el CRM. Quien migre `/plants` en la fase 2 tiene que saberlo: no es un endpoint interno.
 
-Dos detalles que lo hacen más delicado de lo que parece:
+**El sync solo crea, y es a propósito.** `comprobarIdPlantasExistentes` busca por `idPlanta` y descarta las que ya están; `crearTodasLasPlantasEnZoho` solo crea. Nunca actualiza. En Zoho las plantas son una ficha genérica de referencia, no la fuente de verdad: el dato bueno está en la API del proveedor y en esta app. Si hace falta que un cambio se refleje en el CRM, hay que añadir el update; no es que se haya olvidado.
 
-- **Es create-only.** `comprobarIdPlantasExistentes` busca por `idPlanta` y descarta las que ya están; `crearTodasLasPlantasEnZoho` solo crea. Nunca actualiza. **Lo que se escriba mal la primera vez se queda mal para siempre**, porque en la siguiente pasada la planta ya existe y se salta.
-- **Sigenergy es nueva aquí.** Antes no estaba en `getAllPlants`, así que la primera pasada del cron tras desplegar creará sus plantas en el CRM de una tacada. Y por lo de arriba, con los datos que tengan ese día:
-  - sin `latitude`/`longitude` (la Openapi oficial no las expone) → quedan vacías en el CRM,
-  - con la `capacity` tal cual viene, y **hay 3 plantas cuyo `pvCapacity` está en vatios en vez de kW** → entrarían con la capacidad 1000× equivocada, de forma permanente.
+La consecuencia de que solo cree: **lo que se escriba la primera vez se queda**, porque en la siguiente pasada la planta ya existe y se salta.
 
-Antes de desplegar conviene decidir si esas plantas se corrigen en Sigenergy, o si el sync debe actualizar además de crear.
+**Sigenergy es nueva aquí.** Antes no estaba en `getAllPlants`, así que la primera pasada del cron tras desplegar creará sus plantas en el CRM de una tacada, con los datos que tengan ese día:
+
+- sin `latitude`/`longitude` (la Openapi oficial no las expone) → quedan vacías en el CRM;
+- con la `capacity` tal cual viene, y **hay 3 plantas cuyo `pvCapacity` está en vatios en vez de kW** → entran con la capacidad 1000× equivocada.
+
+Se asume: es una ficha de referencia. Pero ojo, ese vatio/kW **no es un problema de Zoho**, es que el dato está mal en Sigenergy y también sale mal en la app. Arreglarlo en origen lo arregla en los dos sitios; entonces el CRM sí se quedaría con la copia mala, y ahí tocaría corregir esas fichas a mano o darle el update al sync.
