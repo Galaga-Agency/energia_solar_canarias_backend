@@ -58,3 +58,16 @@ No hay que tocar el router ni la fachada. Ese es el objetivo.
 ## Lo que todavía NO usa el contrato
 
 `/plants`, `/plants/details` y `/plants/graficas` siguen con sus ramas por proveedor: no solo despachan, también unifican formas distintas (`processPlants`) y tienen ramas separadas de admin y cliente. Migrarlos es más que mover llamadas y se dejó para una segunda fase, con los endpoints simples ya asentados.
+
+## Cuidado: `getAllPlants` escribe en el CRM de Zoho
+
+`/plants` no es solo de lectura. Un cron nocturno llama a `zoho/actualizarDatosPlantas`, que hace `getAllPlants(true)` y **crea las plantas en el Zoho CRM real**. Lo que salga de `processPlants` acaba en el CRM. Quien migre `/plants` en la fase 2 tiene que saberlo: no es un endpoint interno.
+
+Dos detalles que lo hacen más delicado de lo que parece:
+
+- **Es create-only.** `comprobarIdPlantasExistentes` busca por `idPlanta` y descarta las que ya están; `crearTodasLasPlantasEnZoho` solo crea. Nunca actualiza. **Lo que se escriba mal la primera vez se queda mal para siempre**, porque en la siguiente pasada la planta ya existe y se salta.
+- **Sigenergy es nueva aquí.** Antes no estaba en `getAllPlants`, así que la primera pasada del cron tras desplegar creará sus plantas en el CRM de una tacada. Y por lo de arriba, con los datos que tengan ese día:
+  - sin `latitude`/`longitude` (la Openapi oficial no las expone) → quedan vacías en el CRM,
+  - con la `capacity` tal cual viene, y **hay 3 plantas cuyo `pvCapacity` está en vatios en vez de kW** → entrarían con la capacidad 1000× equivocada, de forma permanente.
+
+Antes de desplegar conviene decidir si esas plantas se corrigen en Sigenergy, o si el sync debe actualizar además de crear.
