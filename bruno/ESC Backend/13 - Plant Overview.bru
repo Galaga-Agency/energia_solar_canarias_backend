@@ -1,0 +1,28 @@
+meta {
+  name: 13 - Plant Overview
+  type: http
+  seq: 13
+}
+
+get {
+  url: {{base_url_esc}}/plant/overview/{{esc_plant_id}}?proveedor={{esc_proveedor}}
+  body: none
+  auth: none
+}
+
+params:query {
+  proveedor: {{esc_proveedor}}
+}
+
+headers {
+  Accept: application/json
+  Authorization: Bearer {{esc_jwt}}
+}
+
+docs {
+  Resumen general de la planta.
+
+  Implementado para goodwe / solaredge / victronenergy.
+  Sungrow y Sigenergy todavia NO tienen rama en este endpoint -> responden
+  "El proveedor no es valido".
+}

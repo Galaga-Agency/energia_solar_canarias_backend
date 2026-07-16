@@ -1,0 +1,47 @@
+meta {
+  name: 05 - Station List
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{base_url_sigen}}/device/sigen/station/list?pageNo=1&pageSize=100
+  body: none
+  auth: none
+}
+
+params:query {
+  pageNo: 1
+  pageSize: 100
+}
+
+headers {
+  Accept: */*
+  Content-Type: application/json
+  Authorization: Bearer {{sigen_access_token}}
+  Origin: https://app-eu.sigencloud.com
+  Referer: https://app-eu.sigencloud.com/
+  lang: en_US
+  client-server: eu
+}
+
+script:post-response {
+  const recs = res.body && res.body.data && res.body.data.records;
+  if (recs && recs.length) {
+    bru.setVar('sigen_station_id', String(recs[0].id));
+    console.log('sigen_station_id = ' + recs[0].id + ' (' + recs[0].stationName + ')');
+    console.log('Estaciones: ' + recs.map(r => r.id + ':' + r.stationName).join(', '));
+  } else {
+    console.log('Respuesta: ' + JSON.stringify(res.body).slice(0, 400));
+  }
+}
+
+docs {
+  Lista de estaciones. Es la que usa SigenergyService::getAllPlants
+  (data.records). El script guarda el id de la primera en `sigen_station_id`.
+
+  Si la respuesta es HTML con 403 en vez de JSON, NO es un problema de token:
+  es CloudFront bloqueando tu IP tras varias peticiones seguidas. El endpoint de
+  auth (01) sigue funcionando aunque los de datos esten bloqueados -- ese contraste
+  es justo como distinguir un bloqueo de IP de un token caducado.
+}

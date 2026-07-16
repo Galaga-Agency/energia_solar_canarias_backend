@@ -14,9 +14,13 @@ require_once __DIR__ . '/../DBObjects/usuariosDB.php';
 require_once __DIR__ . '/../DBObjects/clasesDB.php';
 require_once __DIR__ . '/../controllers/SolarEdgeController.php';
 require_once __DIR__ . '/../controllers/GoodWeController.php';
+require_once __DIR__ . '/../controllers/SungrowController.php';
+require_once __DIR__ . '/../controllers/SigenergyController.php';
 require_once __DIR__ . '/../services/ApiControladorService.php';
 require_once __DIR__ . '/../services/GoodWeService.php';
 require_once __DIR__ . '/../services/SolarEdgeService.php';
+require_once __DIR__ . '/../services/SungrowService.php';
+require_once __DIR__ . '/../services/SigenergyService.php';
 require_once __DIR__ . '/../DBObjects/logsDB.php';
 require_once __DIR__ . '/../enums/Logs.php';
 require_once __DIR__ . '/../models/OpenMeteo.php';
@@ -34,7 +38,9 @@ $logsDB = new LogsDB;
 $proveedores = [
     'GoodWe' => 'goodwe',
     'SolarEdge' => 'solaredge',
-    'VictronEnergy' => 'victronenergy'
+    'VictronEnergy' => 'victronenergy',
+    'Sungrow' => 'sungrow',
+    'Sigenergy' => 'sigenergy'
     // Añadir más proveedores según sea necesario
 ];
 
@@ -160,8 +166,22 @@ switch ($method) {
                     if (isset($_GET['proveedor'])) {
                         $apiControladorService = new ApiControladorService;
                         $proveedor = $_GET['proveedor'];
+                        // Admin -> cualquier planta. Usuario normal -> solo las suyas.
+                        // Aqui la planta va en `siteId`; la rama de GoodWe no lleva id
+                        // (devuelve las alarmas de TODO el parque) y se controla aparte.
+                        if (isset($_GET['siteId']) && !$authMiddleware->puedeVerPlanta($_GET['siteId'], $proveedor)) break;
                         switch ($proveedor) {
                             case $proveedores['GoodWe']:
+                                // OJO: sin siteId, esto lista las alarmas de TODAS las
+                                // plantas de GoodWe. Solo para admin hasta que se
+                                // filtren por las plantas del usuario.
+                                if (!$authMiddleware->verificarAdmin()) {
+                                    $respuesta->_403();
+                                    $respuesta->message = 'No tienes permisos para hacer esta consulta';
+                                    http_response_code($respuesta->code);
+                                    echo json_encode($respuesta);
+                                    break;
+                                }
                                 $pageIndex = isset($_GET['pageIndex']) ? $_GET['pageIndex'] : 1;
                                 $pageSize = isset($_GET['pageSize']) ? $_GET['pageSize'] : 200;
                                 $status = isset($_GET['status']) ? $_GET['status'] : 3;
@@ -179,6 +199,32 @@ switch ($method) {
                                     $pageIndex = isset($_GET['pageIndex']) ? $_GET['pageIndex'] : 1;
                                     $pageSize = isset($_GET['pageSize']) ? $_GET['pageSize'] : 200;
                                     $apiControladorService->getSiteAlarms($siteId, $pageIndex, $pageSize);
+                                } else {
+                                    $respuesta->_404();
+                                    $respuesta->message = 'No se ha encontrado el siteId';
+                                    http_response_code($respuesta->code);
+                                    echo json_encode($respuesta);
+                                }
+                                break;
+                            case $proveedores['Sungrow']:
+                                if (isset($_GET['siteId'])) {
+                                    $siteId = $_GET['siteId'];
+                                    $pageIndex = isset($_GET['pageIndex']) ? $_GET['pageIndex'] : 1;
+                                    $pageSize = isset($_GET['pageSize']) ? $_GET['pageSize'] : 200;
+                                    $apiControladorService->getSiteAlarmsSungrow($siteId, $pageIndex, $pageSize);
+                                } else {
+                                    $respuesta->_404();
+                                    $respuesta->message = 'No se ha encontrado el siteId';
+                                    http_response_code($respuesta->code);
+                                    echo json_encode($respuesta);
+                                }
+                                break;
+                            case $proveedores['Sigenergy']:
+                                if (isset($_GET['siteId'])) {
+                                    $siteId = $_GET['siteId'];
+                                    $pageIndex = isset($_GET['pageIndex']) ? $_GET['pageIndex'] : 1;
+                                    $pageSize = isset($_GET['pageSize']) ? $_GET['pageSize'] : 200;
+                                    $apiControladorService->getSiteAlarmsSigenergy($siteId, $pageIndex, $pageSize);
                                 } else {
                                     $respuesta->_404();
                                     $respuesta->message = 'No se ha encontrado el siteId';
@@ -209,6 +255,8 @@ switch ($method) {
                     if (isset($_GET['proveedor'])) {
                         $apiControladorService = new ApiControladorService;
                         $proveedor = $_GET['proveedor'];
+                        // Admin -> cualquier planta. Usuario normal -> solo las suyas.
+                        if (!$authMiddleware->puedeVerPlanta($powerStationId, $proveedor)) break;
                         switch ($proveedor) {
                             case $proveedores['GoodWe']:
                                 $apiControladorService->GetInverterAllPoint($powerStationId);
@@ -218,6 +266,12 @@ switch ($method) {
                                 break;
                             case $proveedores['VictronEnergy']:
                                 $apiControladorService->getSiteEquipoVictronEnergy($powerStationId);
+                                break;
+                            case $proveedores['Sungrow']:
+                                $apiControladorService->getInventarioSungrow($powerStationId);
+                                break;
+                            case $proveedores['Sigenergy']:
+                                $apiControladorService->getInventarioSigenergy($powerStationId);
                                 break;
                             default:
                                 $respuesta->_404();
@@ -242,6 +296,8 @@ switch ($method) {
                     if (isset($_GET['proveedor'])) {
                         $apiControladorService = new ApiControladorService;
                         $proveedor = $_GET['proveedor'];
+                        // Admin -> cualquier planta. Usuario normal -> solo las suyas.
+                        if (!$authMiddleware->puedeVerPlanta($powerStationId, $proveedor)) break;
                         switch ($proveedor) {
                             case $proveedores['GoodWe']:
                                 $respuesta->_404();
@@ -281,6 +337,8 @@ switch ($method) {
                     if (isset($_GET['proveedor'])) {
                         $apiControladorService = new ApiControladorService;
                         $proveedor = $_GET['proveedor'];
+                        // Admin -> cualquier planta. Usuario normal -> solo las suyas.
+                        if (!$authMiddleware->puedeVerPlanta($powerStationId, $proveedor)) break;
                         switch ($proveedor) {
                             case $proveedores['GoodWe']:
                                 $respuesta->_404();
@@ -296,6 +354,9 @@ switch ($method) {
                                 $respuesta->message = 'No hay beneficios en la planta de VictronEnergy';
                                 http_response_code($respuesta->code);
                                 echo json_encode($respuesta);
+                                break;
+                            case $proveedores['Sungrow']:
+                                $apiControladorService->getBenefitsSungrow($powerStationId);
                                 break;
                             default:
                                 $respuesta->_404();
@@ -423,6 +484,8 @@ switch ($method) {
                 $proveedor = $_GET['proveedor'];
                 // Verificamos que el usuario esté autenticado y sea administrador
                 if ($authMiddleware->verificarTokenUsuarioActivo() != false) {
+                    // Admin -> cualquier planta. Usuario normal -> solo las suyas.
+                    if (!$authMiddleware->puedeVerPlanta($powerStationId, $proveedor)) break;
                     switch ($proveedor) {
                         case $proveedores['GoodWe']:
                             $goodWe = new ApiControladorService;
@@ -435,6 +498,14 @@ switch ($method) {
                         case $proveedores['VictronEnergy']:
                             $victronEnergy = new ApiControladorService;
                             $victronEnergy->getPlantPowerRealtimeVictronEnergy($powerStationId);
+                            break;
+                        case $proveedores['Sungrow']:
+                            $sungrow = new ApiControladorService;
+                            $sungrow->getPlantPowerRealtimeSungrow($powerStationId);
+                            break;
+                        case $proveedores['Sigenergy']:
+                            $sigenergy = new ApiControladorService;
+                            $sigenergy->getPlantPowerRealtimeSigenergy($powerStationId);
                             break;
                     }
                 } else {
@@ -569,6 +640,26 @@ switch ($method) {
                                     echo json_encode($respuesta);
                                 }
                                 break;
+                            case $proveedores['Sungrow']:
+                                if ($admin) {
+                                    $apiControladorService->getAllPlantsSungrow($page, $pageSize);
+                                } else {
+                                    $respuesta->_403();
+                                    $respuesta->message = 'No tienes permisos para hacer esta consulta';
+                                    http_response_code($respuesta->code);
+                                    echo json_encode($respuesta);
+                                }
+                                break;
+                            case $proveedores['Sigenergy']:
+                                if ($admin) {
+                                    $apiControladorService->getAllPlantsSigenergy($page, $pageSize);
+                                } else {
+                                    $respuesta->_403();
+                                    $respuesta->message = 'No tienes permisos para hacer esta consulta';
+                                    http_response_code($respuesta->code);
+                                    echo json_encode($respuesta);
+                                }
+                                break;
                             default:
                                 $respuesta->success();
                                 $respuesta->message = 'No se ha encontrado el proveedor';
@@ -671,6 +762,17 @@ switch ($method) {
                     if (isset($_GET['proveedor'])) {
                         $apiControladorService = new ApiControladorService;
                         $proveedor = $_GET['proveedor'];
+                        // Admin -> cualquier planta. Usuario normal -> solo las suyas.
+                        // Aqui llegan VARIOS ids separados por comas: hay que comprobarlos
+                        // todos, o colando una planta suya se leerian las demas.
+                        $permitido = true;
+                        foreach (explode(',', $powerStationIds) as $unId) {
+                            if (!$authMiddleware->puedeVerPlanta(trim($unId), $proveedor)) {
+                                $permitido = false;
+                                break;
+                            }
+                        }
+                        if (!$permitido) break;
                         switch ($proveedor) {
                             case $proveedores['GoodWe']:
                                 $respuesta->_404();
@@ -720,6 +822,8 @@ switch ($method) {
                     if (isset($_GET['proveedor'])) {
                         $apiControladorService = new ApiControladorService;
                         $proveedor = $_GET['proveedor'];
+                        // Admin -> cualquier planta. Usuario normal -> solo las suyas.
+                        if (!$authMiddleware->puedeVerPlanta($powerStationId, $proveedor)) break;
                         switch ($proveedor) {
                             case $proveedores['GoodWe']:
                                 $respuesta->_404();
@@ -769,6 +873,8 @@ switch ($method) {
                     if (isset($_GET['proveedor'])) {
                         $apiControladorService = new ApiControladorService;
                         $proveedor = $_GET['proveedor'];
+                        // Admin -> cualquier planta. Usuario normal -> solo las suyas.
+                        if (!$authMiddleware->puedeVerPlanta($powerStationId, $proveedor)) break;
                         switch ($proveedor) {
                             case $proveedores['GoodWe']:
                                 $respuesta->_404();
@@ -1017,6 +1123,12 @@ switch ($method) {
                             case $proveedores['VictronEnergy']:
                                 $apiController->getGraficasVictronEnergy();
                                 break;
+                            case $proveedores['Sungrow']:
+                                $apiController->getGraficasSungrow();
+                                break;
+                            case $proveedores['Sigenergy']:
+                                $apiController->getGraficasSigenergy();
+                                break;
                             default:
                                 $respuesta->_400();
                                 $respuesta->message = 'Proveedor no encontrado';
@@ -1028,6 +1140,21 @@ switch ($method) {
                         // El usuario nos tiene que mandar obligatoriamente el proveedor para que verifiquemos si tiene acceso a ese id
                         $apiController = new ApiControladorService();
                         $proveedor = $_GET['proveedor'];
+
+                        // Usuario normal -> solo sus plantas. Aqui la planta viaja en el
+                        // CUERPO, no en la ruta: `id` en casi todos y `siteId` en
+                        // SolarEdge (ver getEnergyDashBoardCuerpo).
+                        $cuerpoGrafica = json_decode(file_get_contents('php://input'), true);
+                        $idGrafica = $cuerpoGrafica['id'] ?? $cuerpoGrafica['siteId'] ?? null;
+                        if ($idGrafica === null) {
+                            $respuesta->_400();
+                            $respuesta->message = 'Falta el id de la planta en el cuerpo';
+                            http_response_code($respuesta->code);
+                            echo json_encode($respuesta);
+                            break;
+                        }
+                        if (!$authMiddleware->puedeVerPlanta($idGrafica, $proveedor)) break;
+
                         switch ($proveedor) {
                             case $proveedores['GoodWe']:
                                 $apiController->getGraficasGoodWe();
@@ -1037,6 +1164,12 @@ switch ($method) {
                                 break;
                             case $proveedores['VictronEnergy']:
                                 $apiController->getGraficasVictronEnergy();
+                                break;
+                            case $proveedores['Sungrow']:
+                                $apiController->getGraficasSungrow();
+                                break;
+                            case $proveedores['Sigenergy']:
+                                $apiController->getGraficasSigenergy();
                                 break;
                             default:
                                 $respuesta->_400();

@@ -1,0 +1,31 @@
+meta {
+  name: 08 - Plant Details
+  type: http
+  seq: 8
+}
+
+get {
+  url: {{base_url_esc}}/plants/details/{{esc_plant_id}}?proveedor={{esc_proveedor}}
+  body: none
+  auth: none
+}
+
+params:query {
+  proveedor: {{esc_proveedor}}
+}
+
+headers {
+  Accept: application/json
+  Authorization: Bearer {{esc_jwt}}
+}
+
+docs {
+  Detalle de una planta. Implementado para los 5 proveedores.
+
+  - admin   -> getSiteDetail (cualquier planta)
+  - cliente -> getSiteDetailCliente (comprueba antes que la planta sea suya)
+
+  `esc_plant_id`: id de la planta EN EL PROVEEDOR
+    - Sungrow   -> ps_id
+    - Sigenergy -> id de estacion
+}

@@ -1,0 +1,58 @@
+meta {
+  name: 07 - Device Point Minute Data (grafica)
+  type: http
+  seq: 8
+}
+
+post {
+  url: {{base_url_sungrow}}/openapi/getDevicePointMinuteDataList
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  x-access-key: {{sungrow_secret_key}}
+}
+
+body:json {
+  {
+    "appkey": "{{sungrow_appkey}}",
+    "sys_code": "901",
+    "lang": "_en_US",
+    "token": "{{sungrow_access_token}}",
+    "ps_key_list": ["{{sungrow_ps_key}}"],
+    "points": "p24",
+    "start_time_stamp": "{{sungrow_start_ts}}",
+    "end_time_stamp": "{{sungrow_end_ts}}",
+    "minute_interval": 5
+  }
+}
+
+script:pre-request {
+  // Ventana por defecto: las ultimas 2h (la API rechaza rangos grandes).
+  const pad = n => String(n).padStart(2, '0');
+  const fmt = d => d.getFullYear() + pad(d.getMonth() + 1) + pad(d.getDate())
+                 + pad(d.getHours()) + pad(d.getMinutes()) + pad(d.getSeconds());
+  const end = new Date();
+  const start = new Date(end.getTime() - 2 * 60 * 60 * 1000);
+  if (!bru.getVar('sungrow_start_ts')) bru.setVar('sungrow_start_ts', fmt(start));
+  if (!bru.getVar('sungrow_end_ts')) bru.setVar('sungrow_end_ts', fmt(end));
+}
+
+docs {
+  Serie temporal de un punto del inversor. Es el endpoint que hay DETRAS de
+  /plants/graficas?proveedor=sungrow.
+
+  Por que este y no getStationRealKpi / los endpoints de chart: esos devuelven
+  E900 Unauthorized con el plan de API de esta cuenta. Este si esta autorizado,
+  pero es por DISPOSITIVO, de ahi que haya que pasar antes por getDeviceList (06)
+  para sacar el ps_key del inversor.
+
+  Formato de fechas: YmdHis (14 digitos), p.ej. 20260715143000.
+  La API limita la ventana ("exceeds maximum limit"): el backend la trocea en
+  bloques de 2h y capa el total a 24h. El pre-request script pone por defecto las
+  ultimas 2h.
+
+  points: p24 = potencia activa (W).
+}

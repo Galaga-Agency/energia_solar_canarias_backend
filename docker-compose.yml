@@ -1,0 +1,110 @@
+name: energia-solar-canarias
+
+services:
+  # ---------------------------------------------------------------------------
+  # Base de datos MySQL
+  # El hostname "mysql" coincide con config/conexion.json -> el backend conecta
+  # sin cambiar nada. Importa automaticamente ./db_init/*.sql al primer arranque.
+  # ---------------------------------------------------------------------------
+  mysql:
+    image: mysql:8.0
+    container_name: esc_mysql
+    restart: unless-stopped
+    command: --default-authentication-plugin=mysql_native_password --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-rootpassword}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-esc}
+      MYSQL_USER: ${MYSQL_USER:-escuser}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-escpassword}
+      TZ: Atlantic/Canary
+    ports:
+      # host 3307 -> 3306 contenedor (evita chocar con un MySQL nativo local)
+      - "3307:3306"
+    volumes:
+      - esc_mysql_data:/var/lib/mysql
+      - ./db_init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p${MYSQL_ROOT_PASSWORD:-rootpassword}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    networks:
+      - esc_net
+
+  # ---------------------------------------------------------------------------
+  # Backend PHP 8.2 + Apache (construido desde el Dockerfile del proyecto)
+  # Incluye: mysqli, pdo, pdo_mysql, gd, mod_rewrite, mod_headers, composer.
+  # ---------------------------------------------------------------------------
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: esc_app
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      TZ: Atlantic/Canary
+    ports:
+      - "8080:80"
+    volumes:
+      # Codigo montado para desarrollo en caliente. Se excluye vendor/ para usar
+      # el que instala la imagen (evita problemas de permisos/plataforma).
+      - ./:/var/www/html
+      - /var/www/html/vendor
+    networks:
+      - esc_net
+
+  # ---------------------------------------------------------------------------
+  # Refrescador de tokens OAuth (Sungrow / Sigenergy): ejecuta el cron cada 6h
+  # para que los tokens no caduquen nunca mientras el stack este arriba.
+  # ---------------------------------------------------------------------------
+  token-refresher:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: esc_token_refresher
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    working_dir: /var/www/html
+    environment:
+      TZ: Atlantic/Canary
+    volumes:
+      - ./:/var/www/html
+      - /var/www/html/vendor
+    entrypoint:
+      - sh
+      - -c
+      - "while true; do php app/cron/cron_refresh_tokens_proveedores.php; sleep 21600; done"
+    networks:
+      - esc_net
+
+  # ---------------------------------------------------------------------------
+  # phpMyAdmin: gestion de la BD por navegador (http://localhost:8081)
+  # ---------------------------------------------------------------------------
+  phpmyadmin:
+    image: phpmyadmin:latest
+    container_name: esc_phpmyadmin
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+      UPLOAD_LIMIT: 512M
+      TZ: Atlantic/Canary
+    ports:
+      - "8081:80"
+    networks:
+      - esc_net
+
+volumes:
+  esc_mysql_data:
+
+networks:
+  esc_net:
+    driver: bridge

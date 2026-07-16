@@ -493,10 +493,20 @@ class SolarEdgeService
         }
     }
 
-    //Método que recoje todas las plantas
-    public function getAllPlants($page = 1, $pageSize = 200)
+    /**
+     * Método que recoje todas las plantas.
+     *
+     * Dos limites de la API de SolarEdge que hay que respetar aqui:
+     *  - `size` no admite mas de 100: con 101+ la peticion falla entera y devuelve
+     *    cero plantas (no trunca).
+     *  - `startIndex` es un OFFSET, no un numero de pagina, asi que hay que
+     *    convertirlo o la pagina 1 se saltaria la primera planta.
+     */
+    public function getAllPlants($page = 1, $pageSize = 100)
     {
-        $url = $this->solarEdge->getUrl() . "sites/list?size=$pageSize&startIndex=$page&api_key=" . $this->solarEdge->getApiKey();
+        $pageSize = max(1, min((int) $pageSize, 100));
+        $startIndex = max(0, ((int) $page - 1) * $pageSize);
+        $url = $this->solarEdge->getUrl() . "sites/list?size=$pageSize&startIndex=$startIndex&api_key=" . $this->solarEdge->getApiKey();
         try {
             $response = $this->httpClient->get($url);
             return json_decode($response, true);

@@ -1,0 +1,34 @@
+meta {
+  name: 05 - Power Station Detail
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{base_url_sungrow}}/openapi/getPowerStationDetail
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  x-access-key: {{sungrow_secret_key}}
+}
+
+body:json {
+  {
+    "appkey": "{{sungrow_appkey}}",
+    "sys_code": "901",
+    "lang": "_en_US",
+    "token": "{{sungrow_access_token}}",
+    "ps_id": "{{sungrow_ps_id}}"
+  }
+}
+
+docs {
+  Detalle de una planta. Requiere `sungrow_ps_id` (lo sacas de "03 - Power Station List",
+  campo ps_id).
+
+  Fijate en como va la autenticacion con el login V1: el token va en el BODY, no
+  como Bearer. El header x-access-key (secret) si es obligatorio siempre.
+}

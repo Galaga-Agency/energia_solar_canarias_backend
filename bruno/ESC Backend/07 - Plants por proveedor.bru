@@ -1,0 +1,33 @@
+meta {
+  name: 07 - Plants por proveedor
+  type: http
+  seq: 7
+}
+
+get {
+  url: {{base_url_esc}}/plants?proveedor={{esc_proveedor}}&page=1&pageSize=200
+  body: none
+  auth: none
+}
+
+params:query {
+  proveedor: {{esc_proveedor}}
+  page: 1
+  pageSize: 200
+}
+
+headers {
+  Accept: application/json
+  Authorization: Bearer {{esc_jwt}}
+}
+
+docs {
+  Lista de plantas consultando DIRECTAMENTE la API del proveedor (solo admin).
+
+  `proveedor`: goodwe | solaredge | victronenergy | sungrow | sigenergy
+  (cambia la variable de entorno `esc_proveedor` para alternar).
+
+  Nota: en el router, la rama por proveedor de este endpoint esta implementada para
+  goodwe / solaredge / victronenergy. Para sungrow y sigenergy usa el endpoint
+  agregado (06) o los endpoints directos del proveedor en las carpetas Sungrow/Sigenergy.
+}

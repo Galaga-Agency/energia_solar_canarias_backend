@@ -1,0 +1,50 @@
+meta {
+  name: 12 - Plant Inventario
+  type: http
+  seq: 12
+}
+
+get {
+  url: {{base_url_esc}}/plant/inventario/{{esc_plant_id}}?proveedor={{esc_proveedor}}
+  body: none
+  auth: none
+}
+
+params:query {
+  proveedor: {{esc_proveedor}}
+}
+
+headers {
+  Accept: application/json
+  Authorization: Bearer {{esc_jwt}}
+}
+
+docs {
+  Inventario/equipos de una planta (inversores, medidores, baterias...).
+
+  - sungrow -> getDeviceList de iSolarCloud.
+  - goodwe / solaredge / victronenergy -> ya estaban implementados.
+  - sigenergy -> openapi/system/{id}/devices.
+
+  ## Sigenergy
+
+  Devuelve inversores y baterias con serialNumber, deviceType, status,
+  firmwareVersion y attrMap con las caracteristicas segun el tipo:
+
+    - Inverter -> ratedActivePower, maxActivePower, maxAbsorbedPower,
+                  ratedVoltage, ratedFrequency, pvStringNumber   (kW / V / Hz)
+    - Battery  -> ratedEnergy, ratedChargePower, ratedDischargePower,
+                  chargeableEnergy, dischargeEnergy              (kWh / kW)
+
+  Contraste util: las ratedEnergy de las baterias suman el batteryCapacity
+  que da /plants. En Coagrisan: 8,06 + 5,38 + 8,06 + 8,06 = 29,56.
+
+  OJO con la forma: Sigenergy manda JSON dentro de JSON. Si llamas a SU api
+  directamente veras que `data` es una LISTA DE STRINGS y que cada `attrMap`
+  es OTRO string con JSON dentro. Nuestro backend lo desanida
+  (SigenergyService::desanidar), asi que por aqui ya llegan objetos.
+
+  Estados de un equipo: Normal, Standby, Faulty, Disconnection... Ojo, la doc
+  oficial los llama "Fault" y "Offline", pero la API devuelve "Faulty" y
+  "Disconnection".
+}

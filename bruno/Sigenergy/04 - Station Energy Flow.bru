@@ -1,0 +1,30 @@
+meta {
+  name: 04 - Station Energy Flow
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{base_url_sigen}}/device/sigen/station/energyflow?id={{sigen_station_id}}
+  body: none
+  auth: none
+}
+
+params:query {
+  id: {{sigen_station_id}}
+}
+
+headers {
+  Accept: */*
+  Content-Type: application/json
+  Authorization: Bearer {{sigen_access_token}}
+  Origin: https://app-eu.sigencloud.com
+  Referer: https://app-eu.sigencloud.com/
+  lang: en_US
+  client-server: eu
+}
+
+docs {
+  Flujo de energia en tiempo real de la planta (produccion, consumo, bateria, red).
+  Requiere sigen_station_id (lo obtienes de "03 - Station Home").
+}

@@ -1,0 +1,76 @@
+meta {
+  name: 01 - Auth - Get Token
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{base_url_sigen}}/auth/oauth/token
+  body: formUrlEncoded
+  auth: none
+}
+
+headers {
+  Content-Type: application/x-www-form-urlencoded
+  Authorization: Basic c2lnZW46c2lnZW4=
+  Accept: */*
+  User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:152.0) Gecko/20100101 Firefox/152.0
+  Origin: https://app-eu.sigencloud.com
+  Referer: https://app-eu.sigencloud.com/
+  lang: en_US
+  client-server: eu
+  AUTH-CLIENT-ID: sigen
+  VERSION: RELEASE
+  sg-v: 3.5.2
+  sg-bui: 1
+  sg-env: 1
+  sg-platform: web
+  sg-pkg: sigen_app
+  sg-ts: {{sigen_sg_ts}}
+  sg-log-id: {{sigen_log_id}}
+  sg-session: {{sigen_session}}
+}
+
+body:form-urlencoded {
+  scope: server
+  grant_type: password
+  username: {{sigen_username}}
+  password: {{sigen_enc_password}}
+  userDeviceId: {{sigen_device_id}}
+}
+
+script:pre-request {
+  // Cifrado de la password: AES-128-CBC, key/iv = "sigensigensigenp", PKCS7, base64.
+  const CryptoJS = require('crypto-js');
+  const key = CryptoJS.enc.Utf8.parse('sigensigensigenp');
+  const iv  = CryptoJS.enc.Utf8.parse('sigensigensigenp');
+  const plain = bru.getEnvVar('sigen_password');
+  const enc = CryptoJS.AES.encrypt(CryptoJS.enc.Utf8.parse(plain), key, {
+    iv: iv, mode: CryptoJS.mode.CBC, padding: CryptoJS.pad.Pkcs7
+  }).toString();
+  bru.setVar('sigen_enc_password', enc);
+
+  // Cabeceras dinamicas que espera el cliente web
+  const now = Date.now();
+  bru.setVar('sigen_device_id', String(now));
+  bru.setVar('sigen_sg_ts', String(now * 1000));
+  const rnd = () => ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g, c =>
+    (c ^ (Math.random() * 16) >> (c / 4)).toString(16));
+  bru.setVar('sigen_log_id', rnd());
+  bru.setVar('sigen_session', rnd());
+}
+
+script:post-response {
+  const data = res.body && res.body.data;
+  if (data && data.access_token) {
+    bru.setVar('sigen_access_token', data.access_token);
+    bru.setVar('sigen_refresh_token', data.refresh_token);
+    console.log('Sigen access_token guardado. expires_in=' + data.expires_in + 's');
+  } else {
+    console.log('Sin token. Respuesta: ' + JSON.stringify(res.body));
+  }
+}
+
+assert {
+  res.body.code: eq 0
+}

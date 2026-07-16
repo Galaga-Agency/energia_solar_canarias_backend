@@ -1,0 +1,23 @@
+meta {
+  name: 05 - Proveedores
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{base_url_esc}}/proveedores
+  body: none
+  auth: none
+}
+
+headers {
+  Accept: application/json
+  Authorization: Bearer {{esc_jwt}}
+}
+
+docs {
+  Lista de proveedores soportados (solo admin):
+  goodwe, solaredge, victronenergy, sungrow, sigenergy.
+
+  Estos son los valores validos del query param `?proveedor=` del resto de endpoints.
+}

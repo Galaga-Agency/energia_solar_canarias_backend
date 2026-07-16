@@ -38,7 +38,11 @@ class UsuariosDB
             if (!$deleteStmt) {
                 throw new Exception("Error en la preparación del DELETE: " . $conn->error);
             }
-            $deleteStmt->bind_param('i', $idPlanta);
+            // planta_id es VARCHAR: hay que atarlo como 's'. Con 'i', MySQL convierte a
+            // numero TODA la columna para comparar y revienta en cuanto encuentra un id
+            // no numerico (los UUID de GoodWe, los VSSKC... de Sigenergy), abortando la
+            // operacion entera con "Truncated incorrect DOUBLE value".
+            $deleteStmt->bind_param('s', $idPlanta);
             if (!$deleteStmt->execute()) {
                 throw new Exception("Error al ejecutar DELETE: " . $deleteStmt->error);
             }
@@ -78,7 +82,9 @@ class UsuariosDB
      * @param string $proveedor El nombre del proveedor
      * @return bool true en caso de éxito o false en caso de error
      */
-    public function desrelacionarUsers($idPlanta, $idUsuario = null, $idProveedor)
+    // $idUsuario admite null (borra la relacion de todos los usuarios de la planta),
+    // pero no puede llevar valor por defecto: va delante de un parametro obligatorio.
+    public function desrelacionarUsers($idPlanta, $idUsuario, $idProveedor)
     {
         try {
             $conexion = Conexion::getInstance();
@@ -105,11 +111,12 @@ class UsuariosDB
                 throw new Exception("Error en la preparación de la consulta: " . $conn->error);
             }
 
-            // Bind de parámetros según si hay idUsuario o no
+            // Bind de parámetros según si hay idUsuario o no.
+            // planta_id es VARCHAR -> 's' (ver el comentario en relacionarUsers).
             if ($idUsuario !== null) {
-                $stmt->bind_param('iii', $idPlanta, $idProveedor, $idUsuario);
+                $stmt->bind_param('sii', $idPlanta, $idProveedor, $idUsuario);
             } else {
-                $stmt->bind_param('ii', $idPlanta, $idProveedor);
+                $stmt->bind_param('si', $idPlanta, $idProveedor);
             }
 
             if (!$stmt->execute()) {
@@ -794,16 +801,17 @@ class UsuariosDB
                 }
             }
 
+            // planta_id es VARCHAR -> 's' (ver el comentario en relacionarUsers).
             if ($usuarioId !== null) {
                 // Si se proporciona usuario, se incluye en la condición
                 $query = "SELECT * FROM plantas_asociadas WHERE planta_id = ? AND usuario_id = ? AND proveedor_id = ?";
                 $stmt = $conn->prepare($query);
-                $stmt->bind_param('iii', $plantaId, $usuarioId, $idProveedor);
+                $stmt->bind_param('sii', $plantaId, $usuarioId, $idProveedor);
             } else {
                 // Si no se proporciona usuario, se omite esa condición
                 $query = "SELECT * FROM plantas_asociadas WHERE planta_id = ? AND proveedor_id = ?";
                 $stmt = $conn->prepare($query);
-                $stmt->bind_param('ii', $plantaId, $idProveedor);
+                $stmt->bind_param('si', $plantaId, $idProveedor);
             }
 
             $stmt->execute();

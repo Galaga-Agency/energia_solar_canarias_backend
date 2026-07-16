@@ -1,0 +1,38 @@
+meta {
+  name: 02 - Refresh Token
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{base_url_sungrow}}/openapi/apiManage/refreshToken
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  x-access-key: {{sungrow_secret_key}}
+}
+
+body:json {
+  {
+    "appkey": "{{sungrow_appkey}}",
+    "refresh_token": "{{sungrow_refresh_token}}"
+  }
+}
+
+script:post-response {
+  const b = res.body || {};
+  const data = b.result_data || b.data || b;
+  if (data.access_token) {
+    bru.setVar('sungrow_access_token', data.access_token);
+    if (data.refresh_token) bru.setVar('sungrow_refresh_token', data.refresh_token);
+    console.log('Sungrow token renovado.');
+  }
+}
+
+docs {
+  Renueva el access_token de Sungrow usando el refresh_token.
+  Endpoint: POST /openapi/apiManage/refreshToken (gateway EU).
+}

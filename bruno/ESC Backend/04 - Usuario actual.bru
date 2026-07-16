@@ -1,0 +1,22 @@
+meta {
+  name: 04 - Usuario actual
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{base_url_esc}}/usuario
+  body: none
+  auth: none
+}
+
+headers {
+  Accept: application/json
+  Authorization: Bearer {{esc_jwt}}
+}
+
+docs {
+  Datos del usuario dueno del token. Sirve como comprobacion rapida de que el JWT
+  es valido: si devuelve 403 "El token no se puede authentificar con exito",
+  repite el login (01 -> 02).
+}
