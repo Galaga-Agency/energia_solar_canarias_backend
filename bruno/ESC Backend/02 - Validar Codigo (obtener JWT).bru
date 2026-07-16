@@ -1,0 +1,50 @@
+meta {
+  name: 02 - Validar Codigo (obtener JWT)
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{base_url_esc}}/token
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "id": "{{esc_user_id}}",
+    "token": "{{esc_login_code}}"
+  }
+}
+
+script:post-response {
+  const data = res.body && res.body.data;
+  if (data && data.tokenIdentificador) {
+    bru.setVar('esc_jwt', data.tokenIdentificador);
+    console.log('esc_jwt guardado (valido ~180 dias). Usuario: ' + data.email + ' | clase: ' + data.clase);
+  } else {
+    console.log('Sin JWT. Respuesta: ' + JSON.stringify(res.body));
+  }
+}
+
+assert {
+  res.status: eq 200
+}
+
+docs {
+  PASO 2 del login. Devuelve el JWT.
+
+  Envia el id del usuario (`esc_user_id`, lo guarda el paso 01) y el codigo que
+  llego por email (`esc_login_code`).
+
+  Si el codigo es correcto y no ha caducado, responde con los datos del usuario y
+  `data.tokenIdentificador` = JWT valido ~180 dias. El script lo guarda en `esc_jwt`,
+  que es lo que usan todos los endpoints protegidos: `Authorization: Bearer {{esc_jwt}}`.
+
+  Ojo: al validar, el backend BORRA todos los codigos de login del usuario. Si te
+  equivocas de codigo tendras que repetir el paso 01.
+}

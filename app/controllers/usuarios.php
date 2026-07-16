@@ -68,7 +68,9 @@ class UsuariosController
         }
     }
 
-    public function desrelacionarUsers($idUsuario = null, $idPlanta, $idProveedor)
+    // $idUsuario admite null (desrelaciona la planta de todos los usuarios), pero no
+    // puede llevar valor por defecto: va delante de parametros obligatorios.
+    public function desrelacionarUsers($idUsuario, $idPlanta, $idProveedor)
     {
         // Crear una instancia del controlador de logs
         $logsController = new LogsController();

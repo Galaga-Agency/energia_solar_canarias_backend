@@ -1,0 +1,33 @@
+meta {
+  name: 17 - Grafica Bateria (SolarEdge)
+  type: http
+  seq: 17
+}
+
+post {
+  url: {{base_url_esc}}/plant/grafica/bateria/{{esc_plant_id}}?proveedor=solaredge
+  body: json
+  auth: none
+}
+
+params:query {
+  proveedor: solaredge
+}
+
+headers {
+  Content-Type: application/json
+  Authorization: Bearer {{esc_jwt}}
+}
+
+body:json {
+  {
+    "fechaInicio": "2026-07-14 00:00:00",
+    "fechaFin": "2026-07-15 00:00:00"
+  }
+}
+
+docs {
+  Carga de bateria de una planta. Solo SolarEdge (cargaBateriaSolarEdge).
+  Body obligatorio: fechaInicio + fechaFin.
+  goodwe / victronenergy responden 404 a proposito.
+}

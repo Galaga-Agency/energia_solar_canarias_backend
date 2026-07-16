@@ -1,0 +1,39 @@
+meta {
+  name: 15 - Plants Energy (fleet, SolarEdge)
+  type: http
+  seq: 15
+}
+
+post {
+  url: {{base_url_esc}}/plants/energy/{{esc_plant_id}}?proveedor=solaredge
+  body: json
+  auth: none
+}
+
+params:query {
+  proveedor: solaredge
+}
+
+headers {
+  Content-Type: application/json
+  Authorization: Bearer {{esc_jwt}}
+}
+
+body:json {
+  {
+    "time": "DAY",
+    "startTime": "2026-07-01",
+    "endTime": "2026-07-15"
+  }
+}
+
+docs {
+  Energia de VARIAS plantas de golpe. Los ids van en la ruta separados por comas:
+    /plants/energy/1234,5678,9012?proveedor=solaredge
+  
+  Solo SolarEdge lo implementa (BulkApiFleetEnergy). goodwe / victronenergy
+  responden 404 "El proveedor no tiene esta llamada". Sungrow y Sigenergy aun
+  no tienen rama aqui.
+  
+  Body obligatorio: time, startTime, endTime.
+}

@@ -2,8 +2,11 @@
 require_once __DIR__ . '/../controllers/SolarEdgeController.php';
 require_once __DIR__ . '/../controllers/GoodWeController.php';
 require_once __DIR__ . '/../controllers/VictronEnergyController.php';
+require_once __DIR__ . '/../controllers/SungrowController.php';
+require_once __DIR__ . '/../controllers/SigenergyController.php';
 require_once __DIR__ . '/../controllers/usuarios.php';
 require_once __DIR__ . '/../utils/respuesta.php';
+require_once __DIR__ . '/../utils/SigenergyErrores.php';
 require_once __DIR__ . '/../DBObjects/plantasAsociadasDB.php';
 
 
@@ -12,6 +15,8 @@ class ApiControladorService
     private $solarEdgeController;
     private $goodWeController;
     private $victronEnergyController;
+    private $sungrowController;
+    private $sigenergyController;
     private $logsController;
 
     public function __construct()
@@ -20,6 +25,8 @@ class ApiControladorService
         $this->solarEdgeController = new SolarEdgeController();
         $this->victronEnergyController = new VictronEnergyController;
         $this->goodWeController = new GoodWeController();
+        $this->sungrowController = new SungrowController();
+        $this->sigenergyController = new SigenergyController();
     }
     /**
      * 
@@ -42,7 +49,15 @@ class ApiControladorService
             $victronEnergyResponse = $this->victronEnergyController->getAllPlants();
             $victronEnergyData = json_decode($victronEnergyResponse, true);
 
-            $plants = $this->processPlants($goodWeData, $solarEdgeData, $victronEnergyData);
+            // Obtener datos de Sungrow
+            $sungrowResponse = $this->sungrowController->getAllPlants();
+            $sungrowData = json_decode($sungrowResponse, true);
+
+            // Obtener datos de Sigenergy
+            $sigenergyResponse = $this->sigenergyController->getAllPlants();
+            $sigenergyData = json_decode($sigenergyResponse, true);
+
+            $plants = $this->processPlants($goodWeData, $solarEdgeData, $victronEnergyData, $sungrowData, $sigenergyData);
 
             //si devolver es true entonces devolvemos todas las plantas para que podamos hacer nuestros calculos o otras cosas
             if ($devolver) {
@@ -219,6 +234,56 @@ class ApiControladorService
         echo json_encode($respuesta);
     }
 
+    public function getSiteAlarmsSungrow($siteId, $pageIndex = 1, $pageSize = 200)
+    {
+        $respuesta = new Respuesta;
+        try {
+            $sungrowResponse = $this->sungrowController->getSiteAlarms($siteId, $pageIndex, $pageSize);
+            $sungrowData = json_decode($sungrowResponse, true);
+
+            if ($sungrowData != null && !isset($sungrowData['error'])) {
+                $this->logsController->registrarLog(Logs::INFO, "se han encontrado las alarmas en Sungrow");
+                $respuesta->success($sungrowData);
+            } else {
+                $this->logsController->registrarLog(Logs::INFO, "No se han encontrado alarmas en Sungrow");
+                $respuesta->_400($sungrowData);
+                $respuesta->message = "No se han encontrado alarmas";
+                http_response_code(400);
+            }
+        } catch (Throwable $e) {
+            $this->logsController->registrarLog(Logs::ERROR, $e->getMessage() . "Error en el servidor de Sungrow");
+            $respuesta->_500();
+            $respuesta->message = "Error en el servidor de algun proveedor";
+            http_response_code(500);
+        }
+        header('Content-Type: application/json');
+        echo json_encode($respuesta);
+    }
+    public function getBenefitsSungrow($powerStationId)
+    {
+        $respuesta = new Respuesta;
+        try {
+            $sungrowResponse = $this->sungrowController->getPlantPowerBenefits($powerStationId);
+            $sungrowData = json_decode($sungrowResponse, true);
+
+            if ($sungrowData != null && !isset($sungrowData['error'])) {
+                $this->logsController->registrarLog(Logs::INFO, "se han encontrado los beneficios de Sungrow");
+                $respuesta->success($sungrowData);
+            } else {
+                $this->logsController->registrarLog(Logs::INFO, "no se han encontrado los beneficios de Sungrow");
+                $respuesta->_400($sungrowData);
+                $respuesta->message = "No se han encontrado Beneficios o la peticion es nula";
+                http_response_code(400);
+            }
+        } catch (Throwable $e) {
+            $this->logsController->registrarLog(Logs::ERROR, "Error del proveedor de Sungrow: " . $e->getMessage());
+            $respuesta->_500();
+            $respuesta->message = "Error en el servidor de algun proveedor";
+            http_response_code(500);
+        }
+        header('Content-Type: application/json');
+        echo json_encode($respuesta);
+    }
     public function GetPowerStationWariningInfoByMultiCondition($pageIndex = 1, $pageSize = 2000, $status = 3)
     {
         $respuesta = new Respuesta;
@@ -303,6 +368,32 @@ class ApiControladorService
             http_response_code(500);
         }
         // Devolver el resultado como JSON
+        header('Content-Type: application/json');
+        echo json_encode($respuesta);
+    }
+    //Sungrow
+    public function getInventarioSungrow($powerStationId)
+    {
+        $respuesta = new Respuesta;
+        try {
+            $sungrowResponse = $this->sungrowController->getInventario($powerStationId);
+            $sungrowData = json_decode($sungrowResponse, true);
+
+            if ($sungrowData != null && !isset($sungrowData['error'])) {
+                $this->logsController->registrarLog(Logs::INFO, "se ha encontrado el inventario de Sungrow");
+                $respuesta->success($sungrowData);
+            } else {
+                $this->logsController->registrarLog(Logs::INFO, "no se ha encontrado el inventario de Sungrow");
+                $respuesta->_400($sungrowData);
+                $respuesta->message = "no se ha encontrado el inventario de Sungrow";
+                http_response_code(400);
+            }
+        } catch (Throwable $e) {
+            $this->logsController->registrarLog(Logs::ERROR, "Error del proveedor de Sungrow: " . $e->getMessage());
+            $respuesta->_500($e->getMessage());
+            $respuesta->message = "Error en el servidor de algun proveedor";
+            http_response_code(500);
+        }
         header('Content-Type: application/json');
         echo json_encode($respuesta);
     }
@@ -483,10 +574,80 @@ class ApiControladorService
         header('Content-Type: application/json');
         echo json_encode($respuesta);
     }
+    public function getGraficasSungrow()
+    {
+        $respuesta = new Respuesta;
+        try {
+            $data = $this->getCuerpoGraficaSungrow();
+            if ($data === null) {
+                $this->logsController->registrarLog(Logs::INFO, "Faltan parametros para la grafica de Sungrow");
+                $respuesta->_400();
+                $respuesta->message = "revisa los parametros (id obligatorio)";
+                http_response_code(400);
+                echo json_encode($respuesta);
+                return;
+            }
+            $sungrowResponse = $this->sungrowController->getGraficas($data);
+            $sungrowData = json_decode($sungrowResponse, true);
+
+            if ($sungrowData != null && !isset($sungrowData['error'])) {
+                $this->logsController->registrarLog(Logs::INFO, "se han encontrado las graficas de Sungrow");
+                $respuesta->success($sungrowData);
+            } else {
+                $this->logsController->registrarLog(Logs::INFO, "no se han encontrado las graficas de Sungrow");
+                $respuesta->_400($sungrowData);
+                $respuesta->message = "No se han encontrado graficas de Sungrow";
+                http_response_code(400);
+            }
+        } catch (Throwable $e) {
+            $this->logsController->registrarLog(Logs::ERROR, $e->getMessage() . "Error en el servidor de Sungrow");
+            $respuesta->_500();
+            $respuesta->message = "Error en el servidor de algun proveedor";
+            http_response_code(500);
+        }
+        header('Content-Type: application/json');
+        echo json_encode($respuesta);
+    }
+    public function getGraficasSigenergy()
+    {
+        $respuesta = new Respuesta;
+        try {
+            $data = $this->getCuerpoGraficaSigenergy();
+            if ($data === null) {
+                $this->logsController->registrarLog(Logs::INFO, "Faltan parametros para la grafica de Sigenergy");
+                $respuesta->_400();
+                $respuesta->message = "revisa los parametros (id obligatorio)";
+                http_response_code(400);
+                echo json_encode($respuesta);
+                return;
+            }
+            $sigenergyResponse = $this->sigenergyController->getGraficas($data);
+            $sigenergyData = json_decode($sigenergyResponse, true);
+
+            if ($this->fallaSigenergy($respuesta, $sigenergyData)) return;
+
+            if ($sigenergyData != null && !isset($sigenergyData['error'])) {
+                $this->logsController->registrarLog(Logs::INFO, "se han encontrado las graficas de Sigenergy");
+                $respuesta->success($sigenergyData);
+            } else {
+                $this->logsController->registrarLog(Logs::INFO, "no se han encontrado las graficas de Sigenergy");
+                $respuesta->_400($sigenergyData);
+                $respuesta->message = "No se han encontrado graficas de Sigenergy";
+                http_response_code(400);
+            }
+        } catch (Throwable $e) {
+            $this->logsController->registrarLog(Logs::ERROR, $e->getMessage() . "Error en el servidor de Sigenergy");
+            $respuesta->_500();
+            $respuesta->message = "Error en el servidor de algun proveedor";
+            http_response_code(500);
+        }
+        header('Content-Type: application/json');
+        echo json_encode($respuesta);
+    }
     /**
-     * 
+     *
      * Estas funciones se utilizan para obtener los datos en tiempo real de todos los proveedores
-     * 
+     *
      */
     public function getPlantPowerRealtimeSolarEdge($powerStationId)
     {
@@ -571,10 +732,165 @@ class ApiControladorService
         header('Content-Type: application/json');
         echo json_encode($respuesta);
     }
+    public function getPlantPowerRealtimeSungrow($powerStationId)
+    {
+        $respuesta = new Respuesta;
+        try {
+            $sungrowResponse = $this->sungrowController->getPlantPowerRealtime($powerStationId);
+            $sungrowData = json_decode($sungrowResponse, true);
+
+            if ($sungrowData != null) {
+                $this->logsController->registrarLog(Logs::INFO, "se han encontrado los datos en tiempo real de Sungrow");
+                $respuesta->success($sungrowData);
+            } else {
+                $this->logsController->registrarLog(Logs::INFO, "No se han encontrado datos en tiempo real en Sungrow");
+                $respuesta->_400($sungrowData);
+                $respuesta->message = "No se han encontrado datos en tiempo real";
+                http_response_code(400);
+            }
+        } catch (Throwable $e) {
+            $this->logsController->registrarLog(Logs::ERROR, $e->getMessage() . "Error en el servidor de Sungrow");
+            $respuesta->_500();
+            $respuesta->message = "Error en el servidor de algun proveedor";
+            http_response_code(500);
+        }
+        header('Content-Type: application/json');
+        echo json_encode($respuesta);
+    }
     /**
-     * 
+     * Traduce un error de Sigenergy a nuestra respuesta y lo emite. Devuelve true si
+     * habia error (y por tanto ya no hay que seguir), false si la respuesta era buena.
+     *
+     * Existe porque Sigenergy contesta SIEMPRE HTTP 200 y mete el fallo real en `code`.
+     * Sin esto, un "Station not permitted" salia como 200 status=true con data vacio y
+     * el frontend no podia distinguir "no hay datos" de "esta planta no es tuya".
+     */
+    private function fallaSigenergy($respuesta, $datos)
+    {
+        // Sin envoltorio `code` no hay nada que traducir (p.ej. el detalle de planta,
+        // que devuelve el objeto pelado).
+        if (!is_array($datos) || !array_key_exists('code', $datos)) return false;
+        if (SigenergyErrores::esExito($datos)) return false;
+
+        $e = SigenergyErrores::deRespuesta($datos);
+        $respuesta->status = false;
+        $respuesta->code = $e['http'];
+        $respuesta->message = $e['mensaje'];
+        $respuesta->data = [
+            'proveedor' => 'Sigenergy',
+            'codigo_sigenergy' => $e['codigo'],
+            'msg_sigenergy' => $datos['msg'] ?? null,
+            'causa' => $e['causa'],
+            'reintentable' => $e['transitorio'],
+            'documentado' => $e['documentado'],
+        ];
+        // El bloque de cache se mantiene: en un 1201 es justo lo que dice cuanto esperar.
+        if (isset($datos['_cache'])) $respuesta->data['_cache'] = $datos['_cache'];
+
+        $this->logsController->registrarLog(
+            $e['transitorio'] ? Logs::ERROR : Logs::INFO,
+            "Sigenergy code={$e['codigo']} ({$datos['msg']}): {$e['causa']}"
+        );
+        http_response_code($e['http']);
+        header('Content-Type: application/json');
+        echo json_encode($respuesta);
+        return true;
+    }
+
+    public function getInventarioSigenergy($powerStationId)
+    {
+        $respuesta = new Respuesta;
+        try {
+            $sigenergyResponse = $this->sigenergyController->getInventario($powerStationId);
+            $sigenergyData = json_decode($sigenergyResponse, true);
+
+            if ($this->fallaSigenergy($respuesta, $sigenergyData)) return;
+
+            if ($sigenergyData != null && !isset($sigenergyData['error'])) {
+                $this->logsController->registrarLog(Logs::INFO, "se ha encontrado el inventario de Sigenergy");
+                $respuesta->success($sigenergyData);
+            } else {
+                $this->logsController->registrarLog(Logs::INFO, "no se ha encontrado el inventario de Sigenergy");
+                $respuesta->_400($sigenergyData);
+                $respuesta->message = "no se ha encontrado el inventario de Sigenergy";
+                http_response_code(400);
+            }
+        } catch (Throwable $e) {
+            $this->logsController->registrarLog(Logs::ERROR, "Error del proveedor de Sigenergy: " . $e->getMessage());
+            $respuesta->_500($e->getMessage());
+            $respuesta->message = "Error en el servidor de algun proveedor";
+            http_response_code(500);
+        }
+        header('Content-Type: application/json');
+        echo json_encode($respuesta);
+    }
+
+    /**
+     * Incidencias de una planta de Sigenergy.
+     *
+     * OJO: no son las alarmas push de Sigenergy (esas solo llegan por MQTT), sino lo
+     * que se deduce del estado de los equipos. La respuesta lo indica con
+     * `alarmas_en_tiempo_real: false`. Ver SigenergyService::getSiteAlarms.
+     */
+    public function getSiteAlarmsSigenergy($siteId, $pageIndex = 1, $pageSize = 200)
+    {
+        $respuesta = new Respuesta;
+        try {
+            $sigenergyResponse = $this->sigenergyController->getSiteAlarms($siteId, $pageIndex, $pageSize);
+            $sigenergyData = json_decode($sigenergyResponse, true);
+
+            if ($this->fallaSigenergy($respuesta, $sigenergyData)) return;
+
+            if ($sigenergyData != null && !isset($sigenergyData['error'])) {
+                $this->logsController->registrarLog(Logs::INFO, "se han encontrado las alertas de Sigenergy");
+                $respuesta->success($sigenergyData);
+            } else {
+                $this->logsController->registrarLog(Logs::INFO, "no se han encontrado las alertas de Sigenergy");
+                $respuesta->_400($sigenergyData);
+                $respuesta->message = "no se han encontrado las alertas de Sigenergy";
+                http_response_code(400);
+            }
+        } catch (Throwable $e) {
+            $this->logsController->registrarLog(Logs::ERROR, "Error del proveedor de Sigenergy: " . $e->getMessage());
+            $respuesta->_500($e->getMessage());
+            $respuesta->message = "Error en el servidor de algun proveedor";
+            http_response_code(500);
+        }
+        header('Content-Type: application/json');
+        echo json_encode($respuesta);
+    }
+
+    public function getPlantPowerRealtimeSigenergy($powerStationId)
+    {
+        $respuesta = new Respuesta;
+        try {
+            $sigenergyResponse = $this->sigenergyController->getPlantPowerRealtime($powerStationId);
+            $sigenergyData = json_decode($sigenergyResponse, true);
+
+            if ($this->fallaSigenergy($respuesta, $sigenergyData)) return;
+
+            if ($sigenergyData != null) {
+                $this->logsController->registrarLog(Logs::INFO, "se han encontrado los datos en tiempo real de Sigenergy");
+                $respuesta->success($sigenergyData);
+            } else {
+                $this->logsController->registrarLog(Logs::INFO, "No se han encontrado datos en tiempo real en Sigenergy");
+                $respuesta->_400($sigenergyData);
+                $respuesta->message = "No se han encontrado datos en tiempo real";
+                http_response_code(400);
+            }
+        } catch (Throwable $e) {
+            $this->logsController->registrarLog(Logs::ERROR, $e->getMessage() . "Error en el servidor de Sigenergy");
+            $respuesta->_500();
+            $respuesta->message = "Error en el servidor de algun proveedor";
+            http_response_code(500);
+        }
+        header('Content-Type: application/json');
+        echo json_encode($respuesta);
+    }
+    /**
+     *
      * Estas funciones se utilizan para obtener los datos de Todas las plantas de cada proveedor
-     * 
+     *
      */
     public function getAllPlantsGoodWe($page = 1, $pageSize = 2000)
     {
@@ -669,6 +985,72 @@ class ApiControladorService
         header('Content-Type: application/json');
         echo json_encode($respuesta);
     }
+    public function getAllPlantsSungrow($page = 1, $pageSize = 2000)
+    {
+        $respuesta = new Paginacion();
+        try {
+            $sungrowResponse = $this->sungrowController->getAllPlants($page, $pageSize);
+            $sungrowData = json_decode($sungrowResponse, true);
+
+            $plants = $this->processPlants([], [], [], $sungrowData);
+
+            if ($plants != null) {
+                $this->logsController->registrarLog(Logs::INFO, "se han encontrado las plantas en Sungrow");
+                $respuesta->success($plants);
+                $respuesta->page = $page;
+                $respuesta->limit = $pageSize;
+            } else {
+                $this->logsController->registrarLog(Logs::INFO, "no se han encontrado las plantas en Sungrow");
+                $respuesta->_400($plants);
+                $respuesta->message = "No se han encontrado plantas";
+                http_response_code(400);
+            }
+        } catch (Throwable $e) {
+            $this->logsController->registrarLog(Logs::ERROR, $e->getMessage() . "Error en el servidor de Sungrow");
+            $respuesta->_500();
+            $respuesta->message = "Error en el servidor de algun proveedor";
+            http_response_code(500);
+        }
+        header('Content-Type: application/json');
+        echo json_encode($respuesta);
+    }
+    public function getAllPlantsSigenergy($page = 1, $pageSize = 2000)
+    {
+        $respuesta = new Paginacion();
+        try {
+            $sigenergyResponse = $this->sigenergyController->getAllPlants($page, $pageSize);
+            $sigenergyData = json_decode($sigenergyResponse, true);
+
+            if ($this->fallaSigenergy($respuesta, $sigenergyData)) return;
+
+            $plants = $this->processPlants([], [], [], [], $sigenergyData);
+
+            if ($plants != null) {
+                $this->logsController->registrarLog(Logs::INFO, "se han encontrado las plantas en Sigenergy");
+                $respuesta->success($plants);
+                $respuesta->page = $page;
+                $respuesta->limit = $pageSize;
+                // Info de cache/rate-limit: la lista de Sigenergy solo se puede refrescar
+                // 1 vez cada 5 min POR CUENTA, asi que el frontend necesita saber cuanto
+                // falta para que tenga sentido volver a pedirla.
+                if (isset($sigenergyData['_cache'])) {
+                    $respuesta->cache = $sigenergyData['_cache'];
+                }
+            } else {
+                $this->logsController->registrarLog(Logs::INFO, "no se han encontrado las plantas en Sigenergy");
+                $respuesta->_400($plants);
+                $respuesta->message = "No se han encontrado plantas";
+                http_response_code(400);
+            }
+        } catch (Throwable $e) {
+            $this->logsController->registrarLog(Logs::ERROR, $e->getMessage() . "Error en el servidor de Sigenergy");
+            $respuesta->_500();
+            $respuesta->message = "Error en el servidor de algun proveedor";
+            http_response_code(500);
+        }
+        header('Content-Type: application/json');
+        echo json_encode($respuesta);
+    }
     public function getAllPlantsCliente($idUsuario)
     {
         $respuesta = new Respuesta;
@@ -688,6 +1070,8 @@ class ApiControladorService
             $goodWeArray = [];
             $solarEdgeArray = [];
             $victronEnergyArray = [];
+            $sungrowArray = [];
+            $sigenergyArray = [];
 
             foreach ($plantasAsociadas as $planta) {
                 if ($planta['nombre_proveedor'] === 'GoodWe') {
@@ -720,15 +1104,35 @@ class ApiControladorService
                         $victronEnergyArray[$victronEnergyData['records'][0]['idSite']] = $victronEnergyData;
                     }
                 }
+                if ($planta['nombre_proveedor'] === 'Sungrow') {
+                    // Tiempo real (item de la lista con potencia/energia) por ps_id
+                    $sungrowResponse = $this->sungrowController->getPlantPowerRealtime($planta['planta_id']);
+                    $sungrowData = $this->decodeJsonResponse($sungrowResponse);
+
+                    if (is_array($sungrowData) && isset($sungrowData['ps_id'])) {
+                        $sungrowArray[$sungrowData['ps_id']] = $sungrowData;
+                    }
+                }
+                if ($planta['nombre_proveedor'] === 'Sigenergy') {
+                    // Detalle (registro de la lista oficial) por systemId
+                    $sigenergyResponse = $this->sigenergyController->getPlantDetails($planta['planta_id']);
+                    $sigenergyData = $this->decodeJsonResponse($sigenergyResponse);
+
+                    if (is_array($sigenergyData) && isset($sigenergyData['systemId'])) {
+                        $sigenergyArray[$sigenergyData['systemId']] = $sigenergyData;
+                    }
+                }
             }
 
             // Convertir los arrays asociativos en arrays simples para procesarlos
             $goodWeArray = array_values($goodWeArray);
             $solarEdgeArray = array_values($solarEdgeArray);
             $victronEnergyArray = array_values($victronEnergyArray);
+            $sungrowArray = array_values($sungrowArray);
+            $sigenergyArray = array_values($sigenergyArray);
 
 
-            $processedPlants = $this->processPlantsCliente($goodWeArray, $solarEdgeArray, $victronEnergyArray);
+            $processedPlants = $this->processPlantsCliente($goodWeArray, $solarEdgeArray, $victronEnergyArray, $sungrowArray, $sigenergyArray);
             $respuesta->success($processedPlants);
             $this->logsController->registrarLog(Logs::INFO, "El usuario accede a sus plantas");
         } catch (Throwable $e) {
@@ -769,6 +1173,14 @@ class ApiControladorService
                 $victronEnergyResponse = $this->victronEnergyController->getSiteDetails($id);
                 $victronEnergyData = json_decode($victronEnergyResponse, true);
                 $plants = $victronEnergyData;
+            } elseif ($proveedor === $proveedores['Sungrow']) {
+                // Obtener datos de Sungrow
+                $sungrowResponse = $this->sungrowController->getPlantDetails($id);
+                $plants = $sungrowResponse;
+            } elseif ($proveedor === $proveedores['Sigenergy']) {
+                // Obtener datos de Sigenergy
+                $sigenergyResponse = $this->sigenergyController->getPlantDetails($id);
+                $plants = $sigenergyResponse;
             } else {
                 // Proveedor inválido
                 $this->logsController->registrarLog(Logs::ERROR, "Proveedor no válido: $proveedor");
@@ -831,6 +1243,22 @@ class ApiControladorService
                     $victronEnergyData = "";
                 }
 
+                if ($proveedor == $proveedores['Sungrow']) {
+                    // Obtener datos de Sungrow
+                    $sungrowResponse = $this->sungrowController->getPlantDetails($idPlanta);
+                    $sungrowData = json_decode($sungrowResponse, true);
+                } else {
+                    $sungrowData = "";
+                }
+
+                if ($proveedor == $proveedores['Sigenergy']) {
+                    // Obtener datos de Sigenergy
+                    $sigenergyResponse = $this->sigenergyController->getPlantDetails($idPlanta);
+                    $sigenergyData = json_decode($sigenergyResponse, true);
+                } else {
+                    $sigenergyData = "";
+                }
+
                 $plants = null;
 
                 if ($proveedor == $proveedores['GoodWe']) {
@@ -839,6 +1267,10 @@ class ApiControladorService
                     $plants = $solarEdgeData;
                 } else if ($proveedor == $proveedores['VictronEnergy']){
                     $plants = $victronEnergyData;
+                } else if ($proveedor == $proveedores['Sungrow']){
+                    $plants = $sungrowData;
+                } else if ($proveedor == $proveedores['Sigenergy']){
+                    $plants = $sigenergyData;
                 }
 
 
@@ -878,7 +1310,7 @@ class ApiControladorService
      * 
      */
     //Aquí va la lógica de las apis conversiones etc.. (Lista plantas Admin)
-    public function processPlants(array $goodWeData, array $solarEdgeData, array $victronEnergyData): array
+    public function processPlants(array $goodWeData, array $solarEdgeData, array $victronEnergyData, array $sungrowData = [], array $sigenergyData = []): array
     {
         $plants = [];
 
@@ -1021,10 +1453,77 @@ class ApiControladorService
             error_log('Error: "records" no es un array válido o está vacío.');
         }
 
+        // Procesar datos de Sungrow (getPowerStationList)
+        if (isset($sungrowData['result_data']['pageList']) && is_array($sungrowData['result_data']['pageList'])) {
+            foreach ($sungrowData['result_data']['pageList'] as $ps) {
+                $currPowerKw = isset($ps['curr_power']['value']) ? (float) $ps['curr_power']['value'] : null;
+                $plants[] = [
+                    'id' => $ps['ps_id'] ?? '',
+                    'name' => $ps['ps_name'] ?? '',
+                    'address' => $ps['ps_location'] ?? null,
+                    'capacity' => isset($ps['total_capcity']['value']) ? (float) $ps['total_capcity']['value'] : 0,
+                    'status' => $this->mapSungrowStatus($ps['ps_status'] ?? null),
+                    'type' => $ps['ps_type'] ?? '',
+                    'latitude' => $ps['latitude'] ?? '',
+                    'longitude' => $ps['longitude'] ?? '',
+                    'organization' => 'sungrow',
+                    'batteryVoltage' => null,
+                    'batterySoc' => null,
+                    'current_power' => $currPowerKw !== null ? $currPowerKw * 1000 : null, // kW -> W (coherente con GoodWe)
+                    'total_energy' => isset($ps['total_energy']['value']) ? (float) $ps['total_energy']['value'] : null,
+                    'daily_energy' => isset($ps['today_energy']['value']) ? (float) $ps['today_energy']['value'] : null,
+                    'monthly_energy' => null,
+                    'installation_date' => $ps['install_date'] ?? null,
+                    'pto_date' => null,
+                    'notes' => $ps['description'] ?? null,
+                    'alert_quantity' => $ps['alarm_count'] ?? null,
+                    'highest_impact' => null,
+                    'primary_module' => null,
+                    'public_settings' => null
+                ];
+            }
+        }
+
+        // Procesar datos de Sigenergy (Openapi oficial: openapi/system -> data[] plano).
+        // La lista oficial es mas escueta que el apaño: NO trae lat/lon ni energia
+        // diaria por planta (eso solo esta en summary/energyFlow, limitados a 1 acceso
+        // por estacion cada 5 min, asi que solo se piden en el detalle de la planta).
+        if (isset($sigenergyData['data']) && is_array($sigenergyData['data'])) {
+            foreach ($sigenergyData['data'] as $st) {
+                if (!is_array($st) || !isset($st['systemId'])) continue;
+                $plants[] = [
+                    'id' => $st['systemId'] ?? '',
+                    'name' => $st['systemName'] ?? '',
+                    'address' => $st['addr'] ?? null,
+                    'capacity' => $st['pvCapacity'] ?? 0,
+                    'status' => $this->mapSigenergyStatus($st['status'] ?? null),
+                    'type' => $st['onOffGridStatus'] ?? '',
+                    'latitude' => null,  // la Openapi oficial no expone coordenadas
+                    'longitude' => null,
+                    'organization' => 'sigenergy',
+                    'batteryVoltage' => null,
+                    'batterySoc' => null,
+                    'current_power' => null, // usar /plant/power/realtime (energyFlow) en el detalle
+                    'total_energy' => null,
+                    'daily_energy' => null,  // usar summary en el detalle (rate-limit)
+                    'monthly_energy' => null,
+                    // La API real devuelve gridConnectedTime en MILISEGUNDOS (el doc dice
+                    // "gridConnectTime" en segundos, pero no es asi: ojo con ese desfase).
+                    'installation_date' => isset($st['gridConnectedTime']) ? date('Y-m-d', (int) ($st['gridConnectedTime'] / 1000)) : null,
+                    'pto_date' => null,
+                    'notes' => null,
+                    'alert_quantity' => null, // las alarmas de Sigenergy van por push MQTT
+                    'highest_impact' => null,
+                    'primary_module' => null,
+                    'public_settings' => null
+                ];
+            }
+        }
+
         return $plants;
     }
     //Aquí va la lógica de las apis conversiones etc.. (Lista plantas Cliente)
-    public function processPlantsCliente(array $goodWeData, array $solarEdgeData, array $victronEnergyData): array
+    public function processPlantsCliente(array $goodWeData, array $solarEdgeData, array $victronEnergyData, array $sungrowData = [], array $sigenergyData = []): array
     {
         $plants = [];
 
@@ -1155,6 +1654,61 @@ class ApiControladorService
             }
         }
 
+        // Procesar datos de Sungrow (item de getPowerStationList por planta)
+        foreach ($sungrowData as $ps) {
+            if (!is_array($ps) || !isset($ps['ps_id'])) continue;
+            $currPowerKw = isset($ps['curr_power']['value']) ? (float) $ps['curr_power']['value'] : null;
+            $plants[] = [
+                'id' => $ps['ps_id'] ?? null,
+                'name' => $ps['ps_name'] ?? null,
+                'address' => $ps['ps_location'] ?? null,
+                'capacity' => isset($ps['total_capcity']['value']) ? (float) $ps['total_capcity']['value'] : null,
+                'status' => $this->mapSungrowStatus($ps['ps_status'] ?? null),
+                'type' => $ps['ps_type'] ?? null,
+                'latitude' => $ps['latitude'] ?? null,
+                'longitude' => $ps['longitude'] ?? null,
+                'organization' => 'sungrow',
+                'current_power' => $currPowerKw !== null ? $currPowerKw * 1000 : null, // kW -> W
+                'total_energy' => isset($ps['total_energy']['value']) ? (float) $ps['total_energy']['value'] : null,
+                'daily_energy' => isset($ps['today_energy']['value']) ? (float) $ps['today_energy']['value'] : null,
+                'monthly_energy' => null,
+                'installation_date' => $ps['install_date'] ?? null,
+                'pto_date' => null,
+                'notes' => $ps['description'] ?? null,
+                'alert_quantity' => $ps['alarm_count'] ?? null,
+                'highest_impact' => null,
+                'primary_module' => null,
+                'public_settings' => null
+            ];
+        }
+
+        // Procesar datos de Sigenergy (registro de la lista oficial openapi/system por planta)
+        foreach ($sigenergyData as $st) {
+            if (!is_array($st) || !isset($st['systemId'])) continue;
+            $plants[] = [
+                'id' => $st['systemId'] ?? null,
+                'name' => $st['systemName'] ?? null,
+                'address' => $st['addr'] ?? null,
+                'capacity' => $st['pvCapacity'] ?? null,
+                'status' => $this->mapSigenergyStatus($st['status'] ?? null),
+                'type' => $st['onOffGridStatus'] ?? null,
+                'latitude' => null,  // la Openapi oficial no expone coordenadas
+                'longitude' => null,
+                'organization' => 'sigenergy',
+                'current_power' => null,
+                'total_energy' => null,
+                'daily_energy' => null,  // usar summary en el detalle (rate-limit)
+                'monthly_energy' => null,
+                'installation_date' => isset($st['gridConnectedTime']) ? date('Y-m-d', (int) ($st['gridConnectedTime'] / 1000)) : null,
+                'pto_date' => null,
+                'notes' => null,
+                'alert_quantity' => null, // alarmas via push MQTT
+                'highest_impact' => null,
+                'primary_module' => null,
+                'public_settings' => null
+            ];
+        }
+
         return $plants;
     }
     //===================== Estas funciones se utilizan para recoger datos de clientes en una planta ====================
@@ -1205,6 +1759,55 @@ class ApiControladorService
                 return 'working';
             default:
                 return 'unknown';
+        }
+    }
+
+    // Función para mapear el estado (ps_status) de Sungrow a una descripción legible
+    private function mapSungrowStatus($status)
+    {
+        switch ((int) $status) {
+            case 1:
+                return 'working';
+            case 0:
+                return 'disconnected';
+            default:
+                return 'unknown';
+        }
+    }
+
+    // Función para mapear el estado de Sigenergy a una descripción legible.
+    // NOTA: códigos tentativos (confirmar con la doc de Sigen). Observado en datos
+    // reales: 4 = en producción/normal, 2 = con alarmas/fallo.
+    /**
+     * Estado de una planta Sigenergy al vocabulario unificado.
+     *
+     * La API oficial devuelve `status` como STRING (p.ej. "Normal", "Disconnection",
+     * "Faulty"), a diferencia del apaño anterior que daba un entero. Mapeamos por
+     * texto y dejamos 'unknown' para lo no previsto.
+     */
+    private function mapSigenergyStatus($status)
+    {
+        $s = strtolower(trim((string) $status));
+        switch ($s) {
+            case 'normal':
+            case 'ongrid':
+            case 'on_grid':
+            case 'running':
+                return 'working';
+            case 'faulty':
+            case 'fault':
+            case 'error':
+            case 'alarm':
+                return 'error';
+            case 'waiting':
+            case 'standby':
+                return 'waiting';
+            case 'disconnection':
+            case 'disconnected':
+            case 'offline':
+                return 'disconnected';
+            default:
+                return $s === '' ? 'unknown' : 'unknown';
         }
     }
     /**
@@ -1395,6 +1998,55 @@ class ApiControladorService
             'range' => $range,
             'chartIndexId' => $chartIndexId,
             'isDetailFull' => "",
+        ];
+    }
+    //acceso graficas de Sungrow
+    public function getCuerpoGraficaSungrow()
+    {
+        $json = file_get_contents('php://input');
+        $data = json_decode($json, true);
+        if ($data === null) {
+            return null;
+        }
+        $id = $data['id'] ?? null;
+        if ($id === null) {
+            return null;
+        }
+        // Fechas opcionales: aceptamos 'fechaInicio'/'fechaFin' (YmdHis) o por defecto el dia de hoy.
+        return [
+            'id'       => $id,
+            'point'    => $data['point'] ?? 'p24',           // p24 = potencia activa (W)
+            'start'    => $data['fechaInicio'] ?? $data['start'] ?? null,
+            'end'      => $data['fechaFin'] ?? $data['end'] ?? null,
+            'interval' => $data['interval'] ?? 5,
+        ];
+    }
+
+    /**
+     * Cuerpo de la grafica de Sigenergy (Openapi oficial: history por level+date).
+     *
+     * Body esperado:
+     *   id    obligatorio -> systemId (p.ej. VSSKC1768221900)
+     *   level opcional     -> Day | Week | Month | Year | Lifetime (por defecto Day)
+     *   date  opcional     -> yyyy-MM-dd (por defecto hoy; se ignora en Lifetime)
+     *
+     * Acepta tambien 'fecha' como alias de 'date' por comodidad del frontend.
+     */
+    public function getCuerpoGraficaSigenergy()
+    {
+        $json = file_get_contents('php://input');
+        $data = json_decode($json, true);
+        if ($data === null) {
+            return null;
+        }
+        $id = $data['id'] ?? null;
+        if ($id === null) {
+            return null;
+        }
+        return [
+            'id'    => $id,
+            'level' => $data['level'] ?? 'Day',
+            'date'  => $data['date'] ?? $data['fecha'] ?? date('Y-m-d'),
         ];
     }
     //acceso graficas custom de SolarEdge

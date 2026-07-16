@@ -1,0 +1,31 @@
+meta {
+  name: 11 - Plant Benefits
+  type: http
+  seq: 11
+}
+
+get {
+  url: {{base_url_esc}}/plant/benefits/{{esc_plant_id}}?proveedor={{esc_proveedor}}
+  body: none
+  auth: none
+}
+
+params:query {
+  proveedor: {{esc_proveedor}}
+}
+
+headers {
+  Accept: application/json
+  Authorization: Bearer {{esc_jwt}}
+}
+
+docs {
+  Beneficios/ingresos de una planta.
+
+  Por proveedor:
+    - solaredge -> getBenefitsSolarEdge
+    - sungrow   -> today_income / year_income / total_income + energia + co2.
+                   La moneda llega de la API como "欧元"; el servicio la normaliza a "EUR".
+    - goodwe / victronenergy -> 404 a proposito (no tienen beneficios).
+    - sigenergy -> pendiente (el listado de estaciones no trae ingresos, hace falta otro endpoint).
+}

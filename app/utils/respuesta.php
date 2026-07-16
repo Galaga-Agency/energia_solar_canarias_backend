@@ -78,6 +78,14 @@ class Paginacion extends Respuesta
     public $page;
     public $limit;
 
+    /**
+     * Info de cache/rate-limit del proveedor, cuando aplica (hoy solo Sigenergy, que
+     * limita la lista a 1 acceso cada 5 min por cuenta). Queda null en los proveedores
+     * sin limite, y asi el frontend sabe si el dato es fresco y cuando repreguntar.
+     * Ver CacheApiService.
+     */
+    public $cache = null;
+
     public function __construct($page = 1, $limit = 200)
     {
         parent::__construct();

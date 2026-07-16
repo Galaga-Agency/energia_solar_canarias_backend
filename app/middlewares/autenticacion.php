@@ -170,6 +170,53 @@ class Autenticacion
         return false;
     }
     
+    /**
+     * Comprueba si el usuario del token puede consultar ESTA planta.
+     *
+     * La regla: el admin ve todas; el usuario normal solo las que tiene asignadas
+     * en plantas_asociadas.
+     *
+     * Hace falta porque /plants y /plants/details ya filtraban por usuario, pero los
+     * endpoints de datos (tiempo real, inventario, alertas, graficas...) iban directos
+     * al proveedor sin mirar de quien es la planta: bastaba con saber el id para leer
+     * datos de cualquier instalacion, y en SolarEdge o Sungrow los ids son numericos
+     * y correlativos.
+     *
+     * Si devuelve false YA ha respondido con 403, asi que quien llama solo tiene que
+     * cortar (return/break) sin escribir nada mas.
+     *
+     * @param string $idPlanta  id de la planta tal cual lo da el proveedor
+     * @param string $proveedor nombre del proveedor (vale 'sigenergy' o 'Sigenergy':
+     *                          la comparacion en MySQL no distingue mayusculas)
+     * @return bool true si puede seguir
+     */
+    public function puedeVerPlanta($idPlanta, $proveedor)
+    {
+        if ($this->verificarAdmin()) {
+            return true;
+        }
+
+        $idUsuario = $this->obtenerIdUsuarioActivo();
+        if ($idUsuario) {
+            require_once __DIR__ . '/../DBObjects/plantasAsociadasDB.php';
+            $plantasAsociadas = new PlantasAsociadasDB;
+            if ($plantasAsociadas->isPlantasAsociadasAlUsuario($idUsuario, $idPlanta, $proveedor)) {
+                return true;
+            }
+        }
+
+        // Mismo mensaje tanto si la planta no existe como si es de otro: si dijeramos
+        // "no es tuya" estariamos confirmando que existe, y con ids correlativos eso
+        // permite mapear el parque ajeno planta por planta.
+        $respuesta = new Respuesta;
+        $respuesta->_403();
+        $respuesta->message = 'No tienes acceso a esta planta';
+        http_response_code(403);
+        header('Content-Type: application/json');
+        echo json_encode($respuesta);
+        return false;
+    }
+
     public function verificarTokenUsuarioActivo()
     {
         $headers = getallheaders();

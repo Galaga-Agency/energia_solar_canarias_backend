@@ -1,0 +1,30 @@
+meta {
+  name: 06 - Plants (todas, agregado)
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{base_url_esc}}/plants?proveedor=sungrow
+  body: none
+  auth: none
+}
+
+params:query {
+  proveedor: sungrow
+}
+
+headers {
+  Accept: application/json
+  Authorization: Bearer {{esc_jwt}}
+}
+
+docs {
+  Sin `?proveedor=`:
+    - admin  -> todas las plantas de TODOS los proveedores (agregado, desde la BD).
+    - cliente -> solo las plantas asociadas a su usuario.
+  
+  Variantes (solo admin):
+    /plants?usuarioId=12                        -> plantas de ese cliente
+    /plants?plantId=XXX&proveedor=sungrow       -> clientes de esa planta
+}

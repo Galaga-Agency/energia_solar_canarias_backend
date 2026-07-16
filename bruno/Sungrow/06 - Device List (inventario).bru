@@ -1,0 +1,47 @@
+meta {
+  name: 06 - Device List (inventario)
+  type: http
+  seq: 7
+}
+
+post {
+  url: {{base_url_sungrow}}/openapi/getDeviceList
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  x-access-key: {{sungrow_secret_key}}
+}
+
+body:json {
+  {
+    "appkey": "{{sungrow_appkey}}",
+    "sys_code": "901",
+    "lang": "_en_US",
+    "token": "{{sungrow_access_token}}",
+    "ps_id": "{{sungrow_ps_id}}",
+    "curPage": 1,
+    "size": 100
+  }
+}
+
+script:post-response {
+  const list = res.body && res.body.result_data && res.body.result_data.pageList;
+  if (list) {
+    const inv = list.find(d => Number(d.device_type) === 1);
+    if (inv) {
+      bru.setVar('sungrow_ps_key', inv.ps_key);
+      console.log('sungrow_ps_key (inversor) = ' + inv.ps_key);
+    }
+    console.log('Dispositivos: ' + list.map(d => d.device_type + ':' + d.ps_key).join(', '));
+  }
+}
+
+docs {
+  Equipos de la planta. Alimenta el endpoint /plant/inventario del backend.
+
+  `device_type` 1 = inversor. El script guarda su `ps_key` en `sungrow_ps_key`,
+  que es lo que necesita el request 07 para las series temporales.
+}

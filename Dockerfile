@@ -10,6 +10,13 @@ RUN apt-get update && apt-get install -y unzip git libpng-dev libjpeg-dev libfre
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install mysqli pdo pdo_mysql gd
 
+# La imagen base no activa ningun php.ini, asi que aplican los defaults de PHP y
+# display_errors queda a On: los warnings se imprimen ANTES del JSON y rompen la
+# respuesta de la API. Usamos php.ini-production (display_errors=Off, log_errors=On)
+# para que el cuerpo sea JSON valido. Los errores siguen visibles en:
+#   docker compose logs app
+RUN mv "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini"
+
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 COPY . /var/www/html/

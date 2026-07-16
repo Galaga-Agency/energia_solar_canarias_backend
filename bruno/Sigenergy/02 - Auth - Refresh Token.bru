@@ -1,0 +1,43 @@
+meta {
+  name: 02 - Auth - Refresh Token
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{base_url_sigen}}/auth/oauth/token
+  body: formUrlEncoded
+  auth: none
+}
+
+headers {
+  Content-Type: application/x-www-form-urlencoded
+  Authorization: Basic c2lnZW46c2lnZW4=
+  Accept: */*
+  User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:152.0) Gecko/20100101 Firefox/152.0
+  Origin: https://app-eu.sigencloud.com
+  Referer: https://app-eu.sigencloud.com/
+  lang: en_US
+  client-server: eu
+  AUTH-CLIENT-ID: sigen
+  VERSION: RELEASE
+}
+
+body:form-urlencoded {
+  scope: server
+  grant_type: refresh_token
+  refresh_token: {{sigen_refresh_token}}
+}
+
+script:post-response {
+  const data = res.body && res.body.data;
+  if (data && data.access_token) {
+    bru.setVar('sigen_access_token', data.access_token);
+    bru.setVar('sigen_refresh_token', data.refresh_token);
+    console.log('Sigen token renovado.');
+  }
+}
+
+assert {
+  res.body.code: eq 0
+}

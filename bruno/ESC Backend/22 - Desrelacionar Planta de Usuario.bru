@@ -1,0 +1,37 @@
+meta {
+  name: 22 - Desrelacionar Planta de Usuario
+  type: http
+  seq: 22
+}
+
+delete {
+  url: {{base_url_esc}}/usuarios/relacionar?idusuario={{esc_cliente_user_id}}&idplanta={{esc_plant_id}}&proveedor=Sigenergy
+  body: none
+  auth: none
+}
+
+params:query {
+  idusuario: {{esc_cliente_user_id}}
+  idplanta: {{esc_plant_id}}
+  proveedor: Sigenergy
+}
+
+headers {
+  Accept: application/json
+  Authorization: Bearer {{esc_jwt}}
+}
+
+docs {
+  Quita la asignacion de una planta a un usuario. Solo ADMIN.
+
+  Mismo endpoint que el 21 pero con metodo DELETE, y los parametros tambien
+  van en la QUERY (ver la nota del 21).
+
+  `idusuario` es OPCIONAL: si lo quitas, desrelaciona esa planta de TODOS los
+  usuarios. Util para liberar una planta sin saber quien la tenia.
+
+  Respuestas:
+    200 -> desrelacionada
+    400 -> no estaba relacionada / el usuario es admin
+    403 -> el token no es de admin
+}

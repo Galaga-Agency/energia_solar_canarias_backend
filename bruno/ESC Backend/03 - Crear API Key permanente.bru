@@ -1,0 +1,41 @@
+meta {
+  name: 03 - Crear API Key permanente
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{base_url_esc}}/usuario/bearerToken
+  body: none
+  auth: none
+}
+
+headers {
+  Accept: application/json
+  Authorization: Bearer {{esc_jwt}}
+}
+
+
+script:post-response {
+  const data = res.body && res.body.data;
+  const key = data && (data.api_key || data.apiKey);
+  if (key) {
+    bru.setVar('esc_api_key', key);
+    console.log('esc_api_key guardada. Usala como: Authorization: Token {{esc_api_key}}');
+  } else {
+    console.log('Respuesta: ' + JSON.stringify(res.body));
+  }
+}
+
+docs {
+  Genera (o regenera) una API key permanente para el usuario del JWT.
+  
+  Solo se puede pedir con Bearer JWT; con `Authorization: Token ...` el backend
+  responde 403 a proposito.
+  
+  El scope depende del usuario: admin -> scope1, cliente -> scope2.
+  
+  Alternativa al JWT para los endpoints protegidos:
+    Authorization: Token {{esc_api_key}}
+  (ver el request "20 - Ejemplo con API Key (Token)").
+}

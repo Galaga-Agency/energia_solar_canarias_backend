@@ -1,0 +1,26 @@
+meta {
+  name: 03 - Station Home (owner)
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{base_url_sigen}}/device/owner/station/home
+  body: none
+  auth: none
+}
+
+headers {
+  Accept: */*
+  Content-Type: application/json
+  Authorization: Bearer {{sigen_access_token}}
+  Origin: https://app-eu.sigencloud.com
+  Referer: https://app-eu.sigencloud.com/
+  lang: en_US
+  client-server: eu
+}
+
+docs {
+  Devuelve las estaciones/plantas de la cuenta. Ejecuta antes "01 - Auth - Get Token".
+  Guarda el id de la planta en la variable de entorno sigen_station_id para usarlo en energyflow.
+}
