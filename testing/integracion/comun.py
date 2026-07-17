@@ -33,6 +33,20 @@ def sql(q):
     return [l.split("\t") for l in r.stdout.strip().split("\n") if l.strip()]
 
 
+def php(codigo):
+    """
+    Ejecuta PHP dentro del contenedor de la app y devuelve lo que imprima.
+
+    Sirve para probar cosas de UsuariosDB y compañia contra la BD de verdad. En
+    PHPUnit no se puede: esas clases abren la conexion en el constructor y las
+    pruebas unitarias corren en el host, sin base de datos.
+    """
+    r = subprocess.run(
+        ["docker", "compose", "-f", COMPOSE, "exec", "-T", "app", "php", "-r", codigo],
+        capture_output=True, text=True)
+    return r.stdout.strip()
+
+
 def api(token, metodo, ruta, body=None):
     """Llama al backend. Devuelve (codigo_http, json_decodificado_o_None)."""
     cmd = ["curl", "-s", "-w", "\n%{http_code}", "-X", metodo, "-H", f"Authorization: {token}"]

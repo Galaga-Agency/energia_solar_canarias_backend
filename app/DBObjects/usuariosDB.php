@@ -709,6 +709,22 @@ class UsuariosDB
      *  @param int $id a verificar
      *  @return bool True en caso de que tenga un usuario, false en caso de que no tenga a ese usuario
      */
+    /**
+     * ¿Este usuario esta dado de baja (borrado logico)?
+     *
+     * Aqui a un cliente no se le borra de verdad: se le pone eliminado=1 y en Zoho baja
+     * la marca de "esta en la app". Si algun dia vuelve, se le quita el borrado y la
+     * marca sube otra vez. Se restaura SIEMPRE la misma fila, nunca se crea otra: el
+     * JWT lleva dentro el id y el email y dura 180 dias (el permanente no caduca), asi
+     * que un usuario_id nuevo dejaria sin valor los tokens vivos del cliente y le
+     * soltaria las plantas asociadas. Por eso hay que saber si ya existia dado de baja.
+     *
+     * @param int $id usuario_id. El ID, no la fila de getIdUserPorEmail(): si se le
+     *                pasa el array, PHP lo convierte a 1 y acaba preguntando por el
+     *                usuario 1 en vez de por el que toca.
+     * @return bool|null true si esta dado de baja, false si esta activo, null si no
+     *                   existe.
+     */
     public function usuarioEliminado($id)
     {
         try {
@@ -726,13 +742,10 @@ class UsuariosDB
             // Verificar si se encontró un registro
             if ($result && $row = $result->fetch_assoc()) {
                 $stmt->close();
-
-                // Retornar el estado en función del campo 'eliminado'
-                if ($row['eliminado'] == 1) {
-                    return false;
-                } else {
-                    return true;
-                }
+                // Antes devolvia lo contrario de lo que dice su nombre (false cuando el
+                // usuario SI estaba eliminado). Su unico llamante, crearUser(), se
+                // apoyaba en esa inversion, asi que se corrigen las dos a la vez.
+                return $row['eliminado'] == 1;
             }
 
             // Cerrar el statement y la conexión si no se encontró el usuario
