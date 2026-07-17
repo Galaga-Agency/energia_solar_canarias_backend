@@ -396,10 +396,24 @@ class ZohoController
         }
     }
     */
+    /**
+     * Baja la marca "Usuario_en_la_app" del cliente en Zoho.
+     *
+     * Al dar de baja a un cliente no se le borra del CRM: solo deja de constar que
+     * esta en la app. Si algun dia vuelve, esa marca sube otra vez y aqui se le quita
+     * el borrado logico.
+     *
+     * Devuelve SIEMPRE un array. Antes los errores salian como string (json_encode) y
+     * el exito como array, y su unico llamante los mira con isset($r['error']): sobre
+     * un string eso es siempre false, asi que TODOS los fallos de Zoho se tragaban y
+     * la API contestaba 200 "Usuario eliminado" con el error escondido dentro de data.
+     *
+     * @return array ["error" => motivo] si algo falla, o ["success" => true, ...].
+     */
     public function appCrearClienteFalse($idApp)
     {
         if (!$idApp) {
-            return json_encode(["error" => "ID de cliente (idApp) requerido."]);
+            return ["error" => "ID de cliente (idApp) requerido."];
         }
 
         // Buscar el cliente en Zoho por idApp
@@ -408,7 +422,7 @@ class ZohoController
 
         // Validar si el cliente fue encontrado en Zoho
         if (!isset($resultado['data'][0]['id'])) {
-            return json_encode(["error" => "No se encontró un cliente en Zoho con el idApp: " . $idApp]);
+            return ["error" => "No se encontró un cliente en Zoho con el idApp: " . $idApp];
         }
 
         // Verificar si la búsqueda devuelve exactamente un solo cliente
@@ -427,13 +441,13 @@ class ZohoController
             $deleteResponse = $this->enviarDatosZoho($data, 'PUT', 'Clientes', $zohoId);
 
             if (isset($deleteResponse['error']) && $deleteResponse['error'] == true) {
-                return json_encode(["error" => "Error al eliminar el cliente en Zoho: " . $deleteResponse['message']]);
+                return ["error" => "Error al eliminar el cliente en Zoho: " . ($deleteResponse['message'] ?? '')];
             }
 
             return ["success" => true, "message" => "Cliente eliminado correctamente en Zoho.", "zohoId" => $zohoId, "respuestaZoho" => $deleteResponse];
         } else {
             // Si más de un cliente se encuentra con el mismo idApp, logueamos el problema
-            return json_encode(["error" => "Se encontraron múltiples clientes con el mismo idApp: " . $idApp]);
+            return ["error" => "Se encontraron múltiples clientes con el mismo idApp: " . $idApp];
         }
     }
 

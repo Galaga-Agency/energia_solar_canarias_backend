@@ -572,6 +572,14 @@ class UsuariosController
         $usuariosDB = new UsuariosDB();
         if ($usuariosDB->verificarEstadoUsuario($id)) {
             $logsController->registrarLog(Logs::WARNING, "El usuario " . $id . " se ha eliminado");
+            // O se da de baja en los dos lados, o en ninguno.
+            //
+            // El borrado aqui es logico (eliminado=1) y en Zoho baja la marca de "esta
+            // en la app": son las dos caras de lo mismo. Sin transaccion, el UPDATE
+            // local quedaba firme antes de llamar a Zoho, asi que un fallo alli dejaba
+            // al cliente de baja aqui y activo en el CRM, sin que nadie se enterara.
+            $conn = Conexion::getInstance()->getConexion();
+            $conn->begin_transaction();
             // Llamar a la función para realizar el borrado lógico
             $result = $usuariosDB->borrarUser($id);
         } else {
@@ -607,14 +615,19 @@ class UsuariosController
                 */
 
                 $resultCRM = $zohoService->appCrearClienteFalse($id);
-                if (isset($resultCRM['error']) && $resultCRM['error'] == true) {
-                    $logsController->registrarLog(Logs::ERROR, "Error al eliminar (logicamente) el usuario en Zoho: " . $resultCRM['message']);
+                if (isset($resultCRM['error']) && $resultCRM['error']) {
+                    // Zoho no ha podido bajar la marca: se deshace la baja local para no
+                    // dejar al cliente de baja aqui y activo en el CRM.
+                    $conn->rollback();
+                    $logsController->registrarLog(Logs::ERROR, "Error al eliminar (logicamente) el usuario en Zoho: " . $resultCRM['error']);
                     $respuesta = new Respuesta();
                     $respuesta->_500($resultCRM);
                     $respuesta->message = "Error al eliminar el usuario en Zoho.";
                     echo json_encode($respuesta);
                     return;
                 }
+                // Los dos lados de acuerdo: ahora si queda firme la baja local.
+                $conn->commit();
                 $logsController->registrarLog(Logs::DELETE, "a eliminado al usuario" . $id);
                 $respuesta = new Respuesta();
                 $respuesta->success($resultCRM);
@@ -622,6 +635,7 @@ class UsuariosController
                 http_response_code($respuesta->code);
                 echo json_encode($respuesta);
             } else {
+                $conn->rollback();
                 $logsController->registrarLog(Logs::ERROR, "Error al eliminar el usuario." . $id);
                 $respuesta = new Respuesta();
                 $respuesta->_500();
