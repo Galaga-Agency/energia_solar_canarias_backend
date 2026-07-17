@@ -255,6 +255,23 @@ class UsuariosController
         // Log: Usuario autenticado
         $logsController->registrarLog(Logs::INFO, "Usuario autenticado. ID del usuario activo: {$idUser}");
 
+        // A partir de aqui se escribe: o se crea todo, o no se crea nada.
+        //
+        // Antes el usuario se guardaba aqui y Zoho se llamaba despues. Si Zoho fallaba
+        // se devolvia un 500, pero el usuario YA estaba en la base: la API decia que no
+        // y al recargar aparecia. Y al reintentarlo daba "el email ya esta registrado",
+        // que es la unica pista que quedaba de que se habia creado a medias.
+        //
+        // Con la transaccion, el insert solo queda firme si Zoho tambien acepta. Las
+        // tablas son InnoDB y Conexion es un singleton, asi que esto envuelve de verdad
+        // lo que hace UsuariosDB: comparten la misma conexion mysqli.
+        //
+        // Si el script muere por lo que sea sin llegar al commit, MySQL deshace la
+        // transaccion al cerrarse la conexion. El fallo es hacia "no se creo", que es
+        // el lado seguro: es preferible reintentar a tener un usuario fantasma.
+        $conn = Conexion::getInstance()->getConexion();
+        $conn->begin_transaction();
+
         // Obtener el ID del usuario por email si ya existe en estado eliminado
         $idUsuarioPorEmail = $usuariosDB->getIdUserPorEmail($data['email']);
         if ($idUsuarioPorEmail && $usuariosDB->usuarioEliminado($idUsuarioPorEmail)) {
@@ -288,7 +305,8 @@ class UsuariosController
                     $resultCRM = $zohoService->actualizarId($clienteId, $idApp);
 
                     if (isset($resultCRM['error']) && $resultCRM['error'] === true) {
-                        // Error al actualizar en Zoho
+                        // Error al actualizar en Zoho: se deshace el alta local.
+                        $conn->rollback();
                         $logsController->registrarLog(Logs::ERROR, "Error al actualizar el cliente en Zoho: " . $resultCRM['message']);
                         $respuesta = new Respuesta();
                         $respuesta->_500();
@@ -303,6 +321,7 @@ class UsuariosController
                     $logsController->registrarLog(Logs::INFO, "Usuario {$data['email']} creado desde CRM. No se realiza sincronización hacia Zoho.");
                 }
 
+                $conn->commit();
                 $respuesta = new Respuesta();
                 $respuesta->success($data);
                 $respuesta->code = 201;
@@ -314,6 +333,10 @@ class UsuariosController
             // Crear el usuario en Zoho si no fue creado desde CRM
             $resultCRM = $zohoService->crearCliente($data);
             if (isset($resultCRM['error']) && $resultCRM['error'] === true) {
+                // Zoho dijo que no: se deshace el alta local para no dejar un usuario
+                // que la API acaba de dar por fallido. Sin esto, el admin veia el error,
+                // reintentaba, y se topaba con "el email ya esta registrado".
+                $conn->rollback();
                 $logsController->registrarLog(Logs::ERROR, "Error al crear el usuario en Zoho: " . $resultCRM['message'] . " por el administrador {$idUser}");
 
                 // Respuesta de error si la creación en Zoho falla
@@ -323,6 +346,9 @@ class UsuariosController
                 echo json_encode($respuesta);
                 return;
             }
+
+            // Los dos lados han aceptado: ahora si queda firme el alta local.
+            $conn->commit();
 
             // Log: Usuario creado exitosamente en Zoho
             $logsController->registrarLog(Logs::INFO, "Usuario creado exitosamente en Zoho: {$data['email']}");
@@ -335,6 +361,9 @@ class UsuariosController
             echo json_encode($respuesta);
             return;
         }
+
+        // Ni siquiera se pudo guardar en local.
+        $conn->rollback();
 
         // Log: Error general si no se pudo crear el usuario
         $logsController->registrarLog(Logs::ERROR, "Error al intentar crear el usuario: {$data['email']}");
