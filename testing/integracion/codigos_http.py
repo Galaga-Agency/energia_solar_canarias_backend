@@ -21,7 +21,7 @@ Uso:  export ESC_JWT_ADMIN='...'
 import sys, os
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from comun import CLIENTE1, api, check, resumen, titulo, token_admin
+from comun import CLIENTE1, api, check, resumen, sql, titulo, token_admin
 
 ADMIN = token_admin()
 
@@ -63,6 +63,41 @@ check(
 # Sin token no se puede: tambien tiene que verse en el HTTP.
 hc, _ = api("", "GET", "/plants")
 check(f"sin token -> HTTP {hc}", hc in (401, 403), f"esperaba 401/403 y llego {hc}")
+
+titulo("UN ALTA QUE REVIENTA NO PUEDE DECIR QUE FUE BIEN")
+
+# Un nombre de 300 caracteres en un varchar(255), con STRICT_TRANS_TABLES: MySQL da
+# error en vez de recortar, asi que insertUser() revienta y devuelve false. Es la forma
+# limpia de provocar un fallo de escritura sin tocar nada.
+#
+# origen=crm + idApp a proposito: es la rama que NO llama a Zoho, asi que esto no crea
+# clientes en el CRM ni gasta cuota.
+#
+# Antes esto contestaba 200 status=true "Usuario creado localmente desde Zoho" con
+# usuario_id=null y CERO filas en la base: el control era isset($result), y como
+# $result se asigna siempre, isset(false) daba true y el alta fallida seguia adelante.
+EMAIL_FALLO = "fallo.insert.pruebas@galagaagency.com"
+hc, r = api(ADMIN, "POST", "/usuarios", body={
+    "email": EMAIL_FALLO,
+    "password": "LoQueSea1234!",
+    "nombre": "N" * 300,          # no cabe en varchar(255)
+    "apellido": "X",
+    "clase": "usuario",
+    "origen": "crm", "idApp": "999",
+})
+check(f"el alta falla y se dice: HTTP {hc}", hc == 500, f"esperaba 500 y llego {hc}")
+check(
+    "no se anuncia como creado",
+    bool(r) and r.get("status") is False,
+    f"contesto status={(r or {}).get('status')}: {(r or {}).get('message')!r}",
+)
+check(
+    "y no queda nada en la base",
+    len(sql(f"SELECT usuario_id FROM usuarios WHERE email='{EMAIL_FALLO}';")) == 0,
+    "se creo el usuario a pesar del fallo",
+)
+
+titulo("OTROS CODIGOS")
 
 # Una ruta que no existe no puede contestar 200.
 #
