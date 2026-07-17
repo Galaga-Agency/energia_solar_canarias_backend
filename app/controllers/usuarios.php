@@ -293,17 +293,28 @@ class UsuariosController
             $logsController->registrarLog(Logs::INFO, "Nuevo usuario creado: {$data['email']}");
         }
 
-        // Recogemos el id del usuario nuevo
-        $IdusuarioCreado = $usuariosDB->getIdUserPorEmail($data['email']);
+        // Responder según el resultado.
+        //
+        // Antes ponia isset($result), que es SIEMPRE cierto: $result se asigna en las
+        // dos ramas de arriba y, aunque insertUser() devuelva false porque el alta
+        // reviento, isset(false) sigue siendo true. Asi que un alta fallida seguia por
+        // aqui y acababa contestando "Usuario creado". Lo que importa es si salio bien,
+        // y las dos devuelven el bool de $stmt->execute() (o false si saltan).
+        //
+        // Leer el id y dar el alta por buena tambien va dentro: si el INSERT fallo, el
+        // usuario no esta, getIdUserPorEmail() devuelve false, y lo de fuera dejaba un
+        // aviso de PHP y un log diciendo "se ha creado correctamente" de algo que no
+        // existia. Si $result es false se cae al final, que deshace y contesta 500.
+        if ($result) {
+            // Recogemos el id del usuario nuevo
+            $IdusuarioCreado = $usuariosDB->getIdUserPorEmail($data['email']);
 
-        // Añadir el usuario_id al array de datos
-        $data['usuario_id'] = $IdusuarioCreado['usuario_id'];
+            // Añadir el usuario_id al array de datos
+            $data['usuario_id'] = $IdusuarioCreado['usuario_id'];
 
-        // Log: Usuario creado localmente
-        $logsController->registrarLog(Logs::INFO, "El usuario se ha creado correctamente en la App. ID del usuario creado: {$data['usuario_id']}");
+            // Log: Usuario creado localmente
+            $logsController->registrarLog(Logs::INFO, "El usuario se ha creado correctamente en la App. ID del usuario creado: {$data['usuario_id']}");
 
-        // Responder según el resultado
-        if (isset($result)) {
             // Prevenir bucles infinitos si el usuario fue creado desde Zoho
             // Si el origen es 'crm' y ya existe un idApp, no intentamos re-crearlo
             if (isset($data['origen']) && $data['origen'] == 'crm') {
