@@ -120,4 +120,52 @@ finally:
 check("el usuario 1 queda como estaba", estado(1) == "0", "OJO: se quedo de baja")
 check(f"el cliente {UID} queda como estaba", estado(UID) == "0", "se quedo de baja")
 
+titulo("4) dar de baja: si Zoho no acepta, aqui tampoco")
+
+# appCrearClienteFalse() devolvia los errores como STRING (json_encode) y el exito como
+# array. Su llamante los mira con isset($r['error']), que sobre un string es SIEMPRE
+# false, asi que TODOS los fallos de Zoho se tragaban: la API contestaba 200 "Usuario
+# eliminado" con el error escondido dentro de data, y el cliente quedaba de baja aqui y
+# activo en el CRM.
+#
+# Se le pasa 0 a proposito: entra por la guarda `if (!$idApp)` y devuelve sin llamar a
+# Zoho. Asi se comprueba el tipo de retorno sin tocar el CRM ni gastar cuota.
+TIPO = (
+    'require_once "/var/www/html/app/controllers/ZohoController.php";'
+    '$z = new ZohoController();'
+    '$r = $z->appCrearClienteFalse(0);'
+    'echo is_array($r) ? "array" : gettype($r);'
+    'echo "|";'
+    'echo isset($r["error"]) ? "detectado" : "IGNORADO";'
+)
+tipo = php(TIPO)
+check(
+    f"appCrearClienteFalse devuelve un array, no un json string ({tipo.split('|')[0]})",
+    tipo.startswith("array"),
+    "si vuelve a ser string, isset($r['error']) es false y el error se traga",
+)
+check(
+    "y su llamante puede ver el error",
+    tipo.endswith("detectado"),
+    "isset($r['error']) da false: el fallo de Zoho pasaria por exito",
+)
+
+try:
+    # El cliente de pruebas es solo local (lo crea crear_usuarios_prueba.php, que no
+    # sincroniza con Zoho), asi que NUNCA esta en el CRM: la busqueda no lo encuentra y
+    # no se llega a hacer el PUT. Es seguro incluso con las claves ZOHO_* puestas.
+    hc, r = api(ADMIN, "DELETE", f"/usuarios/{UID}")
+    check(
+        f"Zoho no acepta la baja -> HTTP {hc} (antes: 200 'Usuario eliminado')",
+        hc == 500,
+        f"esperaba 500 y llego {hc}: {(r or {}).get('message')!r}",
+    )
+    check(
+        "y el cliente NO se queda de baja aqui",
+        estado(UID) == "0",
+        "quedo de baja en la app y activo en el CRM: los dos lados descuadrados",
+    )
+finally:
+    restaurar()
+
 resumen()
