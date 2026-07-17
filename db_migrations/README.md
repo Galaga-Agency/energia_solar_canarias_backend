@@ -8,27 +8,43 @@ El esquema base sale de `db_init/esc_dump.sql`, que MySQL importa al primer arra
 
 El contenedor de la app las aplica al arrancar (`docker/entrypoint.sh`), antes de levantar Apache.
 
-**Ojo con esto al desplegar: se aplican al arrancar, no al actualizar el código.** `webhookgithub.php` solo hace `git pull`; no reinicia ni reconstruye nada, así que por sí solo **no aplica ninguna migración**. Un despliegue que solo tire del webhook puede dejar el código nuevo contra el esquema viejo, y eso rompe en silencio: sin la tabla `api_cache`, Sigenergy responde 400 en *todas* las llamadas.
+**Se aplican al arrancar, no al actualizar el código.** Eso importa por cómo está montado el VPS.
 
-Que el `git pull` cambie algo o no depende de cómo esté montado el compose del VPS (que no está en este repo):
+## Desplegar
 
-- **Si monta el directorio del proyecto como volumen**, el pull cambia el código al instante sin pasar por el entrypoint. Es el caso peligroso: código nuevo, esquema viejo, sin aviso.
-- **Si usa la imagen construida**, el pull no cambia nada hasta reconstruir, porque el `Dockerfile` hace `COPY . /var/www/html/`.
+El compose de producción **no está en este repo**: es uno compartido con el resto de proyectos de Galaga, en `/home/galagaagency/proyectos/docker-compose.yml`. Ahí el servicio se llama `esc_backend`. Lo único que monta es la configuración:
 
-En los dos casos el despliegue tiene que terminar levantando el contenedor de nuevo:
-
-```bash
-git pull
-docker compose up -d --build app   # --build si el codigo va dentro de la imagen
+```
+/home/galagaagency/proyectos/energia_solar_canarias/backend-config  ->  /var/www/html/config
 ```
 
-Si no quieres depender de eso, aplícalas a mano antes (ver más abajo): son idempotentes y se pueden lanzar las veces que haga falta.
+De ahí salen dos cosas que conviene tener claras:
+
+- **El código NO está montado**: va dentro de la imagen (`COPY . /var/www/html/`). Un `git pull` a secas **no despliega nada**; hace falta reconstruir. Y como reconstruir arranca el contenedor de nuevo, el entrypoint corre y **las migraciones se aplican solas**.
+- **La configuración sí está montada**, y `config/` entero. O sea que el `config/.env` del repo queda tapado y no lo lee nadie: el bueno es `backend-config/.env`, y como Dotenv lo lee en cada peticion, tocarlo entra al momento sin reconstruir.
+
+El despliegue completo:
+
+```bash
+cd /home/galagaagency/proyectos/energia_solar_canarias/energia_solar_canarias_backend
+git pull
+cd /home/galagaagency/proyectos
+docker compose up -d --build esc_backend    # --build: el codigo va dentro de la imagen
+```
+
+Para comprobar que el entrypoint esta puesto, `docker ps` tiene que mostrar `"/var/www/html/docke…"` en la columna COMMAND. Si pone `"docker-php-entrypoi…"`, la imagen es anterior a que existiera el entrypoint y **las migraciones no se estan aplicando**.
+
+`webhookgithub.php` no vale para esto: apunta a `/var/www/html/esc-backend`, que en este montaje no existe, y aunque existiera haria el pull dentro del contenedor, sobre codigo que se pierde en la siguiente reconstruccion.
+
+Si prefieres no depender del arranque, aplícalas a mano antes (ver más abajo): son idempotentes y se pueden lanzar las veces que haga falta.
 
 Si una migración falla, **el contenedor no arranca**. Es a propósito: es preferible un despliegue que se cae de forma evidente a uno que levanta con el esquema a medias y va fallando por sitios raros. Sin la tabla `api_cache`, por ejemplo, Sigenergy responde 400 en *todas* las llamadas — y eso no es obvio mirando el log de Apache.
 
-Si el contenedor entra en bucle de reinicios, arregla la migración y haz `docker compose up -d --force-recreate app`: un `restart` a secas se queda esperando el backoff de Docker.
+Si el contenedor entra en bucle de reinicios, arregla la migración y haz `docker compose up -d --force-recreate <servicio>`: un `restart` a secas se queda esperando el backoff de Docker.
 
 Se puede saltar con `ESC_MIGRAR=0` (solo para depurar un arranque).
+
+> **El servicio no se llama igual en los dos sitios**: en local es `app` (el `docker-compose.yml` de este repo) y en producción es `esc_backend` (el compose compartido de `/home/galagaagency/proyectos/`). En los ejemplos de abajo va el de local.
 
 ## A mano
 
