@@ -24,3 +24,8 @@ bruno/environments/*.bru
 
 # Helper local de login (lleva credenciales por defecto)
 bin_codigo_login.sh
+
+# Cache de Python de las pruebas de integracion: no pinta nada en el repo
+# (ademas rompe los git stash/checkout al regenerarse en cada ejecucion).
+__pycache__/
+*.pyc

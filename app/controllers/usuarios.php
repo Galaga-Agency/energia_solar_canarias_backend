@@ -272,9 +272,18 @@ class UsuariosController
         $conn = Conexion::getInstance()->getConexion();
         $conn->begin_transaction();
 
-        // Obtener el ID del usuario por email si ya existe en estado eliminado
+        // Si el cliente ya existia pero estaba dado de baja, se le quita el borrado
+        // logico en vez de crear una fila nueva: es el mismo cliente volviendo. Su JWT
+        // lleva dentro el id y el email y vive 180 dias, asi que darle un usuario_id
+        // nuevo le tiraria los tokens y le soltaria las plantas asociadas.
+        //
+        // Se le pasa el usuario_id, no la fila. Antes se le pasaba el array entero que
+        // devuelve getIdUserPorEmail() y PHP lo convertia a 1, asi que esto preguntaba
+        // SIEMPRE por el usuario 1 en vez de por el cliente que tocaba. Salia bien de
+        // chiripa, porque ese usuario no esta dado de baja y la respuesta coincidia con
+        // la buena; el dia que lo estuviera, ningun cliente se podria recuperar.
         $idUsuarioPorEmail = $usuariosDB->getIdUserPorEmail($data['email']);
-        if ($idUsuarioPorEmail && $usuariosDB->usuarioEliminado($idUsuarioPorEmail)) {
+        if ($idUsuarioPorEmail && $usuariosDB->usuarioEliminado($idUsuarioPorEmail['usuario_id'])) {
             // Restaurar usuario eliminado
             $result = $usuariosDB->updateUser($idUsuarioPorEmail['usuario_id'], $data);
             $logsController->registrarLog(Logs::INFO, "Usuario eliminado encontrado, restaurado: {$data['email']}");
