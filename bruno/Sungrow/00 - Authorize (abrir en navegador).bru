@@ -1,0 +1,26 @@
+meta {
+  name: 00 - Authorize (abrir en navegador)
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{sungrow_authorize_web}}/#/authorized-app?cloudId={{sungrow_cloud_id}}&applicationId={{sungrow_application_id}}&redirectUrl={{sungrow_redirect_uri}}
+  body: none
+  auth: none
+}
+
+
+docs {
+  PASO MANUAL (no se ejecuta como request normal - es una URL de navegador):
+  
+  1. Copia la URL de arriba (con las variables ya resueltas) y abrela en el NAVEGADOR.
+  2. Inicia sesion con la cuenta de iSolarCloud DUENA de las plantas y pulsa "Autorizar".
+  3. Te redirige a:
+       https://app-energiasolarcanarias-backend.com/?code=XXXXXXXX
+     Aunque la pagina de error, el CODE esta en la barra de direcciones.
+  4. Copia ese code y pegalo en la variable de entorno "sungrow_auth_code".
+  5. Ejecuta "01 - Exchange Code for Token".
+  
+  El code es de un solo uso y caduca rapido: canjealo enseguida.
+}

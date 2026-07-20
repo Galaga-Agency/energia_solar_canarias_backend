@@ -1,0 +1,34 @@
+meta {
+  name: 03 - Power Station List
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{base_url_sungrow}}/openapi/getPowerStationList
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  x-access-key: {{sungrow_secret_key}}
+  Authorization: Bearer {{sungrow_access_token}}
+}
+
+body:json {
+  {
+    "appkey": "{{sungrow_appkey}}",
+    "sys_code": "901",
+    "lang": "_en_US",
+    "curPage": 1,
+    "size": 10
+  }
+}
+
+docs {
+  Ejemplo de endpoint de datos: lista de plantas.
+  Requiere access_token (Bearer) + x-access-key + appkey en el body.
+  sys_code 901 = acceso web/openapi. Ajusta curPage/size segun necesites.
+  (Verifica el path exacto en el developer portal si Sungrow devuelve error de endpoint.)
+}

@@ -5,3 +5,27 @@ config/jwt.env
 config/.env
 img/
 webhook_data.txt
+# Volcados de base de datos (no versionar): llevan datos reales de clientes
+db_init/*.sql
+*.sql
+*.sql.gz
+# ...pero las migraciones SI se versionan. El *.sql de arriba tambien se las tragaba,
+# y sin ellas el despliegue queda a medias: sin la tabla api_cache, por ejemplo,
+# Sigenergy responde 400 en todas las llamadas.
+!db_migrations/*.sql
+listar_apikeys.php
+
+# Cache de resultados de PHPUnit (local, no aporta nada al repo)
+.phpunit.result.cache
+
+# Bruno - environment con credenciales reales (no versionar)
+bruno/environments/*.bru
+!bruno/environments/*.example.bru
+
+# Helper local de login (lleva credenciales por defecto)
+bin_codigo_login.sh
+
+# Cache de Python de las pruebas de integracion: no pinta nada en el repo
+# (ademas rompe los git stash/checkout al regenerarse en cada ejecucion).
+__pycache__/
+*.pyc

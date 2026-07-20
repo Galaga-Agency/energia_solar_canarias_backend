@@ -1,0 +1,59 @@
+meta {
+  name: 14 - Graficas (Sungrow/Sigenergy)
+  type: http
+  seq: 14
+}
+
+post {
+  url: {{base_url_esc}}/plants/graficas?proveedor={{esc_proveedor}}
+  body: json
+  auth: none
+}
+
+params:query {
+  proveedor: {{esc_proveedor}}
+}
+
+headers {
+  Content-Type: application/json
+  Authorization: Bearer {{esc_jwt}}
+}
+
+body:json {
+  {
+    "id": "{{esc_plant_id}}",
+    "point": "p24",
+    "interval": 5
+  }
+}
+
+docs {
+  Serie temporal de la planta. El cuerpo depende del proveedor.
+
+  SUNGROW / SIGENERGY (este body):
+    id        obligatorio (ps_id / id de estacion)
+    point     punto del inversor. p24 = potencia activa en W (por defecto)
+    interval  minutos entre muestras (5 por defecto)
+    fechaInicio / fechaFin  formato YmdHis, p.ej. "20260715000000".
+                            Por defecto: desde las 00:00 de hoy hasta ahora.
+
+  Sungrow: la ventana esta limitada por la API, asi que el servicio la trocea en
+  bloques de 2h y capa el rango a 24h. Pasa por getDevicePointMinuteDataList (es el
+  unico endpoint de series autorizado para esta cuenta), por eso primero busca el
+  inversor de la planta.
+
+  SIGENERGY (API OFICIAL): usa OTRO body distinto al de Sungrow:
+    id     obligatorio -> systemId (p.ej. VSSKC1768221900)
+    level  opcional     -> Day | Week | Month | Year | Lifetime (por defecto Day)
+    date   opcional     -> yyyy-MM-dd (por defecto hoy; se ignora en Lifetime)
+  Ej: { "id": "VSSKC1768221900", "level": "Day", "date": "2026-07-15" }
+
+  Detras llama a openapi/systems/{systemId}/history. Devuelve los totales del
+  periodo (powerGeneration, powerToGrid, powerSelfConsumption, powerUse...) y un
+  itemList con cada punto (Day = 288 puntos de 5 min): dataTime, pvTotalPower,
+  loadPower, toGridPower, fromGridPower, esChargePower, batSoc...
+  Limite: 1 consulta por estacion cada 5 min.
+
+  GoodWe / SolarEdge / VictronEnergy usan este mismo endpoint pero con OTRO body
+  (cada uno tiene su getCuerpoGrafica*).
+}

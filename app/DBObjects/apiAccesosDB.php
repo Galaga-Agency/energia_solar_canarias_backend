@@ -159,6 +159,13 @@ class ApiAccesosDB {
         try {
             $conn = $this->conexion->getConexion();
 
+            // En la tabla la clave se guarda CON el prefijo ("Token <uuid>"), pero aqui
+            // llega pelada, porque getAuthApiScope() ya lo quita al leer la cabecera.
+            // Sin volver a ponerlo no casa NUNCA y devuelve false: el usuario de la api
+            // key salia como desconocido y no veia ninguna de sus plantas.
+            // Es lo mismo que hace verificarAccesoApiKey().
+            $api_key = 'Token ' . $api_key;
+
             $query = "SELECT usuario_id FROM api_accesos WHERE api_key = ?";
             $stmt = $conn->prepare($query);
             if (!$stmt) {

@@ -1,0 +1,45 @@
+meta {
+  name: 09 - Plant Realtime
+  type: http
+  seq: 9
+}
+
+get {
+  url: {{base_url_esc}}/plant/power/realtime/{{esc_plant_id}}?proveedor={{esc_proveedor}}
+  body: none
+  auth: none
+}
+
+params:query {
+  proveedor: {{esc_proveedor}}
+}
+
+headers {
+  Accept: application/json
+  Authorization: Bearer {{esc_jwt}}
+}
+
+docs {
+  Datos en tiempo real de la planta (potencia actual, energia de hoy, estado).
+  Implementado para los 5 proveedores.
+
+  - Sungrow   -> sale de getPowerStationList (ya trae los KPI en tiempo real).
+
+  - Sigenergy -> FUSIONA las dos llamadas que hace el panel de Sigenergy, porque
+    ninguna basta por si sola (31 campos en total):
+      device/sigen/station/energyflow  -> el diagrama de flujo: pvPower, buySellPower
+                                          (red), batteryPower, evPower, heatPumpPower,
+                                          generatorPower, pvDayNrg, onGrid, pcsPower
+      device/sigen/station/info/{sn}   -> los KPI que NO estan en el flujo: batSoe,
+                                          alarmNum, epActivePower/epReactivePower,
+                                          pcsActivePower/Reactive, esGreenElecRatio
+
+    Detalles de la fusion:
+      - Se usa energyflow SIN /async. La variante /async que llama su web dispara un
+        refresco y responde al instante con TODO a null (la app repregunta luego);
+        la sincrona ya trae los valores.
+      - Al superponer solo se pisan valores no nulos: energyflow devuelve null en
+        campos que info si trae, y machacarlos perderia la lectura buena.
+      - Si una de las dos falla (p.ej. CloudFront bloquea por IP), se devuelve la otra
+        en vez de perder toda la lectura.
+}

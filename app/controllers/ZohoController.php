@@ -16,6 +16,10 @@ class ZohoController
         //array con todas las rutas de zoho
         $this->routes = [
             "Clientes" => "/crm/v2/Accounts",
+            // Buscar por criteria necesita el sub-endpoint /search. Contra el modulo a
+            // secas, Zoho IGNORA el criteria y devuelve los primeros 200 registros, asi
+            // que data[0] era un cliente cualquiera. Igual que 'Plantas/search'.
+            'Clientes/search' => '/crm/v2/Accounts/search',
             'Plantas'  => '/crm/v2/Plantas',
             'Plantas/search' => '/crm/v2/Plantas/search',
             'Historial_de_precios/search' => '/crm/v2/Historial_de_precios/search',
@@ -41,7 +45,7 @@ class ZohoController
 
         // Construir los parámetros de búsqueda
         $queryParams = ['criteria' => '(idApp:equals:' . $idApp . ')'];
-        $resultado = $this->enviarDatosZoho([], 'GET', 'Clientes', '', $queryParams);
+        $resultado = $this->enviarDatosZoho([], 'GET', 'Clientes/search', '', $queryParams);
 
         // Verificar si se encontró un cliente
         if (!is_array($resultado) || !isset($resultado['data'][0]['id'])) {
@@ -54,22 +58,24 @@ class ZohoController
         return $resultado['data'][0]['id'];
     }
 
-    // Función para obtener el cliente desde Zoho CRM por idApp
+    // Función para obtener el cliente desde Zoho CRM por idApp.
+    // Devuelve SIEMPRE un array: su llamante comprueba is_array($r) && isset($r['error']),
+    // asi que un error en json_encode (string) se colaba como si no hubiera fallado.
     public function obtenerCliente($idApp)
     {
         if (empty($idApp)) {
             $this->logsController->registrarLog(Logs::ERROR, "Se requiere idApp para obtener los datos del cliente.");
-            return json_encode(["error" => "Se requiere idApp para obtener los datos del cliente."]);
+            return ["error" => "Se requiere idApp para obtener los datos del cliente."];
         }
 
         // Construir los parámetros de búsqueda
         $queryParams = ['criteria' => '(idApp:equals:' . $idApp . ')'];
-        $resultado = $this->enviarDatosZoho([], 'GET', 'Clientes', '', $queryParams);
+        $resultado = $this->enviarDatosZoho([], 'GET', 'Clientes/search', '', $queryParams);
 
         // Verificar si se encontró un cliente
         if (!is_array($resultado) || !isset($resultado['data'][0]['id'])) {
             $this->logsController->registrarLog(Logs::ERROR, "No se encontró ningún cliente en Zoho con el idApp: " . $idApp);
-            return json_encode(["error" => "No se encontró ningún cliente en Zoho con el idApp: " . $idApp]);
+            return ["error" => "No se encontró ningún cliente en Zoho con el idApp: " . $idApp];
         }
 
         $this->logsController->registrarLog(Logs::INFO, "Cliente encontrado exitosamente." . $idApp);
@@ -305,23 +311,32 @@ class ZohoController
         ];
     }
 
-    // Función principal que usa las funciones anteriores para actualizar un cliente
+    /**
+     * Actualiza un cliente en Zoho a partir del usuario_id de la app.
+     *
+     * Devuelve SIEMPRE un array. Antes devolvia json_encode(...) -> un STRING, tanto en
+     * error como en exito. Su llamante (usuarios.php::actualizarUser) mira el resultado
+     * con isset($r['error']), que sobre un string es SIEMPRE false: el fallo de Zoho se
+     * tragaba y el usuario se actualizaba en local sin sincronizar con el CRM, quedando
+     * los dos lados descuadrados. Mismo patron que se corrigio en appCrearClienteFalse.
+     *
+     * @return array ["error" => motivo] o el resultado de actualizarClienteEnZoho.
+     */
     public function actualizarCliente($data)
     {
         // Validar si se han pasado los datos necesarios
         if ($data === null || !is_array($data) || !isset($data['usuario_id'])) {
-            return json_encode(["error" => "Datos incompletos. Se requiere idApp para actualizar el cliente."]);
+            return ["error" => "Datos incompletos. Se requiere idApp para actualizar el cliente."];
         }
 
         // Buscar el cliente por idApp
         $zohoId = $this->buscarClientePorIdApp($data['usuario_id']);
-        if (isset($zohoId['error'])) {
-            return json_encode($zohoId);  // Si hay un error, lo devolvemos
+        if (is_array($zohoId) && isset($zohoId['error'])) {
+            return $zohoId;  // Si hay un error, lo devolvemos
         }
 
         // Actualizar el cliente en Zoho
-        $resultado = $this->actualizarClienteEnZoho($data, $zohoId);
-        return json_encode($resultado);
+        return $this->actualizarClienteEnZoho($data, $zohoId);
     }
 
     public function actualizarId($clienteId, $idApp)
@@ -373,7 +388,7 @@ class ZohoController
 
         // Buscar el cliente en Zoho por idApp
         $queryParams = ['criteria' => '(idApp:equals:' . $idApp . ')'];
-        $resultado = $this->enviarDatosZoho([], 'GET', 'Clientes', '', $queryParams);
+        $resultado = $this->enviarDatosZoho([], 'GET', 'Clientes/search', '', $queryParams);
 
         // Validar si el cliente fue encontrado en Zoho
         if (!isset($resultado['data'][0]['id'])) {
@@ -396,19 +411,33 @@ class ZohoController
         }
     }
     */
+    /**
+     * Baja la marca "Usuario_en_la_app" del cliente en Zoho.
+     *
+     * Al dar de baja a un cliente no se le borra del CRM: solo deja de constar que
+     * esta en la app. Si algun dia vuelve, esa marca sube otra vez y aqui se le quita
+     * el borrado logico.
+     *
+     * Devuelve SIEMPRE un array. Antes los errores salian como string (json_encode) y
+     * el exito como array, y su unico llamante los mira con isset($r['error']): sobre
+     * un string eso es siempre false, asi que TODOS los fallos de Zoho se tragaban y
+     * la API contestaba 200 "Usuario eliminado" con el error escondido dentro de data.
+     *
+     * @return array ["error" => motivo] si algo falla, o ["success" => true, ...].
+     */
     public function appCrearClienteFalse($idApp)
     {
         if (!$idApp) {
-            return json_encode(["error" => "ID de cliente (idApp) requerido."]);
+            return ["error" => "ID de cliente (idApp) requerido."];
         }
 
         // Buscar el cliente en Zoho por idApp
         $queryParams = ['criteria' => '(idApp:equals:' . $idApp . ')'];
-        $resultado = $this->enviarDatosZoho([], 'GET', 'Clientes', '', $queryParams);
+        $resultado = $this->enviarDatosZoho([], 'GET', 'Clientes/search', '', $queryParams);
 
         // Validar si el cliente fue encontrado en Zoho
         if (!isset($resultado['data'][0]['id'])) {
-            return json_encode(["error" => "No se encontró un cliente en Zoho con el idApp: " . $idApp]);
+            return ["error" => "No se encontró un cliente en Zoho con el idApp: " . $idApp];
         }
 
         // Verificar si la búsqueda devuelve exactamente un solo cliente
@@ -427,13 +456,13 @@ class ZohoController
             $deleteResponse = $this->enviarDatosZoho($data, 'PUT', 'Clientes', $zohoId);
 
             if (isset($deleteResponse['error']) && $deleteResponse['error'] == true) {
-                return json_encode(["error" => "Error al eliminar el cliente en Zoho: " . $deleteResponse['message']]);
+                return ["error" => "Error al eliminar el cliente en Zoho: " . ($deleteResponse['message'] ?? '')];
             }
 
             return ["success" => true, "message" => "Cliente eliminado correctamente en Zoho.", "zohoId" => $zohoId, "respuestaZoho" => $deleteResponse];
         } else {
             // Si más de un cliente se encuentra con el mismo idApp, logueamos el problema
-            return json_encode(["error" => "Se encontraron múltiples clientes con el mismo idApp: " . $idApp]);
+            return ["error" => "Se encontraron múltiples clientes con el mismo idApp: " . $idApp];
         }
     }
 

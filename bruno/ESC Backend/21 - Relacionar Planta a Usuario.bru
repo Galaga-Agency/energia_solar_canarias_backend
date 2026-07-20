@@ -1,0 +1,59 @@
+meta {
+  name: 21 - Relacionar Planta a Usuario
+  type: http
+  seq: 21
+}
+
+post {
+  url: {{base_url_esc}}/usuarios/relacionar?idusuario={{esc_cliente_user_id}}&idplanta={{esc_plant_id}}&proveedor=Sigenergy
+  body: none
+  auth: none
+}
+
+params:query {
+  idusuario: {{esc_cliente_user_id}}
+  idplanta: {{esc_plant_id}}
+  proveedor: Sigenergy
+}
+
+headers {
+  Accept: application/json
+  Authorization: Bearer {{esc_jwt}}
+}
+
+docs {
+  Asigna una planta a un usuario cliente. Solo ADMIN (con Bearer JWT de admin).
+
+  ## OJO: los parametros van en la QUERY, no en el body
+
+  RequestHelper::getParam() solo mira los query params y las cabeceras, NUNCA
+  el body JSON. Si mandas un body, se ignora en silencio y llegan todos los
+  parametros a null -> responde 404 "El usuario ... no existe".
+
+  ## Parametros
+
+    idusuario  id del usuario cliente (no puede ser admin: el admin ya ve todo)
+    idplanta   id de la planta TAL CUAL lo da el proveedor:
+                 - sigenergy     -> systemId,  p.ej. WGANI1733406267
+                 - goodwe        -> UUID,      p.ej. 017ee759-8b4b-...
+                 - solaredge     -> numerico,  p.ej. 3145637
+                 - victronenergy -> numerico
+                 - sungrow       -> ps_id
+    proveedor  nombre tal cual esta en la tabla `proveedores`:
+               GoodWe | VictronEnergy | SolarEdge | Sigenergy | Sungrow
+
+  ## Comportamiento
+
+  Una planta solo puede estar asignada a UN usuario: al relacionar se borran
+  las asignaciones anteriores de esa planta.
+
+  NO se comprueba que la planta exista en el proveedor. Si te equivocas al
+  escribir el id, responde 200 pero crea una relacion muerta: el cliente no
+  vera nada y no habra ningun error que lo avise.
+
+  Respuestas:
+    200 -> relacionada
+    400 -> ya estaba relacionada / el usuario es admin / proveedor inexistente
+    404 -> el usuario no existe o esta eliminado
+    403 -> el token no es de admin
+}

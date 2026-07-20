@@ -1,0 +1,44 @@
+meta {
+  name: 01 - Exchange Code for Token
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{base_url_sungrow}}/openapi/apiManage/token
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  x-access-key: {{sungrow_secret_key}}
+}
+
+body:json {
+  {
+    "appkey": "{{sungrow_appkey}}",
+    "code": "{{sungrow_auth_code}}",
+    "grant_type": "authorization_code",
+    "redirect_uri": "{{sungrow_redirect_uri}}"
+  }
+}
+
+script:post-response {
+  const b = res.body || {};
+  const data = b.result_data || b.data || b;
+  const at = data.access_token || (data.result_data && data.result_data.access_token);
+  if (at) {
+    bru.setVar('sungrow_access_token', at);
+    if (data.refresh_token) bru.setVar('sungrow_refresh_token', data.refresh_token);
+    console.log('Sungrow access_token guardado.');
+  } else {
+    console.log('Sin token. Respuesta: ' + JSON.stringify(b));
+  }
+}
+
+docs {
+  Canjea el sungrow_auth_code (obtenido en el paso 00) por un access_token.
+  Endpoint: POST /openapi/apiManage/token  (gateway EU).
+  Header x-access-key = secret key. Body con appkey + code + grant_type=authorization_code.
+}

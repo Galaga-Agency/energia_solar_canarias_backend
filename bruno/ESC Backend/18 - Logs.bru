@@ -1,0 +1,22 @@
+meta {
+  name: 18 - Logs
+  type: http
+  seq: 18
+}
+
+get {
+  url: {{base_url_esc}}/logs
+  body: none
+  auth: none
+}
+
+headers {
+  Accept: application/json
+  Authorization: Bearer {{esc_jwt}}
+}
+
+docs {
+  Logs de la API (solo admin). Util para ver que hizo el backend en la ultima
+  llamada a un proveedor: cada acceso a Sungrow/Sigenergy deja una linea INFO,
+  y los fallos dejan una ERROR.
+}

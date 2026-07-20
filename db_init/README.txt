@@ -1,0 +1,1 @@
+-- Coloca aqui el volcado esc_dump.sql; MySQL lo importa al primer arranque.

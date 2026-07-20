@@ -1,0 +1,59 @@
+meta {
+  name: 01 - Login (envia codigo al email)
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{base_url_esc}}/login
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "email": "{{esc_email}}",
+    "password": "{{esc_password}}",
+    "idiomaUsuario": "es"
+  }
+}
+
+script:post-response {
+  const data = res.body && res.body.data;
+  if (data && data.id) {
+    bru.setVar('esc_user_id', String(data.id));
+    console.log('esc_user_id = ' + data.id + '. Revisa el email y pon el codigo en esc_login_code.');
+  } else {
+    console.log('Respuesta login: ' + JSON.stringify(res.body));
+  }
+}
+
+docs {
+  PASO 1 del login. NO devuelve el JWT todavia.
+
+  Valida email+password y ENVIA UN CODIGO al correo del usuario (2FA).
+  Ese codigo es el `token_login` que guarda en la tabla `token` (caduca a los 5 MINUTOS).
+
+  Que hacer despues:
+    1. Abre el email y copia el codigo.
+    2. Pegalo en la variable de entorno `esc_login_code`.
+    3. Ejecuta "02 - Validar Codigo (obtener JWT)".
+
+  El script post-response guarda automaticamente el id de usuario en `esc_user_id`.
+
+  ---
+  EN LOCAL: el envio de correo falla (500 "SMTP Error: Could not authenticate")
+  porque la app password de Gmail de soporte@galagaagency.com esta revocada.
+  NO IMPORTA: el codigo se inserta en la BD ANTES de mandar el email, asi que el
+  500 llega cuando el codigo YA esta guardado. Ignoralo y sacalo de la BD:
+
+    docker compose exec -T mysql mysql -N -uescuser -pescpassword esc \
+      -e "SELECT token_login FROM token WHERE usuario_id=21 ORDER BY time_token_login DESC LIMIT 1;"
+
+  (cambia usuario_id por el tuyo). Pegalo en `esc_login_code` y ejecuta el 02
+  antes de que pasen los 5 minutos.
+}

@@ -1,0 +1,27 @@
+meta {
+  name: 20 - Ejemplo con API Key (Token)
+  type: http
+  seq: 20
+}
+
+get {
+  url: {{base_url_esc}}/plants
+  body: none
+  auth: none
+}
+
+headers {
+  Accept: application/json
+  Authorization: Token {{esc_api_key}}
+}
+
+docs {
+  Mismo endpoint que el 06 pero autenticando con la API KEY permanente en vez del JWT.
+
+  El backend acepta DOS esquemas en la cabecera Authorization:
+    Bearer <jwt>       -> JWT del login (caduca a los ~180 dias)
+    Token  <api_key>   -> API key permanente de /usuario/bearerToken (no caduca)
+
+  Requiere haber ejecutado antes "03 - Crear API Key permanente".
+  El scope de la key decide si eres admin (scope1) o cliente (scope2).
+}

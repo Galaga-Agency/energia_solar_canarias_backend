@@ -1,0 +1,65 @@
+meta {
+  name: 10 - Plant Alert
+  type: http
+  seq: 10
+}
+
+get {
+  url: {{base_url_esc}}/plant/alert?proveedor={{esc_proveedor}}&siteId={{esc_plant_id}}&pageIndex=1&pageSize=200
+  body: none
+  auth: none
+}
+
+params:query {
+  proveedor: {{esc_proveedor}}
+  siteId: {{esc_plant_id}}
+  pageIndex: 1
+  pageSize: 200
+}
+
+headers {
+  Accept: application/json
+  Authorization: Bearer {{esc_jwt}}
+}
+
+docs {
+  Alertas/alarmas de una planta.
+
+  Ojo: aqui el id de planta va como QUERY PARAM `siteId`, no en la ruta.
+
+  Por proveedor:
+    - goodwe        -> no usa siteId; filtra por pageIndex/pageSize/status (status por defecto 3).
+    - victronenergy -> requiere siteId.
+    - sungrow       -> requiere siteId. Devuelve solo el RESUMEN (alarm_count, fault_count,
+                       ps_fault_status). El listado detallado necesita permisos E900 que
+                       esta cuenta de iSolarCloud no tiene.
+    - solaredge     -> 404 a proposito (no hay alertas).
+    - sigenergy     -> requiere siteId. Ver abajo: NO son alarmas reales.
+
+  ## Sigenergy: son incidencias deducidas, no alarmas
+
+  La Openapi de Sigenergy NO tiene endpoint REST de alarmas. Las alarmas de
+  verdad (con alarmCode, hora exacta y generation/recovery) solo se entregan
+  por PUSH MQTT, y para eso hace falta suscribirse (seccion Subscription de la
+  doc) y montar un receptor MQTT.
+
+  Mientras tanto, esto devuelve lo unico consultable de forma sincrona: el
+  estado de la planta y el de cada equipo. Por eso la respuesta lleva
+  `alarmas_en_tiempo_real: false` y cada item un `origen`
+  (estado_planta / estado_equipo): el frontend NO debe presentarlas como
+  alarmas reales, porque no tenemos ni el codigo ni desde cuando falla.
+
+    "items": [
+      {"deviceType": "Planta",   "status": "Faulty", "origen": "estado_planta"},
+      {"deviceType": "Inverter", "status": "Faulty", "origen": "estado_equipo"}
+    ],
+    "total": 2,
+    "alarmas_en_tiempo_real": false
+
+  Se miran los dos niveles porque no son lo mismo: una planta caida
+  (Disconnection) tiene sus equipos en Normal, que es el ultimo estado que se
+  supo antes de perder la comunicacion. Mirando solo los equipos, una planta
+  incomunicada saldria con 0 incidencias.
+
+  No gasta llamadas extra: sale del inventario y de la lista, ya cacheados.
+}
