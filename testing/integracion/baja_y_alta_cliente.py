@@ -168,4 +168,47 @@ try:
 finally:
     restaurar()
 
+titulo("5) modificar cliente: el fallo de Zoho no se traga")
+
+# actualizarCliente() y obtenerCliente() devolvian json_encode(...) -> STRING en error, y
+# actualizarUser() los mira con isset($r['error']) / is_array($r): sobre un string eso da
+# false, asi que el usuario se actualizaba en local SIN sincronizar con el CRM. Mismo
+# patron que appCrearClienteFalse. Se comprueba el tipo de retorno por las guardas que
+# no llaman a Zoho (idApp vacio / datos incompletos), sin tocar el CRM.
+RET = (
+    'require_once "/var/www/html/app/controllers/ZohoController.php";'
+    '$z = new ZohoController();'
+    '$a = $z->actualizarCliente([]);'          # sin usuario_id -> guarda
+    '$o = $z->obtenerCliente(0);'              # idApp vacio -> guarda
+    'echo (is_array($a) && isset($a["error"])) ? "a_ok" : "a_MAL";'
+    'echo "|";'
+    'echo (is_array($o) && isset($o["error"])) ? "o_ok" : "o_MAL";'
+)
+ret = php(RET)
+check(
+    f"actualizarCliente devuelve array con error ({ret.split('|')[0]})",
+    ret.startswith("a_ok"),
+    "si vuelve a ser string, actualizarUser se traga el fallo y no sincroniza con Zoho",
+)
+check(
+    f"obtenerCliente devuelve array con error ({ret.split('|')[-1]})",
+    ret.endswith("o_ok"),
+    "mismo problema en la rama origen=crm de actualizarUser",
+)
+
+# Que la busqueda de clientes use /search (sin el, Zoho ignora el criteria y devuelve
+# los primeros 200, y data[0] era un cliente cualquiera al que se le escribia encima).
+RUTA = (
+    'require_once "/var/www/html/app/controllers/ZohoController.php";'
+    '$z = new ZohoController();'
+    '$m = new ReflectionProperty($z, "routes"); $m->setAccessible(true);'
+    '$r = $m->getValue($z);'
+    'echo isset($r["Clientes/search"]) && str_ends_with($r["Clientes/search"], "/Accounts/search") ? "ok" : "MAL";'
+)
+check(
+    "la busqueda de clientes usa el sub-endpoint /search",
+    php(RUTA) == "ok",
+    "sin /search, Zoho ignora el criteria y se opera sobre el cliente equivocado",
+)
+
 resumen()
