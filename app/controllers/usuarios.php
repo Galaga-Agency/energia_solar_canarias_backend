@@ -68,7 +68,9 @@ class UsuariosController
         }
     }
 
-    public function desrelacionarUsers($idUsuario = null, $idPlanta, $idProveedor)
+    // $idUsuario admite null (desrelaciona la planta de todos los usuarios), pero no
+    // puede llevar valor por defecto: va delante de parametros obligatorios.
+    public function desrelacionarUsers($idUsuario, $idPlanta, $idProveedor)
     {
         // Crear una instancia del controlador de logs
         $logsController = new LogsController();
@@ -253,9 +255,35 @@ class UsuariosController
         // Log: Usuario autenticado
         $logsController->registrarLog(Logs::INFO, "Usuario autenticado. ID del usuario activo: {$idUser}");
 
-        // Obtener el ID del usuario por email si ya existe en estado eliminado
+        // A partir de aqui se escribe: o se crea todo, o no se crea nada.
+        //
+        // Antes el usuario se guardaba aqui y Zoho se llamaba despues. Si Zoho fallaba
+        // se devolvia un 500, pero el usuario YA estaba en la base: la API decia que no
+        // y al recargar aparecia. Y al reintentarlo daba "el email ya esta registrado",
+        // que es la unica pista que quedaba de que se habia creado a medias.
+        //
+        // Con la transaccion, el insert solo queda firme si Zoho tambien acepta. Las
+        // tablas son InnoDB y Conexion es un singleton, asi que esto envuelve de verdad
+        // lo que hace UsuariosDB: comparten la misma conexion mysqli.
+        //
+        // Si el script muere por lo que sea sin llegar al commit, MySQL deshace la
+        // transaccion al cerrarse la conexion. El fallo es hacia "no se creo", que es
+        // el lado seguro: es preferible reintentar a tener un usuario fantasma.
+        $conn = Conexion::getInstance()->getConexion();
+        $conn->begin_transaction();
+
+        // Si el cliente ya existia pero estaba dado de baja, se le quita el borrado
+        // logico en vez de crear una fila nueva: es el mismo cliente volviendo. Su JWT
+        // lleva dentro el id y el email y vive 180 dias, asi que darle un usuario_id
+        // nuevo le tiraria los tokens y le soltaria las plantas asociadas.
+        //
+        // Se le pasa el usuario_id, no la fila. Antes se le pasaba el array entero que
+        // devuelve getIdUserPorEmail() y PHP lo convertia a 1, asi que esto preguntaba
+        // SIEMPRE por el usuario 1 en vez de por el cliente que tocaba. Salia bien de
+        // chiripa, porque ese usuario no esta dado de baja y la respuesta coincidia con
+        // la buena; el dia que lo estuviera, ningun cliente se podria recuperar.
         $idUsuarioPorEmail = $usuariosDB->getIdUserPorEmail($data['email']);
-        if ($idUsuarioPorEmail && $usuariosDB->usuarioEliminado($idUsuarioPorEmail)) {
+        if ($idUsuarioPorEmail && $usuariosDB->usuarioEliminado($idUsuarioPorEmail['usuario_id'])) {
             // Restaurar usuario eliminado
             $result = $usuariosDB->updateUser($idUsuarioPorEmail['usuario_id'], $data);
             $logsController->registrarLog(Logs::INFO, "Usuario eliminado encontrado, restaurado: {$data['email']}");
@@ -265,17 +293,28 @@ class UsuariosController
             $logsController->registrarLog(Logs::INFO, "Nuevo usuario creado: {$data['email']}");
         }
 
-        // Recogemos el id del usuario nuevo
-        $IdusuarioCreado = $usuariosDB->getIdUserPorEmail($data['email']);
+        // Responder según el resultado.
+        //
+        // Antes ponia isset($result), que es SIEMPRE cierto: $result se asigna en las
+        // dos ramas de arriba y, aunque insertUser() devuelva false porque el alta
+        // reviento, isset(false) sigue siendo true. Asi que un alta fallida seguia por
+        // aqui y acababa contestando "Usuario creado". Lo que importa es si salio bien,
+        // y las dos devuelven el bool de $stmt->execute() (o false si saltan).
+        //
+        // Leer el id y dar el alta por buena tambien va dentro: si el INSERT fallo, el
+        // usuario no esta, getIdUserPorEmail() devuelve false, y lo de fuera dejaba un
+        // aviso de PHP y un log diciendo "se ha creado correctamente" de algo que no
+        // existia. Si $result es false se cae al final, que deshace y contesta 500.
+        if ($result) {
+            // Recogemos el id del usuario nuevo
+            $IdusuarioCreado = $usuariosDB->getIdUserPorEmail($data['email']);
 
-        // Añadir el usuario_id al array de datos
-        $data['usuario_id'] = $IdusuarioCreado['usuario_id'];
+            // Añadir el usuario_id al array de datos
+            $data['usuario_id'] = $IdusuarioCreado['usuario_id'];
 
-        // Log: Usuario creado localmente
-        $logsController->registrarLog(Logs::INFO, "El usuario se ha creado correctamente en la App. ID del usuario creado: {$data['usuario_id']}");
+            // Log: Usuario creado localmente
+            $logsController->registrarLog(Logs::INFO, "El usuario se ha creado correctamente en la App. ID del usuario creado: {$data['usuario_id']}");
 
-        // Responder según el resultado
-        if (isset($result)) {
             // Prevenir bucles infinitos si el usuario fue creado desde Zoho
             // Si el origen es 'crm' y ya existe un idApp, no intentamos re-crearlo
             if (isset($data['origen']) && $data['origen'] == 'crm') {
@@ -286,7 +325,8 @@ class UsuariosController
                     $resultCRM = $zohoService->actualizarId($clienteId, $idApp);
 
                     if (isset($resultCRM['error']) && $resultCRM['error'] === true) {
-                        // Error al actualizar en Zoho
+                        // Error al actualizar en Zoho: se deshace el alta local.
+                        $conn->rollback();
                         $logsController->registrarLog(Logs::ERROR, "Error al actualizar el cliente en Zoho: " . $resultCRM['message']);
                         $respuesta = new Respuesta();
                         $respuesta->_500();
@@ -301,6 +341,7 @@ class UsuariosController
                     $logsController->registrarLog(Logs::INFO, "Usuario {$data['email']} creado desde CRM. No se realiza sincronización hacia Zoho.");
                 }
 
+                $conn->commit();
                 $respuesta = new Respuesta();
                 $respuesta->success($data);
                 $respuesta->code = 201;
@@ -312,6 +353,10 @@ class UsuariosController
             // Crear el usuario en Zoho si no fue creado desde CRM
             $resultCRM = $zohoService->crearCliente($data);
             if (isset($resultCRM['error']) && $resultCRM['error'] === true) {
+                // Zoho dijo que no: se deshace el alta local para no dejar un usuario
+                // que la API acaba de dar por fallido. Sin esto, el admin veia el error,
+                // reintentaba, y se topaba con "el email ya esta registrado".
+                $conn->rollback();
                 $logsController->registrarLog(Logs::ERROR, "Error al crear el usuario en Zoho: " . $resultCRM['message'] . " por el administrador {$idUser}");
 
                 // Respuesta de error si la creación en Zoho falla
@@ -321,6 +366,9 @@ class UsuariosController
                 echo json_encode($respuesta);
                 return;
             }
+
+            // Los dos lados han aceptado: ahora si queda firme el alta local.
+            $conn->commit();
 
             // Log: Usuario creado exitosamente en Zoho
             $logsController->registrarLog(Logs::INFO, "Usuario creado exitosamente en Zoho: {$data['email']}");
@@ -333,6 +381,9 @@ class UsuariosController
             echo json_encode($respuesta);
             return;
         }
+
+        // Ni siquiera se pudo guardar en local.
+        $conn->rollback();
 
         // Log: Error general si no se pudo crear el usuario
         $logsController->registrarLog(Logs::ERROR, "Error al intentar crear el usuario: {$data['email']}");
@@ -370,6 +421,12 @@ class UsuariosController
             }
 
             if ($usuariosDB->verificarEstadoUsuario($id)) {
+                // El id viene en la URL, no en el cuerpo. actualizarCliente() busca el
+                // cliente en Zoho por (idApp:equals:usuario_id), asi que sin esto la
+                // sincronizacion con el CRM se quedaba sin a quien apuntar y devolvia
+                // "Datos incompletos". Se fija desde la ruta, que es la fuente fiable.
+                $data['usuario_id'] = $id;
+
                 if (!isset($data['origen'])) {
                     $data['origen'] = 'app'; // Si no se especifica, establecemos el origen como 'app' por defecto
                 }
@@ -521,6 +578,14 @@ class UsuariosController
         $usuariosDB = new UsuariosDB();
         if ($usuariosDB->verificarEstadoUsuario($id)) {
             $logsController->registrarLog(Logs::WARNING, "El usuario " . $id . " se ha eliminado");
+            // O se da de baja en los dos lados, o en ninguno.
+            //
+            // El borrado aqui es logico (eliminado=1) y en Zoho baja la marca de "esta
+            // en la app": son las dos caras de lo mismo. Sin transaccion, el UPDATE
+            // local quedaba firme antes de llamar a Zoho, asi que un fallo alli dejaba
+            // al cliente de baja aqui y activo en el CRM, sin que nadie se enterara.
+            $conn = Conexion::getInstance()->getConexion();
+            $conn->begin_transaction();
             // Llamar a la función para realizar el borrado lógico
             $result = $usuariosDB->borrarUser($id);
         } else {
@@ -556,14 +621,19 @@ class UsuariosController
                 */
 
                 $resultCRM = $zohoService->appCrearClienteFalse($id);
-                if (isset($resultCRM['error']) && $resultCRM['error'] == true) {
-                    $logsController->registrarLog(Logs::ERROR, "Error al eliminar (logicamente) el usuario en Zoho: " . $resultCRM['message']);
+                if (isset($resultCRM['error']) && $resultCRM['error']) {
+                    // Zoho no ha podido bajar la marca: se deshace la baja local para no
+                    // dejar al cliente de baja aqui y activo en el CRM.
+                    $conn->rollback();
+                    $logsController->registrarLog(Logs::ERROR, "Error al eliminar (logicamente) el usuario en Zoho: " . $resultCRM['error']);
                     $respuesta = new Respuesta();
                     $respuesta->_500($resultCRM);
                     $respuesta->message = "Error al eliminar el usuario en Zoho.";
                     echo json_encode($respuesta);
                     return;
                 }
+                // Los dos lados de acuerdo: ahora si queda firme la baja local.
+                $conn->commit();
                 $logsController->registrarLog(Logs::DELETE, "a eliminado al usuario" . $id);
                 $respuesta = new Respuesta();
                 $respuesta->success($resultCRM);
@@ -571,6 +641,7 @@ class UsuariosController
                 http_response_code($respuesta->code);
                 echo json_encode($respuesta);
             } else {
+                $conn->rollback();
                 $logsController->registrarLog(Logs::ERROR, "Error al eliminar el usuario." . $id);
                 $respuesta = new Respuesta();
                 $respuesta->_500();

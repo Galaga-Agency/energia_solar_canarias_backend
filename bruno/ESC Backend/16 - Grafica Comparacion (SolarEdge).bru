@@ -1,0 +1,33 @@
+meta {
+  name: 16 - Grafica Comparacion (SolarEdge)
+  type: http
+  seq: 16
+}
+
+post {
+  url: {{base_url_esc}}/plant/grafica/comparacion/{{esc_plant_id}}?proveedor=solaredge
+  body: json
+  auth: none
+}
+
+params:query {
+  proveedor: solaredge
+}
+
+headers {
+  Content-Type: application/json
+  Authorization: Bearer {{esc_jwt}}
+}
+
+body:json {
+  {
+    "timeUnit": "MONTH",
+    "date": "2026"
+  }
+}
+
+docs {
+  Comparativa de produccion de una planta. Solo SolarEdge (getPlantComparative).
+  Body obligatorio: timeUnit + date.
+  goodwe / victronenergy responden 404 a proposito.
+}

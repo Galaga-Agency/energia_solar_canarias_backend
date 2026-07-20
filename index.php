@@ -99,6 +99,9 @@ $page = $_GET['page'] ?? 'inicio';
         <a href="?page=inicio" class="block px-4 py-2 <?php echo $theme === 'dark' ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-blue-100'; ?> rounded"><?php echo translate('menu.inicio') ?></a>
       </li>
       <li>
+        <a href="?page=endpoints-verificados" class="block px-4 py-2 <?php echo $theme === 'dark' ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-blue-100'; ?> rounded font-semibold">Endpoints verificados</a>
+      </li>
+      <li>
         <button onclick="toggleSubmenu('perfilSubmenu')" class="w-full text-left px-4 py-2 <?php echo $theme === 'dark' ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-blue-100'; ?> rounded focus:outline-none">
           <?php echo translate('menu.usuarios') ?>
         </button>
@@ -266,6 +269,9 @@ $page = $_GET['page'] ?? 'inicio';
         break;
       case 'politica-privacidad':
         include('./app/pages/politica-privacidad.php');
+        break;
+      case 'endpoints-verificados':
+        include('./app/pages/endpoints-verificados.php');
         break;
       default:
         echo "<h1 class='text-5xl font-bold text-center'>Página no encontrada</h1>";

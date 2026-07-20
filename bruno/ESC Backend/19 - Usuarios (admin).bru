@@ -1,0 +1,28 @@
+meta {
+  name: 19 - Usuarios (admin)
+  type: http
+  seq: 19
+}
+
+get {
+  url: {{base_url_esc}}/usuarios
+  body: none
+  auth: none
+}
+
+headers {
+  Accept: application/json
+  Authorization: Bearer {{esc_jwt}}
+}
+
+docs {
+  Listado de usuarios (solo admin).
+
+  Relacionados (mismo Bearer):
+    GET    /usuarios/{id}
+    POST   /usuarios              crear usuario
+    PUT    /usuarios/{id}         actualizar
+    DELETE /usuarios/{id}         borrar
+    POST   /usuarios/relacionar   asociar usuario <-> planta
+    GET    /clases                clases/roles
+}

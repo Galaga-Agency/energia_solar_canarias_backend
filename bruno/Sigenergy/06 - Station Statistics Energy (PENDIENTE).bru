@@ -1,0 +1,43 @@
+meta {
+  name: 06 - Station Statistics Energy (PENDIENTE)
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{base_url_sigen}}/data-process/sigen/station/statistics/energy?stationId={{sigen_station_id}}&timeDimension=1
+  body: none
+  auth: none
+}
+
+params:query {
+  stationId: {{sigen_station_id}}
+  timeDimension: 1
+}
+
+headers {
+  Accept: */*
+  Content-Type: application/json
+  Authorization: Bearer {{sigen_access_token}}
+  Origin: https://app-eu.sigencloud.com
+  Referer: https://app-eu.sigencloud.com/
+  lang: en_US
+  client-server: eu
+}
+
+docs {
+  ENDPOINT SIN CERRAR. Es el que falta para completar las graficas de Sigenergy
+  (/plants/graficas?proveedor=sigenergy hoy solo devuelve el tiempo real).
+
+  Que sabemos: el endpoint EXISTE (responde 500, no 404), pero aun no damos con la
+  combinacion correcta de parametros. Los candidatos que hay que probar son
+  variantes de stationId/id + timeDimension/type + fechas, en GET y en POST.
+
+  Por que no esta resuelto: CloudFront bloquea por IP los endpoints de datos
+  (device/*, data-process/*) en cuanto haces varias pruebas seguidas, asi que no se
+  puede iterar desde aqui. Por eso existe `sigen_test_server.php` en la raiz del
+  proyecto: lanzalo desde el servidor (IP distinta) y prueba alli las 9 variantes.
+
+  Cuando una devuelva code=0 con datos, se copia aqui y se cierra
+  SigenergyService::getGraficas.
+}

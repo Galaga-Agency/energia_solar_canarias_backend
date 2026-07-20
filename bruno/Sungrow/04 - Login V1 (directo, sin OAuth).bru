@@ -1,0 +1,53 @@
+meta {
+  name: 04 - Login V1 (directo, sin OAuth)
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{base_url_sungrow}}/openapi/login
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  x-access-key: {{sungrow_secret_key}}
+}
+
+body:json {
+  {
+    "appkey": "{{sungrow_appkey}}",
+    "user_account": "{{sungrow_username}}",
+    "user_password": "{{sungrow_password}}",
+    "login_type": "1",
+    "sys_code": "901"
+  }
+}
+
+script:post-response {
+  const d = res.body && res.body.result_data;
+  if (d && d.token) {
+    bru.setVar('sungrow_access_token', d.token);
+    console.log('sungrow token guardado (login V1): ' + d.token);
+  } else {
+    console.log('Sin token. result_code=' + (res.body && res.body.result_code) + ' | ' + JSON.stringify(res.body));
+  }
+}
+
+assert {
+  res.body.result_code: eq 1
+}
+
+docs {
+  Login DIRECTO con usuario/password. Es el que usa el backend
+  (ProveedorTokenService::refreshSungrow) porque no necesita el paso manual de
+  autorizacion en navegador del flujo OAuth (00 -> 01).
+
+  Devuelve `result_data.token`, que en los endpoints de datos NO va como Bearer:
+  va dentro del BODY como campo `token`.
+
+  Ojo con los codigos: `result_code` "1" es EXITO en iSolarCloud (no un error).
+  Los errores de token llegan como result_code "010" / "er_token_login_invalid",
+  con HTTP 200 -- por eso el backend no puede fiarse del 401.
+}

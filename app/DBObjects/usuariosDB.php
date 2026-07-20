@@ -38,7 +38,11 @@ class UsuariosDB
             if (!$deleteStmt) {
                 throw new Exception("Error en la preparación del DELETE: " . $conn->error);
             }
-            $deleteStmt->bind_param('i', $idPlanta);
+            // planta_id es VARCHAR: hay que atarlo como 's'. Con 'i', MySQL convierte a
+            // numero TODA la columna para comparar y revienta en cuanto encuentra un id
+            // no numerico (los UUID de GoodWe, los VSSKC... de Sigenergy), abortando la
+            // operacion entera con "Truncated incorrect DOUBLE value".
+            $deleteStmt->bind_param('s', $idPlanta);
             if (!$deleteStmt->execute()) {
                 throw new Exception("Error al ejecutar DELETE: " . $deleteStmt->error);
             }
@@ -78,7 +82,9 @@ class UsuariosDB
      * @param string $proveedor El nombre del proveedor
      * @return bool true en caso de éxito o false en caso de error
      */
-    public function desrelacionarUsers($idPlanta, $idUsuario = null, $idProveedor)
+    // $idUsuario admite null (borra la relacion de todos los usuarios de la planta),
+    // pero no puede llevar valor por defecto: va delante de un parametro obligatorio.
+    public function desrelacionarUsers($idPlanta, $idUsuario, $idProveedor)
     {
         try {
             $conexion = Conexion::getInstance();
@@ -105,11 +111,12 @@ class UsuariosDB
                 throw new Exception("Error en la preparación de la consulta: " . $conn->error);
             }
 
-            // Bind de parámetros según si hay idUsuario o no
+            // Bind de parámetros según si hay idUsuario o no.
+            // planta_id es VARCHAR -> 's' (ver el comentario en relacionarUsers).
             if ($idUsuario !== null) {
-                $stmt->bind_param('iii', $idPlanta, $idProveedor, $idUsuario);
+                $stmt->bind_param('sii', $idPlanta, $idProveedor, $idUsuario);
             } else {
-                $stmt->bind_param('ii', $idPlanta, $idProveedor);
+                $stmt->bind_param('si', $idPlanta, $idProveedor);
             }
 
             if (!$stmt->execute()) {
@@ -702,6 +709,22 @@ class UsuariosDB
      *  @param int $id a verificar
      *  @return bool True en caso de que tenga un usuario, false en caso de que no tenga a ese usuario
      */
+    /**
+     * ¿Este usuario esta dado de baja (borrado logico)?
+     *
+     * Aqui a un cliente no se le borra de verdad: se le pone eliminado=1 y en Zoho baja
+     * la marca de "esta en la app". Si algun dia vuelve, se le quita el borrado y la
+     * marca sube otra vez. Se restaura SIEMPRE la misma fila, nunca se crea otra: el
+     * JWT lleva dentro el id y el email y dura 180 dias (el permanente no caduca), asi
+     * que un usuario_id nuevo dejaria sin valor los tokens vivos del cliente y le
+     * soltaria las plantas asociadas. Por eso hay que saber si ya existia dado de baja.
+     *
+     * @param int $id usuario_id. El ID, no la fila de getIdUserPorEmail(): si se le
+     *                pasa el array, PHP lo convierte a 1 y acaba preguntando por el
+     *                usuario 1 en vez de por el que toca.
+     * @return bool|null true si esta dado de baja, false si esta activo, null si no
+     *                   existe.
+     */
     public function usuarioEliminado($id)
     {
         try {
@@ -719,13 +742,10 @@ class UsuariosDB
             // Verificar si se encontró un registro
             if ($result && $row = $result->fetch_assoc()) {
                 $stmt->close();
-
-                // Retornar el estado en función del campo 'eliminado'
-                if ($row['eliminado'] == 1) {
-                    return false;
-                } else {
-                    return true;
-                }
+                // Antes devolvia lo contrario de lo que dice su nombre (false cuando el
+                // usuario SI estaba eliminado). Su unico llamante, crearUser(), se
+                // apoyaba en esa inversion, asi que se corrigen las dos a la vez.
+                return $row['eliminado'] == 1;
             }
 
             // Cerrar el statement y la conexión si no se encontró el usuario
@@ -794,16 +814,17 @@ class UsuariosDB
                 }
             }
 
+            // planta_id es VARCHAR -> 's' (ver el comentario en relacionarUsers).
             if ($usuarioId !== null) {
                 // Si se proporciona usuario, se incluye en la condición
                 $query = "SELECT * FROM plantas_asociadas WHERE planta_id = ? AND usuario_id = ? AND proveedor_id = ?";
                 $stmt = $conn->prepare($query);
-                $stmt->bind_param('iii', $plantaId, $usuarioId, $idProveedor);
+                $stmt->bind_param('sii', $plantaId, $usuarioId, $idProveedor);
             } else {
                 // Si no se proporciona usuario, se omite esa condición
                 $query = "SELECT * FROM plantas_asociadas WHERE planta_id = ? AND proveedor_id = ?";
                 $stmt = $conn->prepare($query);
-                $stmt->bind_param('ii', $plantaId, $idProveedor);
+                $stmt->bind_param('si', $plantaId, $idProveedor);
             }
 
             $stmt->execute();

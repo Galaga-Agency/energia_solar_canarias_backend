@@ -36,6 +36,63 @@ class Autenticacion
             "usuario" => "scope2"
         ];
     }
+    /**
+     * Lee una cabecera sin distinguir mayusculas de minusculas.
+     *
+     * Los nombres de cabecera son case-insensitive (RFC 7230 §3.2), pero aqui se
+     * leian con $headers['Authorization'] literal. Con curl y con el navegador por
+     * HTTP/1.1 llega asi y colaba; en cuanto delante hay algo que normaliza a
+     * minusculas, el token deja de verse y la respuesta es un 403 que parece de
+     * credenciales pero es de mayusculas. Pasa con cualquier proxy en Node (por
+     * ejemplo el rewrite de Next para desarrollo) y, sobre todo, HTTP/2 OBLIGA a
+     * que los nombres vayan en minusculas.
+     *
+     * @return string|null El valor, o null si la cabecera no viene.
+     */
+    public static function cabecera($nombre)
+    {
+        foreach (self::cabeceras() as $clave => $valor) {
+            if (strcasecmp($clave, $nombre) === 0) {
+                return $valor;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * getallheaders() no existe fuera de Apache (php-fpm, CLI), asi que se
+     * reconstruye desde $_SERVER. Estaba copiado dentro de dos metodos y definia la
+     * funcion global sobre la marcha; aqui esta una sola vez.
+     */
+    private static function cabeceras()
+    {
+        if (function_exists('getallheaders')) {
+            $h = getallheaders();
+            if (is_array($h)) return $h;
+        }
+        $headers = [];
+        foreach ($_SERVER as $nombre => $valor) {
+            if (substr($nombre, 0, 5) === 'HTTP_') {
+                $headers[str_replace(' ', '-', ucwords(strtolower(str_replace('_', ' ', substr($nombre, 5)))))] = $valor;
+            }
+        }
+        return $headers;
+    }
+
+    /**
+     * Saca el token de la cabecera Authorization segun su esquema.
+     * @param string $esquema 'Bearer' (JWT de usuario) o 'Token' (API key).
+     * @return string|false
+     */
+    private static function tokenDeAutorizacion($esquema)
+    {
+        $auth = self::cabecera('Authorization');
+        if ($auth && preg_match('/' . $esquema . '\s(\S+)/', $auth, $m)) {
+            return $m[1];
+        }
+        return false;
+    }
+
     //Getter y setter de apiScope
     public function getApiScope()
     {
@@ -88,11 +145,7 @@ class Autenticacion
 
     public function getAuthApiScope()
     {
-        $headers = getallheaders();
-        if (isset($headers['Authorization']) && preg_match('/Token\s(\S+)/', $headers['Authorization'], $matches)) {
-            return $matches[1];
-        }
-        return false;
+        return self::tokenDeAutorizacion('Token');
     }
 
     /**
@@ -101,26 +154,7 @@ class Autenticacion
      */
     public function getAuthToken()
     {
-        if (!function_exists('getallheaders')) {
-            function getallheaders()
-            {
-                $headers = [];
-                foreach ($_SERVER as $name => $value) {
-                    if (substr($name, 0, 5) == 'HTTP_') {
-                        $headers[str_replace(' ', '-', ucwords(strtolower(str_replace('_', ' ', substr($name, 5)))))] = $value;
-                    }
-                }
-                return $headers;
-            }
-        }        
-        $headers = getallheaders();
-        $authHeader = isset($headers['Authorization']) ? $headers['Authorization'] : null;
-
-        if ($authHeader && preg_match('/Bearer\s(\S+)/', $authHeader, $matches)) {
-            return $matches[1]; // Devuelve el token extraído
-        }
-
-        return false; // Si el encabezado no es válido o no existe
+        return self::tokenDeAutorizacion('Bearer');
     }
 
     /**
@@ -129,23 +163,7 @@ class Autenticacion
      */
     public function getBearerToken()
     {
-        if (!function_exists('getallheaders')) {
-            function getallheaders()
-            {
-                $headers = [];
-                foreach ($_SERVER as $name => $value) {
-                    if (substr($name, 0, 5) == 'HTTP_') {
-                        $headers[str_replace(' ', '-', ucwords(strtolower(str_replace('_', ' ', substr($name, 5)))))] = $value;
-                    }
-                }
-                return $headers;
-            }
-        }        
-        $headers = getallheaders();
-        if (isset($headers['Authorization']) && preg_match('/Bearer\s(\S+)/', $headers['Authorization'], $matches)) {
-            return $matches[1];
-        }
-        return false;
+        return self::tokenDeAutorizacion('Bearer');
     }
     /**
      * Verificar si el usuario es administrador y tiene un token válido
@@ -170,13 +188,58 @@ class Autenticacion
         return false;
     }
     
+    /**
+     * Comprueba si el usuario del token puede consultar ESTA planta.
+     *
+     * La regla: el admin ve todas; el usuario normal solo las que tiene asignadas
+     * en plantas_asociadas.
+     *
+     * Hace falta porque /plants y /plants/details ya filtraban por usuario, pero los
+     * endpoints de datos (tiempo real, inventario, alertas, graficas...) iban directos
+     * al proveedor sin mirar de quien es la planta: bastaba con saber el id para leer
+     * datos de cualquier instalacion, y en SolarEdge o Sungrow los ids son numericos
+     * y correlativos.
+     *
+     * Si devuelve false YA ha respondido con 403, asi que quien llama solo tiene que
+     * cortar (return/break) sin escribir nada mas.
+     *
+     * @param string $idPlanta  id de la planta tal cual lo da el proveedor
+     * @param string $proveedor nombre del proveedor (vale 'sigenergy' o 'Sigenergy':
+     *                          la comparacion en MySQL no distingue mayusculas)
+     * @return bool true si puede seguir
+     */
+    public function puedeVerPlanta($idPlanta, $proveedor)
+    {
+        if ($this->verificarAdmin()) {
+            return true;
+        }
+
+        $idUsuario = $this->obtenerIdUsuarioActivo();
+        if ($idUsuario) {
+            require_once __DIR__ . '/../DBObjects/plantasAsociadasDB.php';
+            $plantasAsociadas = new PlantasAsociadasDB;
+            if ($plantasAsociadas->isPlantasAsociadasAlUsuario($idUsuario, $idPlanta, $proveedor)) {
+                return true;
+            }
+        }
+
+        // Mismo mensaje tanto si la planta no existe como si es de otro: si dijeramos
+        // "no es tuya" estariamos confirmando que existe, y con ids correlativos eso
+        // permite mapear el parque ajeno planta por planta.
+        $respuesta = new Respuesta;
+        $respuesta->_403();
+        $respuesta->message = 'No tienes acceso a esta planta';
+        http_response_code(403);
+        header('Content-Type: application/json');
+        echo json_encode($respuesta);
+        return false;
+    }
+
     public function verificarTokenUsuarioActivo()
     {
-        $headers = getallheaders();
-        if(isset($headers['Authorization']) && preg_match('/Bearer\s(\S+)/', $headers['Authorization'], $matches)){
-        $jwtToken = $this->getBearerToken();
-        }else if(isset($headers['Authorization']) && preg_match('/Token\s(\S+)/', $headers['Authorization'], $matches)){
-        $authToken = $this->getAuthApiScope();
+        $jwtToken = $this->getBearerToken() ?: null;
+        if (!$jwtToken) {
+            $authToken = $this->getAuthApiScope() ?: null;
         }
 
         if (isset($jwtToken)) {
