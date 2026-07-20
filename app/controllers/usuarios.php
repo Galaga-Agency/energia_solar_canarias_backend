@@ -421,6 +421,12 @@ class UsuariosController
             }
 
             if ($usuariosDB->verificarEstadoUsuario($id)) {
+                // El id viene en la URL, no en el cuerpo. actualizarCliente() busca el
+                // cliente en Zoho por (idApp:equals:usuario_id), asi que sin esto la
+                // sincronizacion con el CRM se quedaba sin a quien apuntar y devolvia
+                // "Datos incompletos". Se fija desde la ruta, que es la fuente fiable.
+                $data['usuario_id'] = $id;
+
                 if (!isset($data['origen'])) {
                     $data['origen'] = 'app'; // Si no se especifica, establecemos el origen como 'app' por defecto
                 }
