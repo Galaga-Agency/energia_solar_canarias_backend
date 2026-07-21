@@ -99,7 +99,7 @@ $page = $_GET['page'] ?? 'inicio';
         <a href="?page=inicio" class="block px-4 py-2 <?php echo $theme === 'dark' ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-blue-100'; ?> rounded"><?php echo translate('menu.inicio') ?></a>
       </li>
       <li>
-        <a href="?page=endpoints-verificados" class="block px-4 py-2 <?php echo $theme === 'dark' ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-blue-100'; ?> rounded font-semibold">Endpoints verificados</a>
+        <a href="?page=endpoints-verificados" class="block px-4 py-2 <?php echo $theme === 'dark' ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-blue-100'; ?> rounded font-semibold"><?php echo translate('menu.endpoints') ?></a>
       </li>
       <li>
         <button onclick="toggleSubmenu('perfilSubmenu')" class="w-full text-left px-4 py-2 <?php echo $theme === 'dark' ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-blue-100'; ?> rounded focus:outline-none">
