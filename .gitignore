@@ -29,3 +29,15 @@ bin_codigo_login.sh
 # (ademas rompe los git stash/checkout al regenerarse en cada ejecucion).
 __pycache__/
 *.pyc
+
+# Ficheros con secretos/datos reales que estuvieron versionados por error y se
+# purgaron de la historia con git filter-repo (2026-07). NO volver a versionarlos.
+*.ppk
+*.pem
+clases/conexion.json
+storage/clavesInstanciaEsc.ppk
+storage/infoApisEsc.txt
+storage/cookies_seguras.txt
+storage/ec2Config.txt
+storage/usuarios_base.json
+storage/usuarios_base.txt
