@@ -41,3 +41,10 @@ storage/cookies_seguras.txt
 storage/ec2Config.txt
 storage/usuarios_base.json
 storage/usuarios_base.txt
+
+# Backups del .env (llevan secretos viejos) - nunca versionar
+config/.env.*
+config/*.bak
+
+# Paginas de prueba locales (llevaban apiKeys y una contrasena real)
+storage/pruebas_*.html
