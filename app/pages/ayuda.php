@@ -7,15 +7,16 @@ if (isset($_GET['status']) && isset($_GET['message'])) {
     $message = htmlspecialchars(urldecode($_GET['message']));
 
     // Clases dinámicas para éxito y error
-    $classes = $status === 'success' 
-        ? 'bg-green-100 text-green-700 border-green-300' 
-        : 'bg-red-100 text-red-700 border-red-300';
+    $classes = $status === 'success'
+      ? 'bg-green-100 text-green-700 border-green-300'
+      : 'bg-red-100 text-red-700 border-red-300';
 
     echo "<div class='notification border-l-4 p-4 rounded-md mb-4 $classes'>";
     echo "<p class='text-sm text-center'>$message</p>";
     echo "</div>";
+  }
 }
-}
+/** @var string $theme Tema activo ('dark'|'light'); lo define index.php, que incluye esta pagina. */
 ?>
 <div class="container mx-auto p-4 sm:p-6 lg:p-8">
   <!-- Título -->

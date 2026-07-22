@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../services/correo.php';
+/** @var string $urlBase URL base de la aplicación. */
 
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -51,4 +52,3 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           </script>";
     exit;
 }
-?>
