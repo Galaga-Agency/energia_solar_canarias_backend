@@ -1,35 +1,101 @@
-name: PHP Unit Tests
+name: CI/CD
 
+# Tests en cada push/PR a main. Despliegue SOLO en push a main y SOLO si los tests pasan.
 on:
   push:
-    branches:
-      - main    # Ejecutar pruebas en la rama principal
+    branches: [main]
   pull_request:
-    branches:
-      - main    # Ejecutar pruebas cuando se haga un PR a la rama principal
+    branches: [main]
+
+# Un despliegue a la vez. No cancelamos uno en curso a medias (dejaria el server a medias).
+concurrency:
+  group: cicd-${{ github.ref }}
+  cancel-in-progress: false
+
+# El token de Actions solo necesita leer el repo.
+permissions:
+  contents: read
 
 jobs:
-  phpunit:
-    runs-on: ubuntu-latest  # El sistema operativo sobre el que se ejecutará el flujo de trabajo
-
+  # ---------------------------------------------------------------------------
+  # TESTS — runner de GitHub (aislado, sin acceso al servidor). Corre en push y PR.
+  # PHP 8.2 = misma version que produccion (el contenedor es php:8.2-apache).
+  # Solo PHPUnit: los de integracion (Python) necesitan el stack y tocan APIs
+  # reales (Zoho incluido), asi que NO son puerta de CI.
+  # ---------------------------------------------------------------------------
+  test:
+    name: Tests (PHPUnit)
+    runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v2  # Este paso asegura que el código esté disponible en el entorno de GitHub Actions
+      - uses: actions/checkout@v4
 
-      - name: Set up PHP
+      - name: Configurar PHP 8.2
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.4'  # Puedes especificar la versión de PHP que estés usando
+          php-version: '8.2'
+          extensions: mysqli, pdo, pdo_mysql, gd
+          coverage: none
 
-      - name: Install Composer
-        run: |
-          curl -sS https://getcomposer.org/installer | php  # Instalar Composer
-          mv composer.phar /usr/local/bin/composer  # Moverlo al directorio bin
+      - name: Instalar dependencias
+        run: composer install --no-interaction --no-progress --prefer-dist
 
-      - name: Install dependencies
-        run: |
-          composer install --no-interaction  # Instalar las dependencias de PHP con Composer
+      - name: Ejecutar PHPUnit
+        run: vendor/bin/phpunit --configuration phpunit.xml
 
-      - name: Run PHPUnit tests
+  # ---------------------------------------------------------------------------
+  # DEPLOY — tu runner self-hosted (en el VPS). SOLO push a main y SOLO si test
+  # ha pasado (needs: test). Nunca en pull_request. Hay un unico runner
+  # self-hosted en la org, asi que basta 'self-hosted' (sin etiqueta extra).
+  # ---------------------------------------------------------------------------
+  deploy:
+    name: Deploy (self-hosted)
+    needs: test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: self-hosted
+    steps:
+      - name: Backup de la BD antes de desplegar
         run: |
-          vendor/bin/phpunit --configuration phpunit.xml  # Ejecutar los tests utilizando PHPUnit
+          set -euo pipefail
+          cd /home/galagaagency/proyectos/energia_solar_canarias
+          mkdir -p backups
+          DBPASS=$(python3 -c "import json;print(json.load(open('backend-config/conexion.json'))[0]['password'])")
+          docker exec -e MYSQL_PWD="$DBPASS" mysql \
+            mysqldump -uescuser --single-transaction --routines --no-tablespaces esc \
+            | gzip > "backups/esc_ci_$(date +%F_%H%M%S).sql.gz"
+
+      - name: Traer EXACTAMENTE el commit probado al contexto de build
+        run: |
+          set -euo pipefail
+          cd /home/galagaagency/proyectos/energia_solar_canarias/energia_solar_canarias_backend
+          git fetch --prune origin main
+          # reset --hard: el server es un destino de despliegue, no un dir de trabajo.
+          # Despliega el mismo commit que pasaron los tests (github.sha).
+          git reset --hard "${{ github.sha }}"
+
+      - name: Reconstruir y levantar solo esc_backend
+        run: |
+          set -euo pipefail
+          cd /home/galagaagency/proyectos
+          # --build porque el codigo va DENTRO de la imagen. Al arrancar, el
+          # entrypoint aplica las migraciones antes de levantar Apache.
+          docker compose up -d --build esc_backend
+
+      - name: Comprobacion de humo (si falla, el deploy sale en rojo)
+        run: |
+          set -euo pipefail
+          # 1) el contenedor tiene que estar 'running', no en Restarting (migracion rota)
+          test "$(docker inspect -f '{{.State.Status}}' esc_backend)" = "running"
+          # 2) Apache/PHP tiene que estar SIRVIENDO por HTTP. Auto-detectamos el
+          #    puerto publicado (no lo fijamos a mano) y aceptamos CUALQUIER codigo
+          #    HTTP: 200/404/403 significan que el server responde. Solo falla si no
+          #    contesta nada (000 = contenedor caido o no escucha).
+          PORT=$(docker port esc_backend 2>/dev/null | grep -oE '0\.0\.0\.0:[0-9]+' | head -1 | cut -d: -f2 || true)
+          if [ -n "${PORT:-}" ]; then
+            code=$(curl -s -o /dev/null -w '%{http_code}' -m 15 "http://localhost:$PORT/" || echo 000)
+            echo "HTTP en localhost:$PORT -> $code"
+            test "$code" != "000"
+          else
+            echo "esc_backend no publica puerto al host; me quedo con el estado del contenedor"
+          fi
+          # 3) Zoho tiene que llegar a $_ENV (el fix EGPCS)
+          docker exec esc_backend php -r 'exit(isset($_ENV["ZOHO_REFRESH_TOKEN"]) ? 0 : 1);'

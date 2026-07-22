@@ -1,3 +1,7 @@
+<?php
+
+/** @var string $theme Tema activo ('dark'|'light'); lo define index.php, que incluye esta pagina. */
+?>
 <div class="p-6 flex flex-col space-y-8">
     <!-- Descripción del Endpoint de Login -->
     <div class="flex flex-col md:flex-row justify-between">
