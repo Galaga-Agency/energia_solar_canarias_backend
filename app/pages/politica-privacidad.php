@@ -1,3 +1,7 @@
+<?php
+
+/** @var string $theme Tema activo ('dark'|'light'); lo define index.php, que incluye esta pagina. */
+?>
 <div class="max-w-4xl mx-auto">
   <h1 class="text-3xl font-bold text-blue-600 dark:text-blue-400 mb-4"><?php echo translate('politica-privacidad.title') ?></h1>
 

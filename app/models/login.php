@@ -133,12 +133,3 @@ class Login
         }
     }
 }
-
-/*
-//PRUEBAS
-$postBody = '{"email": "soporte@galagaagency.com","password": "***REMOVED***","idiomaUsuario": "es"}';
-$datos = json_decode($postBody, true);
-$login = new Login($datos);
-$responseLogin = $login->userLogin();
-print_r($responseLogin);
-*/

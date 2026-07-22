@@ -1,3 +1,7 @@
+<?php
+
+/** @var string $theme Tema activo ('dark'|'light'); lo define index.php, que incluye esta pagina. */
+?>
 <div class="flex flex-col md:flex-row justify-between">
     <!-- Descripción del Endpoint -->
     <div class="w-full md:w-7/12">
