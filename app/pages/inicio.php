@@ -1,3 +1,7 @@
+<?php
+
+/** @var string $theme Tema activo ('dark'|'light'); lo define index.php, que incluye esta pagina. */
+?>
 <div>
     <h1 class="text-4xl font-bold <?php echo $theme === 'dark' ? 'text-blue-400' : 'text-blue-600'; ?> mb-4">
         <?php echo translate('inicio.titulo'); ?>

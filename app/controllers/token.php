@@ -37,10 +37,3 @@ class TokenController
         }
     }
 }
-
-/*
-//PRUEBAS
-$postBody = '{"email": "soporte@galagaagency.com","password": "***REMOVED***","idiomaUsuario": "es"}';
-$loginController = new LoginController($postBody);
-$loginController->userLogin();
-*/

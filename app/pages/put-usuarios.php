@@ -1,3 +1,7 @@
+<?php
+
+/** @var string $theme Tema activo ('dark'|'light'); lo define index.php, que incluye esta pagina. */
+?>
 <div class="flex flex-col md:flex-row justify-between">
     <!-- Descripción del Endpoint -->
     <div class="w-full md:w-7/12">
@@ -86,11 +90,11 @@ curl -X PUT "https://app-backend.energiasolarcanarias.com/usuarios/1" \
 -H "Content-Type: application/json" \\
 -H "Authorization: Bearer tu_token_de_acceso" \\
 -d '{
-  "email": "thomas@galagaagency.com",
-  "password": "***REMOVED***",
+  "email": "ejemplo@galagaagency.com",
+  "password": "TuContrasena123!",
   "clase": "admin",
-  "nombre": "Thomas",
-  "apellido": "Augot",
+  "nombre": "Nombre",
+  "apellido": "Apellido",
   "imagen": "https://cuv.upc.edu/es/shared/imatges/fotos-professorat-i-professionals/anonimo.jpg",
   "movil": "666555444",
   "activo": true,
