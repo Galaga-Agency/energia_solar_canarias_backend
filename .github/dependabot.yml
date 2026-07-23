@@ -1,0 +1,25 @@
+# Dependabot: abre PRs automaticos cuando salen versiones nuevas o con CVE.
+# Cubre ISO 27001:2022 A.8.8 (gestion de vulnerabilidades tecnicas).
+version: 2
+updates:
+  # Dependencias PHP del proyecto (composer.json / composer.lock)
+  - package-ecosystem: "composer"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencias"
+    commit-message:
+      prefix: "deps"
+
+  # Las propias GitHub Actions usadas en los workflows (checkout, setup-php...)
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 3
+    labels:
+      - "ci"
+    commit-message:
+      prefix: "ci"

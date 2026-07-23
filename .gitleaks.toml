@@ -1,0 +1,25 @@
+# Config de gitleaks (escaneo de secretos en CI).
+# Cubre ISO 27001:2022 A.8.24 — evita que se vuelva a colar una credencial.
+# Parte de las reglas por defecto y anade una allowlist de falsos positivos conocidos.
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Falsos positivos conocidos de este repo"
+
+# Rutas que no son codigo fuente o son ruido (binarios, dependencias, doc).
+paths = [
+  '''vendor/.*''',
+  '''composer\.lock''',
+  '''storage/esc\.apk''',
+  '''storage/img_screens_.*''',
+]
+
+# Valores que NO son secretos aunque lo parezcan:
+regexes = [
+  # Token PUBLICO de login de GoodWe SEMS (constante conocida, no es secreto).
+  '''da75ae92a1ad4d446bc75261cc916285''',
+  # Marcador dejado por la purga del historial.
+  '''\*\*\*REMOVED\*\*\*''',
+]
