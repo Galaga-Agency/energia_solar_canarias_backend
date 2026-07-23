@@ -12,8 +12,15 @@ updates:
       - "dependencias"
     commit-message:
       prefix: "deps"
+    ignore:
+      # PHPUnit 12 exige PHP 8.3 y PHPUnit 13 exige PHP 8.4; el proyecto va en PHP
+      # 8.2 (imagen de produccion php:8.2-apache y CI php:8.2-cli). Nos quedamos en
+      # la linea 11.x (soportada para 8.2). Subir de major es una migracion de
+      # plataforma, no un bump: cuando se suba PHP, se quita esta regla.
+      - dependency-name: "phpunit/phpunit"
+        update-types: ["version-update:semver-major"]
 
-  # Las propias GitHub Actions usadas en los workflows (checkout, setup-php...)
+  # Las propias GitHub Actions usadas en los workflows (checkout...)
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
