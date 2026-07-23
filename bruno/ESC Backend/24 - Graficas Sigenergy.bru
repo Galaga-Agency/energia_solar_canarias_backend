@@ -1,0 +1,64 @@
+meta {
+  name: 24 - Graficas Sigenergy
+  type: http
+  seq: 24
+}
+
+post {
+  url: {{base_url_esc}}/plants/graficas?proveedor=sigenergy
+  body: json
+  auth: none
+}
+
+params:query {
+  proveedor: sigenergy
+}
+
+headers {
+  Content-Type: application/json
+  Authorization: Bearer {{esc_jwt}}
+}
+
+body:json {
+  {
+    "id": "{{sigen_station_id}}",
+    "level": "Day",
+    "date": "2026-07-15"
+  }
+}
+
+assert {
+  res.status: eq 200
+}
+
+tests {
+  test("Graficas Sigenergy: respuesta OK", function() {
+    expect(res.getStatus()).to.equal(200);
+    expect(res.getBody().status).to.equal(true);
+    expect(res.getBody().data).to.be.ok;
+  });
+}
+
+docs {
+  Serie temporal de Sigenergy (API oficial).  POST /plants/graficas?proveedor=sigenergy
+
+  Body (DISTINTO al de Sungrow):
+    id     OBLIGATORIO -> systemId ({{sigen_station_id}}, p.ej. VSSKC1768221900).
+    level  opcional     -> Day | Week | Month | Year | Lifetime. Por defecto Day.
+    date   opcional     -> yyyy-MM-dd. Por defecto hoy; se ignora en Lifetime.
+
+  Detras: GET openapi/systems/{systemId}/history?level=...&date=...
+  Devuelve totales del periodo (powerGeneration, powerToGrid, powerSelfConsumption,
+  powerUse...) y un itemList con cada punto (Day = 288 puntos de 5 min: dataTime,
+  pvTotalPower, loadPower, toGridPower, fromGridPower, esChargePower, batSoc...).
+
+  LIMITE: 1 consulta por estacion cada 5 min (si repites antes, la cache tapa la 2a
+  y devuelve el ultimo dato bueno).
+
+  Variantes utiles (cambia level/date):
+    Semana:   { "id": "{{sigen_station_id}}", "level": "Week",  "date": "2026-07-15" }
+    Mes:      { "id": "{{sigen_station_id}}", "level": "Month", "date": "2026-07-01" }
+    Total:    { "id": "{{sigen_station_id}}", "level": "Lifetime" }
+
+  Requisitos: {{esc_jwt}} valido (ejecuta antes 01 y 02) y {{sigen_station_id}} relleno.
+}
