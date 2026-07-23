@@ -5,6 +5,8 @@ require_once __DIR__ . "/../utils/token.php";
 require_once __DIR__ . "/../models/insert_token.php";
 require_once __DIR__ . "/../services/correo.php";
 require_once __DIR__ . "/../DBObjects/usuariosDB.php";
+require_once __DIR__ . "/../DBObjects/intentosLoginDB.php";
+require_once __DIR__ . "/../utils/seguridad.php";
 require_once __DIR__ . "/../models/conexion.php";
 
 
@@ -32,18 +34,31 @@ class LoginController
 
     public function userLogin()
     {
+        $ip = ipCliente();
+        $identificador = strtolower(trim((string) ($this->datos['email'] ?? '')));
+        $intentos = new IntentosLoginDB();
+
+        // Anti fuerza bruta (A.8.5): si acumula demasiados fallos, bloqueo temporal.
+        if ($identificador !== '' && $intentos->estaBloqueado($identificador, $ip)) {
+            registrarEventoSeguridad('login_bloqueado', 'email=' . $identificador);
+            $respuesta = new Respuesta;
+            $respuesta->_429();
+            $respuesta->message = 'Demasiados intentos fallidos. Espera unos minutos e inténtalo de nuevo.';
+            http_response_code($respuesta->code);
+            echo json_encode($respuesta);
+            return;
+        }
+
         $responseLogin = $this->login->userLogin();
         if ($responseLogin->status) {
+            // Credenciales correctas: se limpian los fallos previos y se registra.
+            $intentos->limpiar($identificador, $ip);
+            registrarEventoSeguridad('login_ok', 'email=' . $identificador);
+
             $this->dataUsuario = $responseLogin->data;
             $this->token = new Token;
             $this->insertToken = new InsertToken($this->dataUsuario, $this->token->value, $this->token->timeCreated);
             $responseInsertToken = $this->insertToken->execute();
-
-            /*
-            //PRUEBAS
-            http_response_code($responseInsertToken->code);
-            echo json_encode($responseInsertToken);
-            */
 
             if ($responseInsertToken->status) {
                 $token = new Token();
@@ -58,6 +73,11 @@ class LoginController
                 echo json_encode($responseInsertToken);
             }
         } else {
+            // Credenciales incorrectas: cuenta para el bloqueo y se registra.
+            if ($identificador !== '') {
+                $intentos->registrarFallo($identificador, $ip);
+            }
+            registrarEventoSeguridad('login_fallido', 'email=' . $identificador . ' http=' . $responseLogin->code);
             http_response_code($responseLogin->code);
             echo json_encode($responseLogin);
         }
