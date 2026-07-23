@@ -46,6 +46,20 @@ class SigenergyErroresTest extends TestCase
         $this->assertFalse($e['documentado'], '13008 no esta en el Error Code List oficial');
     }
 
+    /**
+     * "station info not found" (13001) tampoco se cachea reintentando: como el 13008,
+     * su limite de 1 acceso/5min se aplica igual, asi que se marca no transitorio para
+     * no gastar el cupo de esa estacion en un error. Antes caia en el generico (502).
+     */
+    public function test13001SeCacheaAunqueSeaError()
+    {
+        $this->assertFalse(SigenergyErrores::esTransitorio(13001), 'reintentar 13001 gasta el cupo 5min');
+        $e = SigenergyErrores::traducir(13001);
+        $this->assertSame(404, $e['http']);
+        $this->assertFalse($e['documentado'], '13001 no esta en el Error Code List oficial');
+        $this->assertNotEmpty($e['mensaje']);
+    }
+
     public function testCodigosSeTraducenAlHttpQueTocaFactory()
     {
         $casos = [
