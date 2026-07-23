@@ -4,7 +4,7 @@ Backend en **PHP nativo** (sin framework) que unifica varias plataformas de
 monitorización fotovoltaica (GoodWe, SolarEdge, Sungrow, Victron, Sigenergy) tras una
 sola API, gestiona los usuarios/clientes y los mantiene sincronizados con **Zoho CRM**.
 
-- **Frontend:** https://app-energiasolarcanarias.com
+- **Frontend:** https://app.energiasolarcanarias.com
 - **Stack:** PHP 8.2 + Apache · MySQL 8 · Composer · Docker
 - **Documentación viva:** con el stack arriba, `http://localhost:8080/?page=endpoints-verificados`
   (tabla de todos los endpoints, autorización y matriz de qué ofrece cada proveedor).
@@ -21,12 +21,12 @@ docker compose up -d --build
 
 Levanta cuatro servicios:
 
-| Servicio            | Contenedor            | Puerto host | Qué es                                            |
-|---------------------|-----------------------|-------------|---------------------------------------------------|
-| `app`               | `esc_app`             | `8080`      | Backend PHP 8.2 + Apache                          |
-| `mysql`             | `esc_mysql`           | `3307`      | MySQL 8 (importa `db_init/*.sql` al primer arranque) |
-| `phpmyadmin`        | `esc_phpmyadmin`      | `8081`      | Gestión de la BD por navegador                    |
-| `token-refresher`   | `esc_token_refresher` | —           | Refresca los tokens OAuth (Sungrow/Sigenergy) cada 6 h |
+| Servicio          | Contenedor            | Puerto host | Qué es                                                 |
+| ----------------- | --------------------- | ----------- | ------------------------------------------------------ |
+| `app`             | `esc_app`             | `8080`      | Backend PHP 8.2 + Apache                               |
+| `mysql`           | `esc_mysql`           | `3307`      | MySQL 8 (importa `db_init/*.sql` al primer arranque)   |
+| `phpmyadmin`      | `esc_phpmyadmin`      | `8081`      | Gestión de la BD por navegador                         |
+| `token-refresher` | `esc_token_refresher` | —           | Refresca los tokens OAuth (Sungrow/Sigenergy) cada 6 h |
 
 - La API queda en `http://localhost:8080/`.
 - El código va **montado** en local (recarga en caliente); en producción va **dentro
@@ -39,12 +39,12 @@ Levanta cuatro servicios:
 Los ficheros con credenciales están en `.gitignore` y **no** viajan al repo. Se parte
 de los `*_example`:
 
-| Fichero real (gitignored)     | Ejemplo en el repo            | Qué guarda                          |
-|-------------------------------|-------------------------------|-------------------------------------|
-| `config/.env`                 | `config/claves_example.env`   | Claves de proveedores y `ZOHO_*`    |
-| `config/smtp.json`            | `config/smtp_example.json`    | SMTP para los correos de login      |
-| `config/conexion.json`        | —                             | Conexión MySQL (host `mysql`)       |
-| `bruno/environments/*.bru`    | `bruno/environments/EU.example.bru` | Entorno de la colección Bruno |
+| Fichero real (gitignored)  | Ejemplo en el repo                  | Qué guarda                       |
+| -------------------------- | ----------------------------------- | -------------------------------- |
+| `config/.env`              | `config/claves_example.env`         | Claves de proveedores y `ZOHO_*` |
+| `config/smtp.json`         | `config/smtp_example.json`          | SMTP para los correos de login   |
+| `config/conexion.json`     | —                                   | Conexión MySQL (host `mysql`)    |
+| `bruno/environments/*.bru` | `bruno/environments/EU.example.bru` | Entorno de la colección Bruno    |
 
 > Las variables `ZOHO_*` pueden venir del entorno del contenedor (`$_ENV`) o de
 > `config/.env`. **Con las `ZOHO_*` puestas, el backend escribe en el CRM real** — ojo
@@ -84,7 +84,7 @@ Cada plataforma habla su propio idioma para lo mismo ("dame los equipos" =
 casos en cada endpoint:
 
 - **`Proveedor`** define el contrato: `plantas, detalle, tiempoReal, graficas,
-  inventario, alertas, beneficios, resumen`.
+inventario, alertas, beneficios, resumen`.
 - **`ProveedorBase`**: por defecto **nada** soportado. Cada adaptador declara solo lo
   que su API sabe hacer; lo demás lanza `OperacionNoSoportada` → **404** (no es un
   fallo, es que ese proveedor no lo ofrece).
