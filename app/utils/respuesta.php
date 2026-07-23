@@ -95,6 +95,15 @@ class Respuesta
         $this->aplicarHttp();
     }
 
+    public function _429($errores = [])
+    {
+        $this->status = false;
+        $this->code = 429;
+        $this->message = '429 - Demasiadas solicitudes. Inténtalo de nuevo más tarde.';
+        $this->data = $errores;
+        $this->aplicarHttp();
+    }
+
     public function _500($errores = [])
     {
         $this->status = false;
