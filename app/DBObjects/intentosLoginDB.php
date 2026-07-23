@@ -60,7 +60,7 @@ class IntentosLoginDB
         return (int) ($row['n'] ?? 0);
     }
 
-    /** Apunta un intento fallido. */
+    /** Apunta un intento fallido y, de paso, limpia los ya caducados. */
     public function registrarFallo(string $identificador, string $ip): void
     {
         $conn = $this->conn();
@@ -69,6 +69,24 @@ class IntentosLoginDB
             return;
         }
         $stmt->bind_param('ss', $identificador, $ip);
+        $stmt->execute();
+        $stmt->close();
+
+        // Auto-limpieza: los intentos fuera de la ventana ya no cuentan y solo
+        // ocupan espacio. Se purgan aqui (solo ocurre en fallos, baja frecuencia).
+        $this->purgarAntiguos();
+    }
+
+    /** Borra los intentos ya fuera de la ventana de bloqueo (de todos). */
+    public function purgarAntiguos(): void
+    {
+        $conn = $this->conn();
+        $stmt = $conn->prepare("DELETE FROM login_attempts WHERE creado_en < (NOW() - INTERVAL ? MINUTE)");
+        if (!$stmt) {
+            return;
+        }
+        $ventana = self::ventanaMin();
+        $stmt->bind_param('i', $ventana);
         $stmt->execute();
         $stmt->close();
     }
