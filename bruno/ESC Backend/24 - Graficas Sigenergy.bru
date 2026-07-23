@@ -60,5 +60,7 @@ docs {
     Mes:      { "id": "{{sigen_station_id}}", "level": "Month", "date": "2026-07-01" }
     Total:    { "id": "{{sigen_station_id}}", "level": "Lifetime" }
 
-  Requisitos: {{esc_jwt}} valido (ejecuta antes 01 y 02) y {{sigen_station_id}} relleno.
+  Requisitos: {{esc_jwt}} valido (ejecuta antes 01 y 02) y {{sigen_station_id}} con un
+  systemId real. Ejecuta antes el 06 (Plants agregado): su script rellena
+  {{sigen_station_id}} solo (el id tipo VSSKC.../EUEEH...).
 }
