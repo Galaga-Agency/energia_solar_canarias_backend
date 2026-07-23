@@ -1,5 +1,7 @@
 <?php
 session_start();
+// Cabeceras de seguridad (antes de emitir cualquier salida). ISO A.8.28.
+require_once __DIR__ . '/app/utils/cabeceras_seguridad.php';
 // Cargar el archivo JSON con las traducciones
 $jsonData = file_get_contents('./idiomas/idiomas.json');
 $translations = json_decode($jsonData, true);
