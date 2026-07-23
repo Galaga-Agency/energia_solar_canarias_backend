@@ -26,15 +26,29 @@ jobs:
   test:
     name: Tests y calidad
     runs-on: ubuntu-latest
+    # PHP 8.2 desde la imagen oficial en vez de shivammathur/setup-php: la org tiene
+    # restringidas las acciones a actions/* y de GitHub, asi que una accion de
+    # terceros esta bloqueada. Con `container:` no hace falta ninguna accion externa
+    # (solo actions/checkout, que si esta permitida) y ademas fijamos exactamente la
+    # misma version que produccion (el contenedor de deploy es php:8.2-apache).
+    container:
+      image: php:8.2-cli
     steps:
       - uses: actions/checkout@v4
 
-      - name: Configurar PHP 8.2
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.2'
-          extensions: mysqli, pdo, pdo_mysql, gd
-          coverage: none
+      - name: Preparar PHP (extensiones y Composer)
+        run: |
+          set -euo pipefail
+          # git y unzip los necesita Composer para instalar/extraer los paquetes.
+          apt-get update
+          apt-get install -y --no-install-recommends git unzip
+          # Mismas extensiones que produccion que hacen falta aqui (mysqlnd va incluido,
+          # no precisa libs de sistema). gd no lo usan ni los tests ni PHPStan.
+          docker-php-ext-install mysqli pdo_mysql
+          # Composer via el propio PHP (sin curl): la imagen -cli no trae el binario.
+          php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
+          php composer-setup.php --install-dir=/usr/local/bin --filename=composer
+          php -r "unlink('composer-setup.php');"
 
       - name: Instalar dependencias
         run: composer install --no-interaction --no-progress --prefer-dist
