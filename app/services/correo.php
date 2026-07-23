@@ -53,21 +53,28 @@ class Correo
 
                 $this->mail->isHTML(true);
 
-                $textoEspanol = 'Saludos ' . $nombreUsuario . '. ' . 'El token para iniciar sesión en app-energiasolarcanarias.com es: ';
+                $textoEspanol = 'Saludos ' . $nombreUsuario . '. ' . 'El token para iniciar sesión en app.energiasolarcanarias.com es: ';
                 $textoEspanolHtml = htmlentities($textoEspanol);
-                $textoEnglish = 'Greetings ' . $nombreUsuario . '. ' . 'The token to complete the login on app-energiasolarcanarias.com is: ';
+                $textoEnglish = 'Greetings ' . $nombreUsuario . '. ' . 'The token to complete the login on app.energiasolarcanarias.com is: ';
                 $textoEnglishlHtml = htmlentities($textoEnglish);
                 $validezEs = "El token sólo tiene una validez de 5 minutos";
                 $validezEs = htmlentities($validezEs);
                 $validezEn = "The token is only valid for 5 minutes";
                 $validezEn = htmlentities($validezEn);
 
+                // URL de la PWA/frontend (configurable por .env). Un enlace HTTPS normal:
+                // el sistema abre la PWA instalada si la tiene, o el navegador si no.
+                $appUrl = rtrim($_ENV['FRONTEND_URL'] ?? 'https://app.energiasolarcanarias.com', '/');
+                $btnEs = '<div style="text-align: center; margin: 24px 0;"><a href="' . htmlspecialchars($appUrl) . '" style="display: inline-block; background: #2563eb; color: #ffffff; text-decoration: none; font-size: 18px; font-weight: bold; padding: 12px 28px; border-radius: 8px;">Abrir la aplicación</a></div>';
+                $btnEn = '<div style="text-align: center; margin: 24px 0;"><a href="' . htmlspecialchars($appUrl) . '" style="display: inline-block; background: #2563eb; color: #ffffff; text-decoration: none; font-size: 18px; font-weight: bold; padding: 12px 28px; border-radius: 8px;">Open the app</a></div>';
+                $logoHtml = '<div style="display: flex; width: 100%; justify-content: center; align-items: center;"><img src="https://app-backend.energiasolarcanarias.com/public/assets/img/logo.png" style="width: 260px;"></div>';
+
                 if ($idiomaUsuario == 'es') {
                     $this->mail->Subject = 'Token';
-                    $this->message = '<p style="font-size: 20px; color: black; text-align: center;">' . $textoEspanolHtml . '</p><p style="font-size: 20px; color: black; text-align: center;"><b>' . $token . '</b></p><p style="font-size: 20px; color: black; text-align: center;">' . $validezEs . '</p><div style="display: flex; width: 100%; justify-content: center; align-items: center;"><img src="https://app-backend.energiasolarcanarias.com/public/assets/img/logo.png" style="width: 260px;"></div>';
+                    $this->message = '<p style="font-size: 20px; color: black; text-align: center;">' . $textoEspanolHtml . '</p><p style="font-size: 20px; color: black; text-align: center;"><b>' . $token . '</b></p><p style="font-size: 20px; color: black; text-align: center;">' . $validezEs . '</p>' . $btnEs . $logoHtml;
                 } else {
                     $this->mail->Subject = 'Token';
-                    $this->message = '<p style="font-size: 20px; color: black; text-align: center;">' . $textoEnglishlHtml . '</p><p style="font-size: 20px; color: black; text-align: center;"><b>' . $token . '</b></p><p style="font-size: 20px; color: black; text-align: center;">' . $validezEn . '</p><div style="display: flex; width: 100%; justify-content: center; align-items: center;"><img src="https://app-backend.energiasolarcanarias.com/public/assets/img/logo.png" style="width: 260px;"></div>';
+                    $this->message = '<p style="font-size: 20px; color: black; text-align: center;">' . $textoEnglishlHtml . '</p><p style="font-size: 20px; color: black; text-align: center;"><b>' . $token . '</b></p><p style="font-size: 20px; color: black; text-align: center;">' . $validezEn . '</p>' . $btnEn . $logoHtml;
                 }
 
                 $this->mail->Body = $this->message;
@@ -89,7 +96,7 @@ class Correo
                 $respuesta = new Respuesta;
                 $respuesta->_500();
                 $respuesta->message = 'Error en el servicio correo: No se ha recibido en los datos del usuario ($dataUsuario) los datos necesarios para intentar enviar el correo electrónico con el token al usuario';
-                echo var_dump($dataUsuario);
+                //echo var_dump($dataUsuario);
                 return $respuesta;
             }
         } catch (Exception $e) {
@@ -244,7 +251,7 @@ class Correo
                 $validezEn = htmlentities($validezEn);
 
                 // Enlace de recuperación (esto dependerá de tu sistema de backend, por ejemplo: tu URL de recuperación)
-                $urlRecuperacion = 'https://app-energiasolarcanarias.com/reset-password?token=' . $tokenRecuperacion;
+                $urlRecuperacion = 'https://app.energiasolarcanarias.com/reset-password?token=' . $tokenRecuperacion;
 
                 if ($idiomaUsuario == 'es') {
                     $this->mail->Subject = 'Recuperación de Contraseña';

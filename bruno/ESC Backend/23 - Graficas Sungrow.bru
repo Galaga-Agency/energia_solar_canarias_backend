@@ -1,0 +1,67 @@
+meta {
+  name: 23 - Graficas Sungrow
+  type: http
+  seq: 23
+}
+
+post {
+  url: {{base_url_esc}}/plants/graficas?proveedor=sungrow
+  body: json
+  auth: none
+}
+
+params:query {
+  proveedor: sungrow
+}
+
+headers {
+  Content-Type: application/json
+  Authorization: Bearer {{esc_jwt}}
+}
+
+body:json {
+  {
+    "id": "{{sungrow_ps_id}}",
+    "point": "p24",
+    "interval": 5
+  }
+}
+
+assert {
+  res.status: eq 200
+}
+
+tests {
+  test("Graficas Sungrow: respuesta OK", function() {
+    expect(res.getStatus()).to.equal(200);
+    expect(res.getBody().status).to.equal(true);
+    expect(res.getBody().data).to.be.ok;
+  });
+}
+
+docs {
+  Serie temporal de Sungrow.  POST /plants/graficas?proveedor=sungrow
+
+  Body:
+    id        OBLIGATORIO -> ps_id de la estacion Sungrow ({{sungrow_ps_id}}).
+    point     opcional     -> punto del inversor. p24 = potencia activa (W). Por defecto p24.
+    interval  opcional     -> minutos entre muestras. Por defecto 5.
+    fechaInicio / fechaFin  opcional, formato YmdHis (p.ej. "20260715000000").
+                            Por defecto: desde las 00:00 de hoy hasta ahora.
+
+  La API de Sungrow limita la ventana: el servicio la trocea en bloques de 2h y capa
+  el rango a 24h. Pasa por getDevicePointMinuteDataList (unico endpoint de series
+  autorizado para esta cuenta), asi que primero busca el inversor de la planta.
+
+  Requisitos: {{esc_jwt}} valido (ejecuta antes 01 y 02) y {{sungrow_ps_id}} con un
+  ps_id NUMERICO real. Ejecuta antes el 06 (Plants agregado): su script rellena
+  {{sungrow_ps_id}} solo.
+
+  OJO: el ps_id de Sungrow es NUMERICO. Un id tipo VSSKC.../EUEEH... es un systemId
+  de SIGENERGY: si lo pones aqui, Sungrow no encuentra inversor y responde
+  {"error":"no_inversor"}. Ese id va en la prueba 24 (Sigenergy).
+
+  Ejemplo con ventana explicita:
+    { "id": "{{sungrow_ps_id}}", "point": "p24", "interval": 5,
+      "fechaInicio": "20260715000000", "fechaFin": "20260715235959" }
+}

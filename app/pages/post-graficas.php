@@ -55,6 +55,25 @@
     <span class="text-blue-500">"type"</span>: <span class="text-yellow-500">"venus"</span>, <span class="text-green-500">// venus live_feed consumption solar_yield kwh generator generator-runtime custom forecast</span>
     <span class="text-blue-500">"overallstats"</span>: <span class="text-yellow-500">true</span>, <span class="text-green-500">// true or false</span>
 }
+<span class="text-green-500">/* Sungrow --- OJO: el id es el ps_id NUMERICO de la planta */</span>
+{
+    <span class="text-blue-500">"id"</span>: <span class="text-yellow-500">"1234567"</span>, <span class="text-green-500">// ps_id NUMERICO (no el systemId VSSKC.../EUEEH..., eso es Sigenergy)</span>
+    <span class="text-blue-500">"point"</span>: <span class="text-yellow-500">"p24"</span>, <span class="text-green-500">// opcional. p24 = potencia activa (W). Por defecto p24</span>
+    <span class="text-blue-500">"interval"</span>: <span class="text-yellow-500">5</span>, <span class="text-green-500">// opcional. minutos entre muestras. Por defecto 5</span>
+    <span class="text-blue-500">"fechaInicio"</span>: <span class="text-yellow-500">"20260722000000"</span>, <span class="text-green-500">// opcional, formato YmdHis. Por defecto 00:00 de hoy</span>
+    <span class="text-blue-500">"fechaFin"</span>: <span class="text-yellow-500">"20260722235959"</span> <span class="text-green-500">// opcional, formato YmdHis. Por defecto ahora. La ventana se capa a 24h</span>
+}
+<span class="text-green-500">/* Sigenergy --- el id es el systemId (VSSKC.../EUEEH...), NO numerico */</span>
+{
+    <span class="text-blue-500">"id"</span>: <span class="text-yellow-500">"VSSKC1768221900"</span>, <span class="text-green-500">// systemId de la planta Sigenergy (empieza por VSSKC.../EUEEH...)</span>
+    <span class="text-blue-500">"level"</span>: <span class="text-yellow-500">"Lifetime"</span> <span class="text-green-500">// opcional. Day | Week | Month | Year | Lifetime. Por defecto Day. Lifetime ignora la fecha y casi siempre responde</span>
+}
+<span class="text-green-500">/* Sigenergy con fecha (Day/Week/Month/Year) */</span>
+{
+    <span class="text-blue-500">"id"</span>: <span class="text-yellow-500">"VSSKC1768221900"</span>,
+    <span class="text-blue-500">"level"</span>: <span class="text-yellow-500">"Day"</span>, <span class="text-green-500">// Day | Week | Month | Year | Lifetime</span>
+    <span class="text-blue-500">"date"</span>: <span class="text-yellow-500">"2026-07-22"</span> <span class="text-green-500">// opcional, yyyy-MM-dd. Por defecto hoy. LIMITE: 1 consulta por estacion cada 5 min</span>
+}
 </pre>
 
         <h2 class="text-xl font-semibold <?php echo $theme === 'dark' ? 'text-gray-400' : 'text-gray-800'; ?> mb-2">
@@ -127,6 +146,104 @@
 }
 </pre>
 
+        <!-- Forma de la respuesta por proveedor -->
+        <h2 class="text-xl font-semibold <?php echo $theme === 'dark' ? 'text-gray-400' : 'text-gray-800'; ?> mb-2 mt-6">
+            <?php echo translate('post_graficas.respuestas_proveedor_title'); ?>
+        </h2>
+        <p class="<?php echo $theme === 'dark' ? 'text-gray-300' : 'text-gray-700'; ?> mb-2">
+            <?php echo translate('post_graficas.respuestas_proveedor_desc'); ?>
+        </p>
+        <pre class="<?php echo $theme === 'dark' ? 'bg-gray-900 text-gray-300' : 'bg-gray-100 text-gray-900'; ?> rounded-lg p-4 text-sm overflow-auto font-mono">
+<span class="text-green-500">/* <?php echo translate('post_graficas.respuesta_sungrow_label'); ?> */</span>
+{
+    <span class="text-blue-500">"status"</span>: <span class="text-yellow-500">true</span>,
+    <span class="text-blue-500">"code"</span>: <span class="text-yellow-500">200</span>,
+    <span class="text-blue-500">"data"</span>: {
+        <span class="text-blue-500">"ps_id"</span>: <span class="text-yellow-500">"1234567"</span>,
+        <span class="text-blue-500">"ps_key"</span>: <span class="text-green-500">"1234567_11_2_1"</span>, <span class="text-green-500">// inversor localizado</span>
+        <span class="text-blue-500">"point"</span>: <span class="text-yellow-500">"p24"</span>,
+        <span class="text-blue-500">"series"</span>: [
+            { <span class="text-blue-500">"time"</span>: <span class="text-green-500">"20260722080000"</span>, <span class="text-blue-500">"value"</span>: <span class="text-yellow-500">1523.0</span> },
+            { <span class="text-blue-500">"time"</span>: <span class="text-green-500">"20260722080500"</span>, <span class="text-blue-500">"value"</span>: <span class="text-yellow-500">1710.5</span> }
+        ]
+    }
+}
+<span class="text-green-500">/* <?php echo translate('post_graficas.respuesta_sigenergy_label'); ?> */</span>
+{
+    <span class="text-blue-500">"status"</span>: <span class="text-yellow-500">true</span>,
+    <span class="text-blue-500">"code"</span>: <span class="text-yellow-500">200</span>,
+    <span class="text-blue-500">"data"</span>: {
+        <span class="text-blue-500">"powerGeneration"</span>: <span class="text-yellow-500">42.7</span>, <span class="text-green-500">// totales del periodo (kWh)</span>
+        <span class="text-blue-500">"powerToGrid"</span>: <span class="text-yellow-500">18.3</span>,
+        <span class="text-blue-500">"powerSelfConsumption"</span>: <span class="text-yellow-500">24.4</span>,
+        <span class="text-blue-500">"itemList"</span>: [ <span class="text-green-500">// cada punto (Day = 288 de 5 min)</span>
+            {
+                <span class="text-blue-500">"dataTime"</span>: <span class="text-green-500">"2026-07-22 08:00:00"</span>,
+                <span class="text-blue-500">"pvTotalPower"</span>: <span class="text-yellow-500">1523.0</span>,
+                <span class="text-blue-500">"loadPower"</span>: <span class="text-yellow-500">640.0</span>,
+                <span class="text-blue-500">"toGridPower"</span>: <span class="text-yellow-500">880.0</span>,
+                <span class="text-blue-500">"batSoc"</span>: <span class="text-yellow-500">73</span>
+            }
+        ],
+        <span class="text-blue-500">"_cache"</span>: { <span class="text-blue-500">"hit"</span>: <span class="text-yellow-500">false</span>, <span class="text-blue-500">"esperar_seg"</span>: <span class="text-yellow-500">0</span> } <span class="text-green-500">// límite 1/5min por estación</span>
+    }
+}
+</pre>
+
+        <!-- Respuestas de error -->
+        <h2 class="text-xl font-semibold <?php echo $theme === 'dark' ? 'text-gray-400' : 'text-gray-800'; ?> mb-2 mt-6">
+            <?php echo translate('post_graficas.errores_title'); ?>
+        </h2>
+        <p class="<?php echo $theme === 'dark' ? 'text-gray-300' : 'text-gray-700'; ?> mb-2">
+            <?php echo translate('post_graficas.errores_desc'); ?>
+        </p>
+        <pre class="<?php echo $theme === 'dark' ? 'bg-gray-900 text-gray-300' : 'bg-gray-100 text-gray-900'; ?> rounded-lg p-4 text-sm overflow-auto font-mono">
+<span class="text-green-500">/* Sungrow: id cruzado o planta sin inversor (HTTP 400) */</span>
+{
+    <span class="text-blue-500">"status"</span>: <span class="text-yellow-500">false</span>,
+    <span class="text-blue-500">"code"</span>: <span class="text-yellow-500">400</span>,
+    <span class="text-blue-500">"message"</span>: <span class="text-green-500">"No se han encontrado graficas de Sungrow"</span>,
+    <span class="text-blue-500">"data"</span>: { <span class="text-blue-500">"error"</span>: <span class="text-green-500">"no_inversor"</span>, <span class="text-blue-500">"proveedor"</span>: <span class="text-green-500">"Sungrow"</span>, <span class="text-blue-500">"ps_id"</span>: <span class="text-green-500">"EUEEH1768404593"</span> }
+}
+<span class="text-green-500">/* Sigenergy: planta sin datos servibles, code 13001 (HTTP 404) */</span>
+{
+    <span class="text-blue-500">"status"</span>: <span class="text-yellow-500">false</span>,
+    <span class="text-blue-500">"code"</span>: <span class="text-yellow-500">404</span>,
+    <span class="text-blue-500">"message"</span>: <span class="text-green-500">"La planta no tiene datos disponibles"</span>,
+    <span class="text-blue-500">"data"</span>: {
+        <span class="text-blue-500">"proveedor"</span>: <span class="text-green-500">"Sigenergy"</span>,
+        <span class="text-blue-500">"codigo_sigenergy"</span>: <span class="text-yellow-500">13001</span>,
+        <span class="text-blue-500">"reintentable"</span>: <span class="text-yellow-500">false</span>, <span class="text-green-500">// se cachea: no gasta el cupo de 5 min</span>
+        <span class="text-blue-500">"documentado"</span>: <span class="text-yellow-500">false</span>
+    }
+}
+<span class="text-green-500">/* Sigenergy: llamaste antes de los 5 min, code 1201 (HTTP 429) */</span>
+{
+    <span class="text-blue-500">"status"</span>: <span class="text-yellow-500">false</span>,
+    <span class="text-blue-500">"code"</span>: <span class="text-yellow-500">429</span>,
+    <span class="text-blue-500">"message"</span>: <span class="text-green-500">"Demasiado pronto: espera unos minutos"</span>,
+    <span class="text-blue-500">"data"</span>: {
+        <span class="text-blue-500">"proveedor"</span>: <span class="text-green-500">"Sigenergy"</span>,
+        <span class="text-blue-500">"codigo_sigenergy"</span>: <span class="text-yellow-500">1201</span>,
+        <span class="text-blue-500">"reintentable"</span>: <span class="text-yellow-500">true</span>,
+        <span class="text-blue-500">"_cache"</span>: { <span class="text-blue-500">"esperar_seg"</span>: <span class="text-yellow-500">315</span> } <span class="text-green-500">// cuánto falta para reintentar</span>
+    }
+}
+<span class="text-green-500">/* Sigenergy: id inexistente o de otra cuenta, code 1111 (HTTP 404) */</span>
+{
+    <span class="text-blue-500">"status"</span>: <span class="text-yellow-500">false</span>,
+    <span class="text-blue-500">"code"</span>: <span class="text-yellow-500">404</span>,
+    <span class="text-blue-500">"message"</span>: <span class="text-green-500">"Planta no encontrada o sin acceso"</span>,
+    <span class="text-blue-500">"data"</span>: { <span class="text-blue-500">"proveedor"</span>: <span class="text-green-500">"Sigenergy"</span>, <span class="text-blue-500">"codigo_sigenergy"</span>: <span class="text-yellow-500">1111</span> }
+}
+</pre>
+
+        <!-- Acceso y limites -->
+        <div class="<?php echo $theme === 'dark' ? 'bg-yellow-900/30 border-yellow-600 text-yellow-200' : 'bg-yellow-50 border-yellow-500 text-yellow-800'; ?> border-l-4 rounded p-4 mt-6">
+            <p class="font-semibold mb-1">⚠️ <?php echo translate('post_graficas.acceso_title'); ?></p>
+            <p class="text-sm"><?php echo translate('post_graficas.acceso_desc'); ?></p>
+        </div>
+
     </div>
 
     <!-- Componente de Código Copiable -->
@@ -168,6 +285,10 @@ curl -X POST "https://app-backend.energiasolarcanarias.com/plants/graficas?prove
             <li><strong><?php echo translate('post_graficas.parameters_list_interval_name'); ?>:</strong> <?php echo translate('post_graficas.parameters_list_interval_description'); ?></li>
             <li><strong><?php echo translate('post_graficas.parameters_list_type_name'); ?>:</strong> <?php echo translate('post_graficas.parameters_list_type_description'); ?></li>
             <li><strong><?php echo translate('post_graficas.parameters_list_overallstats_name'); ?>:</strong> <?php echo translate('post_graficas.parameters_list_overallstats_description'); ?></li>
+            <li><strong><?php echo translate('post_graficas.parameters_list_point_name'); ?>:</strong> <?php echo translate('post_graficas.parameters_list_point_description'); ?></li>
+            <li><strong><?php echo translate('post_graficas.parameters_list_level_name'); ?>:</strong> <?php echo translate('post_graficas.parameters_list_level_description'); ?></li>
+            <li><strong><?php echo translate('post_graficas.parameters_list_date_name'); ?>:</strong> <?php echo translate('post_graficas.parameters_list_date_description'); ?></li>
+            <li class="mt-2 <?php echo $theme === 'dark' ? 'text-yellow-400' : 'text-yellow-700'; ?>"><strong>⚠️ <?php echo translate('post_graficas.nota_ids_name'); ?>:</strong> <?php echo translate('post_graficas.nota_ids_description'); ?></li>
         </ul>
 
     </div>

@@ -12,6 +12,9 @@
  *
  *  2. Limpieza de api_cache (ver limpiarCache mas abajo).
  *
+ *  3. Limpieza de login_attempts: borra los intentos de acceso caducados
+ *     (anti-fuerza-bruta), para que la tabla no crezca aunque no haya fallos.
+ *
  * Uso:  php app/cron/cron_refresh_tokens_proveedores.php [--force]
  */
 
@@ -77,6 +80,37 @@ try {
 } catch (Throwable $e) {
     // Que un fallo limpiando no tumbe el refresco de tokens, que es lo critico.
     logmsg('cache: ERROR limpiando -> ' . $e->getMessage());
+}
+
+/**
+ * Borra de login_attempts los intentos ya fuera de la ventana de bloqueo.
+ *
+ * El anti-fuerza-bruta (IntentosLoginDB) ya auto-purga al registrar un fallo,
+ * pero eso solo ocurre cuando ALGUIEN falla un login. Este cron garantiza la
+ * limpieza aunque no haya fallos. Se borran los intentos de mas de 1 hora, muy
+ * por encima de la ventana por defecto (15 min): pasado eso ya no cuentan.
+ * Si subes LOGIN_BLOQUEO_MIN por encima de 60, sube tambien RETENCION_MIN aqui.
+ */
+function limpiarLoginAttempts($db)
+{
+    $RETENCION_MIN = 60;
+    $st = $db->prepare("DELETE FROM login_attempts WHERE creado_en < (NOW() - INTERVAL ? MINUTE)");
+    if (!$st) {
+        // Si la tabla aun no existe (migracion sin aplicar) no es un error grave.
+        logmsg('login_attempts: no se pudo preparar el DELETE (¿tabla sin migrar?) -> ' . $db->error);
+        return;
+    }
+    $st->bind_param('i', $RETENCION_MIN);
+    $st->execute();
+    $borradas = $st->affected_rows;
+    $st->close();
+    logmsg("login_attempts: $borradas intentos caducados borrados.");
+}
+
+try {
+    limpiarLoginAttempts($db);
+} catch (Throwable $e) {
+    logmsg('login_attempts: ERROR limpiando -> ' . $e->getMessage());
 }
 
 $db->close();

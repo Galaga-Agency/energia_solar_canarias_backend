@@ -25,7 +25,7 @@ class SigenergyErrores
      * Se descubrieron probando contra la API con plantas reales, asi que si algun dia
      * dejan de existir o cambian de significado, es aqui donde hay que mirar.
      */
-    private const NO_DOCUMENTADOS = [13008];
+    private const NO_DOCUMENTADOS = [13001, 13008];
 
     private const CATALOGO = [
         0 => [
@@ -167,6 +167,21 @@ class SigenergyErrores
             'mensaje' => 'Desarrollador no aprobado',
             'causa' => 'Developer not approved: falta que Sigenergy apruebe la app en el portal.',
             'http' => 403,
+            'transitorio' => false,
+        ],
+
+        // Tampoco documentado (13xxx). Mismo texto que el 1108 ("station info not
+        // found"): la Openapi no devuelve historico/datos de esta planta aunque el
+        // systemId sea valido (planta nueva, apagada o sin datos para el periodo).
+        // Se cachea (transitorio=false) por lo mismo que el 13008: el limite de 1
+        // acceso cada 5 min se aplica igual aunque la respuesta sea un error, asi que
+        // reintentarlo solo gastaria el cupo de esa estacion.
+        13001 => [
+            'mensaje' => 'La planta no tiene datos disponibles',
+            'causa' => 'station info not found: Sigenergy no encuentra informacion de esta planta. '
+                . 'NO documentado; observado en produccion. El systemId puede ser valido pero sin '
+                . 'historico servible (planta nueva/apagada o sin datos para el level+date pedido).',
+            'http' => 404,
             'transitorio' => false,
         ],
 
