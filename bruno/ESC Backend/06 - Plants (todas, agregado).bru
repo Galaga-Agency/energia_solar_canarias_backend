@@ -5,13 +5,9 @@ meta {
 }
 
 get {
-  url: {{base_url_esc}}/plants?proveedor=sungrow
+  url: {{base_url_esc}}/plants
   body: none
   auth: none
-}
-
-params:query {
-  proveedor: sungrow
 }
 
 headers {
@@ -19,11 +15,45 @@ headers {
   Authorization: Bearer {{esc_jwt}}
 }
 
+script:post-response {
+  // Auto-rellena los ids de planta por proveedor, para que las pruebas de graficas
+  // (23 Sungrow, 24 Sigenergy) usen el id CORRECTO de cada uno:
+  //   Sungrow  -> ps_id NUMERICO        Sigenergy -> systemId (VSSKC.../EUEEH...)
+  // Cada planta del agregado trae 'id' + 'organization'.
+  function listaPlantas(body) {
+    if (Array.isArray(body)) return body;
+    if (!body || typeof body !== 'object') return [];
+    if (Array.isArray(body.data)) return body.data;
+    if (body.data && Array.isArray(body.data.plants)) return body.data.plants;
+    return [];
+  }
+  const plantas = listaPlantas(res.body);
+  const org = p => String((p && p.organization) || '').toLowerCase();
+  const sg = plantas.find(p => org(p) === 'sungrow' && p.id);
+  const si = plantas.find(p => org(p) === 'sigenergy' && p.id);
+  if (sg) { bru.setVar('sungrow_ps_id', String(sg.id)); console.log('sungrow_ps_id = ' + sg.id + ' (' + sg.name + ')'); }
+  else    { console.log('No hay plantas Sungrow en la respuesta.'); }
+  if (si) { bru.setVar('sigen_station_id', String(si.id)); console.log('sigen_station_id = ' + si.id + ' (' + si.name + ')'); }
+  else    { console.log('No hay plantas Sigenergy en la respuesta.'); }
+}
+
+assert {
+  res.status: eq 200
+}
+
 docs {
-  Sin `?proveedor=`:
-    - admin  -> todas las plantas de TODOS los proveedores (agregado, desde la BD).
+  Listado agregado de plantas (sin `?proveedor=`):
+    - admin   -> todas las plantas de TODOS los proveedores (desde la BD).
     - cliente -> solo las plantas asociadas a su usuario.
-  
+
+  Cada planta trae `id` y `organization` (goodwe|solaredge|victronenergy|sungrow|
+  sigenergy). El script post-respuesta guarda el primer id de Sungrow en
+  `sungrow_ps_id` y el de Sigenergy en `sigen_station_id`, para que las pruebas de
+  graficas (23 y 24) cojan el id bueno sin copiarlo a mano.
+
+  OJO con no cruzar ids entre proveedores: el ps_id de Sungrow es NUMERICO; los
+  VSSKC.../EUEEH... son systemId de Sigenergy. Cruzarlos da "no_inversor" en Sungrow.
+
   Variantes (solo admin):
     /plants?usuarioId=12                        -> plantas de ese cliente
     /plants?plantId=XXX&proveedor=sungrow       -> clientes de esa planta

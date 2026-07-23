@@ -53,7 +53,13 @@ docs {
   el rango a 24h. Pasa por getDevicePointMinuteDataList (unico endpoint de series
   autorizado para esta cuenta), asi que primero busca el inversor de la planta.
 
-  Requisitos: {{esc_jwt}} valido (ejecuta antes 01 y 02) y {{sungrow_ps_id}} relleno.
+  Requisitos: {{esc_jwt}} valido (ejecuta antes 01 y 02) y {{sungrow_ps_id}} con un
+  ps_id NUMERICO real. Ejecuta antes el 06 (Plants agregado): su script rellena
+  {{sungrow_ps_id}} solo.
+
+  OJO: el ps_id de Sungrow es NUMERICO. Un id tipo VSSKC.../EUEEH... es un systemId
+  de SIGENERGY: si lo pones aqui, Sungrow no encuentra inversor y responde
+  {"error":"no_inversor"}. Ese id va en la prueba 24 (Sigenergy).
 
   Ejemplo con ventana explicita:
     { "id": "{{sungrow_ps_id}}", "point": "p24", "interval": 5,
