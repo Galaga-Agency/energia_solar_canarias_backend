@@ -122,6 +122,11 @@ class Correo
                 $nombreUsuario = isset($dataUsuario['nombre']) ? $dataUsuario['nombre'] : '';
                 $mensajeUsuario = trim($dataUsuario['mensaje']);
 
+                // Buzon que recibe los mensajes del formulario. Configurable por .env
+                // (SOPORTE_EMAIL) para cambiarlo sin tocar codigo ni redesplegar; si no
+                // esta definido, se mantiene el destino de siempre.
+                $emailSoporte = $_ENV['SOPORTE_EMAIL'] ?? 'soporte@app-energiasolarcanarias.com';
+
                 // Configuración SMTP
                 $this->mail->isSMTP();
                 $this->mail->Host = $this->host; // Servidor SMTP
@@ -168,7 +173,7 @@ class Correo
 
                 // **Correo para soporte**
                 $this->mail->setFrom('admin@app-energiasolarcanarias.com', 'Formulario de Contacto');
-                $this->mail->addAddress('soporte@app-energiasolarcanarias.com', 'Soporte'); // Dirección de soporte
+                $this->mail->addAddress($emailSoporte, 'Soporte'); // Dirección de soporte (SOPORTE_EMAIL)
                 $this->mail->addReplyTo($emailUsuario, $nombreUsuario); // Permitir respuesta al remitente
 
                 $this->mail->isHTML(true);
