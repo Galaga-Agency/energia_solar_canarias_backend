@@ -1,20 +1,20 @@
 <?php
-if (isset($_GET['status']) && isset($_GET['message'])) {
-  $status = htmlspecialchars($_GET['status']);
-  $message = htmlspecialchars(urldecode($_GET['message']));
-  if (isset($_GET['status']) && isset($_GET['message'])) {
-    $status = htmlspecialchars($_GET['status']);
-    $message = htmlspecialchars(urldecode($_GET['message']));
+// Aviso tras enviar el formulario. $_GET viene del propio redirect de ayudaForm.php,
+// pero se trata como no fiable igualmente: el status se limita a un valor conocido y
+// el mensaje se escapa (ENT_QUOTES) antes de imprimirlo, asi que no hay XSS reflejado
+// aunque alguien manipule la URL.
+if (isset($_GET['status'], $_GET['message'])) {
+  $status = $_GET['status'] === 'success' ? 'success' : 'error';
+  $message = htmlspecialchars(urldecode((string) $_GET['message']), ENT_QUOTES, 'UTF-8');
 
-    // Clases dinámicas para éxito y error
-    $classes = $status === 'success'
-      ? 'bg-green-100 text-green-700 border-green-300'
-      : 'bg-red-100 text-red-700 border-red-300';
+  // Clases dinámicas para éxito y error
+  $classes = $status === 'success'
+    ? 'bg-green-100 text-green-700 border-green-300'
+    : 'bg-red-100 text-red-700 border-red-300';
 
-    echo "<div class='notification border-l-4 p-4 rounded-md mb-4 $classes'>";
-    echo "<p class='text-sm text-center'>$message</p>";
-    echo "</div>";
-  }
+  echo "<div class='notification border-l-4 p-4 rounded-md mb-4 $classes'>";
+  echo "<p class='text-sm text-center'>$message</p>";
+  echo "</div>";
 }
 /** @var string $theme Tema activo ('dark'|'light'); lo define index.php, que incluye esta pagina. */
 ?>
@@ -54,6 +54,30 @@ if (isset($_GET['status']) && isset($_GET['message'])) {
           <?php echo translate('ayuda.faq3.contenido'); ?>
         </p>
       </details>
+      <details class="<?php echo $theme === 'dark' ? 'bg-gray-800 text-white' : 'bg-white text-black'; ?> shadow-md rounded-md p-4">
+        <summary class="font-medium cursor-pointer text-lg">
+          <?php echo translate('ayuda.faq4.titulo'); ?>
+        </summary>
+        <p class="mt-2 text-sm sm:text-base">
+          <?php echo translate('ayuda.faq4.contenido'); ?>
+        </p>
+      </details>
+      <details class="<?php echo $theme === 'dark' ? 'bg-gray-800 text-white' : 'bg-white text-black'; ?> shadow-md rounded-md p-4">
+        <summary class="font-medium cursor-pointer text-lg">
+          <?php echo translate('ayuda.faq5.titulo'); ?>
+        </summary>
+        <p class="mt-2 text-sm sm:text-base">
+          <?php echo translate('ayuda.faq5.contenido'); ?>
+        </p>
+      </details>
+      <details class="<?php echo $theme === 'dark' ? 'bg-gray-800 text-white' : 'bg-white text-black'; ?> shadow-md rounded-md p-4">
+        <summary class="font-medium cursor-pointer text-lg">
+          <?php echo translate('ayuda.faq6.titulo'); ?>
+        </summary>
+        <p class="mt-2 text-sm sm:text-base">
+          <?php echo translate('ayuda.faq6.contenido'); ?>
+        </p>
+      </details>
     </div>
   </section>
 
@@ -67,19 +91,19 @@ if (isset($_GET['status']) && isset($_GET['message'])) {
         <label for="name" class="block font-medium text-sm sm:text-base">
           <?php echo translate('ayuda.form.nombre'); ?>
         </label>
-        <input type="text" id="name" name="name" required class="mt-1 w-full rounded-md border <?php echo $theme === 'dark' ? 'bg-gray-700 text-white' : 'bg-gray-100 text-black'; ?> focus:ring-2 focus:ring-blue-500">
+        <input type="text" id="name" name="name" required maxlength="100" class="mt-1 w-full rounded-md border <?php echo $theme === 'dark' ? 'bg-gray-700 text-white' : 'bg-gray-100 text-black'; ?> focus:ring-2 focus:ring-blue-500">
       </div>
       <div>
         <label for="email" class="block font-medium text-sm sm:text-base">
           <?php echo translate('ayuda.form.email'); ?>
         </label>
-        <input type="email" id="email" name="email" required class="mt-1 w-full rounded-md border <?php echo $theme === 'dark' ? 'bg-gray-700 text-white' : 'bg-gray-100 text-black'; ?> focus:ring-2 focus:ring-blue-500">
+        <input type="email" id="email" name="email" required maxlength="254" class="mt-1 w-full rounded-md border <?php echo $theme === 'dark' ? 'bg-gray-700 text-white' : 'bg-gray-100 text-black'; ?> focus:ring-2 focus:ring-blue-500">
       </div>
       <div>
         <label for="message" class="block font-medium text-sm sm:text-base">
           <?php echo translate('ayuda.form.mensaje'); ?>
         </label>
-        <textarea id="message" name="message" rows="4" required class="mt-1 w-full rounded-md border <?php echo $theme === 'dark' ? 'bg-gray-700 text-white' : 'bg-gray-100 text-black'; ?> focus:ring-2 focus:ring-blue-500"></textarea>
+        <textarea id="message" name="message" rows="4" required maxlength="2000" class="mt-1 w-full rounded-md border <?php echo $theme === 'dark' ? 'bg-gray-700 text-white' : 'bg-gray-100 text-black'; ?> focus:ring-2 focus:ring-blue-500"></textarea>
       </div>
       <div>
         <label for="captcha" class="block font-medium text-sm sm:text-base">Escribe el texto del CAPTCHA:</label>

@@ -186,8 +186,20 @@
         "contenido": "Puedes cambiar tu correo electrónico en la sección de configuración de tu perfil."
       },
       "faq3": {
-        "titulo": "¿Dónde puedo encontrar mis facturas?",
-        "contenido": "Tus facturas están disponibles en la sección de facturación de tu cuenta."
+        "titulo": "¿Cómo accedo a la aplicación?",
+        "contenido": "Introduce tu correo en la pantalla de inicio de sesión y recibirás un código de un solo uso por email junto a un enlace para abrir la aplicación. Escribe el código para entrar; por seguridad caduca a los pocos minutos."
+      },
+      "faq4": {
+        "titulo": "No veo los datos de una de mis plantas, ¿por qué?",
+        "contenido": "Suele deberse a uno de estos motivos: la planta aún no está asociada a tu cuenta, está apagada o sin cobertura, o el proveedor todavía no ha enviado datos para el periodo consultado. Si persiste, contáctanos con el nombre de la planta desde el formulario de abajo."
+      },
+      "faq5": {
+        "titulo": "¿Cada cuánto se actualizan los datos de mis plantas?",
+        "contenido": "Los datos en tiempo real se refrescan en cada consulta. En las gráficas, algunos proveedores limitan la frecuencia (por ejemplo, una consulta por planta cada 5 minutos): si vuelves a pedir la gráfica antes, se te muestra el último dato disponible."
+      },
+      "faq6": {
+        "titulo": "¿Es seguro el acceso a mi cuenta?",
+        "contenido": "Sí. El acceso es sin contraseña mediante un código de un solo uso enviado a tu correo, la sesión viaja siempre cifrada (HTTPS) y bloqueamos temporalmente los intentos repetidos para frenar ataques de fuerza bruta. Nunca te pediremos el código por teléfono ni por email."
       },
       "contacto": "Contacto",
       "form": {
@@ -496,8 +508,20 @@
         "contenido": "You can change your email in the settings section of your profile."
       },
       "faq3": {
-        "titulo": "Where can I find my invoices?",
-        "contenido": "Your invoices are available in the billing section of your account."
+        "titulo": "How do I sign in to the app?",
+        "contenido": "Enter your email on the login screen and you will receive a one-time code by email along with a link to open the app. Type the code to sign in; for security it expires after a few minutes."
+      },
+      "faq4": {
+        "titulo": "I can't see data for one of my plants, why?",
+        "contenido": "It is usually one of these: the plant is not yet linked to your account, it is powered off or has no connectivity, or the provider has not sent data for the requested period yet. If it persists, contact us with the plant name using the form below."
+      },
+      "faq5": {
+        "titulo": "How often is my plant data updated?",
+        "contenido": "Real-time data is refreshed on every request. For charts, some providers limit the frequency (for example, one request per plant every 5 minutes): if you request the chart again sooner, the last available value is shown."
+      },
+      "faq6": {
+        "titulo": "Is access to my account secure?",
+        "contenido": "Yes. Access is passwordless via a one-time code sent to your email, the session always travels encrypted (HTTPS), and we temporarily block repeated attempts to stop brute-force attacks. We will never ask you for the code by phone or email."
       },
       "contacto": "Contact Support",
       "form": {
