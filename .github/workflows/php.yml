@@ -34,7 +34,7 @@ jobs:
     container:
       image: php:8.2-cli
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Preparar PHP (extensiones y Composer)
         run: |
@@ -75,7 +75,7 @@ jobs:
     name: Escaneo de secretos (gitleaks)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Instalar gitleaks
         run: |
