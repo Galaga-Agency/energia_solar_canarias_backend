@@ -8,5 +8,7 @@ CREATE TABLE IF NOT EXISTS `login_attempts` (
     `ip`            VARCHAR(45)     NOT NULL,
     `creado_en`     DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (`id`),
-    KEY `idx_ident_ip_creado` (`identificador`, `ip`, `creado_en`)
+    KEY `idx_ident_ip_creado` (`identificador`, `ip`, `creado_en`),
+    -- Para la purga periodica por antiguedad (DELETE ... WHERE creado_en < X).
+    KEY `idx_creado_en` (`creado_en`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
