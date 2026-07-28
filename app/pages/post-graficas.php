@@ -55,14 +55,26 @@
     <span class="text-blue-500">"type"</span>: <span class="text-yellow-500">"venus"</span>, <span class="text-green-500">// venus live_feed consumption solar_yield kwh generator generator-runtime custom forecast</span>
     <span class="text-blue-500">"overallstats"</span>: <span class="text-yellow-500">true</span>, <span class="text-green-500">// true or false</span>
 }
-<span class="text-green-500">/* Sungrow --- OJO: el id es el ps_id NUMERICO de la planta */</span>
+<span class="text-green-500">/* Sungrow Day/Custom (intradia por minuto) --- id = ps_id NUMERICO */</span>
 {
     <span class="text-blue-500">"id"</span>: <span class="text-yellow-500">"1234567"</span>, <span class="text-green-500">// ps_id NUMERICO (no el systemId VSSKC.../EUEEH..., eso es Sigenergy)</span>
-    <span class="text-blue-500">"point"</span>: <span class="text-yellow-500">"p24"</span>, <span class="text-green-500">// opcional. p24 = potencia activa (W). Por defecto p24</span>
-    <span class="text-blue-500">"interval"</span>: <span class="text-yellow-500">5</span>, <span class="text-green-500">// opcional. minutos entre muestras. Por defecto 5</span>
-    <span class="text-blue-500">"fechaInicio"</span>: <span class="text-yellow-500">"20260722000000"</span>, <span class="text-green-500">// opcional, formato YmdHis. Por defecto 00:00 de hoy</span>
-    <span class="text-blue-500">"fechaFin"</span>: <span class="text-yellow-500">"20260722235959"</span> <span class="text-green-500">// opcional, formato YmdHis. Por defecto ahora. La ventana se capa a 24h</span>
+    <span class="text-blue-500">"level"</span>: <span class="text-yellow-500">"Day"</span>, <span class="text-green-500">// Day | Custom | Week | Month | Year. Por defecto Day</span>
+    <span class="text-blue-500">"points"</span>: <span class="text-yellow-500">"p24,p18,p21"</span>, <span class="text-green-500">// una o varias medidas (csv o array). Por defecto p24</span>
+    <span class="text-blue-500">"interval"</span>: <span class="text-yellow-500">5</span>, <span class="text-green-500">// solo intradia. 5 | 15 | 30 | 60 min. Por defecto 5</span>
+    <span class="text-blue-500">"fechaInicio"</span>: <span class="text-yellow-500">"20260722000000"</span>, <span class="text-green-500">// solo Custom, formato YmdHis. La ventana se capa a 24h (bloques de 2h)</span>
+    <span class="text-blue-500">"fechaFin"</span>: <span class="text-yellow-500">"20260722235959"</span> <span class="text-green-500">// solo Custom, formato YmdHis. Por defecto ahora</span>
 }
+<span class="text-green-500">/* Sungrow Week/Month/Year (agregado dia/mes) */</span>
+{
+    <span class="text-blue-500">"id"</span>: <span class="text-yellow-500">"1234567"</span>,
+    <span class="text-blue-500">"level"</span>: <span class="text-yellow-500">"Week"</span>, <span class="text-green-500">// Week/Month -> un punto por dia; Year -> un punto por mes</span>
+    <span class="text-blue-500">"points"</span>: <span class="text-yellow-500">"p24,p14"</span>,
+    <span class="text-blue-500">"date"</span>: <span class="text-yellow-500">"2026-07-22"</span> <span class="text-green-500">// opcional, fecha de referencia (yyyy-mm-dd). Por defecto hoy</span>
+}
+<span class="text-green-500">/* Puntos (points) mas usados: p24=potencia activa(W) [confirmado], p14=potencia DC(W),</span>
+<span class="text-green-500">   p18/p19/p20=voltaje fase A/B/C(V), p21/p22/p23=corriente fase A/B/C(A), p44=voltaje MPPT(V).</span>
+<span class="text-green-500">   OJO: los inversores HIBRIDOS (con bateria) devuelven serie VACIA por el plan de API de</span>
+<span class="text-green-500">   Sungrow; hoy solo dan datos los inversores normales (tipo 1). */</span>
 <span class="text-green-500">/* Sigenergy --- el id es el systemId (VSSKC.../EUEEH...), NO numerico */</span>
 {
     <span class="text-blue-500">"id"</span>: <span class="text-yellow-500">"VSSKC1768221900"</span>, <span class="text-green-500">// systemId de la planta Sigenergy (empieza por VSSKC.../EUEEH...)</span>
@@ -160,14 +172,18 @@
     <span class="text-blue-500">"code"</span>: <span class="text-yellow-500">200</span>,
     <span class="text-blue-500">"data"</span>: {
         <span class="text-blue-500">"ps_id"</span>: <span class="text-yellow-500">"1234567"</span>,
-        <span class="text-blue-500">"ps_key"</span>: <span class="text-green-500">"1234567_11_2_1"</span>, <span class="text-green-500">// inversor localizado</span>
-        <span class="text-blue-500">"point"</span>: <span class="text-yellow-500">"p24"</span>,
-        <span class="text-blue-500">"series"</span>: [
-            { <span class="text-blue-500">"time"</span>: <span class="text-green-500">"20260722080000"</span>, <span class="text-blue-500">"value"</span>: <span class="text-yellow-500">1523.0</span> },
-            { <span class="text-blue-500">"time"</span>: <span class="text-green-500">"20260722080500"</span>, <span class="text-blue-500">"value"</span>: <span class="text-yellow-500">1710.5</span> }
-        ]
+        <span class="text-blue-500">"ps_key"</span>: <span class="text-green-500">"1234567_14_1_1"</span>, <span class="text-green-500">// inversor localizado (tipo 1 o 14)</span>
+        <span class="text-blue-500">"level"</span>: <span class="text-yellow-500">"day"</span>,
+        <span class="text-blue-500">"series"</span>: { <span class="text-green-500">// UNA serie por punto pedido (multipunto)</span>
+            <span class="text-blue-500">"p24"</span>: [
+                { <span class="text-blue-500">"time"</span>: <span class="text-green-500">"20260722080000"</span>, <span class="text-blue-500">"value"</span>: <span class="text-yellow-500">1523.0</span> },
+                { <span class="text-blue-500">"time"</span>: <span class="text-green-500">"20260722080500"</span>, <span class="text-blue-500">"value"</span>: <span class="text-yellow-500">1710.5</span> }
+            ],
+            <span class="text-blue-500">"p18"</span>: [ { <span class="text-blue-500">"time"</span>: <span class="text-green-500">"20260722080000"</span>, <span class="text-blue-500">"value"</span>: <span class="text-yellow-500">225.6</span> } ]
+        }
     }
 }
+<span class="text-green-500">// Compat: si pides un solo "point" (en vez de "points"), data trae {point, series:[...]} plano.</span>
 <span class="text-green-500">/* <?php echo translate('post_graficas.respuesta_sigenergy_label'); ?> */</span>
 {
     <span class="text-blue-500">"status"</span>: <span class="text-yellow-500">true</span>,
@@ -286,6 +302,7 @@ curl -X POST "https://app-backend.energiasolarcanarias.com/plants/graficas?prove
             <li><strong><?php echo translate('post_graficas.parameters_list_type_name'); ?>:</strong> <?php echo translate('post_graficas.parameters_list_type_description'); ?></li>
             <li><strong><?php echo translate('post_graficas.parameters_list_overallstats_name'); ?>:</strong> <?php echo translate('post_graficas.parameters_list_overallstats_description'); ?></li>
             <li><strong><?php echo translate('post_graficas.parameters_list_point_name'); ?>:</strong> <?php echo translate('post_graficas.parameters_list_point_description'); ?></li>
+            <li><strong><?php echo translate('post_graficas.parameters_list_points_name'); ?>:</strong> <?php echo translate('post_graficas.parameters_list_points_description'); ?></li>
             <li><strong><?php echo translate('post_graficas.parameters_list_level_name'); ?>:</strong> <?php echo translate('post_graficas.parameters_list_level_description'); ?></li>
             <li><strong><?php echo translate('post_graficas.parameters_list_date_name'); ?>:</strong> <?php echo translate('post_graficas.parameters_list_date_description'); ?></li>
             <li class="mt-2 <?php echo $theme === 'dark' ? 'text-yellow-400' : 'text-yellow-700'; ?>"><strong>⚠️ <?php echo translate('post_graficas.nota_ids_name'); ?>:</strong> <?php echo translate('post_graficas.nota_ids_description'); ?></li>

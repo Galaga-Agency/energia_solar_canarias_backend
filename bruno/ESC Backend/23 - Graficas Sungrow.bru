@@ -22,8 +22,9 @@ headers {
 body:json {
   {
     "id": "{{sungrow_ps_id}}",
-    "point": "p24",
-    "interval": 5
+    "level": "Day",
+    "points": "p24,p18,p21",
+    "interval": 15
   }
 }
 
@@ -40,28 +41,35 @@ tests {
 }
 
 docs {
-  Serie temporal de Sungrow.  POST /plants/graficas?proveedor=sungrow
+  Serie temporal de Sungrow (panel).  POST /plants/graficas?proveedor=sungrow
 
   Body:
-    id        OBLIGATORIO -> ps_id de la estacion Sungrow ({{sungrow_ps_id}}).
-    point     opcional     -> punto del inversor. p24 = potencia activa (W). Por defecto p24.
-    interval  opcional     -> minutos entre muestras. Por defecto 5.
-    fechaInicio / fechaFin  opcional, formato YmdHis (p.ej. "20260715000000").
-                            Por defecto: desde las 00:00 de hoy hasta ahora.
+    id       OBLIGATORIO -> ps_id NUMERICO de la estacion Sungrow ({{sungrow_ps_id}}).
+    level    opcional -> Day | Custom (intradia por minuto) | Week | Month | Year
+                        (agregado). Por defecto Day.
+    points   opcional -> una o varias medidas (csv o array). Por defecto p24.
+                        p24=potencia activa(W), p14=potencia DC(W), p18/p19/p20=voltaje
+                        fase A/B/C(V), p21/p22/p23=corriente fase A/B/C(A), p44=voltaje MPPT(V).
+    point    opcional -> compat: un solo punto (respuesta con forma plana).
+    interval opcional -> solo intradia. 5|15|30|60 min. Por defecto 5.
+    date     opcional -> solo Week/Month/Year. Fecha de referencia (yyyy-mm-dd). Hoy por defecto.
+    fechaInicio/fechaFin -> solo Custom, formato YmdHis. Ventana capada a 24h (bloques de 2h).
 
-  La API de Sungrow limita la ventana: el servicio la trocea en bloques de 2h y capa
-  el rango a 24h. Pasa por getDevicePointMinuteDataList (unico endpoint de series
-  autorizado para esta cuenta), asi que primero busca el inversor de la planta.
+  Respuesta multipunto: data.series = { "p24": [ {time,value}, ... ], "p18": [...] }.
+  Con 'point' suelto: data = { point, series:[ {time,value} ] } (compat).
 
-  Requisitos: {{esc_jwt}} valido (ejecuta antes 01 y 02) y {{sungrow_ps_id}} con un
-  ps_id NUMERICO real. Ejecuta antes el 06 (Plants agregado): su script rellena
-  {{sungrow_ps_id}} solo.
+  Variantes:
+    Semana: { "id": "{{sungrow_ps_id}}", "level": "Week",  "points": "p24,p14", "date": "2026-07-27" }
+    Mes:    { "id": "{{sungrow_ps_id}}", "level": "Month", "points": "p24",     "date": "2026-07-01" }
+    Anio:   { "id": "{{sungrow_ps_id}}", "level": "Year",  "points": "p24",     "date": "2026-01-01" }
+    Custom: { "id": "{{sungrow_ps_id}}", "level": "Custom", "points": "p24",
+              "interval": 5, "fechaInicio": "20260727100000", "fechaFin": "20260727120000" }
 
-  OJO: el ps_id de Sungrow es NUMERICO. Un id tipo VSSKC.../EUEEH... es un systemId
-  de SIGENERGY: si lo pones aqui, Sungrow no encuentra inversor y responde
-  {"error":"no_inversor"}. Ese id va en la prueba 24 (Sigenergy).
+  Requisitos: {{esc_jwt}} valido (01 y 02) y {{sungrow_ps_id}} NUMERICO real (ejecuta
+  antes el 06). El ps_id de Sungrow es NUMERICO: un id VSSKC.../EUEEH... es un systemId
+  de SIGENERGY (va en la 24), y aqui daria {"error":"no_inversor"}.
 
-  Ejemplo con ventana explicita:
-    { "id": "{{sungrow_ps_id}}", "point": "p24", "interval": 5,
-      "fechaInicio": "20260715000000", "fechaFin": "20260715235959" }
+  OJO IMPORTANTE: solo los inversores NORMALES (device_type 1) devuelven serie. Los
+  HIBRIDOS (tipo 14, con bateria) responden vacio por el plan de API de Sungrow, no
+  por el backend. Ver documentacion/sungrow/openapi-sungrow.md.
 }
