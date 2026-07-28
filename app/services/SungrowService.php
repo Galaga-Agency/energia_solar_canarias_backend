@@ -48,6 +48,43 @@ class SungrowService
     /** device_type de getDeviceList que cuentan como inversor: 1 = Inverter, 14 = Hybrid inverter. */
     private const TIPOS_INVERSOR = [1, 14];
 
+    /**
+     * Catalogo de puntos de medida del inversor para el filtro del panel de graficas.
+     *
+     * Mapa etiqueta -> id de punto (pXX). p24 esta confirmado oficialmente (potencia
+     * activa). El resto se verifico por MAGNITUD contra un inversor tipo 1 el
+     * 2026-07-27 (voltajes ~220-235 V, corrientes ~5 A, potencias ~3 kW). El endpoint
+     * acepta cualquier pXX; esto es solo la referencia para traducir los checkboxes.
+     *
+     * OJO: los puntos de bateria (carga/descarga) solo existen en inversores HIBRIDOS
+     * (device_type 14), que por el plan de API de la cuenta NO devuelven series. Por
+     * eso no se listan aqui todavia (ver documentacion/sungrow/openapi-sungrow.md).
+     */
+    public const CATALOGO_PUNTOS = [
+        'potencia_activa_total' => 'p24', // W  (confirmado oficialmente)
+        'potencia_dc_total'     => 'p14', // W
+        'voltaje_fase_a'        => 'p18', // V
+        'voltaje_fase_b'        => 'p19', // V
+        'voltaje_fase_c'        => 'p20', // V
+        'corriente_fase_a'      => 'p21', // A
+        'corriente_fase_b'      => 'p22', // A
+        'corriente_fase_c'      => 'p23', // A
+        'voltaje_mppt'          => 'p44', // V
+    ];
+
+    /**
+     * Nivel de agregacion -> query_type del endpoint getDevicePointsDayMonthYearDataList.
+     * query_type fija la granularidad Y el formato de fecha (verificado):
+     *   1 = por dia   (start/end yyyyMMdd, <=100 dias)  -> Week y Month
+     *   2 = por mes   (start/end yyyyMM)                -> Year
+     * Day/Custom NO usan este endpoint (van por minuto), por eso no estan aqui.
+     */
+    private const NIVELES_AGREGADOS = [
+        'week'  => 1,
+        'month' => 1,
+        'year'  => 2,
+    ];
+
     private $sungrow;
     private $httpClient;
 
@@ -269,71 +306,179 @@ class SungrowService
     }
 
     /**
-     * Serie temporal (grafica) de un punto del inversor de la planta.
-     * Endpoint autorizado: getDevicePointMinuteDataList (por eso pasa por el inversor).
+     * Serie temporal (grafica) del inversor de la planta.
      *
-     * @param mixed $psId  id de la planta
-     * @param array $params [ 'point' => 'p24' (potencia activa W, por defecto),
-     *                        'start' => 'YmdHis', 'end' => 'YmdHis',
-     *                        'interval' => 5 (minutos) ]
-     * @return array ['ps_id','ps_key','point','series' => [ ['time','value'], ... ]]
+     * Soporta el panel: eje de tiempo por `level` y varias medidas por `points`.
+     *   level  Day | Custom -> intradia por minuto (getDevicePointMinuteDataList),
+     *          con `interval` (5/15/30/60) y ventana (start/end); tope 24h, bloques 2h.
+     *          Week | Month | Year -> agregado (getDevicePointsDayMonthYearDataList).
+     *   points lista de puntos (o csv, o `point` suelto). p24 = potencia activa. Ver
+     *          CATALOGO_PUNTOS para el resto de etiquetas del filtro.
+     *
+     * OJO: los inversores HIBRIDOS (device_type 14) devuelven serie VACIA por el plan
+     * de API de la cuenta (ver documentacion/sungrow/openapi-sungrow.md); esto solo
+     * devuelve datos en los tipo 1.
+     *
+     * @param mixed $psId   id de la planta
+     * @param array $params [ 'level', 'points'|'point', 'interval', 'start','end','date' ]
+     * @return array Peticion de 1 punto (compat): ['ps_id','ps_key','point','series'=>[[time,value]]].
+     *               Peticion multipunto/nivel: ['ps_id','ps_key','level','series'=>['pXX'=>[[time,value]]]].
      */
     public function getGraficas($psId, $params = [])
     {
         try {
-            $point    = $params['point'] ?? 'p24';           // p24 = potencia activa (W)
-            $interval = (int) ($params['interval'] ?? 5);
-            $end      = $params['end']   ?? date('YmdHis');
-            $start    = $params['start'] ?? date('YmdHis', strtotime('today'));
-
-            // 1) Localizar el inversor de la planta.
-            // Hay dos tipos y la mayoria del parque es del segundo: 1 = "Inverter"
-            // (solo fotovoltaica) y 14 = "Hybrid inverter" (fotovoltaica + bateria).
-            // Buscar solo el 1 dejaba sin grafica a las plantas con bateria.
-            $devs = $this->apiCall('/openapi/getDeviceList', [
-                'ps_id' => $psId, 'curPage' => 1, 'size' => 50,
-            ]);
-            $psKey = null;
-            foreach (($devs['result_data']['pageList'] ?? []) as $d) {
-                if (in_array((int) ($d['device_type'] ?? 0), self::TIPOS_INVERSOR, true)) {
-                    $psKey = $d['ps_key'];
-                    break;
-                }
-            }
+            $puntos = self::normalizarPuntos($params);
+            $psKey  = $this->localizarInversor($psId);
             if (!$psKey) {
                 return ['error' => 'no_inversor', 'proveedor' => 'Sungrow', 'ps_id' => $psId];
             }
 
-            // 2) La API limita la ventana; troceamos en bloques de 2h (max 24h)
-            $series = [];
-            $sTs = strtotime(self::parseTs($start));
-            $eTs = strtotime(self::parseTs($end));
-            if ($eTs <= $sTs) $eTs = $sTs + 3600;
-            if ($eTs - $sTs > 24 * 3600) $sTs = $eTs - 24 * 3600; // cap 24h
-            $bloque = 2 * 3600;
+            $level = strtolower((string) ($params['level'] ?? 'day'));
+            $series = isset(self::NIVELES_AGREGADOS[$level])
+                ? $this->serieAgregada($psKey, $puntos, $level, $params)  // Week/Month/Year
+                : $this->serieIntradia($psKey, $puntos, $params);         // Day/Custom
 
-            for ($ini = $sTs; $ini < $eTs; $ini += $bloque) {
-                $fin = min($ini + $bloque, $eTs);
-                $resp = $this->apiCall('/openapi/getDevicePointMinuteDataList', [
-                    'ps_key_list'      => [$psKey],
-                    'points'           => $point,
-                    'start_time_stamp' => date('YmdHis', $ini),
-                    'end_time_stamp'   => date('YmdHis', $fin),
-                    'minute_interval'  => $interval,
-                ]);
-                $raw = $resp['result_data'][$psKey] ?? [];
-                foreach ($raw as $r) {
-                    $series[] = [
-                        'time'  => $r['time_stamp'] ?? null,
-                        'value' => isset($r[$point]) ? (float) $r[$point] : null,
-                    ];
-                }
+            // Compat: peticion antigua con `point` suelto (sin `points`) -> forma plana.
+            if (!isset($params['points']) && count($puntos) === 1) {
+                $p = $puntos[0];
+                return ['ps_id' => $psId, 'ps_key' => $psKey, 'point' => $p, 'series' => $series[$p] ?? []];
             }
-
-            return ['ps_id' => $psId, 'ps_key' => $psKey, 'point' => $point, 'series' => $series];
+            return ['ps_id' => $psId, 'ps_key' => $psKey, 'level' => $level, 'series' => $series];
         } catch (Exception $e) {
             return ['error' => $e->getMessage()];
         }
+    }
+
+    /**
+     * Normaliza los puntos pedidos a una lista limpia de ids (pXX). Acepta `points`
+     * (array o csv) o `point` (uno). Por defecto p24 (potencia activa).
+     */
+    public static function normalizarPuntos(array $params): array
+    {
+        $raw = $params['points'] ?? $params['point'] ?? 'p24';
+        if (is_string($raw)) {
+            $raw = explode(',', $raw);
+        }
+        $puntos = [];
+        foreach ((array) $raw as $p) {
+            $p = trim((string) $p);
+            if ($p !== '' && !in_array($p, $puntos, true)) {
+                $puntos[] = $p;
+            }
+        }
+        return $puntos ?: ['p24'];
+    }
+
+    /**
+     * Rango [start, end] para el endpoint agregado segun el nivel, en el formato que
+     * exige su query_type: Week/Month -> yyyyMMdd; Year -> yyyyMM. `date` es la fecha
+     * de referencia (hoy por defecto).
+     */
+    public static function rangoNivel(string $level, $date = null): array
+    {
+        $ref = $date ? strtotime((string) $date) : strtotime('today');
+        switch ($level) {
+            case 'week':  return [date('Ymd', strtotime('-6 days', $ref)), date('Ymd', $ref)];
+            case 'month': return [date('Ym', $ref) . '01', date('Ymt', $ref)];
+            case 'year':  return [date('Y', $ref) . '01', date('Y', $ref) . '12'];
+            default:      return [date('Ymd', $ref), date('Ymd', $ref)];
+        }
+    }
+
+    /** Localiza el ps_key del inversor (device_type 1 o 14) de la planta. */
+    private function localizarInversor($psId)
+    {
+        // OJO: el primer dispositivo suele ser un Meter (tipo 7) que NO da series; por
+        // eso se filtra por TIPOS_INVERSOR y no se coge el primero de la lista.
+        $devs = $this->apiCall('/openapi/getDeviceList', [
+            'ps_id' => $psId, 'curPage' => 1, 'size' => 50,
+        ]);
+        foreach (($devs['result_data']['pageList'] ?? []) as $d) {
+            if (in_array((int) ($d['device_type'] ?? 0), self::TIPOS_INVERSOR, true)) {
+                return $d['ps_key'];
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Serie intradia (Day/Custom): getDevicePointMinuteDataList. La API limita la
+     * ventana, asi que se trocea en bloques de 2h y se capa el total a 24h.
+     * @return array<string, array<int, array{time:?string,value:?float}>> series por punto
+     */
+    private function serieIntradia($psKey, array $puntos, array $params): array
+    {
+        $interval = (int) ($params['interval'] ?? 5);
+        $end   = $params['end']   ?? date('YmdHis');
+        $start = $params['start'] ?? date('YmdHis', strtotime('today'));
+
+        $sTs = strtotime(self::parseTs($start));
+        $eTs = strtotime(self::parseTs($end));
+        if ($eTs <= $sTs) $eTs = $sTs + 3600;
+        if ($eTs - $sTs > 24 * 3600) $sTs = $eTs - 24 * 3600; // cap 24h
+
+        $series = array_fill_keys($puntos, []);
+        $csv = implode(',', $puntos);
+        for ($ini = $sTs; $ini < $eTs; $ini += 2 * 3600) {
+            $fin = min($ini + 2 * 3600, $eTs);
+            $resp = $this->apiCall('/openapi/getDevicePointMinuteDataList', [
+                'ps_key_list'      => [$psKey],
+                'points'           => $csv,
+                'start_time_stamp' => date('YmdHis', $ini),
+                'end_time_stamp'   => date('YmdHis', $fin),
+                'minute_interval'  => $interval,
+            ]);
+            foreach (($resp['result_data'][$psKey] ?? []) as $r) {
+                $t = $r['time_stamp'] ?? null;
+                foreach ($puntos as $p) {
+                    if (array_key_exists($p, $r)) {
+                        $series[$p][] = ['time' => $t, 'value' => self::aFloat($r[$p])];
+                    }
+                }
+            }
+        }
+        return $series;
+    }
+
+    /**
+     * Serie agregada (Week/Month/Year): getDevicePointsDayMonthYearDataList. El valor
+     * de cada punto viene bajo una clave igual al query_type ("1" dia, "2" mes).
+     * @return array<string, array<int, array{time:?string,value:?float}>> series por punto
+     */
+    private function serieAgregada($psKey, array $puntos, string $level, array $params): array
+    {
+        $qt = self::NIVELES_AGREGADOS[$level];
+        [$ini, $fin] = self::rangoNivel($level, $params['date'] ?? null);
+
+        $resp = $this->apiCall('/openapi/getDevicePointsDayMonthYearDataList', [
+            'ps_key_list' => [$psKey],
+            'data_point'  => implode(',', $puntos),
+            'data_type'   => (string) $qt,
+            'query_type'  => (string) $qt,
+            'start_time'  => $ini,
+            'end_time'    => $fin,
+        ]);
+
+        $dev = $resp['result_data'][$psKey] ?? [];
+        $series = array_fill_keys($puntos, []);
+        foreach ($puntos as $p) {
+            foreach (($dev[$p] ?? []) as $row) {
+                $series[$p][] = [
+                    'time'  => $row['time_stamp'] ?? null,
+                    'value' => self::aFloat($row[(string) $qt] ?? null),
+                ];
+            }
+        }
+        return $series;
+    }
+
+    /** Convierte el value de la API a float; null / "--" / "" -> null. */
+    private static function aFloat($v): ?float
+    {
+        if ($v === null || $v === '' || $v === '--') {
+            return null;
+        }
+        return (float) $v;
     }
 
     /** Normaliza un timestamp 14-dígitos (YmdHis) a formato parseable por strtotime. */
