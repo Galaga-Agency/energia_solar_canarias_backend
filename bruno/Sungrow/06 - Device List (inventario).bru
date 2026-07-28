@@ -30,10 +30,15 @@ body:json {
 script:post-response {
   const list = res.body && res.body.result_data && res.body.result_data.pageList;
   if (list) {
-    const inv = list.find(d => Number(d.device_type) === 1);
+    // Inversor = device_type 1 (Inverter) o 14 (Hybrid inverter), igual que el
+    // backend (SungrowService::TIPOS_INVERSOR). OJO: el primer dispositivo de la
+    // lista suele ser un Meter (tipo 7), que NO da series; hay que filtrar por tipo.
+    const inv = list.find(d => [1, 14].includes(Number(d.device_type)));
     if (inv) {
       bru.setVar('sungrow_ps_key', inv.ps_key);
-      console.log('sungrow_ps_key (inversor) = ' + inv.ps_key);
+      console.log('sungrow_ps_key (inversor tipo ' + inv.device_type + ') = ' + inv.ps_key);
+    } else {
+      console.log('Sin inversor (tipo 1/14) en la lista; ps_key NO actualizado.');
     }
     console.log('Dispositivos: ' + list.map(d => d.device_type + ':' + d.ps_key).join(', '));
   }
@@ -42,6 +47,8 @@ script:post-response {
 docs {
   Equipos de la planta. Alimenta el endpoint /plant/inventario del backend.
 
-  `device_type` 1 = inversor. El script guarda su `ps_key` en `sungrow_ps_key`,
-  que es lo que necesita el request 07 para las series temporales.
+  Inversor = `device_type` 1 (Inverter) o 14 (Hybrid inverter). El script guarda su
+  `ps_key` en `sungrow_ps_key`, que es lo que necesitan los request 07 y 08 para las
+  series. OJO: el primer dispositivo suele ser un Meter (tipo 7) que NO da series,
+  por eso se filtra por tipo y no se coge el primero.
 }

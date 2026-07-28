@@ -1,0 +1,90 @@
+meta {
+  name: 08 - Device Point Day-Month-Year Data (agregado)
+  type: http
+  seq: 9
+}
+
+post {
+  url: {{base_url_sungrow}}/openapi/getDevicePointsDayMonthYearDataList
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  x-access-key: {{sungrow_secret_key}}
+}
+
+body:json {
+  {
+    "appkey": "{{sungrow_appkey}}",
+    "sys_code": "901",
+    "lang": "_en_US",
+    "token": "{{sungrow_access_token}}",
+    "ps_key_list": ["{{sungrow_ps_key}}"],
+    "data_point": "p24",
+    "data_type": "1",
+    "query_type": "1",
+    "start_time": "{{sungrow_dmy_start}}",
+    "end_time": "{{sungrow_dmy_end}}"
+  }
+}
+
+vars:pre-request {
+  sungrow_dmy_start: 20260701
+  sungrow_dmy_end: 20260727
+}
+
+assert {
+  res.status: eq 200
+}
+
+script:pre-request {
+  // La API pidio start_time/end_time (no date_id). Rango por defecto para date_type
+  // 1 (dia): del dia 1 del mes a hoy, en yyyyMMdd. Si pruebas mes/anio, cambia
+  // date_type ARRIBA y ajusta el formato del rango:
+  //   date_type 1 (dia)  -> yyyyMMdd  (p.ej. 20260701 .. 20260727)
+  //   date_type 2 (mes)  -> yyyyMM    (p.ej. 202601 .. 202607)
+  //   date_type 3 (anio) -> yyyy      (p.ej. 2024 .. 2026)
+  const pad = n => String(n).padStart(2, '0');
+  const d = new Date();
+  const ymd = (y, m, day) => '' + y + pad(m) + pad(day);
+  bru.setVar('sungrow_dmy_start', ymd(d.getFullYear(), d.getMonth() + 1, 1));
+  bru.setVar('sungrow_dmy_end', ymd(d.getFullYear(), d.getMonth() + 1, d.getDate()));
+}
+
+docs {
+  PRUEBA DE AUTORIZACION del endpoint agregado dia/mes/anio de Sungrow.
+  
+  Objetivo: averiguar si el PLAN de vuestra cuenta iSolarCloud autoriza
+  getDevicePointsDayMonthYearDataList, que es lo que haria falta para las vistas
+  Week / Month / Year del panel. (El intradia Day/Custom con intervalo 5/15/30/60
+  ya va por getDevicePointMinuteDataList, prueba 07.)
+  
+  Requisitos previos (mismas variables que la 07):
+    - Ejecuta antes 04 (Login V1) para tener {{sungrow_access_token}}.
+    - Ejecuta 06 (Device List) para tener {{sungrow_ps_key}} del inversor.
+  
+  Como interpretar el resultado:
+    - result_code "1" + result_data CON puntos  -> AUTORIZADO. Se puede construir
+      Week/Month/Year en el backend. Dime que forma trae y lo implemento.
+    - result_code "1" + result_data {} VACIO     -> mismo caso que los hibridos:
+      responde "success" pero sin datos. Plan no lo sirve para esta planta.
+    - E900 / Unauthorized                        -> el plan NO autoriza el endpoint.
+      Week/Month/Year quedan bloqueados hasta ampliar el plan con Sungrow.
+  
+  ESTADO (probado contra la cuenta real):
+    - NO da E900: el endpoint ESTA AUTORIZADO. La 1a prueba devolvio
+      result_code "009" er_missing_parameter:start_time -> usa start_time/end_time,
+      no date_id. Ya corregido arriba.
+  
+  PARAMETROS A AFINAR (iterando con la respuesta de la API):
+    date_type  -> que valor es dia / mes / anio. Se asume 1=dia, 2=mes, 3=anio.
+    start_time / end_time -> formato por tipo (yyyyMMdd / yyyyMM / yyyy). Ver
+                 pre-request. Si la API se queja de otro parametro, pega el mensaje.
+    data_point -> id(s) del punto. p24 = potencia activa. Si admite varios separados
+                 por coma (p24,p83,...) se podrian pedir todos los del filtro de una.
+  
+  Siguiente paso: relanza. Si sale result_code "1" con datos -> tenemos la forma.
+  Si pide/rechaza otro parametro, pega el result_msg y lo ajusto.
+}

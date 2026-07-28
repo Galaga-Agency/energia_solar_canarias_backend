@@ -1676,14 +1676,28 @@ class ApiControladorService
         if ($id === null) {
             return null;
         }
-        // Fechas opcionales: aceptamos 'fechaInicio'/'fechaFin' (YmdHis) o por defecto el dia de hoy.
-        return [
+        // Panel de graficas:
+        //   level    Day|Custom -> intradia por minuto; Week|Month|Year -> agregado.
+        //   points   varias medidas (array o csv). Compat: 'point' suelto sigue valiendo.
+        //   interval 5|15|30|60 (solo intradia).
+        //   date     fecha de referencia para Week/Month/Year (yyyy-mm-dd; hoy por defecto).
+        //   fechaInicio/fechaFin (YmdHis) para Custom intradia.
+        $cuerpo = [
             'id'       => $id,
-            'point'    => $data['point'] ?? 'p24',           // p24 = potencia activa (W)
+            'interval' => $data['interval'] ?? 5,
             'start'    => $data['fechaInicio'] ?? $data['start'] ?? null,
             'end'      => $data['fechaFin'] ?? $data['end'] ?? null,
-            'interval' => $data['interval'] ?? 5,
         ];
+        if (isset($data['level']))  $cuerpo['level']  = $data['level'];
+        if (isset($data['date']))   $cuerpo['date']   = $data['date'];
+        // Solo se pasa 'points' si viene explicito (activa el modo multipunto); si no,
+        // se mantiene 'point' suelto para no cambiar la forma de respuesta antigua.
+        if (isset($data['points'])) {
+            $cuerpo['points'] = $data['points'];
+        } else {
+            $cuerpo['point'] = $data['point'] ?? 'p24'; // p24 = potencia activa (W)
+        }
+        return $cuerpo;
     }
 
     /**
