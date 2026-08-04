@@ -113,5 +113,23 @@ try {
     logmsg('login_attempts: ERROR limpiando -> ' . $e->getMessage());
 }
 
+/**
+ * Borra enlaces magicos y codigos de traspaso caducados o ya usados.
+ *
+ * Nada mas los borra: el canje solo marca `consumido_en`, no elimina la fila
+ * (a proposito, para poder investigar un acceso reciente). Sin esta limpieza
+ * las tablas solo crecen, y `magic_links` recibe una fila por cada intento de
+ * login de cada usuario.
+ */
+try {
+    require_once __DIR__ . '/../services/MagicLinkService.php';
+    (new MagicLinkService($db))->limpiarCaducados();
+    logmsg('magic_links / auth_handoffs: limpieza completada.');
+} catch (Throwable $e) {
+    // Si las tablas aun no existen (migracion sin aplicar) no es grave: el
+    // cron no debe caerse por esto.
+    logmsg('magic_links: ERROR limpiando -> ' . $e->getMessage());
+}
+
 $db->close();
 logmsg('== Fin ==');

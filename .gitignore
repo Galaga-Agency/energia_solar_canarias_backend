@@ -4,6 +4,12 @@ config/smtp.json
 config/jwt.env
 config/.env
 img/
+# ...pero los assets que sirven los CORREOS si se versionan: si no llegan al
+# servidor, el <img> del correo apunta a un 404 y le llega al cliente un email
+# con la imagen rota. Los logos antiguos ya estaban en el repo de antes de esta
+# regla; estos hay que rescatarlos a mano.
+!public/assets/img/
+!public/assets/img/**
 webhook_data.txt
 # Volcados de base de datos (no versionar): llevan datos reales de clientes
 db_init/*.sql

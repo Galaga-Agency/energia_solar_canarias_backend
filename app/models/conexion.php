@@ -229,6 +229,32 @@ class Conexion
         //echo '<pre>'; print_r($jwt); echo '</pre>'; // Sirve para saber que nos devuelve el token
     }
 
+    /**
+     * JWT de sesion para el acceso por enlace magico: 30 dias.
+     *
+     * Mas corto que los 180 dias del login con contraseña a proposito. Sin
+     * contraseña, quien controle el correo puede pedir un enlace nuevo cuando
+     * quiera, asi que alargar la sesion no aporta comodidad: solo alarga la
+     * ventana de un token robado.
+     *
+     * Misma clave y mismo algoritmo que jwt(), asi que el middleware de
+     * autenticacion lo valida sin cambios.
+     */
+    static public function jwtSesion($id, $email)
+    {
+        $time = time();
+        $token = array(
+            "iat" => $time,
+            "exp" => $time + (60 * 60 * 24 * 30), // 30 dias
+            "data" => [
+                "id" => $id,
+                "email" => $email
+            ]
+        );
+
+        return JWT::encode($token, self::$secret_key, self::$algorithm);
+    }
+
     static public function jwtPermanente($id, $email)
     {
         $time = time(); // Devuelve la fecha Unix actual

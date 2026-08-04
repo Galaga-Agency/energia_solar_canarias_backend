@@ -220,6 +220,124 @@ class Correo
             return $respuesta;
         }
     }
+    /**
+     * URL publica del backend, de donde cuelgan las imagenes del correo.
+     * Configurable por si cambia el dominio; el valor por defecto es el actual.
+     */
+    private function backendUrl()
+    {
+        return rtrim(
+            $_ENV['BACKEND_URL'] ?? 'https://app-backend.energiasolarcanarias.com',
+            '/'
+        );
+    }
+
+    /**
+     * Correo de acceso sin contraseña: un solo boton con el enlace magico.
+     *
+     * A diferencia del login antiguo, aqui NO se manda ningun codigo para
+     * copiar: el enlace es la credencial. Por eso el correo no debe reenviarse
+     * — quien lo tenga entra.
+     *
+     * El enlace se pinta tambien como texto debajo del boton porque algunos
+     * clientes de correo corporativos bloquean los botones HTML; sin esa copia
+     * el usuario se queda sin forma de entrar.
+     *
+     * @param array  $dataUsuario datos del usuario (email, nombre)
+     * @param string $enlace      URL completa al backend, con el token dentro
+     */
+    public function enlaceMagico($dataUsuario, $enlace, $idiomaUsuario = 'es')
+    {
+        try {
+            if (!isset($dataUsuario['email'])) {
+                $respuesta = new Respuesta;
+                $respuesta->_500();
+                $respuesta->message = 'Error en el servicio correo: falta el email del usuario.';
+                return $respuesta;
+            }
+
+            $emailUsuario = $dataUsuario['email'];
+            $nombreUsuario = isset($dataUsuario['nombre']) ? $dataUsuario['nombre'] : '';
+
+            $this->mail->isSMTP();
+            $this->mail->Host = $this->host;
+            $this->mail->SMTPAuth = true;
+            $this->mail->Username = $this->username;
+            $this->mail->Password = $this->password;
+            $this->mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+            $this->mail->Port = $this->port;
+            $this->mail->CharSet = 'UTF-8';
+
+            $this->mail->setFrom('admin@app-energiasolarcanarias.com', 'Energía Solar Canarias');
+            $this->mail->addAddress($emailUsuario, $nombreUsuario);
+            $this->mail->isHTML(true);
+
+            // htmlspecialchars en el href y htmlentities en el texto: el nombre
+            // viene de la base de datos y el enlace lleva un token, asi que
+            // ninguno se concatena en crudo dentro del HTML.
+            $enlaceSeguro = htmlspecialchars($enlace, ENT_QUOTES, 'UTF-8');
+            $nombreSeguro = htmlentities($nombreUsuario);
+
+            if ($idiomaUsuario == 'es') {
+                $this->mail->Subject = 'Tu acceso a Energía Solar Canarias';
+                $saludo = 'Hola ' . $nombreSeguro . ',';
+                $intro = 'Pulsa el botón para entrar en la aplicación. No necesitas contraseña.';
+                $textoBoton = 'Entrar en la aplicación';
+                $validez = 'Este enlace caduca en 15 minutos y solo se puede usar una vez.';
+                $aviso = 'Si no has pedido este acceso, puedes ignorar este correo.';
+                $alternativa = 'Si el botón no funciona, copia esta dirección en tu navegador:';
+            } else {
+                $this->mail->Subject = 'Your access to Energía Solar Canarias';
+                $saludo = 'Hi ' . $nombreSeguro . ',';
+                $intro = 'Tap the button to sign in. No password needed.';
+                $textoBoton = 'Open the app';
+                $validez = 'This link expires in 15 minutes and can only be used once.';
+                $aviso = 'If you did not request this, you can safely ignore this email.';
+                $alternativa = 'If the button does not work, copy this address into your browser:';
+            }
+
+            // Colores de la identidad de 2026 (Rubro Studio): naranja #e4572c
+            // sobre crema #f4f1ea, verde tinta #21332a para el texto.
+            $this->message =
+                '<div style="background:#f4f1ea;padding:32px 16px;font-family:Helvetica,Arial,sans-serif;">'
+                . '<div style="max-width:520px;margin:0 auto;background:#ffffff;padding:32px;">'
+                . '<p style="font-size:18px;color:#21332a;margin:0 0 16px;">' . $saludo . '</p>'
+                . '<p style="font-size:16px;color:#21332a;line-height:1.5;margin:0 0 28px;">' . $intro . '</p>'
+                . '<div style="text-align:center;margin:0 0 28px;">'
+                . '<a href="' . $enlaceSeguro . '" style="display:inline-block;background:#e4572c;color:#f4f1ea;'
+                . 'text-decoration:none;font-size:17px;font-weight:bold;padding:14px 32px;">' . $textoBoton . '</a>'
+                . '</div>'
+                . '<p style="font-size:14px;color:#5b5551;line-height:1.5;margin:0 0 8px;">' . $alternativa . '</p>'
+                . '<p style="font-size:13px;color:#5b5551;word-break:break-all;margin:0 0 24px;">' . $enlaceSeguro . '</p>'
+                . '<p style="font-size:14px;color:#5b5551;margin:0 0 8px;">' . $validez . '</p>'
+                . '<p style="font-size:14px;color:#5b5551;margin:0;">' . $aviso . '</p>'
+                . '</div>'
+                // Logo de la identidad de 2026. NO usar logo.png: ese es el
+                // logotipo anterior (circulo azul con sol amarillo) y desentona
+                // por completo con el resto del correo.
+                . '<div style="text-align:center;margin-top:24px;">'
+                . '<img src="' . $this->backendUrl() . '/public/assets/img/logo-esc-2026.png"'
+                . ' width="200" style="width:200px;height:auto;" alt="Energía Solar Canarias">'
+                . '</div>'
+                . '</div>';
+
+            $this->mail->Body = $this->message;
+            $this->mail->send();
+
+            $respuesta = new Respuesta;
+            $respuesta->success();
+            $respuesta->message = $idiomaUsuario == 'es'
+                ? 'Enlace de acceso enviado.'
+                : 'Access link sent.';
+            return $respuesta;
+        } catch (Exception $e) {
+            $respuesta = new Respuesta;
+            $respuesta->_500($e);
+            $respuesta->message = 'Error al enviar el enlace de acceso: ' . $this->mail->ErrorInfo;
+            return $respuesta;
+        }
+    }
+
     public function recuperarContrasena($dataUsuario, $tokenRecuperacion, $idiomaUsuario = 'es')
     {
         try {

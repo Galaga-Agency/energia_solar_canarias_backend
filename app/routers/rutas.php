@@ -87,6 +87,21 @@ $handled = false; // Bandera para indicar si la ruta fue manejada
 switch ($method) {
     case 'GET':
         switch (true) {
+            // Paso 2 del acceso sin contraseña: el usuario pulsa el enlace del
+            // correo. Valida, consume el token y REDIRIGE al frontend con un
+            // codigo de traspaso de un solo uso. Nunca devuelve JSON: aqui ha
+            // llegado un navegador siguiendo un enlace, no una llamada de la
+            // API. Ver MagicLinkController.
+            //
+            // Va lo PRIMERO del switch a proposito: es la unica ruta publica
+            // del bloque GET y no debe pasar por ninguna comprobacion de token.
+            case ($request === 'auth/magic'):
+                $handled = true;
+                require_once __DIR__ . '/../controllers/MagicLinkController.php';
+                $magicController = new MagicLinkController();
+                $magicController->canjearEnlace();
+                break;
+
             case ($request === 'zoho/actualizarDatosPlantas'):
                 $handled = true;
                 if ($authMiddleware->verificarTokenUsuarioActivo() != false) {
@@ -850,6 +865,28 @@ switch ($method) {
                 $postBody = file_get_contents("php://input");
                 $tokenController = new TokenController($postBody);
                 $tokenController->validarToken();
+                break;
+
+            // ── Acceso sin contraseña (enlace magico) ──────────────────────
+            // Convive con /login y /token, que siguen funcionando mientras
+            // dure la migracion del frontend. Ver MagicLinkController.
+
+            // Paso 1: pedir el enlace. Responde igual exista el email o no.
+            case ($request === 'auth/magic-link'):
+                $handled = true;
+                require_once __DIR__ . '/../controllers/MagicLinkController.php';
+                $postBody = file_get_contents("php://input");
+                $magicController = new MagicLinkController();
+                $magicController->solicitarEnlace($postBody);
+                break;
+
+            // Paso 3: canjear el codigo de traspaso por el JWT de sesion.
+            case ($request === 'auth/handoff'):
+                $handled = true;
+                require_once __DIR__ . '/../controllers/MagicLinkController.php';
+                $postBody = file_get_contents("php://input");
+                $magicController = new MagicLinkController();
+                $magicController->canjearHandoff($postBody);
                 break;
             case ($request === 'usuarios'):
                 $handled = true;
