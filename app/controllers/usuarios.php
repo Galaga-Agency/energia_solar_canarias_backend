@@ -207,13 +207,25 @@ class UsuariosController
         $logsController->registrarLog(Logs::INFO, "Solicitud recibida para crear un usuario. Datos: ");
 
         // Validar que los datos requeridos existan en el JSON
-        if (!isset($data['email'], $data['password'], $data['clase'])) {
+        if (!isset($data['email'], $data['clase'])) {
             $logsController->registrarLog(Logs::WARNING, "Datos incompletos en el JSON de la solicitud.");
             $respuesta = new Respuesta();
             $respuesta->_400();
-            $respuesta->message = "Datos incompletos en la solicitud, Se requiere un email, clase y una contraseña.";
+            $respuesta->message = "Datos incompletos en la solicitud, Se requiere un email y una clase.";
             echo json_encode($respuesta);
             return;
+        }
+
+        // El acceso es por enlace magico: nadie escribe ni usa esta contraseña.
+        // La columna sigue siendo NOT NULL, asi que se rellena con algo aleatorio
+        // y no adivinable en vez de pedirle al administrador que se invente una
+        // (que acabaria siendo la misma para todos los usuarios que cree).
+        //
+        // 32 bytes de un CSPRNG: no hay contraseña equivalente, asi que la fila
+        // no se puede usar para entrar aunque alguna ruta antigua lo intentase.
+        if (!isset($data['password']) || $data['password'] === '') {
+            $data['password'] = bin2hex(random_bytes(32));
+            $logsController->registrarLog(Logs::INFO, "Alta sin contraseña: se genera una aleatoria (acceso por enlace magico).");
         }
 
         if (!isset($data['origen'])) {
@@ -343,7 +355,11 @@ class UsuariosController
 
                 $conn->commit();
                 $respuesta = new Respuesta();
-                $respuesta->success($data);
+                // Sin la contraseña: es un secreto del servidor y no tiene por
+                // que salir de aqui, menos aun quedar en el log del navegador.
+                $datosRespuesta = $data;
+                unset($datosRespuesta['password']);
+                $respuesta->success($datosRespuesta);
                 $respuesta->code = 201;
                 $respuesta->message = "Usuario creado localmente desde Zoho (sin sincronización hacia CRM).";
                 echo json_encode($respuesta);
@@ -375,7 +391,10 @@ class UsuariosController
 
             // Respuesta de éxito
             $respuesta = new Respuesta();
-            $respuesta->success($data);
+            // Sin la contraseña, por lo mismo de arriba.
+            $datosRespuesta = $data;
+            unset($datosRespuesta['password']);
+            $respuesta->success($datosRespuesta);
             $respuesta->code = 201;
             $respuesta->message = "Usuario creado exitosamente y sincronizado con Zoho.";
             echo json_encode($respuesta);
