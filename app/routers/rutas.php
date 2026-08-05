@@ -176,6 +176,36 @@ switch ($method) {
                     echo json_encode($respuesta);
                 }
                 break;
+            // Alertas silenciadas vigentes. Las caducadas no se devuelven: la
+            // alerta vuelve a avisar sola, sin reactivarla a mano.
+            case (preg_match('/^plant\/alert\/silenciadas$/', $request, $matches) ? true : false):
+                $handled = true;
+                if ($authMiddleware->verificarTokenUsuarioActivo() != false) {
+                    require_once __DIR__ . '/../DBObjects/alertasSilenciadasDB.php';
+
+                    $plantaId  = $_GET['plantaId'] ?? null;
+                    $proveedor = $_GET['proveedor'] ?? null;
+
+                    $db = new AlertasSilenciadasDB;
+                    $filas = $db->listar($plantaId, $proveedor);
+
+                    if ($filas === false) {
+                        $respuesta->_500();
+                        $respuesta->message = 'No se ha podido consultar las alertas silenciadas';
+                    } else {
+                        $respuesta->success($filas);
+                        $respuesta->message = '200 - Solicitud exitosa';
+                    }
+                    http_response_code($respuesta->code);
+                    echo json_encode($respuesta);
+                } else {
+                    $respuesta->_403();
+                    $respuesta->message = 'El token no se puede authentificar con exito';
+                    http_response_code($respuesta->code);
+                    echo json_encode($respuesta);
+                }
+                break;
+
             case (preg_match('/^plant\/alert/', $request, $matches) && isset($_GET['proveedor']) ? true : false):
                 $handled = true;
                 //Verificamos que existe el usuario CREADOR del token y sino manejamos el error dentro de la funcion
@@ -277,6 +307,70 @@ switch ($method) {
                         if (!$authMiddleware->puedeVerPlanta($powerStationId, $proveedor)) break;
                         // Sin switch: quien no ofrezca beneficios lo dice el mismo.
                         (new ProveedorApiService)->beneficios($proveedor, $powerStationId);
+                    }
+                } else {
+                    $respuesta->_403();
+                    $respuesta->message = 'El token no se puede authentificar con exito';
+                    http_response_code($respuesta->code);
+                    echo json_encode($respuesta);
+                }
+                break;
+
+            // Usuarios con acceso a una planta. Es la consulta inversa de
+            // usuarios/{id}/plantas, que el frontend necesita para la ficha de
+            // la planta: sin ella habria que pedir todos los usuarios y sus
+            // plantas para pintar un solo panel.
+            //
+            // Solo administradores: saber quien tiene acceso a una instalacion
+            // es informacion de gestion, no de monitorizacion.
+            case (preg_match('/^planta\/usuarios\/([\w-]+)$/', $request, $matches) ? true : false):
+                $handled = true;
+                $idPlanta = $matches[1];
+                if ($authMiddleware->verificarTokenUsuarioActivo() != false) {
+                    if ($authMiddleware->verificarAdmin()) {
+                        // Explicito: hoy llega via otros require_once, pero
+                        // depender de eso rompe en cuanto cambie ese orden.
+                        require_once __DIR__ . '/../DBObjects/plantasAsociadasDB.php';
+                        // Se acepta el slug que usa el resto de la API
+                        // ("victronenergy") y se traduce al nombre que guarda
+                        // la tabla proveedores ("VictronEnergy"). Pedir el
+                        // nombre exacto obligaria al cliente a conocer una
+                        // segunda forma de escribir cada proveedor, y los dos
+                        // se parecen lo bastante como para fallar en silencio.
+                        $proveedorParam = $_GET['proveedor'] ?? null;
+                        $proveedor = null;
+                        if ($proveedorParam !== null && $proveedorParam !== '') {
+                            $slug = strtolower($proveedorParam);
+                            foreach ($proveedores as $nombre => $clave) {
+                                if ($clave === $slug || strtolower($nombre) === $slug) {
+                                    $proveedor = $nombre;
+                                    break;
+                                }
+                            }
+                            // Proveedor desconocido: mejor no filtrar por un
+                            // nombre inventado, que devolveria vacio siempre.
+                            if ($proveedor === null) $proveedor = $proveedorParam;
+                        }
+
+                        $plantasAsociadasDB = new PlantasAsociadasDB;
+                        $usuarios = $plantasAsociadasDB->getUsuariosDeLaPlanta($idPlanta, $proveedor);
+
+                        if ($usuarios === false) {
+                            $respuesta->_500();
+                            $respuesta->message = 'No se ha podido consultar los usuarios de la planta';
+                        } else {
+                            // Una planta sin usuarios asociados es un resultado
+                            // valido (lista vacia), no un 404.
+                            $respuesta->success($usuarios);
+                            $respuesta->message = '200 - Solicitud exitosa';
+                        }
+                        http_response_code($respuesta->code);
+                        echo json_encode($respuesta);
+                    } else {
+                        $respuesta->_403();
+                        $respuesta->message = 'No tienes permisos para hacer esta consulta';
+                        http_response_code($respuesta->code);
+                        echo json_encode($respuesta);
                     }
                 } else {
                     $respuesta->_403();
@@ -599,6 +693,67 @@ switch ($method) {
 
     case 'POST':
         switch (true) {
+            // Silenciar / reactivar una alerta, y listar las silenciadas.
+            //
+            // El silenciado es NUESTRO, no del proveedor: los cinco exponen las
+            // alertas en modo lectura, asi que se guarda aparte y se aplica al
+            // presentar la lista. La alerta sigue existiendo y sigue llegando.
+            //
+            // Cualquier usuario con acceso a la planta puede silenciar: quien
+            // vigila una instalacion es quien sabe que un aviso es ruido.
+            case (preg_match('/^plant\/alert\/silenciar$/', $request, $matches) ? true : false):
+                $handled = true;
+                if ($authMiddleware->verificarTokenUsuarioActivo() != false) {
+                    require_once __DIR__ . '/../DBObjects/alertasSilenciadasDB.php';
+
+                    $body = json_decode(file_get_contents("php://input"), true) ?: [];
+                    $proveedor = $body['proveedor'] ?? ($_GET['proveedor'] ?? null);
+                    $plantaId  = $body['plantaId'] ?? null;
+                    $alertaId  = $body['alertaId'] ?? null;
+                    $hasta     = $body['hasta'] ?? null;   // 'Y-m-d H:i:s' o null
+                    $motivo    = $body['motivo'] ?? null;
+
+                    if (!$proveedor || !$plantaId || !$alertaId) {
+                        $respuesta->_400();
+                        $respuesta->message = 'Faltan parametros: proveedor, plantaId y alertaId son obligatorios';
+                        http_response_code($respuesta->code);
+                        echo json_encode($respuesta);
+                        break;
+                    }
+
+                    // Mismo control que para ver la planta: si no puede verla,
+                    // no puede silenciar sus alertas.
+                    if (!$authMiddleware->puedeVerPlanta($plantaId, $proveedor)) break;
+
+                    $usuarioId = $authMiddleware->obtenerIdUsuarioActivo();
+                    $db = new AlertasSilenciadasDB;
+
+                    if ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
+                        $ok = $db->reactivar($proveedor, $plantaId, $alertaId);
+                        $accion = 'alerta_reactivada';
+                    } else {
+                        $ok = $db->silenciar($proveedor, $plantaId, $alertaId, $usuarioId, $hasta, $motivo);
+                        $accion = 'alerta_silenciada';
+                    }
+
+                    if ($ok) {
+                        registrarEventoSeguridad($accion, "usuario=$usuarioId | proveedor=$proveedor | planta=$plantaId | alerta=$alertaId");
+                        $respuesta->success([]);
+                        $respuesta->message = '200 - Solicitud exitosa';
+                    } else {
+                        $respuesta->_500();
+                        $respuesta->message = 'No se ha podido guardar el silenciado';
+                    }
+                    http_response_code($respuesta->code);
+                    echo json_encode($respuesta);
+                } else {
+                    $respuesta->_403();
+                    $respuesta->message = 'El token no se puede authentificar con exito';
+                    http_response_code($respuesta->code);
+                    echo json_encode($respuesta);
+                }
+                break;
+
             case ($request === 'zoho/historialprecios' && isset($_GET['plantId']) && isset($_GET['proveedor'])):
                 $handled = true;
                 $plantId = $_GET['plantId'];
@@ -1347,6 +1502,67 @@ switch ($method) {
 
     case 'DELETE':
         switch (true) {
+            // Silenciar / reactivar una alerta, y listar las silenciadas.
+            //
+            // El silenciado es NUESTRO, no del proveedor: los cinco exponen las
+            // alertas en modo lectura, asi que se guarda aparte y se aplica al
+            // presentar la lista. La alerta sigue existiendo y sigue llegando.
+            //
+            // Cualquier usuario con acceso a la planta puede silenciar: quien
+            // vigila una instalacion es quien sabe que un aviso es ruido.
+            case (preg_match('/^plant\/alert\/silenciar$/', $request, $matches) ? true : false):
+                $handled = true;
+                if ($authMiddleware->verificarTokenUsuarioActivo() != false) {
+                    require_once __DIR__ . '/../DBObjects/alertasSilenciadasDB.php';
+
+                    $body = json_decode(file_get_contents("php://input"), true) ?: [];
+                    $proveedor = $body['proveedor'] ?? ($_GET['proveedor'] ?? null);
+                    $plantaId  = $body['plantaId'] ?? null;
+                    $alertaId  = $body['alertaId'] ?? null;
+                    $hasta     = $body['hasta'] ?? null;   // 'Y-m-d H:i:s' o null
+                    $motivo    = $body['motivo'] ?? null;
+
+                    if (!$proveedor || !$plantaId || !$alertaId) {
+                        $respuesta->_400();
+                        $respuesta->message = 'Faltan parametros: proveedor, plantaId y alertaId son obligatorios';
+                        http_response_code($respuesta->code);
+                        echo json_encode($respuesta);
+                        break;
+                    }
+
+                    // Mismo control que para ver la planta: si no puede verla,
+                    // no puede silenciar sus alertas.
+                    if (!$authMiddleware->puedeVerPlanta($plantaId, $proveedor)) break;
+
+                    $usuarioId = $authMiddleware->obtenerIdUsuarioActivo();
+                    $db = new AlertasSilenciadasDB;
+
+                    if ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
+                        $ok = $db->reactivar($proveedor, $plantaId, $alertaId);
+                        $accion = 'alerta_reactivada';
+                    } else {
+                        $ok = $db->silenciar($proveedor, $plantaId, $alertaId, $usuarioId, $hasta, $motivo);
+                        $accion = 'alerta_silenciada';
+                    }
+
+                    if ($ok) {
+                        registrarEventoSeguridad($accion, "usuario=$usuarioId | proveedor=$proveedor | planta=$plantaId | alerta=$alertaId");
+                        $respuesta->success([]);
+                        $respuesta->message = '200 - Solicitud exitosa';
+                    } else {
+                        $respuesta->_500();
+                        $respuesta->message = 'No se ha podido guardar el silenciado';
+                    }
+                    http_response_code($respuesta->code);
+                    echo json_encode($respuesta);
+                } else {
+                    $respuesta->_403();
+                    $respuesta->message = 'El token no se puede authentificar con exito';
+                    http_response_code($respuesta->code);
+                    echo json_encode($respuesta);
+                }
+                break;
+
             case ($request === 'zoho/imprimirWebhook'):
                 $handled = true;
                 if ($authMiddleware->verificarTokenUsuarioActivo() != false) {

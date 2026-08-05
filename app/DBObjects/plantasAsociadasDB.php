@@ -57,6 +57,79 @@ class PlantasAsociadasDB
         }
     }
     /**
+     * Usuarios que tienen acceso a una planta.
+     *
+     * Es la consulta inversa de getPlantasAsociadasAlUsuario(): aquella responde
+     * "que plantas ve este usuario", y esta "quien ve esta planta". El frontend
+     * la necesita para la ficha de la planta; sin ella habria que pedir todos
+     * los usuarios y sus plantas para pintar un solo panel.
+     *
+     * No devuelve password_hash ni ningun otro campo sensible: solo lo que hace
+     * falta para listar personas.
+     *
+     * @param string $idPlanta  Id de planta del proveedor (varchar, no entero).
+     * @param string $proveedor Nombre del proveedor, p.ej. "GoodWe".
+     * @return array|false
+     */
+    public function getUsuariosDeLaPlanta($idPlanta, $proveedor = null)
+    {
+        try {
+            $conexion = Conexion::getInstance();
+            $conn = $conexion->getConexion();
+
+            // El proveedor es opcional: dos proveedores podrian usar el mismo id
+            // de planta, asi que cuando se conoce se filtra, y cuando no, se
+            // devuelven todas las coincidencias.
+            if ($proveedor !== null && $proveedor !== '') {
+                $query = "SELECT u.usuario_id, u.email, u.nombre, u.apellido, u.imagen,
+                                 c.nombre AS clase
+                          FROM plantas_asociadas pa
+                          JOIN usuarios u ON u.usuario_id = pa.usuario_id
+                          LEFT JOIN clases c ON c.clase_id = u.clase_id
+                          JOIN proveedores p ON p.id = pa.proveedor_id
+                          WHERE pa.planta_id = ? AND p.nombre = ?
+                            AND (u.eliminado IS NULL OR u.eliminado = 0)
+                          ORDER BY u.nombre, u.apellido;";
+                $stmt = $conn->prepare($query);
+                if (!$stmt) {
+                    throw new Exception("Error en la preparación de la consulta: " . $conn->error);
+                }
+                $stmt->bind_param('ss', $idPlanta, $proveedor);
+            } else {
+                $query = "SELECT u.usuario_id, u.email, u.nombre, u.apellido, u.imagen,
+                                 c.nombre AS clase
+                          FROM plantas_asociadas pa
+                          JOIN usuarios u ON u.usuario_id = pa.usuario_id
+                          LEFT JOIN clases c ON c.clase_id = u.clase_id
+                          WHERE pa.planta_id = ?
+                            AND (u.eliminado IS NULL OR u.eliminado = 0)
+                          ORDER BY u.nombre, u.apellido;";
+                $stmt = $conn->prepare($query);
+                if (!$stmt) {
+                    throw new Exception("Error en la preparación de la consulta: " . $conn->error);
+                }
+                $stmt->bind_param('s', $idPlanta);
+            }
+
+            if (!$stmt->execute()) {
+                throw new Exception("Error en la ejecución de la consulta: " . $stmt->error);
+            }
+
+            $result = $stmt->get_result();
+            $usuarios = [];
+            while ($row = $result->fetch_assoc()) {
+                $usuarios[] = $row;
+            }
+            $stmt->close();
+
+            return $usuarios;
+        } catch (Exception $e) {
+            error_log("Error al obtener usuarios de la planta: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
      * Verificar si una planta está asociada a un usuario.
      * 
      * @param int $usuarioId El ID del usuario
