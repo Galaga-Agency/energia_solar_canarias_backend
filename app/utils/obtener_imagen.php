@@ -24,7 +24,26 @@ if (isset($_GET['token'])) {
         $usuario_id = $decoded->usuario_id;
         $usuariosDB = new UsuariosDB();
 
-        var_dump($usuario_id);
+        // Un administrador puede pedir la imagen de OTRO usuario pasando
+        // ?usuario_id=. Sin esto el endpoint solo podia devolver la foto del
+        // propio solicitante, asi que la ficha de usuario mostraba siempre el
+        // mismo avatar. Un usuario normal que lo intente recibe 403.
+        if (isset($_GET['usuario_id'])) {
+            $solicitado = (int) $_GET['usuario_id'];
+
+            if ($solicitado !== (int) $usuario_id) {
+                if (!$usuariosDB->getAdmin($usuario_id)) {
+                    $respuesta->_403();
+                    $respuesta->message = 'No autorizado para ver esta imagen';
+                    http_response_code($respuesta->code);
+                    echo json_encode($respuesta);
+                    exit;
+                }
+
+                $usuario_id = $solicitado;
+            }
+        }
+
         // Obtener la ruta de la imagen del usuario
         $imagen = $usuariosDB->getUserImage($usuario_id);
 

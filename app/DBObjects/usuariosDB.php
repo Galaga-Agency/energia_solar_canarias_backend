@@ -149,6 +149,7 @@ class UsuariosDB
                         usuarios.nombre AS nombre,
                         usuarios.apellido,
                         usuarios.email,
+                        usuarios.email_respaldo,
                         usuarios.movil,
                         usuarios.imagen,
                         usuarios.activo,
@@ -202,6 +203,7 @@ class UsuariosDB
                         usuarios.nombre AS nombre,
                         usuarios.apellido,
                         usuarios.email,
+                        usuarios.email_respaldo,
                         usuarios.movil,
                         usuarios.imagen,
                         usuarios.activo,
@@ -428,6 +430,11 @@ class UsuariosDB
             $region_estado = $data['region_estado']  ?? $usuario['region_estado']; // Mantener la región/estado actual si no viene
             $pais          = $data['pais']           ?? $usuario['pais']; // Mantener el país actual si no viene
             $cif_nif       = $data['cif_nif']        ?? $usuario['cif_nif']; // Mantener el CIF/NIF actual si no viene
+            // Correo de respaldo: cadena vacia significa "quitarlo", asi que se
+            // guarda como NULL y no como "".
+            $emailRespaldo = array_key_exists('email_respaldo', $data)
+                ? (trim((string) $data['email_respaldo']) ?: null)
+                : ($usuario['email_respaldo'] ?? null);
 
             // --------------------------------------------------
             // 4. Preparar la consulta de actualización
@@ -438,6 +445,7 @@ class UsuariosDB
             UPDATE usuarios 
             SET
                 email = ?,
+                email_respaldo = ?,
                 password_hash = ?,
                 clase_id = (SELECT clase_id FROM clases WHERE nombre = ?),
                 nombre = ?,
@@ -461,8 +469,9 @@ class UsuariosDB
             // 5. Vincular parámetros (18 placeholders + 1 para el WHERE)
             // Tipos: s (string), i (int). El orden debe coincidir con el de la sentencia.
             $stmt->bind_param(
-                'ssssssiissssssssi',
+                'sssssssiissssssssi',
                 $email,     // s
+                $emailRespaldo,     // s (nullable)
                 $passwordHash,      // s
                 $clase,             // s
                 $nombre,            // s

@@ -232,6 +232,15 @@ class Correo
         );
     }
 
+    /** Donde vive la app, para los enlaces que deben abrirla y no la API. */
+    private function frontendUrl()
+    {
+        return rtrim(
+            $_ENV['FRONTEND_URL'] ?? 'https://app.energiasolarcanarias.com',
+            '/'
+        );
+    }
+
     /**
      * Correo de acceso sin contraseña: un solo boton con el enlace magico.
      *
@@ -413,4 +422,112 @@ class Correo
             return $respuesta;
         }
     }
+
+    /**
+     * Aviso de alertas en las instalaciones del usuario.
+     *
+     * Un solo correo con todas las alertas nuevas, no uno por alerta: una
+     * tormenta que tumba doce plantas a la vez no puede convertirse en doce
+     * correos, o el usuario silencia el remitente y deja de ver los avisos que
+     * si importan.
+     *
+     * @param array $dataUsuario  email y nombre.
+     * @param array $alertas      cada una: planta, mensaje, severidad.
+     */
+    public function avisoAlertas($dataUsuario, $alertas, $idiomaUsuario = 'es')
+    {
+        try {
+            if (!isset($dataUsuario['email']) || empty($alertas)) {
+                return false;
+            }
+
+            $this->mail->clearAddresses();
+            $this->mail->isSMTP();
+            $this->mail->Host = $this->host;
+            $this->mail->SMTPAuth = true;
+            $this->mail->Username = $this->username;
+            $this->mail->Password = $this->password;
+            $this->mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+            $this->mail->Port = $this->port;
+            $this->mail->CharSet = 'UTF-8';
+
+            $this->mail->setFrom('admin@app-energiasolarcanarias.com', 'Energía Solar Canarias');
+            $this->mail->addAddress($dataUsuario['email'], $dataUsuario['nombre'] ?? '');
+            $this->mail->isHTML(true);
+
+            $total = count($alertas);
+            $nombreSeguro = htmlentities($dataUsuario['nombre'] ?? '');
+
+            if ($idiomaUsuario == 'es') {
+                $this->mail->Subject = $total === 1
+                    ? 'Una incidencia en tus instalaciones'
+                    : $total . ' incidencias en tus instalaciones';
+                $saludo = 'Hola ' . $nombreSeguro . ',';
+                $intro = $total === 1
+                    ? 'Hemos detectado una incidencia:'
+                    : 'Hemos detectado ' . $total . ' incidencias:';
+                $textoBoton = 'Ver en la aplicación';
+                $pie = 'Puedes cambiar qué avisos recibes en Ajustes.';
+            } else {
+                $this->mail->Subject = $total === 1
+                    ? 'An issue at your installations'
+                    : $total . ' issues at your installations';
+                $saludo = 'Hi ' . $nombreSeguro . ',';
+                $intro = $total === 1
+                    ? 'We detected an issue:'
+                    : 'We detected ' . $total . ' issues:';
+                $textoBoton = 'Open the app';
+                $pie = 'You can change which alerts you receive in Settings.';
+            }
+
+            // Cada alerta como una fila con una barra de color a la izquierda.
+            // El color NO es el unico portador del significado: la severidad va
+            // escrita al lado (WCAG 1.4.1, y aqui ademas hay clientes de correo
+            // que descartan los estilos por completo).
+            $filas = '';
+            foreach ($alertas as $alerta) {
+                $color = ($alerta['severidad'] ?? '') === 'critical' ? '#a32219' : '#83624b';
+                $etiqueta = ($alerta['severidad'] ?? '') === 'critical'
+                    ? ($idiomaUsuario == 'es' ? 'Avería' : 'Fault')
+                    : ($idiomaUsuario == 'es' ? 'Aviso' : 'Warning');
+
+                $filas .=
+                    '<div style="border-left:3px solid ' . $color . ';padding:10px 0 10px 14px;margin:0 0 14px;">'
+                    . '<p style="font-size:12px;color:' . $color . ';margin:0 0 4px;'
+                    . 'text-transform:uppercase;letter-spacing:0.12em;">' . $etiqueta . '</p>'
+                    . '<p style="font-size:16px;color:#21332a;margin:0 0 4px;">'
+                    . htmlentities($alerta['planta'] ?? '') . '</p>'
+                    . '<p style="font-size:14px;color:#5b5551;margin:0;line-height:1.5;">'
+                    . htmlentities($alerta['mensaje'] ?? '') . '</p>'
+                    . '</div>';
+            }
+
+            $enlaceApp = htmlspecialchars($this->frontendUrl() . '/alertas', ENT_QUOTES, 'UTF-8');
+
+            $this->message =
+                '<div style="background:#f4f1ea;padding:32px 16px;font-family:Helvetica,Arial,sans-serif;">'
+                . '<div style="max-width:520px;margin:0 auto;background:#ffffff;padding:32px;">'
+                . '<p style="font-size:18px;color:#21332a;margin:0 0 16px;">' . $saludo . '</p>'
+                . '<p style="font-size:16px;color:#21332a;line-height:1.5;margin:0 0 24px;">' . $intro . '</p>'
+                . $filas
+                . '<div style="text-align:center;margin:28px 0 0;">'
+                . '<a href="' . $enlaceApp . '" style="display:inline-block;background:#e4572c;color:#f4f1ea;'
+                . 'text-decoration:none;font-size:17px;font-weight:bold;padding:14px 32px;">' . $textoBoton . '</a>'
+                . '</div>'
+                . '<p style="font-size:13px;color:#5b5551;margin:24px 0 0;">' . $pie . '</p>'
+                . '</div>'
+                . '<div style="text-align:center;margin-top:24px;">'
+                . '<img src="' . $this->backendUrl() . '/public/assets/img/logo-esc-2026.png"'
+                . ' width="200" style="width:200px;height:auto;" alt="Energía Solar Canarias">'
+                . '</div>'
+                . '</div>';
+
+            $this->mail->Body = $this->message;
+            return $this->mail->send();
+        } catch (Exception $e) {
+            error_log("Error en avisoAlertas: " . $e->getMessage());
+            return false;
+        }
+    }
+
 }

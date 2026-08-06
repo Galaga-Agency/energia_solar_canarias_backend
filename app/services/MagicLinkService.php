@@ -226,14 +226,17 @@ class MagicLinkService
                        usuarios.imagen, usuarios.activo, usuarios.eliminado
                   FROM usuarios
             INNER JOIN clases ON clases.clase_id = usuarios.clase_id
-                 WHERE usuarios.email = ?
+                 WHERE usuarios.email = ? OR usuarios.email_respaldo = ?
                  LIMIT 1";
 
         $stmt = $this->conn->prepare($sql);
         if (!$stmt) {
             return null;
         }
-        $stmt->bind_param('s', $email);
+        // El correo de respaldo entra por la misma puerta: quien pierde el
+        // acceso al principal no tiene contrasena que recuperar, asi que sin
+        // esto la cuenta queda inaccesible para siempre.
+        $stmt->bind_param('ss', $email, $email);
         $stmt->execute();
         $resultado = $stmt->get_result();
         $fila = $resultado ? $resultado->fetch_assoc() : null;
