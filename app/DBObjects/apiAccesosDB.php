@@ -120,6 +120,69 @@ class ApiAccesosDB {
     /**
      * Verifica el acceso de un token y devuelve su scope
      */
+    /**
+     * Claves de un usuario, sin exponer la clave en si.
+     *
+     * La clave solo se ve una vez, al crearla: guardarla y volver a mostrarla
+     * convertiria esta pantalla en un sitio donde robar credenciales. Lo que se
+     * lista es el nombre, cuando se creo y cuando se uso por ultima vez.
+     */
+    public function listarPorUsuario($usuarioId) {
+        try {
+            $conn = $this->conexion->getConexion();
+            $query = "SELECT api_accesos_id AS id, nombre, api_scope, creado_en,
+                             ultimo_uso, revocado_en
+                        FROM api_accesos
+                       WHERE usuario_id = ?
+                    ORDER BY creado_en DESC";
+            $stmt = $conn->prepare($query);
+            if (!$stmt) {
+                return [];
+            }
+            $stmt->bind_param('i', $usuarioId);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            $filas = [];
+            while ($fila = $result->fetch_assoc()) {
+                $filas[] = $fila;
+            }
+            $stmt->close();
+            return $filas;
+        } catch (Exception $e) {
+            error_log("Error en listarPorUsuario: " . $e->getMessage());
+            return [];
+        }
+    }
+
+    /**
+     * Revoca una clave. Se marca en vez de borrarse: el registro de cuando
+     * existio y cuando se uso es justamente lo que hace falta despues de una
+     * filtracion.
+     */
+    public function revocar($usuarioId, $id) {
+        try {
+            $conn = $this->conexion->getConexion();
+            // usuario_id en el WHERE: sin eso, cualquiera con una sesion podria
+            // revocar la clave de otro pasando su id.
+            $query = "UPDATE api_accesos
+                         SET revocado_en = NOW()
+                       WHERE api_accesos_id = ? AND usuario_id = ?
+                         AND revocado_en IS NULL";
+            $stmt = $conn->prepare($query);
+            if (!$stmt) {
+                return false;
+            }
+            $stmt->bind_param('ii', $id, $usuarioId);
+            $stmt->execute();
+            $afectadas = $stmt->affected_rows;
+            $stmt->close();
+            return $afectadas > 0;
+        } catch (Exception $e) {
+            error_log("Error en revocar: " . $e->getMessage());
+            return false;
+        }
+    }
+
     public function verificarAccesoApiKey($api_key) {
         try {
             $conn = $this->conexion->getConexion();
@@ -129,7 +192,13 @@ class ApiAccesosDB {
             //Metemos el Token para la validacion
             $api_key = 'Token ' . $api_key;
     
-            $query = "SELECT api_scope, usuario_id as userId FROM api_accesos WHERE api_key = ? LIMIT 1";
+            // revocado_en IS NULL: una clave revocada tiene que dejar de
+            // funcionar de inmediato. Antes seguia siendo valida porque la
+            // consulta solo miraba la clave.
+            $query = "SELECT api_accesos_id, api_scope, usuario_id as userId
+                        FROM api_accesos
+                       WHERE api_key = ? AND revocado_en IS NULL
+                       LIMIT 1";
             $stmt = $conn->prepare($query);
             if (!$stmt) {
                 throw new Exception("Error al preparar consulta: " . $conn->error);
@@ -144,6 +213,19 @@ class ApiAccesosDB {
     
             $scope = $result->fetch_assoc();
             $stmt->close();
+
+            // Marca de uso, para que el usuario pueda ver si una clave sigue
+            // viva antes de revocarla. Sin fallar la peticion si no se puede.
+            if ($scope) {
+                $touch = $conn->prepare(
+                    "UPDATE api_accesos SET ultimo_uso = NOW() WHERE api_accesos_id = ?"
+                );
+                if ($touch) {
+                    $touch->bind_param('i', $scope['api_accesos_id']);
+                    $touch->execute();
+                    $touch->close();
+                }
+            }
     
             return $scope;
         } catch (Exception $e) {

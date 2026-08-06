@@ -265,8 +265,16 @@ class Imagenes
             $host .= "/esc-backend";
         }
 
+        // El esquema se toma de la peticion en vez de forzar https: en local el
+        // stack habla http, y una url https://localhost el navegador no puede
+        // resolver, asi que ningun avatar cargaba en desarrollo.
+        $esquema = (
+            (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+            || (($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https')
+        ) ? 'https' : 'http';
+
         // Retornar la URL protegida
-        return "https://$host/app/utils/obtener_imagen.php?token=$token_url";
+        return "$esquema://$host/app/utils/obtener_imagen.php?token=$token_url";
     }
 
     // Método para obtener la imagen del usuario

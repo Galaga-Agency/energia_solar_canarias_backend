@@ -380,6 +380,84 @@ switch ($method) {
                 }
                 break;
 
+            // Preferencias de notificacion del propio usuario. Sin fila en la
+            // tabla se devuelven los valores por defecto, asi que esta ruta
+            // nunca esta vacia.
+            case ($request === 'usuario/notificaciones'):
+                $handled = true;
+                if ($authMiddleware->verificarTokenUsuarioActivo() != false) {
+                    require_once __DIR__ . '/../DBObjects/preferenciasNotificacionesDB.php';
+                    $idUser = $authMiddleware->obtenerIdUsuarioActivo();
+                    $prefsDB = new PreferenciasNotificacionesDB();
+                    $respuesta->success(true);
+                    $respuesta->data = $prefsDB->obtener($idUser);
+                    http_response_code($respuesta->code);
+                    echo json_encode($respuesta);
+                } else {
+                    $respuesta->_403();
+                    $respuesta->message = 'El token no se puede authentificar con exito';
+                    http_response_code($respuesta->code);
+                    echo json_encode($respuesta);
+                }
+                break;
+
+            // Actividad reciente de la cuenta. Solo la del propio usuario: el
+            // usuario_id sale del token, nunca de la peticion.
+            case ($request === 'usuario/actividad'):
+                $handled = true;
+                if ($authMiddleware->verificarTokenUsuarioActivo() != false) {
+                    $idUser = $authMiddleware->obtenerIdUsuarioActivo();
+                    $conn = Conexion::getInstance()->getConexion();
+                    $stmt = $conn->prepare(
+                        "SELECT id, timestamp, level, message
+                           FROM logs
+                          WHERE usuario_id = ?
+                       ORDER BY timestamp DESC
+                          LIMIT 30"
+                    );
+                    $filas = [];
+                    if ($stmt) {
+                        $stmt->bind_param('i', $idUser);
+                        $stmt->execute();
+                        $res = $stmt->get_result();
+                        while ($fila = $res->fetch_assoc()) {
+                            $filas[] = $fila;
+                        }
+                        $stmt->close();
+                    }
+                    $respuesta->success(true);
+                    $respuesta->data = $filas;
+                    http_response_code($respuesta->code);
+                    echo json_encode($respuesta);
+                } else {
+                    $respuesta->_403();
+                    $respuesta->message = 'El token no se puede authentificar con exito';
+                    http_response_code($respuesta->code);
+                    echo json_encode($respuesta);
+                }
+                break;
+
+            // Claves de API del propio usuario. Sin la clave en si: solo se ve
+            // una vez, al crearla, y volver a mostrarla convertiria esta ruta
+            // en un sitio del que robar credenciales.
+            case ($request === 'usuario/api-keys'):
+                $handled = true;
+                if ($authMiddleware->verificarTokenUsuarioActivo() != false) {
+                    $idUser = $authMiddleware->obtenerIdUsuarioActivo();
+                    require_once __DIR__ . '/../DBObjects/apiAccesosDB.php';
+                    $apiAccesosDB = new ApiAccesosDB();
+                    $respuesta->success(true);
+                    $respuesta->data = $apiAccesosDB->listarPorUsuario($idUser);
+                    http_response_code($respuesta->code);
+                    echo json_encode($respuesta);
+                } else {
+                    $respuesta->_403();
+                    $respuesta->message = 'El token no se puede authentificar con exito';
+                    http_response_code($respuesta->code);
+                    echo json_encode($respuesta);
+                }
+                break;
+
             case (preg_match('/^usuario\/bearerToken/', $request, $matches) ? true : false):
                 $handled = true;
                 //Verificamos que existe el usuario CREADOR del token y sino manejamos el error dentro de la funcion
@@ -546,6 +624,34 @@ switch ($method) {
                     echo json_encode($respuesta);
                 }
                 break;
+            case ($request === 'usuario/notificaciones'):
+                $handled = true;
+                if ($authMiddleware->verificarTokenUsuarioActivo() != false) {
+                    require_once __DIR__ . '/../DBObjects/preferenciasNotificacionesDB.php';
+                    $idUser = $authMiddleware->obtenerIdUsuarioActivo();
+                    $datos = json_decode(file_get_contents("php://input"), true) ?: [];
+                    $prefsDB = new PreferenciasNotificacionesDB();
+
+                    if ($prefsDB->guardar($idUser, $datos)) {
+                        $respuesta->success(true);
+                        // Se devuelve lo GUARDADO, no lo enviado: la severidad y
+                        // la frecuencia pasan por lista blanca, y el frontend
+                        // tiene que ver el valor que ha quedado de verdad.
+                        $respuesta->data = $prefsDB->obtener($idUser);
+                    } else {
+                        $respuesta->_500();
+                        $respuesta->message = 'No se pudieron guardar las preferencias';
+                    }
+                    http_response_code($respuesta->code);
+                    echo json_encode($respuesta);
+                } else {
+                    $respuesta->_403();
+                    $respuesta->message = 'El token no se puede authentificar con exito';
+                    http_response_code($respuesta->code);
+                    echo json_encode($respuesta);
+                }
+                break;
+
             case ($request === 'usuario'):
                 $handled = true;
                 //Verificamos que existe el usuario CREADOR del token y sino manejamos el error dentro de la funcion
@@ -1502,6 +1608,32 @@ switch ($method) {
 
     case 'DELETE':
         switch (true) {
+            // Revocar una clave de API propia. Se marca revocada en vez de
+            // borrarse: despues de una filtracion, saber cuando existio y
+            // cuando se uso por ultima vez es justo lo que hace falta.
+            case (preg_match('/^usuario\/api-keys\/(\d+)$/', $request, $matches) ? true : false):
+                $handled = true;
+                if ($authMiddleware->verificarTokenUsuarioActivo() != false) {
+                    require_once __DIR__ . '/../DBObjects/apiAccesosDB.php';
+                    $idUser = $authMiddleware->obtenerIdUsuarioActivo();
+                    $apiAccesosDB = new ApiAccesosDB();
+                    if ($apiAccesosDB->revocar($idUser, (int) $matches[1])) {
+                        $respuesta->success(true);
+                        $respuesta->message = 'Clave revocada';
+                    } else {
+                        $respuesta->_404();
+                        $respuesta->message = 'Clave no encontrada o ya revocada';
+                    }
+                    http_response_code($respuesta->code);
+                    echo json_encode($respuesta);
+                } else {
+                    $respuesta->_403();
+                    $respuesta->message = 'El token no se puede authentificar con exito';
+                    http_response_code($respuesta->code);
+                    echo json_encode($respuesta);
+                }
+                break;
+
             // Silenciar / reactivar una alerta, y listar las silenciadas.
             //
             // El silenciado es NUESTRO, no del proveedor: los cinco exponen las
