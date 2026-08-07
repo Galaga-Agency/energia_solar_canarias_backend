@@ -219,6 +219,16 @@ class SungrowService
             $plantas = $lista['result_data']['pageList'] ?? [];
             foreach ($plantas as $p) {
                 if ((string) ($p['ps_id'] ?? '') === (string) $psId) {
+                    // getPowerStationList da la produccion (curr_power) pero NO
+                    // el reparto entre consumo y red. Ese dato esta en el
+                    // CONTADOR de la planta, punto p8018 (potencia activa, W):
+                    // negativo = vertiendo a red, positivo = importando.
+                    // Comprobado en vivo: inversor 30.227 W con p8018 -6.349 W
+                    // da 23.878 W de consumo, que es lo que muestra iSolarCloud.
+                    $flujo = $this->getFlujoContador($psId);
+                    if (is_array($flujo)) {
+                        $p = array_merge($p, $flujo);
+                    }
                     return $p;
                 }
             }
@@ -226,6 +236,130 @@ class SungrowService
         } catch (Exception $e) {
             return ['error' => $e->getMessage()];
         }
+    }
+
+    /**
+     * Reparto de energia leido del contador de la planta.
+     *
+     * iSolarCloud no publica un endpoint de "flujo" para el plan de esta
+     * cuenta, pero el contador expone la potencia activa y de ahi salen las
+     * tres cifras del diagrama:
+     *
+     *   grid_power  p8018   negativo = exporta, positivo = importa
+     *   load_power  produccion - exportacion (o + importacion)
+     *
+     * Solo funciona con inversor de STRING (device_type 1). Los hibridos
+     * (device_type 14) devuelven serie vacia por el plan contratado, y en ese
+     * caso esto devuelve null y el frontend dibuja solo la produccion.
+     */
+    private function getFlujoContador($psId)
+    {
+        try {
+            $inv = $this->getInventario($psId);
+            $devices = $inv['result_data']['pageList'] ?? $inv['result_data'] ?? [];
+
+            $meterKey  = null;
+            $invKey    = null;
+            $hybridKey = null;
+            foreach ($devices as $d) {
+                $tipo = (int) ($d['device_type'] ?? 0);
+                if ($tipo === 7 && $meterKey === null) {
+                    $meterKey = $d['ps_key'] ?? null;
+                }
+                // 1 = string, 14 = hibrido. El hibrido no devuelve serie con
+                // este plan, pero se pide igual por si la cuenta cambia.
+                if (($tipo === 1 || $tipo === 14) && $invKey === null) {
+                    $invKey = $d['ps_key'] ?? null;
+                }
+                // Solo el hibrido lleva bateria. El de string (tipo 1) no
+                // tiene, y pedirle los puntos de bateria devuelve vacio.
+                if ($tipo === 14 && $hybridKey === null) {
+                    $hybridKey = $d['ps_key'] ?? null;
+                }
+            }
+
+            $keys = array_values(array_filter([$invKey, $meterKey]));
+            if (!count($keys)) {
+                return null;
+            }
+
+            // getDeviceRealTimeData es el endpoint EN VIVO. getPowerStationList
+            // devuelve un resumen cacheado de hace varios minutos y
+            // getDevicePointMinuteDataList agrega por minuto: los dos hacian
+            // parecer que las cifras no se movian. Este devuelve la lectura
+            // instantanea, que es la que usa el panel de iSolarCloud.
+            $out = [];
+
+            if ($invKey !== null) {
+                $resp = $this->apiCall('/openapi/getDeviceRealTimeData', [
+                    'ps_key_list'   => [$invKey],
+                    'device_type'   => 1,
+                    'point_id_list' => ['24'],
+                ]);
+                $punto = $resp['result_data']['device_point_list'][0]['device_point'] ?? null;
+                if (isset($punto['p24']) && $punto['p24'] !== '' && $punto['p24'] !== null) {
+                    $out['curr_power'] = [
+                        'value' => round(((float) $punto['p24']) / 1000.0, 3),
+                        'unit'  => 'kW',
+                    ];
+                    $out['curr_power_update_time'] = date('c');
+                }
+            }
+
+            if ($meterKey !== null) {
+                $resp = $this->apiCall('/openapi/getDeviceRealTimeData', [
+                    'ps_key_list'   => [$meterKey],
+                    'device_type'   => 7,
+                    'point_id_list' => ['8018'],
+                ]);
+                $punto = $resp['result_data']['device_point_list'][0]['device_point'] ?? null;
+                if (isset($punto['p8018']) && $punto['p8018'] !== '' && $punto['p8018'] !== null) {
+                    // Negativo vierte a red, positivo importa.
+                    $out['grid_power'] = [
+                        'value' => round(((float) $punto['p8018']) / 1000.0, 3),
+                        'unit'  => 'kW',
+                    ];
+                }
+            }
+
+            // Bateria: solo las plantas ESS con inversor hibrido la tienen.
+            // p13126 = potencia de bateria (positivo carga, negativo descarga),
+            // p13141 = estado de carga en %. Si la planta no es hibrida no se
+            // pide, y el frontend no dibuja el nodo de bateria.
+            if ($hybridKey !== null) {
+                $resp = $this->apiCall('/openapi/getDeviceRealTimeData', [
+                    'ps_key_list'   => [$hybridKey],
+                    'device_type'   => 14,
+                    'point_id_list' => ['13126', '13141'],
+                ]);
+                $punto = $resp['result_data']['device_point_list'][0]['device_point'] ?? null;
+
+                if (isset($punto['p13126']) && $punto['p13126'] !== '' && $punto['p13126'] !== null) {
+                    $out['p_battery'] = [
+                        'value' => round(((float) $punto['p13126']) / 1000.0, 3),
+                        'unit'  => 'kW',
+                    ];
+                }
+                if (isset($punto['p13141']) && $punto['p13141'] !== '' && $punto['p13141'] !== null) {
+                    $out['battery_soc'] = (float) $punto['p13141'];
+                }
+            }
+
+            return count($out) ? $out : null;
+        } catch (Exception $e) {
+            return null;
+        }
+    }
+
+    /** `20260807113500` -> `2026-08-07T11:35:00`. */
+    private function stampToIso($stamp)
+    {
+        $s = (string) $stamp;
+        if (strlen($s) !== 14) {
+            return null;
+        }
+        return substr($s, 0, 4) . '-' . substr($s, 4, 2) . '-' . substr($s, 6, 2)
+            . 'T' . substr($s, 8, 2) . ':' . substr($s, 10, 2) . ':' . substr($s, 12, 2);
     }
 
     // =====================================================================
@@ -328,15 +462,52 @@ class SungrowService
     {
         try {
             $puntos = self::normalizarPuntos($params);
-            $psKey  = $this->localizarInversor($psId);
-            if (!$psKey) {
+            $devs   = $this->localizarDispositivos($psId);
+            if (!$devs['inversor'] && !$devs['contador']) {
                 return ['error' => 'no_inversor', 'proveedor' => 'Sungrow', 'ps_id' => $psId];
             }
 
             $level = strtolower((string) ($params['level'] ?? 'day'));
-            $series = isset(self::NIVELES_AGREGADOS[$level])
-                ? $this->serieAgregada($psKey, $puntos, $level, $params)  // Week/Month/Year
-                : $this->serieIntradia($psKey, $puntos, $params);         // Day/Custom
+            $agregado = isset(self::NIVELES_AGREGADOS[$level]);
+
+            // Cada punto vive en UN dispositivo concreto: p8018 es del contador
+            // y el resto del inversor. Pedirlos todos al mismo device devuelve
+            // vacio para los que no le pertenecen, que es justo lo que pasaba:
+            // al caer al contador solo respondia p8018 y las otras cuatro
+            // series llegaban vacias. Se agrupan por dispositivo y se fusiona.
+            $porDispositivo = [];
+            foreach ($puntos as $punto) {
+                $key = self::dispositivoDePunto($punto, $devs);
+                if ($key === null) {
+                    continue;
+                }
+                $porDispositivo[$key][] = $punto;
+            }
+
+            $series = array_fill_keys($puntos, []);
+            foreach ($porDispositivo as $key => $suyos) {
+                $parcial = $agregado
+                    ? $this->serieAgregada($key, $suyos, $level, $params)
+                    : $this->serieIntradia($key, $suyos, $params);
+                foreach ($parcial as $punto => $valores) {
+                    if (!empty($valores)) {
+                        $series[$punto] = $valores;
+                    }
+                }
+            }
+
+            // Ultimo recurso: si TODO vino vacio, se reintenta entero contra el
+            // otro dispositivo por si esta planta reparte los puntos distinto.
+            if (self::serieVacia($series)) {
+                $alternativo = $devs['contador'] ?: $devs['inversor'];
+                if ($alternativo) {
+                    $series = $agregado
+                        ? $this->serieAgregada($alternativo, $puntos, $level, $params)
+                        : $this->serieIntradia($alternativo, $puntos, $params);
+                }
+            }
+
+            $psKey = $devs['inversor'] ?: $devs['contador'];
 
             // Compat: peticion antigua con `point` suelto (sin `points`) -> forma plana.
             if (!isset($params['points']) && count($puntos) === 1) {
@@ -347,6 +518,22 @@ class SungrowService
         } catch (Exception $e) {
             return ['error' => $e->getMessage()];
         }
+    }
+
+    /**
+     * Que dispositivo sirve cada punto.
+     *
+     * Los p80xx son del CONTADOR (device_type 7); el resto —potencia PV,
+     * bateria, consumo, SOC— del inversor. Comprobado en vivo: con ps_key
+     * 5657217_7_1_2 (contador) solo p8018 devolvia datos y p24/p13126/p13119/
+     * p13141 llegaban como arrays vacios.
+     */
+    private static function dispositivoDePunto(string $punto, array $devs): ?string
+    {
+        $esContador = str_starts_with($punto, 'p80');
+        $preferido  = $esContador ? $devs['contador'] : $devs['inversor'];
+
+        return $preferido ?: ($esContador ? $devs['inversor'] : $devs['contador']);
     }
 
     /**
@@ -388,17 +575,70 @@ class SungrowService
     /** Localiza el ps_key del inversor (device_type 1 o 14) de la planta. */
     private function localizarInversor($psId)
     {
-        // OJO: el primer dispositivo suele ser un Meter (tipo 7) que NO da series; por
-        // eso se filtra por TIPOS_INVERSOR y no se coge el primero de la lista.
-        $devs = $this->apiCall('/openapi/getDeviceList', [
-            'ps_id' => $psId, 'curPage' => 1, 'size' => 50,
-        ]);
+        return $this->localizarDispositivos($psId)['inversor'];
+    }
+
+    /**
+     * ps_key del inversor Y del contador.
+     *
+     * El contador (tipo 7) hace falta porque en los HIBRIDOS (tipo 14) el
+     * inversor devuelve serie vacia con este plan de API, mientras que el
+     * contador si responde: es exactamente lo que pasaba con el flujo en
+     * tiempo real, donde el inversor no daba nada y el contador si.
+     *
+     * @return array{inversor: ?string, contador: ?string, tipo: ?int}
+     */
+    private function localizarDispositivos($psId)
+    {
+        // Cacheado por planta: cada carga de graficas pide varios grupos de
+        // puntos y cada uno resolvia la lista de dispositivos otra vez, lo que
+        // agota el limite de peticiones de Sungrow y devuelve una lista vacia.
+        // Entonces el guard de arriba respondia 'no_inversor' y la grafica se
+        // quedaba a medias: las curvas "rotas" que se veian.
+        static $cache = [];
+        if (isset($cache[$psId])) {
+            return $cache[$psId];
+        }
+
+        try {
+            $devs = $this->apiCall('/openapi/getDeviceList', [
+                'ps_id' => $psId, 'curPage' => 1, 'size' => 50,
+            ]);
+        } catch (Exception $e) {
+            return ['inversor' => null, 'contador' => null, 'tipo' => null];
+        }
+
+        $out = ['inversor' => null, 'contador' => null, 'tipo' => null];
         foreach (($devs['result_data']['pageList'] ?? []) as $d) {
-            if (in_array((int) ($d['device_type'] ?? 0), self::TIPOS_INVERSOR, true)) {
-                return $d['ps_key'];
+            $tipo = (int) ($d['device_type'] ?? 0);
+            if (in_array($tipo, self::TIPOS_INVERSOR, true) && $out['inversor'] === null) {
+                $out['inversor'] = $d['ps_key'] ?? null;
+                $out['tipo'] = $tipo;
+            }
+            if ($tipo === 7 && $out['contador'] === null) {
+                $out['contador'] = $d['ps_key'] ?? null;
             }
         }
-        return null;
+
+        // Solo se cachea un resultado util: si la llamada vino vacia por el
+        // limite de peticiones, el siguiente intento debe volver a preguntar.
+        if ($out['inversor'] || $out['contador']) {
+            $cache[$psId] = $out;
+        }
+        return $out;
+    }
+
+    /** True si la serie no trae ni un solo valor utilizable. */
+    private static function serieVacia(array $series): bool
+    {
+        foreach ($series as $puntos) {
+            foreach ((array) $puntos as $r) {
+                if (($r['value'] ?? null) !== null) {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 
     /**
