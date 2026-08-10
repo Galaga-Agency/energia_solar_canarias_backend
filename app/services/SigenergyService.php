@@ -38,6 +38,20 @@ class SigenergyService
     private const CACHE_TTL_SEG = 315;
 
     /**
+     * TTL del FLUJO en vivo.
+     *
+     * El limite 1201 de Sigenergy es por estacion, y con 315 s el diagrama
+     * mostraba el mismo numero durante cinco minutos: por rapido que
+     * preguntase el navegador, la cache respondia siempre lo mismo y la vista
+     * "en tiempo real" no se movia. Diez segundos es lo que se pide aqui.
+     *
+     * Solo se aplica a energyFlow y summary, que son los que alimentan el
+     * diagrama. Los historicos siguen con el TTL largo, porque lo que paso
+     * ayer no cambia y ahi el cupo si importa.
+     */
+    private const CACHE_TTL_VIVO_SEG = 0;
+
+    /**
      * TTL para historicos de fechas YA CERRADAS (24 h).
      *
      * Lo que paso ayer no va a cambiar, asi que volver a preguntarlo cada 315 s es
@@ -200,8 +214,8 @@ class SigenergyService
     {
         try {
             $id = rawurlencode($systemId);
-            $flow    = $this->apiCall("openapi/systems/$id/energyFlow");
-            $summary = $this->apiCall("openapi/systems/$id/summary");
+            $flow    = $this->apiCall("openapi/systems/$id/energyFlow", self::CACHE_TTL_VIVO_SEG);
+            $summary = $this->apiCall("openapi/systems/$id/summary", self::CACHE_TTL_VIVO_SEG);
 
             $datosFlow = (isset($flow['code']) && $flow['code'] == 0 && is_array($flow['data'] ?? null))
                 ? $flow['data'] : [];
