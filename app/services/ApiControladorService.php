@@ -1029,7 +1029,13 @@ class ApiControladorService
                     'id' => $site['id'] ?? '',
                     'name' => $site['name'] ?? '',
                     'address' => $address,
-                    'capacity' => $site['peakPower'] ?? 0,
+                    // SolarEdge's LIST reports peakPower as 0.0 for every
+                    // site — verified against its own API, where the same
+                    // plant's detail says 4.05 — so the real nameplate is
+                    // read from the detail. Without it the shared plant table
+                    // showed "0 kW" on all 17 SolarEdge rows while the other
+                    // providers filled the column.
+                    'capacity' => self::capacidadSolarEdge($site, $this->solarEdgeController),
                     'status' => $status,
                     'type' => $site['type'] ?? '',
                     'latitude' => $site['location']['latitude'] ?? '',
@@ -1414,6 +1420,54 @@ class ApiControladorService
     }
 
     // Función para mapear el estado de SolarEdge a una descripción legible
+    /**
+     * Nameplate capacity for a SolarEdge site, in kWp.
+     *
+     * Prefers the value the list carries; falls back to the site detail when
+     * it is missing or zero. The detail costs one request per site, so it is
+     * only paid when the list genuinely has nothing usable.
+     */
+    private static function capacidadSolarEdge(array $site, $controlador)
+    {
+        $delListado = (float) ($site['peakPower'] ?? 0);
+        if ($delListado > 0) {
+            return $delListado;
+        }
+
+        $id = $site['id'] ?? null;
+        if (!$id || !$controlador || !method_exists($controlador, 'getSiteDetails')) {
+            return 0;
+        }
+
+        try {
+            $detalle = $controlador->getSiteDetails($id);
+
+            // Llega codificado DOS veces: json_decode devuelve otra cadena
+            // JSON, no un array, asi que buscar 'details' dentro daba NULL
+            // siempre. Se decodifica hasta que deje de ser texto.
+            $datos = $detalle;
+            for ($i = 0; $i < 3 && is_string($datos); $i++) {
+                $datos = json_decode($datos, true);
+            }
+            if (!is_array($datos)) {
+                return 0;
+            }
+
+            // El detalle llega anidado de formas distintas segun por donde se
+            // pida (`details`, `data.details`, o plano), asi que se buscan
+            // todas en vez de asumir una.
+            $pico = $datos['details']['peakPower']
+                ?? $datos['data']['details']['peakPower']
+                ?? $datos['peakPower']
+                ?? null;
+
+            return $pico !== null ? (float) $pico : 0;
+        } catch (Throwable $e) {
+            // Una capacidad ausente no justifica romper el listado entero.
+            return 0;
+        }
+    }
+
     private function mapSolarEdgeStatus($status)
     {
         switch ($status) {

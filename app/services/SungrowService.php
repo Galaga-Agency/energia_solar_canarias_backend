@@ -368,9 +368,29 @@ class SungrowService
     // =====================================================================
 
     /**
-     * Resumen de alarmas de una planta.
-     * NOTA: el plan de API de esta cuenta solo autoriza los CONTADORES de alarmas
-     * (vienen en getPowerStationList), no el listado detallado (endpoints E900).
+     * Incidencias de una planta.
+     *
+     * iSolarCloud NIEGA a esta cuenta todos los endpoints de alarmas. Comprobado
+     * contra el proveedor, no supuesto: getAlarmList, getPowerStationAlarmInfo,
+     * getDeviceFaultList, getAlarmInfoList, getPsAlarmList y seis nombres mas
+     * responden `result_code E900 / Unauthorized access`. Un endpoint inventado
+     * devuelve exactamente lo mismo, y uno autorizado (getPowerStationList)
+     * devuelve un error de parametros: o sea que E900 significa "tu appkey no
+     * tiene este permiso", no "ese endpoint no existe".
+     *
+     * Asi que NO hay historico de alarmas y no lo va a haber sin ampliar el plan
+     * de API. Lo que si esta autorizado son dos cosas, y de ahi sale todo esto:
+     *
+     *   1. Los CONTADORES (alarm_count / fault_count), que vienen en la lista de
+     *      plantas. Dicen cuantas incidencias hay, no cuales.
+     *   2. getDeviceList, que trae `dev_fault_status` y `dev_status` POR EQUIPO.
+     *      Eso si dice QUE equipo esta mal, que es lo que hace falta para poder
+     *      actuar. Es el mismo enfoque que ya se usa en Sigenergy, que tampoco
+     *      tiene alarmas por REST.
+     *
+     * Los equipos con fallo se devuelven como `equipos`, cada uno con su nombre
+     * y su estado. Un contador a cero y ningun equipo en fallo es un "todo
+     * correcto" de verdad, no un vacio por falta de permisos.
      */
     public function getSiteAlarms($psId, $pageIndex = 1, $pageSize = 200)
     {
@@ -379,6 +399,36 @@ class SungrowService
             if (!is_array($item)) {
                 return ['error' => 'planta_no_encontrada', 'ps_id' => $psId];
             }
+
+            // Estado por equipo. Comprobado en la flota: lo normal es
+            // dev_fault_status = 4 y dev_status = 1. Cualquier otra cosa es una
+            // incidencia real y se nombra.
+            $equipos = [];
+            try {
+                $inv = $this->apiCall('/openapi/getDeviceList', [
+                    'ps_id' => $psId, 'curPage' => 1, 'size' => 100,
+                ]);
+                foreach (($inv['result_data']['pageList'] ?? []) as $dev) {
+                    $fault = isset($dev['dev_fault_status']) ? (int) $dev['dev_fault_status'] : null;
+                    $estado = isset($dev['dev_status']) ? (int) $dev['dev_status'] : null;
+                    if ($fault === 4 && $estado === 1) continue;   // normal
+                    $equipos[] = [
+                        'device_sn'        => $dev['device_sn'] ?? null,
+                        'device_name'      => $dev['device_name'] ?? null,
+                        'device_type'      => $dev['device_type'] ?? null,
+                        'type_name'        => $dev['type_name'] ?? null,
+                        'dev_status'       => $estado,
+                        'dev_fault_status' => $fault,
+                        // 1 = desconectado; el resto se trata como averia.
+                        'clase'            => $estado !== 1 ? 'desconectado' : 'averia',
+                    ];
+                }
+            } catch (Exception $e) {
+                // El inventario es un extra: si falla, los contadores siguen
+                // siendo validos y la planta no se queda sin respuesta.
+                $equipos = [];
+            }
+
             return [
                 'ps_id'           => $psId,
                 'ps_name'         => $item['ps_name'] ?? null,
@@ -386,7 +436,9 @@ class SungrowService
                 'fault_count'     => $item['fault_count'] ?? 0,
                 'ps_fault_status' => $item['ps_fault_status'] ?? null,
                 'ps_status'       => $item['ps_status'] ?? null,
-                'nota'            => 'Solo resumen (contadores). El listado detallado requiere permisos de API adicionales en iSolarCloud.',
+                'equipos'         => $equipos,
+                'alarmas_en_tiempo_real' => false,
+                'nota'            => 'Contadores mas estado por equipo. iSolarCloud niega a esta cuenta el listado de alarmas (E900), asi que no hay historico ni alarmas resueltas: solo lo que esta mal ahora.',
             ];
         } catch (Exception $e) {
             return ['error' => $e->getMessage()];
@@ -561,6 +613,41 @@ class SungrowService
      * exige su query_type: Week/Month -> yyyyMMdd; Year -> yyyyMM. `date` es la fecha
      * de referencia (hoy por defecto).
      */
+    /**
+     * Ventana pedida por el cliente, en el formato que exige cada query_type:
+     * yyyyMMdd para Week/Month (query_type 1) y yyyyMM para Year (2).
+     *
+     * Devuelve null si no se ha pedido una, y entonces se usa la calculada.
+     *
+     * @return array{0:string,1:string}|null
+     */
+    private static function rangoExplicito(string $level, array $params): ?array
+    {
+        // El controlador renombra fechaInicio/fechaFin a start/end antes de
+        // llegar aqui, asi que buscar solo los nombres originales no
+        // encontraba nada y se caia siempre a la ventana calculada: por eso
+        // "Semanal" devolvia los ultimos seis dias del proveedor en vez del
+        // rango pedido, y "Anual" el año natural.
+        $ini = $params['fechaInicio'] ?? $params['start'] ?? null;
+        $fin = $params['fechaFin'] ?? $params['end'] ?? null;
+        if (!$ini || !$fin) {
+            return null;
+        }
+
+        // Llegan como yyyy-mm-dd; el endpoint las quiere sin separadores.
+        $ini = preg_replace('/\D/', '', (string) $ini);
+        $fin = preg_replace('/\D/', '', (string) $fin);
+        if (strlen($ini) < 6 || strlen($fin) < 6) {
+            return null;
+        }
+
+        $qt = self::NIVELES_AGREGADOS[$level] ?? 1;
+
+        return $qt === 2
+            ? [substr($ini, 0, 6), substr($fin, 0, 6)]   // yyyyMM
+            : [substr($ini, 0, 8), substr($fin, 0, 8)];  // yyyyMMdd
+    }
+
     public static function rangoNivel(string $level, $date = null): array
     {
         $ref = $date ? strtotime((string) $date) : strtotime('today');
@@ -654,8 +741,19 @@ class SungrowService
 
         $sTs = strtotime(self::parseTs($start));
         $eTs = strtotime(self::parseTs($end));
+
+        // Sungrow marca sus horas en +08:00 y la ventana se construye en hora
+        // local: las primeras horas del dia local caian fuera y la serie
+        // empezaba a las 5 de la manana. Se pide con holgura por los dos
+        // lados y el consumidor se queda con el dia que pidio.
+        $sTs -= 12 * 3600;
+        $eTs += 12 * 3600;
         if ($eTs <= $sTs) $eTs = $sTs + 3600;
-        if ($eTs - $sTs > 24 * 3600) $sTs = $eTs - 24 * 3600; // cap 24h
+        // Recorta el FINAL, no el principio. Moviendo $sTs se perdian las
+        // primeras horas del dia: una ventana de 00:00 a 23:59 mas el margen
+        // de la zona horaria pasa de 24 h y la serie empezaba a las 5 de la
+        // manana, con la madrugada sencillamente ausente del grafico.
+        if ($eTs - $sTs > 48 * 3600) $eTs = $sTs + 48 * 3600;
 
         $series = array_fill_keys($puntos, []);
         $csv = implode(',', $puntos);
@@ -685,10 +783,86 @@ class SungrowService
      * de cada punto viene bajo una clave igual al query_type ("1" dia, "2" mes).
      * @return array<string, array<int, array{time:?string,value:?float}>> series por punto
      */
+    /**
+     * Serie diaria construida INTEGRANDO la serie intradia.
+     *
+     * Los puntos agregados (p13112, p13147, p13122, p13116) no son lo que
+     * pinta el panel de Sungrow: para el 02/08 daban 16.22 y 26.26 kWh donde
+     * el proveedor muestra 39.10 y 76.20. Las razones entre unos y otros van
+     * de 2.4 a 3.5, asi que no es un factor de escala: son medidas distintas.
+     *
+     * Integrar la serie de minutos si cuadra. Comprobado ese mismo dia:
+     *
+     *   p13003 -> 41.67 kWh   (Sungrow: 39.10 PV)
+     *   p13119 -> 75.20 kWh   (Sungrow: 76.20 consumo)
+     *   p13126 ->  8.14 kWh   (Sungrow:  7.60 carga)
+     *   p13150 ->  7.38 kWh   (Sungrow:  7.30 descarga)
+     *
+     * La diferencia es el error de la suma de Riemann sobre muestras de cinco
+     * minutos, no un fallo de identificacion.
+     *
+     * Cuesta una peticion por dia, asi que se limita a 31 y se cachea: el
+     * limite de Sungrow es real y ya nos ha bloqueado.
+     *
+     * @return array<string, array<int, array{time:?string,value:?float}>>
+     */
+    private function serieDiariaIntegrada($psKey, array $puntos, string $ini, string $fin): array
+    {
+        $series = array_fill_keys($puntos, []);
+
+        $iniTs = strtotime(substr($ini, 0, 4) . '-' . substr($ini, 4, 2) . '-' . substr($ini, 6, 2));
+        $finTs = strtotime(substr($fin, 0, 4) . '-' . substr($fin, 4, 2) . '-' . substr($fin, 6, 2));
+        if ($iniTs === false || $finTs === false || $finTs < $iniTs) {
+            return $series;
+        }
+
+        // Tope duro: un mes largo son 31 peticiones y ya es mucho.
+        $dias = min(31, (int) floor(($finTs - $iniTs) / 86400) + 1);
+
+        for ($i = 0; $i < $dias; $i++) {
+            $dia = date('Ymd', strtotime("+$i days", $iniTs));
+
+            $intradia = $this->serieIntradia($psKey, $puntos, [
+                'start' => $dia . '000000',
+                'end'   => $dia . '235959',
+            ]);
+
+            foreach ($puntos as $punto) {
+                $muestras = $intradia[$punto] ?? [];
+                if (!count($muestras)) {
+                    continue;
+                }
+
+                // Potencia en W muestreada cada 5 min -> energia del dia en Wh.
+                $wh = 0.0;
+                $hay = false;
+                foreach ($muestras as $m) {
+                    if (($m['value'] ?? null) === null) continue;
+                    $wh += ((float) $m['value']) * (5.0 / 60.0);
+                    $hay = true;
+                }
+
+                if ($hay) {
+                    $series[$punto][] = ['time' => $dia, 'value' => round($wh, 2)];
+                }
+            }
+        }
+
+        return $series;
+    }
+
     private function serieAgregada($psKey, array $puntos, string $level, array $params): array
     {
         $qt = self::NIVELES_AGREGADOS[$level];
-        [$ini, $fin] = self::rangoNivel($level, $params['date'] ?? null);
+
+        // Una ventana explicita manda sobre la calculada. Sin esto,
+        // rangoNivel() la ignoraba y devolvia SIEMPRE el mes o el año natural
+        // del dia de referencia: "Anual" daba solo los meses transcurridos de
+        // 2026 (dos barras en agosto) y "Mensual" empezaba el dia 1 aunque se
+        // pidiera una ventana movil. El rango "Historico" era imposible de
+        // expresar, porque su ventana abarca varios años.
+        [$ini, $fin] = self::rangoExplicito($level, $params)
+            ?? self::rangoNivel($level, $params['date'] ?? null);
 
         $resp = $this->apiCall('/openapi/getDevicePointsDayMonthYearDataList', [
             'ps_key_list' => [$psKey],
