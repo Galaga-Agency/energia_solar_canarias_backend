@@ -32,17 +32,27 @@ class UsuariosDB
                 }
             }
 
-            // Eliminar asociaciones anteriores de esta planta
-            $deleteQuery = "DELETE FROM plantas_asociadas WHERE planta_id = ?";
-            $deleteStmt = $conn->prepare($deleteQuery);
-            if (!$deleteStmt) {
-                throw new Exception("Error en la preparación del DELETE: " . $conn->error);
-            }
+            // Borra la relacion de ESTE usuario con ESTA planta, no la de todos.
+            //
+            // Antes el DELETE llevaba solo `planta_id = ?`, asi que cada alta
+            // vaciaba la planta entera y dejaba unicamente al ultimo usuario
+            // anadido: dar acceso a un segundo cliente se lo quitaba al primero
+            // sin avisar. Comprobado en local — asociar 37 y luego 1082 dejaba
+            // en la tabla unicamente a 1082.
+            //
+            // Se mantiene el DELETE (en vez de un INSERT a secas) para que la
+            // operacion siga siendo idempotente: repetirla no duplica filas.
+            //
             // planta_id es VARCHAR: hay que atarlo como 's'. Con 'i', MySQL convierte a
             // numero TODA la columna para comparar y revienta en cuanto encuentra un id
             // no numerico (los UUID de GoodWe, los VSSKC... de Sigenergy), abortando la
             // operacion entera con "Truncated incorrect DOUBLE value".
-            $deleteStmt->bind_param('s', $idPlanta);
+            $deleteQuery = "DELETE FROM plantas_asociadas WHERE planta_id = ? AND usuario_id = ?";
+            $deleteStmt = $conn->prepare($deleteQuery);
+            if (!$deleteStmt) {
+                throw new Exception("Error en la preparación del DELETE: " . $conn->error);
+            }
+            $deleteStmt->bind_param('si', $idPlanta, $idUsuario);
             if (!$deleteStmt->execute()) {
                 throw new Exception("Error al ejecutar DELETE: " . $deleteStmt->error);
             }
@@ -165,6 +175,7 @@ class UsuariosDB
                         usuarios.cif_nif
                     FROM usuarios 
                     INNER JOIN clases ON usuarios.clase_id = clases.clase_id
+                    WHERE usuarios.eliminado = 0
                     LIMIT ? OFFSET ?";
             $stmt = $conn->prepare($query);
             $stmt->bind_param('ii', $limit, $offset); // Bind de los parámetros para LIMIT y OFFSET

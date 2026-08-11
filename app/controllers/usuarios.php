@@ -478,14 +478,26 @@ class UsuariosController
                         $data['origen'] = 'app';  // Marcar explícitamente que la actualización proviene de la app
 
 
+                        // Zoho es un ESPEJO, no la fuente de la verdad.
+                        //
+                        // Antes, si el CRM fallaba se abortaba aqui y la base de
+                        // datos no se tocaba: cualquier usuario que no exista en
+                        // Zoho ("No se encontro ningun cliente con el idApp") era
+                        // IMPOSIBLE de editar desde la app, y el admin veia
+                        // "El servidor del proveedor no responde ahora mismo".
+                        // Afecta a toda cuenta creada antes de la integracion o
+                        // dada de alta directamente en base de datos.
+                        //
+                        // Ahora el fallo se registra y se sigue: el dato del
+                        // usuario se guarda, y la desincronizacion con el CRM
+                        // queda en el log para resolverla aparte.
                         $resultUpdateCRM = $zohoService->actualizarCliente($data);
-                        if (isset($resultUpdateCRM['error']) && $resultUpdateCRM['error'] == true) {
-                            $logsController->registrarLog(Logs::ERROR, "Error al actualizar el usuario en Zoho: " . $resultUpdateCRM['message']);
-                            $respuesta = new Respuesta();
-                            $respuesta->_500($resultUpdateCRM);
-                            $respuesta->message = "Error al actualizar el usuario en Zoho.";
-                            echo json_encode($respuesta);
-                            return;
+                        $zohoFallo = isset($resultUpdateCRM['error']) && $resultUpdateCRM['error'] == true;
+                        if ($zohoFallo) {
+                            $motivo = is_string($resultUpdateCRM['error'])
+                                ? $resultUpdateCRM['error']
+                                : ($resultUpdateCRM['message'] ?? 'sin detalle');
+                            $logsController->registrarLog(Logs::ERROR, "Zoho no se pudo actualizar (se continua): " . $motivo);
                         }
 
                         // Si se actualiza Zoho, entonces actualizar también la base de datos
@@ -494,7 +506,9 @@ class UsuariosController
                             $logsController->registrarLog(Logs::PUT, "Se actualizó el usuario en Zoho y en la base de datos " . $id);
                             $respuesta = new Respuesta();
                             $respuesta->success(true);
-                            $respuesta->message = "Usuario actualizado correctamente en Zoho y en la base de datos.";
+                            $respuesta->message = $zohoFallo
+                                ? "Usuario actualizado. El CRM no se pudo sincronizar."
+                                : "Usuario actualizado correctamente en Zoho y en la base de datos.";
                             http_response_code($respuesta->code);
                             echo json_encode($respuesta);
                         } else {
@@ -524,14 +538,26 @@ class UsuariosController
                         // Aquí modificamos el origen a 'app' antes de enviar a Zoho para evitar bucles
                         $data['origen'] = 'app'; // Aseguramos que el origen sea 'app' al actualizar Zoho
 
+                        // Zoho es un ESPEJO, no la fuente de la verdad.
+                        //
+                        // Antes, si el CRM fallaba se abortaba aqui y la base de
+                        // datos no se tocaba: cualquier usuario que no exista en
+                        // Zoho ("No se encontro ningun cliente con el idApp") era
+                        // IMPOSIBLE de editar desde la app, y el admin veia
+                        // "El servidor del proveedor no responde ahora mismo".
+                        // Afecta a toda cuenta creada antes de la integracion o
+                        // dada de alta directamente en base de datos.
+                        //
+                        // Ahora el fallo se registra y se sigue: el dato del
+                        // usuario se guarda, y la desincronizacion con el CRM
+                        // queda en el log para resolverla aparte.
                         $resultUpdateCRM = $zohoService->actualizarCliente($data);
-                        if (isset($resultUpdateCRM['error']) && $resultUpdateCRM['error'] == true) {
-                            $logsController->registrarLog(Logs::ERROR, "Error al actualizar el usuario en Zoho: " . $resultUpdateCRM['message']);
-                            $respuesta = new Respuesta();
-                            $respuesta->_500($resultUpdateCRM);
-                            $respuesta->message = "Error al actualizar el usuario en Zoho.";
-                            echo json_encode($respuesta);
-                            return;
+                        $zohoFallo = isset($resultUpdateCRM['error']) && $resultUpdateCRM['error'] == true;
+                        if ($zohoFallo) {
+                            $motivo = is_string($resultUpdateCRM['error'])
+                                ? $resultUpdateCRM['error']
+                                : ($resultUpdateCRM['message'] ?? 'sin detalle');
+                            $logsController->registrarLog(Logs::ERROR, "Zoho no se pudo actualizar (se continua): " . $motivo);
                         }
 
                         // Ahora actualizar la base de datos
@@ -540,7 +566,9 @@ class UsuariosController
                             $logsController->registrarLog(Logs::PUT, "Se actualizó el usuario en la base de datos y en Zoho " . $id);
                             $respuesta = new Respuesta();
                             $respuesta->success(true);
-                            $respuesta->message = "Usuario actualizado correctamente en la base de datos y Zoho.";
+                            $respuesta->message = $zohoFallo
+                                ? "Usuario actualizado. El CRM no se pudo sincronizar."
+                                : "Usuario actualizado correctamente en la base de datos y Zoho.";
                             http_response_code($respuesta->code);
                             echo json_encode($respuesta);
                         } else {
