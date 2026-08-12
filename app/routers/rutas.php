@@ -624,34 +624,6 @@ switch ($method) {
                     echo json_encode($respuesta);
                 }
                 break;
-            case ($request === 'usuario/notificaciones'):
-                $handled = true;
-                if ($authMiddleware->verificarTokenUsuarioActivo() != false) {
-                    require_once __DIR__ . '/../DBObjects/preferenciasNotificacionesDB.php';
-                    $idUser = $authMiddleware->obtenerIdUsuarioActivo();
-                    $datos = json_decode(file_get_contents("php://input"), true) ?: [];
-                    $prefsDB = new PreferenciasNotificacionesDB();
-
-                    if ($prefsDB->guardar($idUser, $datos)) {
-                        $respuesta->success(true);
-                        // Se devuelve lo GUARDADO, no lo enviado: la severidad y
-                        // la frecuencia pasan por lista blanca, y el frontend
-                        // tiene que ver el valor que ha quedado de verdad.
-                        $respuesta->data = $prefsDB->obtener($idUser);
-                    } else {
-                        $respuesta->_500();
-                        $respuesta->message = 'No se pudieron guardar las preferencias';
-                    }
-                    http_response_code($respuesta->code);
-                    echo json_encode($respuesta);
-                } else {
-                    $respuesta->_403();
-                    $respuesta->message = 'El token no se puede authentificar con exito';
-                    http_response_code($respuesta->code);
-                    echo json_encode($respuesta);
-                }
-                break;
-
             case ($request === 'usuario'):
                 $handled = true;
                 //Verificamos que existe el usuario CREADOR del token y sino manejamos el error dentro de la funcion
@@ -1429,6 +1401,43 @@ switch ($method) {
 
     case 'PUT':
         switch (true) {
+            // Guardar las preferencias de notificacion del propio usuario.
+            //
+            // Esta ruta estaba declarada DOS veces dentro del bloque GET: la de
+            // lectura primero y esta justo despues, asi que el switch entraba
+            // siempre en la primera y el guardado no era alcanzable por ningun
+            // metodo. El frontend hacia PUT y recibia "El End Point no existe
+            // en la API", de modo que los interruptores de ajustes no
+            // guardaban nada. El cuerpo del handler no cambia; solo pasa al
+            // bloque que le corresponde.
+            case ($request === 'usuario/notificaciones'):
+                $handled = true;
+                if ($authMiddleware->verificarTokenUsuarioActivo() != false) {
+                    require_once __DIR__ . '/../DBObjects/preferenciasNotificacionesDB.php';
+                    $idUser = $authMiddleware->obtenerIdUsuarioActivo();
+                    $datos = json_decode(file_get_contents("php://input"), true) ?: [];
+                    $prefsDB = new PreferenciasNotificacionesDB();
+
+                    if ($prefsDB->guardar($idUser, $datos)) {
+                        $respuesta->success(true);
+                        // Se devuelve lo GUARDADO, no lo enviado: la severidad y
+                        // la frecuencia pasan por lista blanca, y el frontend
+                        // tiene que ver el valor que ha quedado de verdad.
+                        $respuesta->data = $prefsDB->obtener($idUser);
+                    } else {
+                        $respuesta->_500();
+                        $respuesta->message = 'No se pudieron guardar las preferencias';
+                    }
+                    http_response_code($respuesta->code);
+                    echo json_encode($respuesta);
+                } else {
+                    $respuesta->_403();
+                    $respuesta->message = 'El token no se puede authentificar con exito';
+                    http_response_code($respuesta->code);
+                    echo json_encode($respuesta);
+                }
+                break;
+
             case ($request === 'zoho/imprimirWebhook'):
                 $handled = true;
                 if ($authMiddleware->verificarTokenUsuarioActivo() != false) {
