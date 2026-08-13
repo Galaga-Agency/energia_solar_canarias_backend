@@ -10,8 +10,19 @@ require_once __DIR__ . "/../models/conexion.php";
 class PreferenciasNotificacionesDB
 {
     /** Lo que recibe quien nunca ha tocado esta pantalla. */
+    /**
+     * Lo que ve quien no ha tocado nunca esta pantalla.
+     *
+     * `activas` en false: nadie recibe correos sin haberlos pedido. Tiene que
+     * coincidir con lo que hace el cron, que ya no escribe a quien no tenga
+     * fila — si aqui dijera true, el interruptor apareceria encendido en
+     * Ajustes mientras no llega ningun correo, que es peor que estar apagado.
+     *
+     * El resto son los valores con los que arranca el formulario cuando el
+     * usuario SI active los avisos, no preferencias en uso.
+     */
     private const DEFECTOS = [
-        'activas'          => true,
+        'activas'          => false,
         'email'            => true,
         'severidad_minima' => 'critical',
         'frecuencia'       => 'immediate',
