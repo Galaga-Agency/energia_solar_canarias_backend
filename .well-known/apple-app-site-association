@@ -1,0 +1,20 @@
+{
+  "applinks": {
+    "details": [
+      {
+        "appIDs": [
+          "9544YXDFQK.com.galagaagency.energiasolarcanarias.app"
+        ],
+        "components": [
+          {
+            "/": "/auth/magic",
+            "?": {
+              "token": "?*"
+            },
+            "comment": "El enlace del correo: abre la app, no el navegador"
+          }
+        ]
+      }
+    ]
+  }
+}

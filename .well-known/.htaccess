@@ -1,0 +1,30 @@
+# Ficheros de asociacion con las aplicaciones nativas.
+#
+# El enlace de acceso del correo apunta a este dominio, y iOS y Android
+# comprueban aqui si la aplicacion instalada puede abrirlo. Sin esto el enlace
+# se abre en el navegador: la sesion queda en las cookies del navegador y la
+# aplicacion, que es un WebView con su propio almacenamiento, sigue sin sesion.
+#
+# Se sirven como ficheros ESTATICOS: sin esta excepcion el router de PHP se los
+# come y responde "El End Point no existe en la API".
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule ^ - [L]
+</IfModule>
+
+# `apple-app-site-association` no tiene extension, asi que saldria como
+# application/octet-stream y iOS lo descarta en silencio — la asociacion
+# simplemente no se activa y no hay ningun error en ninguna parte.
+<Files "apple-app-site-association">
+    Require all granted
+    ForceType application/json
+</Files>
+
+# El .htaccess de la raiz deniega TODOS los .json a proposito, porque ahi viven
+# conexion.json y smtp.json con credenciales. Esa regla se mantiene: aqui solo
+# se vuelve a permitir este fichero concreto, que es publico por diseño — no
+# contiene mas que el identificador de la aplicacion y la huella de su firma.
+<Files "assetlinks.json">
+    Require all granted
+    ForceType application/json
+</Files>
