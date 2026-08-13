@@ -65,8 +65,17 @@ class UsuariosDB
                 throw new Exception("Error en la preparación del INSERT: " . $conn->error);
             }
 
-            // Vincula los parámetros: 'i' para enteros (usuario y planta) y 's' para string (proveedor)
-            $stmt->bind_param('isi', $idUsuario, $idPlanta, $idProveedor);
+            // planta_id es VARCHAR(255) -> 's', igual que en el DELETE de arriba
+            // y que en comprobarUsuarioAsociadoPlanta.
+            //
+            // Estaba atado como 'i', asi que PHP convertia el id a entero antes
+            // de enviarlo: los ids numericos (Victron, "925565") sobrevivian,
+            // pero los UUID de GoodWe y los "VSSKC..." de Sigenergy se
+            // convertian en 0. La fila se insertaba con planta_id = 0, que no
+            // corresponde a ninguna planta, asi que la asignacion parecia
+            // funcionar y la lista del cliente seguia vacia. De ahi que fallara
+            // solo con algunos proveedores.
+            $stmt->bind_param('ssi', $idUsuario, $idPlanta, $idProveedor);
 
             // Ejecuta la consulta
             if (!$stmt->execute()) {
