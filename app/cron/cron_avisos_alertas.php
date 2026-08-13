@@ -124,19 +124,26 @@ $INCLUYE = [
     'info'     => ['critical', 'warning', 'info'],
 ];
 
-// Usuarios con avisos activos. LEFT JOIN: sin fila de preferencias valen los
-// valores por defecto, que son "activo y solo averias".
+// Usuarios con avisos activos.
+//
+// SIN FILA DE PREFERENCIAS NO SE ESCRIBE. El defecto es no molestar: antes era
+// COALESCE(p.activas, 1), es decir que todo usuario dado de alta quedaba
+// suscrito sin haberlo pedido y recibia correos de averias desde el primer dia.
+// Quien quiera avisos los activa en Ajustes, y esa accion es la que crea la
+// fila.
+//
+// El INNER JOIN sustituye al LEFT JOIN por eso mismo: sin fila, fuera.
 $sql = "SELECT u.usuario_id, u.email, u.nombre, c.nombre AS clase,
-               COALESCE(p.activas, 1)                  AS activas,
-               COALESCE(p.email, 1)                    AS canal_email,
-               COALESCE(p.severidad_minima, 'critical') AS severidad,
-               COALESCE(p.frecuencia, 'immediate')      AS frecuencia
+               p.activas                  AS activas,
+               p.email                    AS canal_email,
+               p.severidad_minima         AS severidad,
+               p.frecuencia               AS frecuencia
           FROM usuarios u
-     LEFT JOIN preferencias_notificaciones p ON p.usuario_id = u.usuario_id
+     INNER JOIN preferencias_notificaciones p ON p.usuario_id = u.usuario_id
      INNER JOIN clases c ON c.clase_id = u.clase_id
          WHERE u.eliminado = 0 AND u.activo = 1
-           AND COALESCE(p.activas, 1) = 1
-           AND COALESCE(p.email, 1) = 1";
+           AND p.activas = 1
+           AND p.email = 1";
 
 $usuarios = [];
 if ($res = $db->query($sql)) {
