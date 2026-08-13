@@ -71,6 +71,40 @@ function severidadNormalizada(array $item): string
     return 'warning';
 }
 
+/**
+ * Encuentra el array de alertas dentro del sobre que envuelva cada proveedor.
+ *
+ * Antes se leia `$respuesta['data'] ?? $respuesta['alertas'] ?? $respuesta`, y
+ * ninguna de las dos claves existe en Victron ni en Sigenergy: se recorrian las
+ * claves del SOBRE ({ success, records, num_records }) como si fueran alertas,
+ * ninguna traia 'id', y todas se descartaban. Por eso la aplicacion mostraba
+ * alertas de esas dos plantas y el correo no salia nunca.
+ *
+ * Las rutas estan verificadas contra payloads reales (las mismas que usa el
+ * front en utils/parse/shared/alert.ts): GoodWe anida en `data.list`, Victron
+ * responde `{ success, records, num_records }` y Sigenergy usa `items` dos
+ * niveles abajo, en `data.data.items`.
+ */
+function buscarArrayAlertas($fuente, int $nivel = 0): array
+{
+    if (is_array($fuente) && array_is_list($fuente)) { return $fuente; }
+    if (!is_array($fuente) || $nivel > 3) { return []; }
+
+    foreach (['list', 'records', 'pageList', 'alerts', 'alertas', 'rows', 'items'] as $clave) {
+        if (isset($fuente[$clave]) && is_array($fuente[$clave]) && array_is_list($fuente[$clave])) {
+            return $fuente[$clave];
+        }
+    }
+
+    foreach (['data', 'result', 'resultData'] as $clave) {
+        if (!isset($fuente[$clave])) { continue; }
+        $encontrado = buscarArrayAlertas($fuente[$clave], $nivel + 1);
+        if ($encontrado) { return $encontrado; }
+    }
+
+    return [];
+}
+
 $c = json_decode(file_get_contents(__DIR__ . '/../../config/conexion.json'), true)[0];
 $db = new mysqli($c['server'], $c['user'], $c['password'], $c['database'], (int) $c['port']);
 if ($db->connect_errno) { exit("Error BD: " . $db->connect_error . "\n"); }
@@ -197,7 +231,7 @@ foreach ($usuarios as $usuario) {
             // registros en produccion), casi todos ya resueltos: avisar de eso
             // seria mandar un correo con anos de averias arregladas.
             $parque = $goodwe->GetPowerStationWariningInfoByMultiCondition(1, 200, 0);
-            $lista = $parque['data']['list'] ?? $parque['data'] ?? [];
+            $lista = buscarArrayAlertas($parque);
 
             foreach ((is_array($lista) ? $lista : []) as $item) {
                 if (!is_array($item)) { continue; }
@@ -271,18 +305,41 @@ foreach ($usuarios as $usuario) {
             continue;
         }
 
-        $lista = $respuesta['data'] ?? $respuesta['alertas'] ?? $respuesta;
-        if (!is_array($lista)) { continue; }
+        $lista = buscarArrayAlertas($respuesta);
+        if (!$lista) { continue; }
 
         foreach ($lista as $item) {
             if (!is_array($item)) { continue; }
 
-            $severidad = severidadNormalizada($item);
+            // Sigenergy no tiene alarmas de verdad por REST: el backend las
+            // DEDUCE del estado de los equipos, y una planta que no habla con
+            // la nube pesa mas que el fallo de un equipo suelto. Igual que en
+            // el front (utils/parse/sigenergy/alerts.ts).
+            $severidad = $clave === 'sigenergy'
+                ? (($item['deviceType'] ?? '') === 'Planta' ? 'critical' : 'warning')
+                : severidadNormalizada($item);
             if (!in_array($severidad, $severidades, true)) { continue; }
 
-            $alertaId = (string) (
-                $item['id'] ?? $item['warningid'] ?? $item['alarm_id'] ?? ''
-            );
+            // El identificador tampoco se llama igual en todos:
+            //
+            //   · Victron manda `idAlarm`, no `id`. Ninguna de las tres claves
+            //     que se miraban aqui existia, asi que TODAS sus alertas se
+            //     descartaban en la linea siguiente.
+            //   · Sigenergy no manda ninguno, porque sus filas son estado
+            //     deducido y no registros de alarma. Se compone uno estable con
+            //     planta + equipo + condicion, que es lo que hace el front, de
+            //     forma que 'ya avisada' siga funcionando entre pasadas.
+            if ($clave === 'sigenergy') {
+                $alertaId = implode(':', array_filter([
+                    (string) ($item['systemId'] ?? $planta['planta_id']),
+                    (string) ($item['deviceType'] ?? ''),
+                    (string) ($item['status'] ?? ''),
+                ]));
+            } else {
+                $alertaId = (string) (
+                    $item['idAlarm'] ?? $item['id'] ?? $item['warningid'] ?? $item['alarm_id'] ?? ''
+                );
+            }
             if ($alertaId === '') { continue; }
 
             // Ya avisada: se comprueba aqui y no en SQL porque las alertas
@@ -302,8 +359,12 @@ foreach ($usuarios as $usuario) {
                 'alerta_id'     => $alertaId,
                 'proveedor'     => $clave,
                 'severidad'     => $severidad,
+                // `description` es Victron y `status` la condicion deducida de
+                // Sigenergy; sin ellas el correo salia con la linea en blanco
+                // justo para los dos proveedores que mas alertas dan aqui.
                 'mensaje'       => (string) (
-                    $item['warningstr'] ?? $item['message'] ?? $item['fault_name'] ?? ''
+                    $item['warningstr'] ?? $item['message'] ?? $item['fault_name']
+                    ?? $item['description'] ?? $item['nameEnum'] ?? $item['status'] ?? ''
                 ),
                 'planta_nombre' => (string) (
                     $item['stationname'] ?? $item['plantName'] ?? $planta['planta_id']
