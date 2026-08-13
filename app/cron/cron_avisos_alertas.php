@@ -311,6 +311,23 @@ foreach ($usuarios as $usuario) {
         foreach ($lista as $item) {
             if (!is_array($item)) { continue; }
 
+            // SOLO las que siguen activas.
+            //
+            // Victron devuelve el HISTORICO entero y, verificado en vivo,
+            // ignora el parametro status=0|1: las 50 filas que contesta para
+            // una planta son casi todas averias ya resueltas hace meses, con
+            // isActive=0 y su hora de cierre. Sin este filtro el primer correo
+            // llegaba con 20 "incidencias" arregladas en diciembre.
+            //
+            // `isActive` manda cuando viene; si no, se mira `cleared`, donde 0
+            // significa "nunca se cerro" y NO "se cerro en el epoch" — la misma
+            // regla que aplica el front en utils/parse/victron/alerts.ts.
+            if (array_key_exists('isActive', $item)) {
+                if ((int) $item['isActive'] !== 1) { continue; }
+            } elseif (!empty($item['cleared'])) {
+                continue;
+            }
+
             // Sigenergy no tiene alarmas de verdad por REST: el backend las
             // DEDUCE del estado de los equipos, y una planta que no habla con
             // la nube pesa mas que el fallo de un equipo suelto. Igual que en
