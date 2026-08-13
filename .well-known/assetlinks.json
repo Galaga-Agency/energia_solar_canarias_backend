@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.galaga.esc_android",
+      "sha256_cert_fingerprints": [
+        "F4:27:11:05:37:88:31:7A:06:BB:E3:57:88:B4:FE:C4:A3:05:BD:94:D3:C0:A3:25:16:9F:3A:41:EB:C0:AC:85"
+      ]
+    }
+  }
+]
