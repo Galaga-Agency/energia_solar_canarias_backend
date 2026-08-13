@@ -222,16 +222,38 @@ switch ($method) {
                         // atiende aparte, y solo para admin: darselas a un cliente seria
                         // ensenarle alarmas de instalaciones ajenas.
                         if ($proveedor === $proveedores['GoodWe']) {
-                            if (!$authMiddleware->verificarAdmin()) {
-                                $respuesta->_403();
-                                $respuesta->message = 'No tienes permisos para hacer esta consulta';
-                                http_response_code($respuesta->code);
-                                echo json_encode($respuesta);
-                                break;
-                            }
                             $pageIndex = isset($_GET['pageIndex']) ? $_GET['pageIndex'] : 1;
                             $pageSize = isset($_GET['pageSize']) ? $_GET['pageSize'] : 200;
                             $status = isset($_GET['status']) ? $_GET['status'] : 3;
+
+                            // Un cliente TAMBIEN ve sus alarmas, filtradas.
+                            //
+                            // Antes esto respondia 403 a quien no fuera admin, asi que un
+                            // cliente abriendo una planta GoodWe no veia ninguna alerta y
+                            // la peticion fallaba una y otra vez. Y devolverle la lista
+                            // entera tampoco vale: son las alarmas de TODO el parque, o
+                            // sea las instalaciones de otros clientes.
+                            //
+                            // Cada alarma trae `stationId`, asi que se piden todas y se
+                            // deja solo las de sus plantas. El filtro se hace AQUI, no en
+                            // el frontend: lo que no debe ver, no sale del servidor.
+                            if (!$authMiddleware->verificarAdmin()) {
+                                require_once __DIR__ . '/../DBObjects/plantasAsociadasDB.php';
+                                $idUsuario = $authMiddleware->obtenerIdUsuarioActivo();
+                                $propias = (new PlantasAsociadasDB)->getPlantasAsociadasAlUsuario($idUsuario);
+                                $idsPropias = [];
+                                foreach (($propias ?: []) as $fila) {
+                                    $idsPropias[(string) $fila['planta_id']] = true;
+                                }
+                                (new ApiControladorService)->alarmasGoodWeDelUsuario(
+                                    $pageIndex,
+                                    $pageSize,
+                                    $status,
+                                    $idsPropias
+                                );
+                                break;
+                            }
+
                             (new ApiControladorService)->GetPowerStationWariningInfoByMultiCondition($pageIndex, $pageSize, $status);
                             break;
                         }

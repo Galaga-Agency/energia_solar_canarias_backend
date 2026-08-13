@@ -263,9 +263,63 @@ class ApiControladorService
     }
 
     /**
-     * 
+     * Las alarmas de GoodWe de UN cliente.
+     *
+     * El endpoint de GoodWe no acepta una planta: devuelve las alarmas de todo
+     * el parque. Para un cliente eso son, casi todas, instalaciones ajenas, asi
+     * que se piden todas y se descartan las que no son suyas antes de
+     * responder — el filtro vive aqui, en el servidor, no en el frontend.
+     *
+     * @param array $idsPropias Mapa planta_id => true de sus instalaciones.
+     */
+    public function alarmasGoodWeDelUsuario($pageIndex, $pageSize, $status, array $idsPropias)
+    {
+        $respuesta = new Respuesta;
+        try {
+            $goodWeResponse = $this->goodWeController->GetPowerStationWariningInfoByMultiCondition($pageIndex, $pageSize, $status);
+            $goodWeData = json_decode($goodWeResponse, true);
+
+            if ($goodWeData === null) {
+                $this->logsController->registrarLog(Logs::INFO, "No se han encontrado alarmas en GoodWe");
+                $respuesta->_400($goodWeData);
+                $respuesta->message = "No se han encontrado plantas";
+                http_response_code(400);
+                header('Content-Type: application/json');
+                echo json_encode($respuesta);
+                return;
+            }
+
+            // La lista viaja en data.data.list; si GoodWe cambia la forma, se
+            // devuelve vacio en lugar de arriesgarse a enseñar de mas.
+            $lista = $goodWeData['data']['list'] ?? null;
+            if (!is_array($lista)) {
+                $lista = [];
+            }
+
+            $suyas = [];
+            foreach ($lista as $alarma) {
+                $planta = (string) ($alarma['stationId'] ?? '');
+                if ($planta !== '' && isset($idsPropias[$planta])) {
+                    $suyas[] = $alarma;
+                }
+            }
+
+            $goodWeData['data']['list'] = $suyas;
+            $respuesta->success($goodWeData);
+        } catch (Throwable $e) {
+            $this->logsController->registrarLog(Logs::ERROR, $e->getMessage() . "Error en el servidor de GoodWe");
+            $respuesta->_500();
+            $respuesta->message = "Error en el servidor de algun proveedor";
+            http_response_code(500);
+        }
+        header('Content-Type: application/json');
+        echo json_encode($respuesta);
+    }
+
+    /**
+     *
      * Estas funcion proporcionan informacion sobre el equipo
-     * 
+     *
      */
     //VictronEnergy
     //SolarEdge
