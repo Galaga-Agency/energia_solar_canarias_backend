@@ -97,6 +97,17 @@ class MagicLinkController
         $usuario = $this->servicio->buscarUsuarioPorEmail($email);
 
         if ($usuario) {
+            // Se cuenta TAMBIEN cuando el correo existe.
+            //
+            // Antes solo se registraba el caso desconocido, asi que el limite
+            // nunca saltaba para una cuenta real: se podian pedir enlaces sin
+            // freno y llenarle el buzon a un cliente, que es justo lo que este
+            // bloque dice arriba que quiere evitar.
+            //
+            // Se registra ANTES de enviar: si el correo falla, el intento ya
+            // cuenta igualmente y no queda un hueco por el que reintentar.
+            $intentos->registrarFallo($email, $ip);
+
             $token = $this->servicio->emitirMagicLink($usuario['id'], $ip);
             $enlace = $this->backendUrl() . '/auth/magic?token=' . urlencode($token);
 
