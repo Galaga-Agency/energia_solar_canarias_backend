@@ -667,24 +667,40 @@ class UsuariosController
                 //VAMOS A CAMBIAR EL CAMPO DEL CRM APP CREAR CLIENTE ESTARA EN FALSE
                 */
 
-                $resultCRM = $zohoService->appCrearClienteFalse($id);
-                if (isset($resultCRM['error']) && $resultCRM['error']) {
-                    // Zoho no ha podido bajar la marca: se deshace la baja local para no
-                    // dejar al cliente de baja aqui y activo en el CRM.
-                    $conn->rollback();
-                    $logsController->registrarLog(Logs::ERROR, "Error al eliminar (logicamente) el usuario en Zoho: " . $resultCRM['error']);
-                    $respuesta = new Respuesta();
-                    $respuesta->_500($resultCRM);
-                    $respuesta->message = "Error al eliminar el usuario en Zoho.";
-                    echo json_encode($respuesta);
-                    return;
-                }
-                // Los dos lados de acuerdo: ahora si queda firme la baja local.
+                // La baja local queda firme SIEMPRE. Zoho es un destino externo,
+                // no una condicion para poder borrar en nuestra propia base.
+                //
+                // Antes un fallo del CRM hacia rollback y devolvia un 500, asi
+                // que el usuario no se podia eliminar. Y no hacia falta que Zoho
+                // estuviera caido: `appCrearClienteFalse` busca en el CRM por
+                // `idApp`, y devuelve error si no encuentra nada — de modo que
+                // cualquier usuario creado en la aplicacion y nunca sincronizado
+                // era IMPOSIBLE de borrar. El administrador veia un 500 sin
+                // ninguna forma de resolverlo.
+                //
+                // Es el mismo criterio que ya sigue la actualizacion de usuario
+                // unas lineas mas arriba: se guarda, y se avisa de que el CRM no
+                // se pudo sincronizar.
                 $conn->commit();
+
+                $resultCRM = $zohoService->appCrearClienteFalse($id);
+                $crmFallo = isset($resultCRM['error']) && $resultCRM['error'];
+                if ($crmFallo) {
+                    // Queda en el registro para poder reconciliarlo despues: el
+                    // cliente sigue marcado como activo en el CRM.
+                    $logsController->registrarLog(
+                        Logs::ERROR,
+                        "Usuario " . $id . " eliminado en la app, pero el CRM no se pudo sincronizar: "
+                            . (is_string($resultCRM['error']) ? $resultCRM['error'] : json_encode($resultCRM))
+                    );
+                }
+
                 $logsController->registrarLog(Logs::DELETE, "a eliminado al usuario" . $id);
                 $respuesta = new Respuesta();
-                $respuesta->success($resultCRM);
-                $respuesta->message = "Usuario eliminado.";
+                $respuesta->success($result);
+                $respuesta->message = $crmFallo
+                    ? "Usuario eliminado. El CRM no se pudo sincronizar."
+                    : "Usuario eliminado.";
                 http_response_code($respuesta->code);
                 echo json_encode($respuesta);
             } else {
