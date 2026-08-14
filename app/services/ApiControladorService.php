@@ -1093,6 +1093,10 @@ class ApiControladorService
                 // Mapear el código de estado a una descripción legible
                 $status = $this->mapSolarEdgeStatus($site['status']);
 
+                // Potencia y energia de hoy: el listado no las trae, el
+                // overview si. Una peticion por planta, cacheada por id.
+                $overviewSolarEdge = self::resumenSolarEdge($site, $this->solarEdgeController);
+
                 $plants[] = [
                     'id' => $site['id'] ?? '',
                     'name' => $site['name'] ?? '',
@@ -1111,9 +1115,12 @@ class ApiControladorService
                     'organization' => 'SolarEdge',
                     'batteryVoltage' => null, //No disponible en SolarEdge
                     'batterySoc' => null, //No disponible en SolarEdge
-                    'current_power' => null, // No disponible en SolarEdge
+                    // El listado no las trae, pero el overview si (ver
+                    // overviewSolarEdge). Estaban a null y una planta
+                    // produciendo 2,7 kW sumaba cero en el panel.
+                    'current_power' => $overviewSolarEdge['potenciaW'],
                     'total_energy' => null, // No disponible en SolarEdge
-                    'daily_energy' => null, // No disponible en SolarEdge
+                    'daily_energy' => $overviewSolarEdge['energiaHoyKwh'],
                     'monthly_energy' => null, // No disponible en SolarEdge
                     'installation_date' => $site['installationDate'] ?? null,
                     'pto_date' => $site['ptoDate'] ?? null,
@@ -1146,9 +1153,36 @@ class ApiControladorService
                 // Convertir syscreated a fecha
                 $installation_date = isset($plant['syscreated']) ? date("Y-m-d", $plant['syscreated']) : null;
 
-                // Verificar si 'extended' existe y es un array
+                // Potencia solar, ademas de bateria y estado.
+                //
+                // `current_power` estaba a null fijo, asi que una planta
+                // Victron produciendo casi 5 kW salia en la lista con un guion
+                // y sumaba CERO en los KPIs del panel: con tres plantas en
+                // averia y dos produciendo, el panel decia "0 W" mientras la
+                // ficha de cada planta mostraba la produccion real.
+                //
+                // La potencia viene en el propio listado, en un agregado con
+                // code "solar_yield" (P total de la planta, /Dc/Pv/Power).
+                // OJO: esas entradas agregadas traen `idDataAttribute` a NULL
+                // y se identifican por `code`, no por id — por eso una busqueda
+                // por id no las encuentra aunque esten delante.
+                //
+                // `rawValue` es numero limpio (4939.31); `formattedValue` es la
+                // cadena "4939 W", que habria que parsear.
+                //
+                // La energia del dia NO esta en el listado: los "Yield today"
+                // por regulador solo aparecen en el detalle, asi que
+                // `daily_energy` se queda como estaba para no pedir una
+                // llamada por planta solo para eso.
+                $potenciaSolarW = null;
+
                 if (isset($plant['extended']) && is_array($plant['extended'])) {
                     foreach ($plant['extended'] as $item) {
+                        if (($item['code'] ?? null) === 'solar_yield' && isset($item['rawValue'])) {
+                            $potenciaSolarW = (float) $item['rawValue'];
+                            continue;
+                        }
+
                         if (isset($item['idDataAttribute'], $item['rawValue'])) {
                             if ($item['idDataAttribute'] == 144) {
                                 $batterySoc = $item['rawValue'];
@@ -1174,8 +1208,13 @@ class ApiControladorService
                     'organization' => 'victronenergy', // Valor fijo
                     'batteryVoltage' => $batteryVoltage ?? null,
                     'batterySoc' => $batterySoc ?? null,
-                    'current_power' => null,
+                    // En W, como GoodWe. Null (no 0) cuando la planta no lo
+                    // reporta: "sin lectura" y "no produce" son cosas
+                    // distintas y la interfaz las pinta distinto.
+                    'current_power' => $potenciaSolarW,
                     'total_energy' => null,
+                    // El listado no trae la energia del dia: los "Yield today"
+                    // son por regulador y solo aparecen en el detalle.
                     'daily_energy' => null,
                     'monthly_energy' => null,
                     'installation_date' => $installation_date,
@@ -1229,6 +1268,13 @@ class ApiControladorService
         if (isset($sigenergyData['data']) && is_array($sigenergyData['data'])) {
             foreach ($sigenergyData['data'] as $st) {
                 if (!is_array($st) || !isset($st['systemId'])) continue;
+
+                // Una peticion por planta, cacheada 315 s. Ver resumenSigenergy.
+                $vivoSigenergy = self::resumenSigenergy(
+                    $st['systemId'] ?? null,
+                    $this->sigenergyController
+                );
+
                 $plants[] = [
                     'id' => $st['systemId'] ?? '',
                     'name' => $st['systemName'] ?? '',
@@ -1241,9 +1287,15 @@ class ApiControladorService
                     'organization' => 'sigenergy',
                     'batteryVoltage' => null,
                     'batterySoc' => null,
-                    'current_power' => null, // usar /plant/power/realtime (energyFlow) en el detalle
+                    // Se queda a null A PROPOSITO. Ver la nota de limites en
+                    // SigenergyService: summary y energyFlow admiten 1 peticion
+                    // por estacion cada 5 min Y la cuenta entera tiene un tope
+                    // de 10 peticiones por minuto. Llamarlos por cada planta
+                    // desde el listado agota el cupo de TODA la cuenta y
+                    // empieza a fallar todo, no solo Sigenergy.
+                    'current_power' => $vivoSigenergy['potenciaW'],
                     'total_energy' => null,
-                    'daily_energy' => null,  // usar summary en el detalle (rate-limit)
+                    'daily_energy' => $vivoSigenergy['energiaHoyKwh'],
                     'monthly_energy' => null,
                     // La API real devuelve gridConnectedTime en MILISEGUNDOS (el doc dice
                     // "gridConnectTime" en segundos, pero no es asi: ojo con ese desfase).
@@ -1394,6 +1446,14 @@ class ApiControladorService
             $address = implode(', ', array_filter($addressParts));
 
             $status = $solarEdgePlant['details']['status'] ?? 'unknown';
+
+            // Igual que en la rama de admin: el listado no trae potencia ni
+            // energia de hoy, el overview si.
+            $overviewSolarEdge = self::resumenSolarEdge(
+                $solarEdgePlant['details'] ?? [],
+                $this->solarEdgeController
+            );
+
             $plant = [
                 'id' => $solarEdgePlant['details']['id'] ?? null,
                 'name' => $solarEdgePlant['details']['name'] ?? null,
@@ -1404,9 +1464,9 @@ class ApiControladorService
                 'latitude' => $solarEdgePlant['details']['location']['latitude'] ?? null,
                 'longitude' => $solarEdgePlant['details']['location']['longitude'] ?? null,
                 'organization' => 'SolarEdge',
-                'current_power' => null, // No disponible en SolarEdge
+                'current_power' => $overviewSolarEdge['potenciaW'],
                 'total_energy' => null, // No disponible en SolarEdge
-                'daily_energy' => null, // No disponible en SolarEdge
+                'daily_energy' => $overviewSolarEdge['energiaHoyKwh'],
                 'monthly_energy' => null, // No disponible en SolarEdge
                 'installation_date' => $solarEdgePlant['details']['installationDate'] ?? null,
                 'pto_date' => $solarEdgePlant['details']['ptoDate'] ?? null,
@@ -1439,9 +1499,36 @@ class ApiControladorService
                 // Convertir syscreated a fecha
                 $installation_date = isset($plant['syscreated']) ? date("Y-m-d", $plant['syscreated']) : null;
 
-                // Verificar si 'extended' existe y es un array
+                // Potencia solar, ademas de bateria y estado.
+                //
+                // `current_power` estaba a null fijo, asi que una planta
+                // Victron produciendo casi 5 kW salia en la lista con un guion
+                // y sumaba CERO en los KPIs del panel: con tres plantas en
+                // averia y dos produciendo, el panel decia "0 W" mientras la
+                // ficha de cada planta mostraba la produccion real.
+                //
+                // La potencia viene en el propio listado, en un agregado con
+                // code "solar_yield" (P total de la planta, /Dc/Pv/Power).
+                // OJO: esas entradas agregadas traen `idDataAttribute` a NULL
+                // y se identifican por `code`, no por id — por eso una busqueda
+                // por id no las encuentra aunque esten delante.
+                //
+                // `rawValue` es numero limpio (4939.31); `formattedValue` es la
+                // cadena "4939 W", que habria que parsear.
+                //
+                // La energia del dia NO esta en el listado: los "Yield today"
+                // por regulador solo aparecen en el detalle, asi que
+                // `daily_energy` se queda como estaba para no pedir una
+                // llamada por planta solo para eso.
+                $potenciaSolarW = null;
+
                 if (isset($plant['extended']) && is_array($plant['extended'])) {
                     foreach ($plant['extended'] as $item) {
+                        if (($item['code'] ?? null) === 'solar_yield' && isset($item['rawValue'])) {
+                            $potenciaSolarW = (float) $item['rawValue'];
+                            continue;
+                        }
+
                         if (isset($item['idDataAttribute'], $item['rawValue'])) {
                             if ($item['idDataAttribute'] == 144) {
                                 $batterySoc = $item['rawValue'];
@@ -1467,8 +1554,13 @@ class ApiControladorService
                     'organization' => 'victronenergy', // Valor fijo
                     'batteryVoltage' => $batteryVoltage ?? null,
                     'batterySoc' => $batterySoc ?? null,
-                    'current_power' => null,
+                    // En W, como GoodWe. Null (no 0) cuando la planta no lo
+                    // reporta: "sin lectura" y "no produce" son cosas
+                    // distintas y la interfaz las pinta distinto.
+                    'current_power' => $potenciaSolarW,
                     'total_energy' => null,
+                    // El listado no trae la energia del dia: los "Yield today"
+                    // son por regulador y solo aparecen en el detalle.
                     'daily_energy' => null,
                     'monthly_energy' => null,
                     'installation_date' => $installation_date,
@@ -1513,6 +1605,13 @@ class ApiControladorService
         // Procesar datos de Sigenergy (registro de la lista oficial openapi/system por planta)
         foreach ($sigenergyData as $st) {
             if (!is_array($st) || !isset($st['systemId'])) continue;
+
+            // Igual que en la rama de admin.
+            $vivoSigenergy = self::resumenSigenergy(
+                $st['systemId'] ?? null,
+                $this->sigenergyController
+            );
+
             $plants[] = [
                 'id' => $st['systemId'] ?? null,
                 'name' => $st['systemName'] ?? null,
@@ -1523,9 +1622,10 @@ class ApiControladorService
                 'latitude' => null,  // la Openapi oficial no expone coordenadas
                 'longitude' => null,
                 'organization' => 'sigenergy',
-                'current_power' => null,
+                // Null a proposito: ver la nota en la rama de admin.
+                'current_power' => $vivoSigenergy['potenciaW'],
                 'total_energy' => null,
-                'daily_energy' => null,  // usar summary en el detalle (rate-limit)
+                'daily_energy' => $vivoSigenergy['energiaHoyKwh'],
                 'monthly_energy' => null,
                 'installation_date' => isset($st['gridConnectedTime']) ? date('Y-m-d', (int) ($st['gridConnectedTime'] / 1000)) : null,
                 'pto_date' => null,
@@ -1585,6 +1685,132 @@ class ApiControladorService
      * it is missing or zero. The detail costs one request per site, so it is
      * only paid when the list genuinely has nothing usable.
      */
+    /**
+     * Potencia actual (W) y energia de hoy (kWh) de una planta SolarEdge.
+     *
+     * El listado de SolarEdge NO trae ninguna de las dos — el codigo las daba
+     * por "no disponibles" y las dejaba a null — pero su endpoint de overview
+     * sirve las dos en una sola llamada:
+     *
+     *   currentPower.power   -> 2720.6  (W)
+     *   lastDayData.energy   -> 4583    (Wh)
+     *
+     * Sin esto, una planta SolarEdge produciendo 2,7 kW sumaba cero en los KPIs
+     * del panel, igual que pasaba con Victron.
+     *
+     * Una peticion por planta, como ya hace `capacidadSolarEdge`. Se cachea por
+     * id dentro de la peticion porque ambas se llaman en el mismo bucle y no
+     * tiene sentido pedir el mismo overview dos veces.
+     *
+     * @return array{potenciaW: float|null, energiaHoyKwh: float|null}
+     */
+    /**
+     * Potencia actual (W) y energia de hoy (kWh) de una planta Sigenergy.
+     *
+     * El listado de Sigenergy solo trae capacidad y estado, asi que hay que
+     * preguntar por planta. Se usa `getPlantSummary` — UNA peticion — y no
+     * `getPlantPowerRealtime`, que pide summary y energyFlow: con 21 plantas
+     * eso serian 42 llamadas y el limite de la cuenta es de 10 por minuto para
+     * todo, no por estacion.
+     *
+     * La cache de SigenergyService (315 s) hace el resto: el limite por
+     * estacion es 1 cada 5 minutos, asi que recargar la lista no cuesta
+     * peticiones nuevas y el dato puede tener hasta 5 minutos — que es lo que
+     * el proveedor permite como maximo, no una limitacion nuestra.
+     *
+     * Si una planta falla o se agota el cupo, devuelve null y esa fila muestra
+     * un guion. Nunca se inventa un cero.
+     *
+     * @return array{potenciaW: float|null, energiaHoyKwh: float|null}
+     */
+    private static array $resumenSigenergyCache = [];
+
+    private static function resumenSigenergy($stationId, $controlador): array
+    {
+        $vacio = ['potenciaW' => null, 'energiaHoyKwh' => null];
+
+        if (!$stationId || !$controlador || !method_exists($controlador, 'getPlantSummary')) {
+            return $vacio;
+        }
+
+        if (isset(self::$resumenSigenergyCache[$stationId])) {
+            return self::$resumenSigenergyCache[$stationId];
+        }
+
+        try {
+            $datos = $controlador->getPlantSummary($stationId);
+            for ($i = 0; $i < 3 && is_string($datos); $i++) {
+                $datos = json_decode($datos, true);
+            }
+            if (!is_array($datos)) { return $vacio; }
+
+            $d = $datos['data'] ?? [];
+
+            // Nombres verificados contra una planta real (WGANI1733406267):
+            // `pvPower` en kW y `dailyPowerGeneration` en kWh.
+            $potencia = $d['pvPower'] ?? null;
+            $energia  = $d['dailyPowerGeneration'] ?? null;
+
+            $resultado = [
+                // kW -> W, para ser coherentes con el resto de proveedores.
+                'potenciaW'     => $potencia !== null ? ((float) $potencia) * 1000 : null,
+                'energiaHoyKwh' => $energia !== null ? (float) $energia : null,
+            ];
+
+            self::$resumenSigenergyCache[$stationId] = $resultado;
+            return $resultado;
+        } catch (Throwable $e) {
+            return $vacio;
+        }
+    }
+
+    private static array $resumenSolarEdgeCache = [];
+
+    private static function resumenSolarEdge(array $site, $controlador): array
+    {
+        $vacio = ['potenciaW' => null, 'energiaHoyKwh' => null];
+
+        $id = $site['id'] ?? null;
+        if (!$id || !$controlador || !method_exists($controlador, 'overviewSolarEdge')) {
+            return $vacio;
+        }
+
+        if (isset(self::$resumenSolarEdgeCache[$id])) {
+            return self::$resumenSolarEdgeCache[$id];
+        }
+
+        try {
+            $datos = $controlador->overviewSolarEdge($id);
+
+            // Igual que en capacidadSolarEdge: llega codificado mas de una vez,
+            // asi que se decodifica hasta que deje de ser texto.
+            for ($i = 0; $i < 3 && is_string($datos); $i++) {
+                $datos = json_decode($datos, true);
+            }
+            if (!is_array($datos)) {
+                return $vacio;
+            }
+
+            $overview = $datos['overview'] ?? [];
+            $potencia = $overview['currentPower']['power'] ?? null;
+            // El overview da la energia del dia en Wh; el resto de proveedores
+            // la publican en kWh, asi que se convierte aqui para que la suma
+            // del panel no mezcle unidades.
+            $energiaWh = $overview['lastDayData']['energy'] ?? null;
+
+            $resultado = [
+                'potenciaW'     => $potencia !== null ? (float) $potencia : null,
+                'energiaHoyKwh' => $energiaWh !== null ? ((float) $energiaWh) / 1000 : null,
+            ];
+
+            self::$resumenSolarEdgeCache[$id] = $resultado;
+            return $resultado;
+        } catch (Throwable $e) {
+            // Una planta que no conteste no puede tumbar el listado entero.
+            return $vacio;
+        }
+    }
+
     private static function capacidadSolarEdge(array $site, $controlador)
     {
         $delListado = (float) ($site['peakPower'] ?? 0);

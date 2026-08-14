@@ -210,6 +210,39 @@ class SigenergyService
      *
      * @param string $systemId systemId oficial (p.ej. VSSKC1768221900)
      */
+    /**
+     * Solo el `summary`, pensado para el LISTADO de plantas.
+     *
+     * Distinto de `getPlantRealtime`, que pide summary Y energyFlow: dos
+     * llamadas por planta. Eso vale en el detalle de UNA planta, pero en la
+     * lista se multiplica por todas y revienta el limite de la cuenta — que es
+     * de 10 peticiones por minuto para TODO, no por estacion. Al agotarlo
+     * empiezan a fallar tambien las demas llamadas a Sigenergy.
+     *
+     * Aqui una sola peticion por planta, y con el TTL normal de 315 s en vez
+     * del "vivo" de 0: el limite por estacion es de 1 cada 5 minutos, asi que
+     * recargar la lista veinte veces seguidas no cuesta ni una peticion mas.
+     * Los datos pueden tener hasta 5 minutos, que es justo lo que el proveedor
+     * permite.
+     *
+     * @param string $systemId systemId oficial (p.ej. VSSKC1768221900)
+     */
+    public function getPlantSummary($systemId)
+    {
+        try {
+            $id = rawurlencode($systemId);
+            $summary = $this->apiCall("openapi/systems/$id/summary", self::CACHE_TTL_SEG);
+
+            if (!isset($summary['code']) || $summary['code'] != 0) {
+                return $summary;
+            }
+
+            return $summary;
+        } catch (Exception $e) {
+            return ['code' => -1, 'msg' => $e->getMessage(), 'data' => null];
+        }
+    }
+
     public function getPlantRealtime($systemId)
     {
         try {

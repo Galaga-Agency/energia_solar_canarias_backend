@@ -36,6 +36,14 @@ class SigenergyController
     }
 
     /** Datos en tiempo real de una planta (energyflow). */
+    /** Solo el resumen, para el listado. Una peticion por planta, cacheada. */
+    public function getPlantSummary($stationId)
+    {
+        $data = $this->sigenergyService->getPlantSummary($stationId);
+        header('Content-Type: application/json');
+        return json_encode($data);
+    }
+
     public function getPlantPowerRealtime($stationId)
     {
         $this->logsController->registrarLog(Logs::INFO, " accede a la api de Sigenergy tiempo real de la planta " . $stationId);
