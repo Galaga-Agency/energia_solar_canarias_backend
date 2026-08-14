@@ -8,6 +8,7 @@ require_once __DIR__ . '/../controllers/usuarios.php';
 require_once __DIR__ . '/../utils/respuesta.php';
 require_once __DIR__ . '/../utils/SigenergyErrores.php';
 require_once __DIR__ . '/../DBObjects/plantasAsociadasDB.php';
+require_once __DIR__ . '/GeocodificadorService.php';
 
 
 class ApiControladorService
@@ -798,6 +799,19 @@ class ApiControladorService
                     $goodWeData = $this->decodeJsonResponse($goodWeResponse);
 
                     if (is_array($goodWeData) && isset($goodWeData['data']['info']['powerstation_id'])) {
+                        // Las COORDENADAS solo vienen en el listado, no en el
+                        // detalle: `getPlantDetails` no trae latitude/longitude
+                        // ni en la raiz ni dentro de data.info (comprobado en
+                        // produccion, ambas null). Como esta rama es la del
+                        // cliente y solo pide detalles, el mapa se quedaba sin
+                        // una sola ubicacion mientras el del admin — que lee el
+                        // listado — las pintaba todas.
+                        $coords = $this->coordenadasGoodWe($planta['planta_id']);
+                        if ($coords) {
+                            $goodWeData['latitude']  = $coords['lat'];
+                            $goodWeData['longitude'] = $coords['lng'];
+                        }
+
                         // Usar el ID como clave para evitar duplicados
                         $goodWeArray[$goodWeData['data']['info']['powerstation_id']] = $goodWeData;
                     }
@@ -1244,8 +1258,98 @@ class ApiControladorService
             }
         }
 
+        return $this->rellenarCoordenadasPorDireccion($plants);
+    }
+    /**
+     * Ultimo recurso para el mapa: si una planta trae DIRECCION pero no
+     * coordenadas, se geocodifica la direccion.
+     *
+     * Los cinco proveedores dan direccion, pero no todos dan latitud y
+     * longitud: Sigenergy no las expone en su Openapi y el detalle de GoodWe
+     * tampoco las trae. Sin esto, esas plantas no salian en el mapa aunque en
+     * la ficha se viera perfectamente su calle.
+     *
+     * Se aplica a las DOS ramas, admin y cliente, porque el hueco no es de una
+     * sola: una planta Sigenergy no tiene coordenadas para nadie.
+     *
+     * El resultado se cachea en base de datos (ver GeocodificadorService), asi
+     * que esto solo cuesta una llamada la primera vez que se ve una direccion.
+     */
+    private function rellenarCoordenadasPorDireccion(array $plants): array
+    {
+        $geocodificador = null;
+
+        foreach ($plants as $i => $planta) {
+            // Las que ya traen coordenadas del proveedor se dejan intactas: son
+            // la posicion real del sitio, no una aproximacion de la calle.
+            $tieneLat = isset($planta['latitude']) && $planta['latitude'] !== '' && $planta['latitude'] !== null;
+            $tieneLng = isset($planta['longitude']) && $planta['longitude'] !== '' && $planta['longitude'] !== null;
+            if ($tieneLat && $tieneLng) { continue; }
+
+            $direccion = $planta['address'] ?? null;
+            if (!is_string($direccion) || trim($direccion) === '') { continue; }
+
+            // Se instancia solo si de verdad hace falta: abre conexion a la BD.
+            if ($geocodificador === null) {
+                $geocodificador = new GeocodificadorService();
+            }
+
+            $coordenadas = $geocodificador->coordenadas($direccion);
+            if ($coordenadas === null) { continue; }
+
+            $plants[$i]['latitude']  = $coordenadas['lat'];
+            $plants[$i]['longitude'] = $coordenadas['lng'];
+            // Marcado como aproximado: viene de la calle, no del inversor. El
+            // front puede distinguirlo si algun dia quiere dibujarlo distinto.
+            $plants[$i]['coordinates_approximate'] = true;
+        }
+
         return $plants;
     }
+
+    /**
+     * Coordenadas de una planta GoodWe, sacadas del LISTADO.
+     *
+     * El detalle no las trae — ni en la raiz ni en data.info — asi que es el
+     * unico sitio de donde se pueden leer. Se pide el listado UNA vez por
+     * peticion y se guarda en memoria: un cliente con seis plantas haria si no
+     * seis llamadas identicas al mismo endpoint.
+     */
+    private ?array $coordenadasGoodWeCache = null;
+
+    private function coordenadasGoodWe(string $plantaId): ?array
+    {
+        if ($this->coordenadasGoodWeCache === null) {
+            $this->coordenadasGoodWeCache = [];
+            try {
+                $listado = $this->decodeJsonResponse($this->goodWeController->getAllPlants(1, 200));
+                $filas = $listado['data']['list'] ?? $listado['data'] ?? [];
+
+                foreach ((is_array($filas) ? $filas : []) as $fila) {
+                    if (!is_array($fila)) { continue; }
+                    $id = (string) ($fila['powerstation_id'] ?? '');
+                    if ($id === '') { continue; }
+                    // GoodWe las manda como CADENA ("28.100486"); se guardan tal
+                    // cual y el front ya las normaliza a numero.
+                    $this->coordenadasGoodWeCache[$id] = [
+                        'lat' => $fila['latitude'] ?? null,
+                        'lng' => $fila['longitude'] ?? null,
+                    ];
+                }
+            } catch (Throwable $e) {
+                // Sin listado no hay mapa, pero la lista de plantas del cliente
+                // tiene que seguir saliendo: un mapa vacio es mucho menos grave
+                // que una pantalla sin instalaciones.
+                $this->logsController->registrarLog(
+                    Logs::WARNING,
+                    'No se pudieron leer las coordenadas del listado GoodWe: ' . $e->getMessage()
+                );
+            }
+        }
+
+        return $this->coordenadasGoodWeCache[$plantaId] ?? null;
+    }
+
     //Aquí va la lógica de las apis conversiones etc.. (Lista plantas Cliente)
     public function processPlantsCliente(array $goodWeData, array $solarEdgeData, array $victronEnergyData, array $sungrowData = [], array $sigenergyData = []): array
     {
@@ -1433,7 +1537,7 @@ class ApiControladorService
             ];
         }
 
-        return $plants;
+        return $this->rellenarCoordenadasPorDireccion($plants);
     }
     //===================== Estas funciones se utilizan para recoger datos de clientes en una planta ====================
     public function getAllClientsPlanta($idPlanta,$nombreProveedor)
