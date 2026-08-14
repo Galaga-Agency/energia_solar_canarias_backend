@@ -231,13 +231,40 @@ class SigenergyService
     {
         try {
             $id = rawurlencode($systemId);
-            $summary = $this->apiCall("openapi/systems/$id/summary", self::CACHE_TTL_SEG);
 
-            if (!isset($summary['code']) || $summary['code'] != 0) {
+            // Las DOS llamadas, porque cada una trae la mitad del dato:
+            //   summary    -> energia (dailyPowerGeneration, kWh)
+            //   energyFlow -> potencia instantanea (pvPower, kW)
+            // El summary NO incluye pvPower — comprobado en vivo, sus claves
+            // son solo totales de energia — asi que pedir solo una dejaba la
+            // columna "Potencia actual" vacia en toda la flota Sigenergy.
+            //
+            // Con el TTL normal de 315 s (su limite es 1 por estacion cada 5
+            // min) recargar la lista no cuesta ninguna peticion nueva: la
+            // primera vez son dos por planta y a partir de ahi salen de cache.
+            $summary = $this->apiCall("openapi/systems/$id/summary", self::CACHE_TTL_SEG);
+            $flow    = $this->apiCall("openapi/systems/$id/energyFlow", self::CACHE_TTL_SEG);
+
+            $datosSum  = (isset($summary['code']) && $summary['code'] == 0 && is_array($summary['data'] ?? null))
+                ? $summary['data'] : [];
+            $datosFlow = (isset($flow['code']) && $flow['code'] == 0 && is_array($flow['data'] ?? null))
+                ? $flow['data'] : [];
+
+            if (!$datosSum && !$datosFlow) {
                 return $summary;
             }
 
-            return $summary;
+            $fusion = $datosSum;
+            foreach ($datosFlow as $k => $v) {
+                if ($v !== null || !array_key_exists($k, $fusion)) { $fusion[$k] = $v; }
+            }
+
+            return [
+                'code' => 0,
+                'msg' => 'success',
+                'data' => $fusion,
+                '_cache' => $this->cacheMasRestrictiva([$summary, $flow]),
+            ];
         } catch (Exception $e) {
             return ['code' => -1, 'msg' => $e->getMessage(), 'data' => null];
         }
