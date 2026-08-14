@@ -62,6 +62,25 @@ class Conexion
         if ($this->conexion->connect_errno) {
             throw new Exception("Error al conectar a la base de datos: " . $this->conexion->connect_error);
         }
+
+        /**
+         * UTF-8 en la conexión, no solo en las tablas.
+         *
+         * Sin esto mysqli habla latin1 aunque la tabla sea utf8mb4, y todo lo
+         * que lleve tilde o eñe se guarda roto: en `geocodificacion_cache` se
+         * veían "Mogán" como "Mog?n", "Santa Brígida" como "Santa Br?gida" y
+         * "España" como "Espa?a".
+         *
+         * No es solo cosmético. Esas direcciones se mandaban así a Google, que
+         * no reconoce "Br?gida" como ningún sitio, de modo que la planta se
+         * quedaba sin coordenadas y fuera del mapa para siempre — porque un
+         * fallo cacheado no se reintenta.
+         *
+         * Va AQUÍ y no en cada servicio: `Conexion` es un singleton, así que
+         * quien lo arregle en su propio sitio llega tarde si otro lo creó
+         * antes. Este es el único punto donde se abre la conexión.
+         */
+        $this->conexion->set_charset('utf8mb4');
     }
 
     // Método estático para obtener la instancia única
