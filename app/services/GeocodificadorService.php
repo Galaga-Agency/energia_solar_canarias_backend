@@ -29,13 +29,29 @@ class GeocodificadorService
     private const MAXIMO_POR_PETICION = 8;
 
     private mysqli $db;
-    private int $resueltasEstaPeticion = 0;
     /** Cache en memoria, para no releer la tabla dentro de la misma peticion. */
     private array $memoria = [];
+
+    /**
+     * Compartidos entre instancias, a proposito.
+     *
+     * `rellenarCoordenadasPorDireccion` crea un geocodificador por llamada, asi
+     * que un contador de instancia no limitaba nada: se vieron ~40 consultas en
+     * 30 segundos, muy por encima del maximo de 1/s que pide Nominatim. Pasado
+     * ese ritmo responde vacio, y esas respuestas vacias se cacheaban como
+     * "esta direccion no existe" — por eso direcciones perfectamente validas
+     * quedaban sin punto en el mapa.
+     */
+    private static float $ultimaLlamada = 0.0;
+    private static int $llamadasEstaPeticion = 0;
 
     public function __construct()
     {
         $this->db = Conexion::getInstance()->getConexion();
+        // Las direcciones llevan tildes y enes. Sin fijar el charset, la
+        // conexion usa latin1 y se guardan (y se leen) rotas: "Gu�a" en vez de
+        // "Guía". Se enviaban asi a Nominatim, que no las reconocia.
+        $this->db->set_charset('utf8mb4');
     }
 
     /**
@@ -80,14 +96,33 @@ class GeocodificadorService
         // puede convertir una carga de pantalla en cuarenta segundos de espera.
         // Las que falten se resolveran en las siguientes cargas, y quedaran
         // cacheadas para siempre.
-        if ($this->resueltasEstaPeticion >= self::MAXIMO_POR_PETICION) {
+        if (self::$llamadasEstaPeticion >= self::MAXIMO_POR_PETICION) {
             return null;
         }
 
-        $coordenadas = $this->consultarNominatim($direccion);
-        $this->resueltasEstaPeticion++;
+        // Tope DIARIO, la red de seguridad de verdad.
+        //
+        // Todo lo de arriba evita repetir consultas, pero solo funciona si la
+        // cache se puede escribir. Si la tabla desaparece o la BD rechaza el
+        // INSERT, cada carga de pantalla volveria a preguntar por las mismas
+        // direcciones y la factura crece sola. Este contador vive en la propia
+        // BD, cuenta llamadas reales y corta el grifo pase lo que pase.
+        if (!$this->quedaCuotaHoy()) {
+            return null;
+        }
 
-        $this->guardarCache($hash, $direccion, $coordenadas);
+        $coordenadas = $this->resolverConReintentos($direccion);
+        self::$llamadasEstaPeticion++;
+        $this->apuntarLlamada();
+
+        // Si la cache NO se pudo escribir, se apaga el geocodificador para el
+        // resto de la peticion: sin escritura no hay memoria entre cargas, y
+        // seguir preguntando seria pagar lo mismo una y otra vez.
+        if (!$this->guardarCache($hash, $direccion, $coordenadas)) {
+            error_log('GeocodificadorService: no se pudo escribir en cache; se detienen las consultas');
+            self::$llamadasEstaPeticion = self::MAXIMO_POR_PETICION;
+        }
+
         $this->memoria[$normalizada] = $coordenadas;
 
         return $coordenadas;
@@ -115,20 +150,181 @@ class GeocodificadorService
         return ['lat' => (float) $fila['latitud'], 'lng' => (float) $fila['longitud']];
     }
 
-    private function guardarCache(string $hash, string $direccion, ?array $coordenadas): void
+    /** @return bool true si la fila quedo guardada. */
+    private function guardarCache(string $hash, string $direccion, ?array $coordenadas): bool
     {
         $stmt = $this->db->prepare(
             "INSERT INTO geocodificacion_cache (direccion_hash, direccion, latitud, longitud)
              VALUES (?, ?, ?, ?)
              ON DUPLICATE KEY UPDATE latitud = VALUES(latitud), longitud = VALUES(longitud)"
         );
-        if (!$stmt) { return; }
+        if (!$stmt) { return false; }
 
         $lat = $coordenadas['lat'] ?? null;
         $lng = $coordenadas['lng'] ?? null;
         $stmt->bind_param('ssdd', $hash, $direccion, $lat, $lng);
+        $ok = $stmt->execute();
+        $stmt->close();
+
+        return (bool) $ok;
+    }
+
+    /**
+     * Tope diario de llamadas reales al geocodificador.
+     *
+     * 500 al dia es holgadisimo para lo que esto hace — las direcciones de una
+     * flota se resuelven UNA vez y quedan cacheadas para siempre, asi que en
+     * regimen normal esto marca cero — y a la vez es un techo duro: aunque todo
+     * lo demas falle, no se pueden gastar mas de 500 geocodificaciones en un
+     * dia. Con la tarifa de Google eso son unos 2,50 $, dentro del credito
+     * mensual gratuito de 200 $.
+     */
+    private const MAXIMO_POR_DIA = 500;
+
+    private function quedaCuotaHoy(): bool
+    {
+        $stmt = $this->db->prepare(
+            "SELECT COUNT(*) AS total FROM geocodificacion_llamadas
+              WHERE fecha = CURDATE()"
+        );
+        // Sin tabla de contador no se geocodifica. Es deliberado: preferimos
+        // quedarnos sin puntos en el mapa a perder el unico freno de gasto.
+        if (!$stmt) { return false; }
+
+        $stmt->execute();
+        $total = (int) ($stmt->get_result()->fetch_assoc()['total'] ?? 0);
+        $stmt->close();
+
+        if ($total >= self::MAXIMO_POR_DIA) {
+            error_log('GeocodificadorService: alcanzado el tope diario de ' . self::MAXIMO_POR_DIA . ' consultas');
+            return false;
+        }
+
+        return true;
+    }
+
+    private function apuntarLlamada(): void
+    {
+        $stmt = $this->db->prepare(
+            "INSERT INTO geocodificacion_llamadas (fecha, momento) VALUES (CURDATE(), NOW())"
+        );
+        if (!$stmt) { return; }
         $stmt->execute();
         $stmt->close();
+    }
+
+    /**
+     * Intenta la direccion completa y, si no la reconoce, va soltando detalle.
+     *
+     * Nominatim solo devuelve lo que existe en OpenStreetMap, y muchas calles
+     * de los pueblos de Gran Canaria no estan mapeadas: "C. Juan Godoy Ramos,
+     * 50, 35450 Guia" no da resultado, pero "Guia, Las Palmas" si. Un punto en
+     * el municipio correcto es infinitamente mas util que ningun punto —
+     * el usuario ve donde esta la instalacion aunque no sea el portal exacto.
+     *
+     * De ahi tambien `coordinates_approximate` en la respuesta: el front puede
+     * distinguir un punto exacto de uno aproximado si algun dia hace falta.
+     *
+     * Las variantes se prueban de la mas precisa a la mas general y se para en
+     * la primera que acierte.
+     *
+     * @return array{lat: float, lng: float}|null
+     */
+    private function resolverConReintentos(string $direccion): ?array
+    {
+        // GOOGLE PRIMERO cuando hay clave.
+        //
+        // Nominatim solo conoce lo que este mapeado en OpenStreetMap, y muchas
+        // calles de los pueblos de Gran Canaria no lo estan. Peor: es
+        // incoherente — "Guia, Las Palmas" lo encuentra pero "35450 Guia, Las
+        // Palmas" no, y "35213 Telde" si mientras "Telde" no. No hay forma de
+        // reescribir la consulta que arregle eso.
+        //
+        // Google resuelve estas direcciones tal cual, en un solo intento. Se
+        // deja Nominatim como respaldo gratuito para cuando no haya clave o
+        // Google no conteste, que es mejor que quedarse sin nada.
+        $clave = $_ENV['GOOGLE_GEOCODING_API_KEY'] ?? getenv('GOOGLE_GEOCODING_API_KEY') ?: null;
+
+        if ($clave) {
+            $coordenadas = $this->consultarGoogle($direccion, $clave);
+            if ($coordenadas !== null) { return $coordenadas; }
+        }
+
+        foreach ($this->variantes($direccion) as $intento) {
+            $coordenadas = $this->consultarNominatim($intento);
+            if ($coordenadas !== null) { return $coordenadas; }
+        }
+
+        return null;
+    }
+
+    /**
+     * Google Geocoding. Una sola consulta: entiende la direccion completa.
+     *
+     * @return array{lat: float, lng: float}|null
+     */
+    private function consultarGoogle(string $direccion, string $clave): ?array
+    {
+        $url = 'https://maps.googleapis.com/maps/api/geocode/json'
+             . '?address=' . urlencode($direccion)
+             // Sesga el resultado a Espana: sin esto, una direccion ambigua
+             // puede caer en Sudamerica, que comparte muchos nombres de calle.
+             . '&region=es'
+             . '&key=' . urlencode($clave);
+
+        $contexto = stream_context_create([
+            'http' => ['timeout' => 5, 'ignore_errors' => true],
+        ]);
+
+        $respuesta = @file_get_contents($url, false, $contexto);
+        if ($respuesta === false) { return null; }
+
+        $datos = json_decode($respuesta, true);
+        $estado = $datos['status'] ?? '';
+
+        // ZERO_RESULTS es una respuesta legitima: Google tampoco la conoce.
+        // Cualquier otro estado que no sea OK es un problema de configuracion
+        // (clave invalida, API sin habilitar, cuota agotada) y conviene que
+        // quede en el log en vez de parecer "direccion no encontrada".
+        if ($estado !== 'OK') {
+            if ($estado !== 'ZERO_RESULTS') {
+                error_log('Google Geocoding devolvio ' . $estado . ': ' . ($datos['error_message'] ?? ''));
+            }
+            return null;
+        }
+
+        $punto = $datos['results'][0]['geometry']['location'] ?? null;
+        if (!isset($punto['lat'], $punto['lng'])) { return null; }
+
+        return ['lat' => (float) $punto['lat'], 'lng' => (float) $punto['lng']];
+    }
+
+    /**
+     * La direccion, y luego versiones cada vez mas cortas de ella.
+     *
+     * Las direcciones vienen separadas por comas, de lo particular a lo
+     * general ("calle, numero, codigo postal, municipio, provincia, pais"), asi
+     * que quitar el primer trozo es exactamente "olvida el detalle mas fino".
+     *
+     * @return string[]
+     */
+    private function variantes(string $direccion): array
+    {
+        $partes = array_values(array_filter(
+            array_map('trim', explode(',', $direccion)),
+            static fn ($parte) => $parte !== ''
+        ));
+
+        $variantes = [$direccion];
+
+        // Se dejan SIEMPRE al menos dos trozos (tipicamente municipio + pais):
+        // con uno solo, "España" pondria la planta en el centro del pais.
+        while (count($partes) > 2) {
+            array_shift($partes);
+            $variantes[] = implode(', ', $partes);
+        }
+
+        return array_values(array_unique($variantes));
     }
 
     /**
@@ -136,11 +332,14 @@ class GeocodificadorService
      */
     private function consultarNominatim(string $direccion): ?array
     {
-        // Solo entre llamadas REALES: la primera de la peticion no espera, y
-        // las cacheadas no pasan por aqui.
-        if ($this->resueltasEstaPeticion > 0) {
-            sleep(self::PAUSA_ENTRE_LLAMADAS);
+        // Espera lo que falte desde la ULTIMA llamada real, sea de la instancia
+        // que sea. Con un contador por instancia no se esperaba nada, porque
+        // cada planta creaba un geocodificador nuevo.
+        $desde = microtime(true) - self::$ultimaLlamada;
+        if (self::$ultimaLlamada > 0.0 && $desde < self::PAUSA_ENTRE_LLAMADAS) {
+            usleep((int) ((self::PAUSA_ENTRE_LLAMADAS - $desde) * 1_000_000));
         }
+        self::$ultimaLlamada = microtime(true);
 
         $url = 'https://nominatim.openstreetmap.org/search?format=json&limit=1&q='
              . urlencode($direccion);
