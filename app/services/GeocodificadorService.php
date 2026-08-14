@@ -25,8 +25,22 @@ class GeocodificadorService
     /** Segundos entre llamadas a Nominatim (su politica: maximo 1/s). */
     private const PAUSA_ENTRE_LLAMADAS = 1;
 
-    /** Cuantas direcciones nuevas se resuelven como maximo en una peticion. */
-    private const MAXIMO_POR_PETICION = 8;
+    /**
+     * Cuantas direcciones NUEVAS se resuelven como maximo en una peticion.
+     *
+     * Estaba en 8, pensado para Nominatim, que obliga a esperar un segundo
+     * entre llamadas: resolver mas habria dejado la pantalla colgada. Con esa
+     * cifra y una flota de 130 plantas hacian falta media docena de cargas
+     * para llenar el mapa, y el usuario veia 44 instalaciones sin ubicar sin
+     * entender por que.
+     *
+     * Google responde en unos 200 ms y no pide pausa, asi que 40 direcciones
+     * nuevas suponen unos ocho segundos en el PEOR caso — la primera vez y
+     * solo para las que aun no esten cacheadas. A partir de ahi es cero.
+     *
+     * El tope diario de 500 sigue siendo el freno de gasto de verdad.
+     */
+    private const MAXIMO_POR_PETICION = 40;
 
     private mysqli $db;
     /** Cache en memoria, para no releer la tabla dentro de la misma peticion. */
