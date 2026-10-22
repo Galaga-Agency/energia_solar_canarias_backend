@@ -8,6 +8,9 @@ sola API, gestiona los usuarios/clientes y los mantiene sincronizados con **Zoho
 - **Stack:** PHP 8.2 + Apache · MySQL 8 · Composer · Docker
 - **Documentación viva:** con el stack arriba, `http://localhost:8080/?page=endpoints-verificados`
   (tabla de todos los endpoints, autorización y matriz de qué ofrece cada proveedor).
+- **Guías:** [documentacion/](documentacion/README.md): autenticación, Zoho, GoodWe, pruebas,
+  versionado y CI.
+- **Versión:** [`VERSION`](VERSION) · cambios en [`CHANGELOG.md`](CHANGELOG.md).
 
 ---
 
@@ -16,21 +19,36 @@ sola API, gestiona los usuarios/clientes y los mantiene sincronizados con **Zoho
 Todo el entorno va con Docker. No hace falta PHP ni MySQL nativos.
 
 ```bash
-docker compose up -d --build
+docker compose up -d --build frontend
 ```
 
-Levanta cuatro servicios:
+Levanta frontend, backend, MySQL y Mailpit en la misma red Docker. El frontend
+requiere el repositorio hermano `../energia_solar_canarias_frontend`.
+
+Servicios disponibles:
 
 | Servicio          | Contenedor            | Puerto host | Qué es                                                 |
 | ----------------- | --------------------- | ----------- | ------------------------------------------------------ |
 | `app`             | `esc_app`             | `8080`      | Backend PHP 8.2 + Apache                               |
+| `frontend`        | `esc_frontend`        | `3001`      | Frontend Next en desarrollo, con recarga al editar |
 | `mysql`           | `esc_mysql`           | `3307`      | MySQL 8 (importa `db_init/*.sql` al primer arranque)   |
 | `phpmyadmin`      | `esc_phpmyadmin`      | `8081`      | Gestión de la BD por navegador                         |
+| `mailpit`         | `esc_mailpit`         | `8025`      | Buzón de correo local: recoge todo lo que envía la app |
 | `token-refresher` | `esc_token_refresher` | —           | Refresca los tokens OAuth (Sungrow/Sigenergy) cada 6 h |
 
 - La API queda en `http://localhost:8080/`.
+- La aplicacion se abre en `http://localhost:3001/es/login`. Next envia las llamadas
+  del navegador desde `/backend-api` a `http://app` dentro de `esc_net`, la misma red
+  del backend y MySQL. La URL del navegador nunca debe ser `http://app`.
+- `phpmyadmin` y `token-refresher` son opcionales: se levantan si se piden
+  explicitamente. No hacen falta para probar el acceso local.
+- Si cambian las dependencias del frontend, reconstruye y renueva su volumen de
+  dependencias: `docker compose up -d --build --renew-anon-volumes frontend`.
 - El código va **montado** en local (recarga en caliente); en producción va **dentro
   de la imagen** (ver Despliegue).
+- El contexto Docker excluye los ficheros de secretos, las credenciales Bruno y los
+  dumps. El despliegue debe montar la configuración real en /var/www/html/config;
+  construir la imagen sin ese montaje no deja una configuración ejecutable.
 - Al arrancar, el `entrypoint.sh` aplica las migraciones pendientes **antes** de
   levantar Apache. Si una migración falla, el contenedor no arranca (a propósito).
 
@@ -42,13 +60,79 @@ de los `*_example`:
 | Fichero real (gitignored)  | Ejemplo en el repo                  | Qué guarda                       |
 | -------------------------- | ----------------------------------- | -------------------------------- |
 | `config/.env`              | `config/claves_example.env`         | Claves de proveedores y `ZOHO_*` |
-| `config/smtp.json`         | `config/smtp_example.json`          | SMTP para los correos de login   |
+| `config/smtp.json`         | `config/smtp_example.json`          | SMTP real (solo producción¹)     |
 | `config/conexion.json`     | —                                   | Conexión MySQL (host `mysql`)    |
 | `bruno/environments/*.bru` | `bruno/environments/EU.example.bru` | Entorno de la colección Bruno    |
 
-> Las variables `ZOHO_*` pueden venir del entorno del contenedor (`$_ENV`) o de
-> `config/.env`. **Con las `ZOHO_*` puestas, el backend escribe en el CRM real** — ojo
-> al probar altas/bajas/modificaciones de usuario en local.
+¹ En local el compose monta `docker/smtp-local.json` encima de `config/smtp.json`: todo
+el correo va a Mailpit y **nunca sale un correo real** desde local, tengas lo que tengas
+en tu `config/smtp.json`.
+
+> **En local Zoho está desconectado.** El compose pone `ZOHO_DESACTIVADO=1`, así que
+> aunque `config/.env` traiga las claves reales, el backend no habla con el CRM: las altas
+> se quedan en local, y las bajas y modificaciones avisan de que "el CRM no se pudo
+> sincronizar". Para probar Zoho a propósito: `ZOHO_DESACTIVADO=0 docker compose up -d app`
+> (es el CRM de **producción**). Detalle en [documentacion/zoho.md](documentacion/zoho.md).
+
+### Entrar en local (Mailpit)
+
+El login es por **enlace mágico**: escribes el email y llega un correo con un botón para
+entrar. En local ese correo no sale a internet: lo atrapa **Mailpit**, un buzón de
+pruebas que se ve en el navegador.
+
+**Primera vez:** crea los usuarios de prueba (clase `usuario`, solo vista) en tu BD local:
+
+```bash
+docker compose exec -T app php /var/www/html/testing/integracion/crear_usuarios_prueba.php
+```
+
+Crea `cliente.pruebas@galagaagency.com` y `cliente.pruebas2@galagaagency.com`.
+
+**Para entrar**, con el backend y el frontend (`http://localhost:3001`) levantados:
+
+1. Abre `http://localhost:3001`, escribe el email de un usuario de la BD local y pulsa
+   *Enviar enlace de acceso*.
+2. Abre Mailpit en **http://localhost:8025**, abre el correo *Tu acceso a Energía Solar
+   Canarias* y pulsa **Entrar en la aplicación**. Se abrirá una confirmación en el
+   backend; pulsa **Acceder a mi cuenta** para completar el inicio de sesión.
+
+O en un solo paso (pide el enlace, lo saca de Mailpit y lo abre en el navegador):
+
+```bash
+docker/login-local.sh                         # cliente.pruebas2@galagaagency.com
+docker/login-local.sh alguien@ejemplo.com     # cualquier usuario de la BD local
+```
+
+El enlace caduca a los 15 minutos y es de un solo uso. Si no llega ningún correo, el
+email no existe o está desactivado en la BD local (el endpoint responde lo mismo en ambos
+casos, a propósito).
+
+Cómo encaja: el compose pone `FRONTEND_URL=http://localhost:3001` y
+`BACKEND_URL=http://localhost:8080` para que el enlace y la redirección se queden en
+local, y `docker/smtp-local.json` apunta el SMTP a Mailpit con `"secure": "none"` (Mailpit
+no habla TLS; sin esa clave `Correo` usa STARTTLS, que es lo que exige el SMTP real).
+
+**Admin de pruebas** (ve todas las plantas de todos los proveedores y el menú Usuarios):
+
+```bash
+docker compose exec -T app php /var/www/html/docker/crear_admin_local.php
+docker/login-local.sh admin.pruebas@galagaagency.com
+```
+
+No tiene contraseña conocida (se le pone una aleatoria): solo se entra por enlace.
+
+**Entrar con contraseña:** entra por enlace, ve a *Ajustes → Formas de entrar*, activa
+*Correo y contraseña* eligiendo una, y a partir de ahí en la pantalla de login usa
+*Entrar con contraseña*. Por defecto está desactivado para todos
+([documentacion/autenticacion.md](documentacion/autenticacion.md)).
+
+> **Como admin, la app llama de verdad a las cinco APIs.** Con las credenciales de
+> `config/.env` y de la tabla `proveedores`, el backend inicia sesión en Sungrow y
+> Sigenergy con usuario/contraseña (no con el refresh token rotatorio), así que no
+> invalida el token de producción. Lo que sí gasta es **cuota**: Sigenergy limita los
+> accesos por estación (error `1201`); la caché lo amortigua, pero evita recargar en
+> bucle. SolarEdge y Sigenergy tardan bastante más que el resto en listar plantas: si
+> al entrar no aparecen sus pestañas, espera unos segundos y recarga.
 
 ---
 
@@ -102,10 +186,17 @@ inventario, alertas, beneficios, resumen`.
 Dos esquemas, ambos por la cabecera `Authorization` (leída **sin distinguir
 mayúsculas**, RFC 7230 — funciona por HTTP/1.1 y HTTP/2):
 
-- **Bearer (JWT):** `Authorization: Bearer <jwt>`. Se obtiene con `/login` (envía un
-  código al email) + `/token` (lo valida y devuelve el JWT). Dura **180 días**.
+- **Bearer (JWT):** `Authorization: Bearer <jwt>`. En la web se obtiene por **enlace al
+  correo** (`/auth/magic-link` → `/auth/magic` → confirmación → `/auth/magic/consume` → `/auth/handoff`, por defecto) o por **email + contraseña**
+  (`/auth/password`, si el usuario lo activa en Ajustes). Siempre es una **sesión
+  renovable**: acceso de 15 minutos más refresh en cookie HttpOnly, revocable al salir o al
+  cambiar la contraseña. El login antiguo `/login` + `/token` emite el mismo tipo de sesión.
+  Ya no se aceptan JWT largos sin sesión.
 - **Clave de API:** `Authorization: Token <uuid>`. La crea el propio usuario con su
   Bearer en `/usuario/bearerToken`. No caduca.
+
+Cada usuario elige con qué métodos puede entrar (`/usuario/metodos-acceso`); nunca puede
+quedarse sin ninguno. Todo en [documentacion/autenticacion.md](documentacion/autenticacion.md).
 
 Control de acceso:
 
@@ -121,7 +212,8 @@ Control de acceso:
 
 La referencia completa y verificada está en `?page=endpoints-verificados`. En resumen:
 
-- **Auth/usuario:** `/login`, `/token`, `/usuario`, `/usuario/bearerToken`
+- **Auth/usuario:** `/auth/magic-link`, `/auth/magic`, `/auth/magic/consume`, `/auth/handoff`, `/auth/password`, `/auth/refresh`, `/auth/logout`,
+  `/usuario/metodos-acceso` (GET/PUT), `/login`, `/token`, `/usuario`, `/usuario/bearerToken`
 - **Admin:** `/usuarios` (GET/POST/PUT/DELETE), `/usuarios/relacionar` (POST/DELETE),
   `/logs`
 - **Catálogo:** `/proveedores`, `/clases`, `/clima` (POST, `{name}` o `{lat,long}`)
@@ -134,9 +226,16 @@ La referencia completa y verificada está en `?page=endpoints-verificados`. En r
 
 ## Sincronización con Zoho CRM
 
-- Los **usuarios/clientes** se sincronizan con el módulo `Accounts`. Alta, modificación
-  y baja son **atómicas**: si Zoho no acepta, en local tampoco se aplica (transacción
-  InnoDB). El campo `idApp` mapea al `usuario_id` de la app.
+- Los **usuarios/clientes** se sincronizan con el módulo `Accounts`. El campo `idApp`
+  mapea al `usuario_id` de la app.
+- El **alta** es atómica: si Zoho no la acepta, se deshace en local. La **modificación** y
+  la **baja** no dependen de Zoho: se hacen en local y la respuesta avisa si el CRM no se
+  pudo sincronizar.
+- La **baja no borra la ficha del CRM**: le pone `Usuario_en_la_app = Inactivo` (un `PUT`,
+  no un `DELETE`).
+- `ZOHO_DESACTIVADO=1` corta toda conexión con el CRM (por defecto en local y obligatorio
+  en las pruebas). Guía completa, con cómo comprobar en Bruno si un usuario ya está en el
+  CRM: [documentacion/zoho.md](documentacion/zoho.md).
 - Las búsquedas de cliente usan el sub-endpoint **`/search`** — sin él Zoho ignora el
   `criteria` y devuelve los primeros 200 registros (se operaba sobre el cliente
   equivocado). Corregido.
@@ -173,20 +272,26 @@ Manual (idempotente): `php db_migrations/migrar.php`.
 Cubren el catálogo de errores de Sigenergy, la normalización de Sungrow (factor
 万 = 10.000), el contrato de proveedores, la cabecera de autorización, etc.
 
-**Integración (Python, requieren el stack levantado):**
+**Análisis estático:** `vendor/bin/phpstan analyse --memory-limit=1G` (con baseline: solo
+fallan los avisos nuevos).
+
+**Integración (Python, requieren el stack levantado y Zoho desactivado):**
 
 ```bash
-export ESC_JWT_ADMIN='...'
 python3 testing/integracion/acceso_por_usuario.py
 python3 testing/integracion/acceso_proveedores_y_apikey.py
 python3 testing/integracion/baja_y_alta_cliente.py
 python3 testing/integracion/codigos_http.py
 python3 testing/integracion/configuracion_php.py
+python3 testing/integracion/metodos_acceso.py
 ```
 
 Comprueban el control de acceso contra `plantas_asociadas` (no contra suposiciones), el
 flujo de baja/alta de cliente, que los códigos de error viajen en el HTTP y no solo en el
-cuerpo, y la configuración de PHP. Usuarios de prueba local: `crear_usuarios_prueba.php`.
+cuerpo, la configuración de PHP y los métodos de acceso. Sacan solos el JWT de admin
+(enlace + Mailpit) y no arrancan si Zoho está conectado. Usuarios de prueba local:
+`crear_usuarios_prueba.php` y `docker/crear_admin_local.php`. Todo en
+[documentacion/pruebas.md](documentacion/pruebas.md).
 
 También hay una colección **Bruno** en `bruno/` (API completa + cada proveedor).
 
@@ -213,6 +318,10 @@ docker compose up -d --build esc_backend
   montaje) y entra al reiniciar, sin reconstruir.
 - Las cabeceras CORS de producción las pone el vhost del VPS (fuera del repo);
   `docker/cors-dev.conf` es solo para local.
+- Lo normal es no hacerlo a mano: el push a `main` lanza el CI/CD (tests, PHPStan,
+  gitleaks, versión → deploy con backup de la BD y comprobación de humo). Versiones y
+  releases: [documentacion/versionado.md](documentacion/versionado.md).
+- **`ZOHO_DESACTIVADO` no puede estar puesto en producción**: el deploy lo comprueba.
 
 ---
 
