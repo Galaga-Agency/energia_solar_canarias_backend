@@ -1,0 +1,42 @@
+# Build context: no introducir credenciales, datos locales o dependencias del host.
+.git
+.github
+.claude
+.vscode
+.DS_Store
+
+# Configuración real: producción y desarrollo la montan desde fuera del contexto.
+config/.env
+config/.env.*
+config/jwt.env
+config/*.json
+!config/*_example.json
+!config/*_example.env
+bruno/environments/*.bru
+!bruno/environments/*.example.bru
+
+# Dumps, dependencias y artefactos de pruebas.
+vendor/
+storage/
+db_init/*.sql
+*.sql
+!db_migrations/*.sql
+testing/
+.phpunit.result.cache
+__pycache__/
+*.pyc
+
+# Ficheros locales ignorados por Git que no pertenecen a la imagen.
+*.log
+*.tmp
+app/utils/img/
+storage/clavesInstanciaEsc.ppk
+storage/infoApisEsc.txt
+storage/cookies_seguras.txt
+storage/ec2Config.txt
+storage/usuarios_base.json
+storage/usuarios_base.txt
+storage/pruebas_*.html
+
+# Variables del compose local
+.env
