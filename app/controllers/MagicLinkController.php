@@ -173,12 +173,24 @@ class MagicLinkController
         echo '<!doctype html><html lang="' . $idioma . '"><head><meta charset="utf-8">'
             . '<meta name="viewport" content="width=device-width, initial-scale=1">'
             . '<title>' . $texto[0] . '</title><style>'
-            . 'body{font:16px system-ui,sans-serif;margin:0;background:#f5f7fa;color:#182230;min-height:100vh;display:grid;place-items:center}'
-            . 'main{max-width:28rem;margin:1rem;padding:2rem;background:white;border:1px solid #dce2e9;border-radius:1rem;box-shadow:0 8px 32px #18223012}'
-            . 'h1{font-size:1.5rem;margin-top:0}p{line-height:1.55;color:#485465}'
-            . 'button{border:0;border-radius:.6rem;background:#087f5b;color:white;font:inherit;font-weight:600;padding:.8rem 1.1rem;cursor:pointer}'
-            . '</style></head><body><main><h1>' . $texto[0] . '</h1>'
-            . '<p>' . $texto[1] . '</p>'
+            // Marca de la app (Rubro Studio, 2026): crema, tinta, naranja, esquinas
+            // rectas y Acumin, que solo existe en 400 y 700. Es la unica pantalla
+            // del login que no sirve el frontend, y no puede parecer de otra web.
+            . '@font-face{font-family:Acumin;src:url(/public/assets/fonts/Acumin-RPro.woff2) format("woff2");font-weight:400;font-display:swap}'
+            . '@font-face{font-family:Acumin;src:url(/public/assets/fonts/Acumin-BdPro.woff2) format("woff2");font-weight:700;font-display:swap}'
+            . '*{box-sizing:border-box}'
+            . 'body{font:400 16px/1.5 Acumin,system-ui,sans-serif;margin:0;background:#f4f1ea;color:#21332a;min-height:100vh;display:grid;place-items:center;padding:1rem}'
+            . 'main{width:100%;max-width:26rem;display:flex;flex-direction:column;gap:2rem}'
+            . 'img{width:9.5rem;height:auto;display:block}'
+            . 'h1{font-size:clamp(1.65rem,3vw,2.5rem);font-weight:400;line-height:1.1;letter-spacing:-.022em;margin:0 0 .75rem}'
+            . 'p{margin:0;color:#21332a}'
+            . 'button{width:100%;border:1px solid #e4572c;border-radius:0;background:#e4572c;color:#f4f1ea;font:inherit;padding:.875rem 1.75rem;cursor:pointer;transition:background-color .3s,border-color .3s}'
+            . 'button:hover{background:#d53f21;border-color:#d53f21}'
+            . 'button:focus-visible{outline:2px solid #e4572c;outline-offset:3px}'
+            . '</style></head><body><main>'
+            . '<img src="/public/assets/img/logo-horizontal-orange.svg" alt="Energía Solar Canarias">'
+            . '<div><h1>' . $texto[0] . '</h1>'
+            . '<p>' . $texto[1] . '</p></div>'
             . '<form method="post" action="' . $accion . '"><input type="hidden" name="token" value="' . $tokenHtml . '">'
             . '<button type="submit">' . $texto[2] . '</button></form></main></body></html>';
     }
@@ -212,7 +224,7 @@ class MagicLinkController
         header('X-Content-Type-Options: nosniff');
         $origenFrontend = $this->origenFrontend();
         $formAction = "'self'" . ($origenFrontend !== null ? ' ' . $origenFrontend : '');
-        header("Content-Security-Policy: default-src 'none'; style-src 'unsafe-inline'; form-action $formAction; base-uri 'none'; frame-ancestors 'none'");
+        header("Content-Security-Policy: default-src 'none'; style-src 'unsafe-inline'; font-src 'self'; img-src 'self'; form-action $formAction; base-uri 'none'; frame-ancestors 'none'");
     }
 
     /** Origen exacto del destino de confianza al que redirige el POST. */

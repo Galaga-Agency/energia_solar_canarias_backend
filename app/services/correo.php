@@ -86,16 +86,16 @@ class Correo
                 // URL de la PWA/frontend (configurable por .env). Un enlace HTTPS normal:
                 // el sistema abre la PWA instalada si la tiene, o el navegador si no.
                 $appUrl = rtrim($_ENV['FRONTEND_URL'] ?? 'https://app.energiasolarcanarias.com', '/');
-                $btnEs = '<div style="text-align: center; margin: 24px 0;"><a href="' . htmlspecialchars($appUrl) . '" style="display: inline-block; background: #2563eb; color: #ffffff; text-decoration: none; font-size: 18px; font-weight: bold; padding: 12px 28px; border-radius: 8px;">Abrir la aplicación</a></div>';
-                $btnEn = '<div style="text-align: center; margin: 24px 0;"><a href="' . htmlspecialchars($appUrl) . '" style="display: inline-block; background: #2563eb; color: #ffffff; text-decoration: none; font-size: 18px; font-weight: bold; padding: 12px 28px; border-radius: 8px;">Open the app</a></div>';
-                $logoHtml = '<div style="display: flex; width: 100%; justify-content: center; align-items: center;"><img src="https://app-backend.energiasolarcanarias.com/public/assets/img/logo.png" style="width: 260px;"></div>';
+                $btnEs = '<div style="text-align: center; margin: 24px 0;"><a href="' . htmlspecialchars($appUrl) . '" style="display: inline-block; background: #e4572c; color: #f4f1ea; text-decoration: none; font-size: 16px; padding: 14px 28px; border-radius: 0;">Abrir la aplicación</a></div>';
+                $btnEn = '<div style="text-align: center; margin: 24px 0;"><a href="' . htmlspecialchars($appUrl) . '" style="display: inline-block; background: #e4572c; color: #f4f1ea; text-decoration: none; font-size: 16px; padding: 14px 28px; border-radius: 0;">Open the app</a></div>';
+                $logoHtml = '<div style="display: flex; width: 100%; justify-content: center; align-items: center;"><img src="https://app-backend.energiasolarcanarias.com/public/assets/img/logo-esc-2026.png" style="width: 260px;"></div>';
 
                 if ($idiomaUsuario == 'es') {
                     $this->mail->Subject = 'Token';
-                    $this->message = '<p style="font-size: 20px; color: black; text-align: center;">' . $textoEspanolHtml . '</p><p style="font-size: 20px; color: black; text-align: center;"><b>' . $token . '</b></p><p style="font-size: 20px; color: black; text-align: center;">' . $validezEs . '</p>' . $btnEs . $logoHtml;
+                    $this->message = '<p style="font-size: 20px; color: #21332a; text-align: center;">' . $textoEspanolHtml . '</p><p style="font-size: 20px; color: #21332a; text-align: center;"><b>' . $token . '</b></p><p style="font-size: 20px; color: #21332a; text-align: center;">' . $validezEs . '</p>' . $btnEs . $logoHtml;
                 } else {
                     $this->mail->Subject = 'Token';
-                    $this->message = '<p style="font-size: 20px; color: black; text-align: center;">' . $textoEnglishlHtml . '</p><p style="font-size: 20px; color: black; text-align: center;"><b>' . $token . '</b></p><p style="font-size: 20px; color: black; text-align: center;">' . $validezEn . '</p>' . $btnEn . $logoHtml;
+                    $this->message = '<p style="font-size: 20px; color: #21332a; text-align: center;">' . $textoEnglishlHtml . '</p><p style="font-size: 20px; color: #21332a; text-align: center;"><b>' . $token . '</b></p><p style="font-size: 20px; color: #21332a; text-align: center;">' . $validezEn . '</p>' . $btnEn . $logoHtml;
                 }
 
                 $this->mail->Body = $this->message;
@@ -471,10 +471,10 @@ class Correo
 
                 if ($idiomaUsuario == 'es') {
                     $this->mail->Subject = 'Recuperación de Contraseña';
-                    $this->message = '<p style="font-size: 20px; color: black; text-align: center;">' . $textoEspanolHtml . '</p><p style="font-size: 20px; color: black; text-align: center;"><b>' . $urlRecuperacion . '</b></p><p style="font-size: 20px; color: black; text-align: center;">' . $validezEs . '</p><div style="display: flex; width: 100%; justify-content: center; align-items: center;"><img src="https://app-backend.energiasolarcanarias.com/public/assets/img/logo.png" style="width: 260px;"></div>';
+                    $this->message = '<p style="font-size: 20px; color: #21332a; text-align: center;">' . $textoEspanolHtml . '</p><p style="font-size: 20px; color: #21332a; text-align: center;"><b>' . $urlRecuperacion . '</b></p><p style="font-size: 20px; color: #21332a; text-align: center;">' . $validezEs . '</p><div style="display: flex; width: 100%; justify-content: center; align-items: center;"><img src="https://app-backend.energiasolarcanarias.com/public/assets/img/logo-esc-2026.png" style="width: 260px;"></div>';
                 } else {
                     $this->mail->Subject = 'Password Recovery';
-                    $this->message = '<p style="font-size: 20px; color: black; text-align: center;">' . $textoEnglishlHtml . '</p><p style="font-size: 20px; color: black; text-align: center;"><b>' . $urlRecuperacion . '</b></p><p style="font-size: 20px; color: black; text-align: center;">' . $validezEn . '</p><div style="display: flex; width: 100%; justify-content: center; align-items: center;"><img src="https://app-backend.energiasolarcanarias.com/public/assets/img/logo.png" style="width: 260px;"></div>';
+                    $this->message = '<p style="font-size: 20px; color: #21332a; text-align: center;">' . $textoEnglishlHtml . '</p><p style="font-size: 20px; color: #21332a; text-align: center;"><b>' . $urlRecuperacion . '</b></p><p style="font-size: 20px; color: #21332a; text-align: center;">' . $validezEn . '</p><div style="display: flex; width: 100%; justify-content: center; align-items: center;"><img src="https://app-backend.energiasolarcanarias.com/public/assets/img/logo-esc-2026.png" style="width: 260px;"></div>';
                 }
 
                 $this->mail->Body = $this->message;
