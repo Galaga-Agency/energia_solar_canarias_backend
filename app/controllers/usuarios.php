@@ -336,7 +336,8 @@ class UsuariosController
                     $idApp = $IdusuarioCreado['usuario_id'];
                     $resultCRM = $zohoService->actualizarId($clienteId, $idApp);
 
-                    if (isset($resultCRM['error']) && $resultCRM['error'] === true) {
+                    // Con Zoho desactivado no se escribe el idApp en el CRM, pero el alta local vale.
+                    if (isset($resultCRM['error']) && $resultCRM['error'] === true && !ZohoService::desactivado()) {
                         // Error al actualizar en Zoho: se deshace el alta local.
                         $conn->rollback();
                         $logsController->registrarLog(Logs::ERROR, "Error al actualizar el cliente en Zoho: " . $resultCRM['message']);
@@ -362,6 +363,24 @@ class UsuariosController
                 $respuesta->success($datosRespuesta);
                 $respuesta->code = 201;
                 $respuesta->message = "Usuario creado localmente desde Zoho (sin sincronización hacia CRM).";
+                echo json_encode($respuesta);
+                return;
+            }
+
+            // Con Zoho desactivado (local y pruebas, ZOHO_DESACTIVADO=1) el alta se
+            // queda en local: es la forma de crear usuarios sin tocar el CRM real.
+            // En produccion esa variable no existe y se sigue por la rama normal,
+            // donde un fallo de Zoho deshace el alta.
+            if (ZohoService::desactivado()) {
+                $conn->commit();
+                $logsController->registrarLog(Logs::INFO, "Usuario {$data['email']} creado solo en local: Zoho desactivado (ZOHO_DESACTIVADO).");
+                $respuesta = new Respuesta();
+                $datosRespuesta = $data;
+                unset($datosRespuesta['password']);
+                $respuesta->success($datosRespuesta);
+                $respuesta->code = 201;
+                $respuesta->message = "Usuario creado. Zoho está desactivado en este entorno: no se ha creado en el CRM.";
+                http_response_code(201);
                 echo json_encode($respuesta);
                 return;
             }
