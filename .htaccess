@@ -3,12 +3,31 @@ RewriteEngine On
 # Asegurar que index.php sea el archivo por defecto
 DirectoryIndex index.php
 
-# PERMITIR LISTADO DE DIRECTORIOS EN storage/img_screens_frontend
+# NUNCA SERVIR FICHEROS INTERNOS. Antes se servia todo lo que no fuera .json/.php/.txt
+# con listado de directorios activo: config/.env (claves JWT), .git/config (credencial
+# de GitHub), docker-compose.yml, Bruno, scripts... Se responde 404, sin delatar nada.
+# Solo se mira la peticion original: en la segunda pasada (tras reescribir a
+# app/routers/rutas.php) las reglas de abajo bloquearian al propio router.
+RewriteCond %{ENV:REDIRECT_STATUS} !^$
+RewriteRule ^ - [L]
+# - Cualquier ruta con un segmento oculto (.env, .git/, .gitleaks.toml...).
+RewriteRule (^|/)\. - [R=404,L]
+# - Carpetas que no son publicas (storage solo expone las capturas del frontend).
+RewriteRule ^(config|vendor|testing|bruno|db_init|db_migrations|documentacion|docker|idiomas|app/(cron|DBObjects|models|services|controllers|middlewares|routers|proveedores|utils/(?!img/)))(/|$) - [R=404,L]
+RewriteCond %{REQUEST_URI} !^/storage/img_screens_frontend/
+RewriteRule ^storage(/|$) - [R=404,L]
+# - Configuracion, volcados, scripts y documentacion sueltos.
+RewriteRule \.(env|bru|sql|gz|sh|py|ya?ml|neon|lock|md|toml|ini|conf|dist|bak|log|ppk|pem|key|apk|xml)$ - [R=404,L]
+RewriteRule ^(Dockerfile[^/]*|VERSION|composer\.json|prueba\.json)$ - [R=404,L]
+
+# PERMITIR LISTADO DE DIRECTORIOS SOLO EN storage/img_screens_frontend
 RewriteCond %{REQUEST_URI} ^/storage/img_screens_frontend/
 RewriteRule ^ - [L]
 
-# Habilitar el listado de directorios
-Options +Indexes
+Options -Indexes
+<If "%{REQUEST_URI} =~ m#^/storage/img_screens_frontend/#">
+    Options +Indexes
+</If>
 Require all granted
 
 #ARCHIVOS PROHIBIDOS

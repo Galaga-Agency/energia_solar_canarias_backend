@@ -1,0 +1,9 @@
+{
+    "smtp": {
+        "host": "mailpit",
+        "username": "mailpit",
+        "password": "mailpit",
+        "port": "1025",
+        "secure": "none"
+    }
+}

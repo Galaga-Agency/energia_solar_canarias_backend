@@ -1,0 +1,32 @@
+meta {
+  name: 03 - Buscar cliente por email
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{zoho_api_domain}}/crm/v2/Accounts/search?criteria=(email:equals:{{zoho_email}})&fields=id,Account_Name,email,idApp,Usuario_en_la_app
+  body: none
+  auth: none
+}
+
+params:query {
+  criteria: (email:equals:{{zoho_email}})
+  fields: id,Account_Name,email,idApp,Usuario_en_la_app
+}
+
+headers {
+  Authorization: Zoho-oauthtoken {{zoho_access_token}}
+}
+
+script:post-response {
+  if (res.status === 204) { console.log('Ningun cliente con ese email.'); return; }
+  const filas = (res.body && res.body.data) || [];
+  filas.forEach(f => console.log('id=' + f.id + '  idApp=' + f.idApp + '  Usuario_en_la_app=' + f.Usuario_en_la_app));
+  if (filas[0]) bru.setVar('zoho_account_id', filas[0].id);
+}
+
+docs {
+  Para saber si una persona ya es cliente aunque aun no tenga usuario en la app
+  (o lo tenga con otro idApp). El campo del email en Accounts se llama `email`.
+}

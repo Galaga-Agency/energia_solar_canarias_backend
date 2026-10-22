@@ -164,8 +164,34 @@ class ZohoService
     /**
      * REFRESCAR TOKEN CUANDO ESTE EXPIRE Y METERLO EN LA BASE DE DATOS
      */
+    /**
+     * ZOHO_DESACTIVADO=1 corta TODA la conexion con el CRM.
+     *
+     * Para local y para las pruebas: el .env de desarrollo suele llevar las claves
+     * reales, y una baja de un usuario de pruebas cuyo id coincida con un idApp
+     * real escribe en el CRM de produccion (paso el 2026-10-15). Todas las llamadas
+     * a Zoho piden antes un token aqui, asi que este es el unico punto de corte:
+     * sin token, cada llamada devuelve su error normal y el backend sigue con su
+     * logica de "el CRM no se pudo sincronizar".
+     *
+     * Se lee del entorno del contenedor (docker-compose) antes que del .env.
+     */
+    public static function desactivado(): bool
+    {
+        $valor = getenv('ZOHO_DESACTIVADO');
+        if ($valor === false) {
+            $valor = $_ENV['ZOHO_DESACTIVADO'] ?? '';
+        }
+        return in_array(strtolower(trim((string) $valor)), ['1', 'true', 'si', 'sí', 'yes'], true);
+    }
+
     public function getAccessToken()
     {
+        if (self::desactivado()) {
+            // Sin claves access_token/api_domain: los llamantes lo tratan como fallo.
+            return ["error" => "Zoho desactivado en este entorno (ZOHO_DESACTIVADO)"];
+        }
+
         // Definir la estructura de respuesta por defecto
         $defaultResponse = [
             "access_token" => "",

@@ -4,13 +4,14 @@
 # de intentar enviarlo, asi que se lee de ahi.
 # Uso: ./login.sh <usuario_id> <email> <password>
 UID_="$1"; EMAIL="$2"; PASS="$3"
-COMPOSE="/Volumes/l/Proyectos Energía Solar Canarias/energia_solar_canarias_backend/docker-compose.yml"
+COMPOSE="$(cd "$(dirname "$0")/../.." && pwd)/docker-compose.yml"
 
 curl -s -o /dev/null -X POST -H "Content-Type: application/json" \
   -d "{\"email\":\"$EMAIL\",\"password\":\"$PASS\"}" "http://localhost:8080/login"
 
-CODE=$(docker compose -f "$COMPOSE" exec -T mysql mysql -N -uescuser -pescpassword esc \
-  -e "SELECT token_login FROM token WHERE usuario_id=$UID_ ORDER BY time_token_login DESC LIMIT 1;" 2>/dev/null | tr -d '[:space:]')
+# Credenciales del propio contenedor (MYSQL_* del compose / .env), no del repo.
+CODE=$(docker compose -f "$COMPOSE" exec -T mysql sh -c 'MYSQL_PWD="$MYSQL_PASSWORD" mysql -N -u"$MYSQL_USER" "$MYSQL_DATABASE" -e "$1"' sql \
+  "SELECT token_login FROM token WHERE usuario_id=$UID_ ORDER BY time_token_login DESC LIMIT 1;" 2>/dev/null | tr -d '[:space:]')
 
 if [ -z "$CODE" ]; then echo "ERROR: no hay codigo en BD para $UID_" >&2; exit 1; fi
 

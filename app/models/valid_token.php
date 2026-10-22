@@ -115,6 +115,13 @@ class ValidToken
         $this->valido = $valido;
     }
 
+    /** Mismas credenciales que /auth/handoff y /auth/password. */
+    private static function sesionRenovable(int $id): array
+    {
+        require_once __DIR__ . '/../controllers/SesionWebController.php';
+        return SesionWebController::emitir($id);
+    }
+
     //FUNCION DE VALIDACION DE TOKEN
     public function execute($id, $token)
     {
@@ -125,10 +132,6 @@ class ValidToken
             $conexion = Conexion::getInstance();
             $conn = $conexion->getConexion();
 
-              // ✅ Bypass para Apple review
-              if ( $token === 'REVIEWTOKEN2025') {
-                $id = 21;
-            }
 
 
             //Preparar la consulta
@@ -170,18 +173,6 @@ class ValidToken
                     $this->dataUsuario = $dataUsuario;
                     $this->tokenLogin = $this->dataUsuario['tokenLogin'];
                     $this->tokenEsperado = $token;
-                    if ($token === 'REVIEWTOKEN2025') {
-                        // ✅ No validar caducidad
-                        unset($this->dataUsuario['tokenLogin']);
-                        unset($this->dataUsuario['timeTokenLogin']);
-                        $this->dataUsuario['tokenIdentificador'] = Conexion::jwt($this->dataUsuario['id'], $this->dataUsuario['email']);
-                        $respuesta->success($this->dataUsuario);
-                        $respuesta->message = 'Login con token de revisión Apple.';
-                        $token = new Token();
-                        $token->deleteAllTokensUser($this->dataUsuario['id']);
-                        return $respuesta;
-                    }
-
                     if ($this->tokenEsperado == $this->tokenLogin) {
                         $this->timeTokenLogin = $this->dataUsuario['timeTokenLogin'];
                         $this->valido = $this->token->isTokenValid($this->dataUsuario['timeTokenLogin']);
@@ -189,8 +180,9 @@ class ValidToken
                             //Eliminamos los parametros de la base de datos
                             unset($this->dataUsuario['tokenLogin']);
                             unset($this->dataUsuario['timeTokenLogin']);
-                            //Creamos un token que dura 180 dias en la base de datos
-                            $this->dataUsuario['tokenIdentificador'] = $token = Conexion::jwt($this->dataUsuario['id'], $this->dataUsuario['email']);
+                            // Sesion renovable, como la web: acceso de 15 min + refresh en cookie.
+                            // El JWT de 180 dias sin sesion ya no se emite.
+                            $this->dataUsuario = array_merge($this->dataUsuario, self::sesionRenovable((int) $this->dataUsuario['id']));
                             $respuesta->success($this->dataUsuario);
                             $respuesta->message = 'El token aún es válido para el usuario enviado';
                             //cuando este el token validado borramos todos los tokens que tiene el usuario

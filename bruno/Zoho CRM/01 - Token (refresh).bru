@@ -1,0 +1,40 @@
+meta {
+  name: 01 - Token (refresh)
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{zoho_accounts_url}}/oauth/v2/token
+  body: formUrlEncoded
+  auth: none
+}
+
+body:form-urlencoded {
+  grant_type: refresh_token
+  refresh_token: {{zoho_refresh_token}}
+  client_id: {{zoho_client_id}}
+  client_secret: {{zoho_client_secret}}
+}
+
+script:post-response {
+  const b = res.body || {};
+  if (b.access_token) {
+    // Solo en variables de ejecucion: no se escribe en el environment.
+    bru.setVar('zoho_access_token', b.access_token);
+    bru.setVar('zoho_api_domain', b.api_domain);
+    console.log('Token de Zoho OK (caduca en ' + b.expires_in + ' s). api_domain = ' + b.api_domain);
+  } else {
+    console.log('Zoho no dio token: ' + JSON.stringify(b));
+  }
+}
+
+docs {
+  Access token a partir del refresh token, igual que ZohoService::getAccessToken().
+  Dura 1 hora. Lo guarda en `zoho_access_token` y `zoho_api_domain`
+  (p. ej. https://www.zohoapis.eu) para el resto de peticiones.
+
+  Variables (environments/EU.bru, no se versiona): zoho_accounts_url
+  (https://accounts.zoho.eu), zoho_client_id, zoho_client_secret, zoho_refresh_token.
+  Son las mismas que ZOHO_* en config/.env del backend.
+}

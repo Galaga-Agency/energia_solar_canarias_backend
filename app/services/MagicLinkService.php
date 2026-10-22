@@ -92,16 +92,43 @@ class MagicLinkService
     }
 
     /**
-     * Canjea un enlace magico. Devuelve el usuario_id o null si no vale.
+     * Comprueba un enlace sin consumirlo.
      *
-     * El canje es ATOMICO: el UPDATE marca la fila como consumida y solo
-     * continua si afecto a una fila. Si dos peticiones llegan a la vez con el
-     * mismo token (el usuario pulsa dos veces, o un escaner de correo hace
-     * prefetch), MySQL serializa los UPDATE y solo uno ve affected_rows = 1.
+     * Este paso se usa en el GET que abre el correo. Los escaneres de seguridad
+     * suelen visitar enlaces antes que la persona; por eso un GET nunca debe
+     * consumir el secreto.
      *
-     * Comprobar primero y actualizar despues seria una condicion de carrera:
-     * ambas peticiones verian el token como valido antes de que ninguna lo
-     * marcase, y el enlace de "un solo uso" valdria dos veces.
+     * @return bool true mientras el secreto exista, no se haya usado y no caduque
+     */
+    public function validarMagicLink($token): bool
+    {
+        if (!is_string($token) || !preg_match('/^[a-f0-9]{64}$/', $token)) {
+            return false;
+        }
+
+        $hash = $this->hash($token);
+        $sql = "SELECT usuario_id FROM magic_links
+                 WHERE token_hash = ?
+                   AND consumido_en IS NULL
+                   AND expira_en > NOW()
+                 LIMIT 1";
+        $stmt = $this->conn->prepare($sql);
+        if (!$stmt) return false;
+        $stmt->bind_param('s', $hash);
+        $stmt->execute();
+        $resultado = $stmt->get_result();
+        $fila = $resultado ? $resultado->fetch_assoc() : null;
+        $stmt->close();
+        return is_array($fila) && isset($fila['usuario_id']);
+    }
+
+    /**
+     * Consume un enlace magico despues de que la persona confirme en el navegador.
+     * Devuelve el usuario_id o null si no vale.
+     *
+     * El canje es ATOMICO: el UPDATE marca la fila como consumida y solo continua
+     * si afecto a una fila. Dos POST simultaneos con el mismo token no pueden
+     * iniciar dos sesiones.
      *
      * @return int|null usuario_id si el canje es valido
      */

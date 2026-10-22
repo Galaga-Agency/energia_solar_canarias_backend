@@ -1,0 +1,27 @@
+meta {
+  name: 30 - GET auth magic
+  type: http
+  seq: 30
+}
+
+get {
+  url: {{base_url_esc}}/auth/magic?token={{esc_magic_token}}&lang={{esc_lang}}
+  body: none
+  auth: none
+}
+
+headers {
+  Accept: text/html
+}
+
+docs {
+  Público; valida el enlace y muestra confirmación sin consumirlo. Los escáneres de correo pueden visitar esta ruta automáticamente.
+}
+
+script:pre-request {
+  const target = String(bru.getEnvVar('base_url_esc') || '');
+  const isLocal = /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(:\d+)?(\/|$)/i.test(target);
+  if (!isLocal) {
+    throw new Error('Bloqueado: la colección del backend solo se puede ejecutar contra localhost.');
+  }
+}

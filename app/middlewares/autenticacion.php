@@ -1,7 +1,4 @@
 <?php
-use Dotenv\Dotenv;
-use Firebase\JWT\Key;
-use Firebase\JWT\JWT;
 
 require_once __DIR__ . '/../models/conexion.php';
 require_once __DIR__ . '/../utils/respuesta.php';
@@ -12,24 +9,11 @@ require_once __DIR__ . '/../controllers/ApiAccesosController.php';
 
 class Autenticacion
 {
-    private static $secret_key;
-    private static $algorithm;
     private $conexion;
     private $apiScope;
 
     function __construct()
     {
-        try{
-            // Cargar el archivo .env desde la carpeta config
-            $dotenv = Dotenv::createImmutable(__DIR__ . '/../../config');
-            $dotenv->load();
-
-            // Asignar los valores del .env a las propiedades estáticas
-            self::$secret_key = $_ENV['SECRET_KEY'];
-            self::$algorithm = $_ENV['ALGORITHM'];
-        }catch(Exception $e){
-            echo "Error al cargar el archivo .env";
-        }
         $this->conexion = Conexion::getInstance();
         $this->apiScope = [
             "admin" => "scope1",
@@ -215,12 +199,22 @@ class Autenticacion
         }
 
         $idUsuario = $this->obtenerIdUsuarioActivo();
-        if ($idUsuario) {
-            require_once __DIR__ . '/../DBObjects/plantasAsociadasDB.php';
-            $plantasAsociadas = new PlantasAsociadasDB;
-            if ($plantasAsociadas->isPlantasAsociadasAlUsuario($idUsuario, $idPlanta, $proveedor)) {
-                return true;
-            }
+        if (!$idUsuario) {
+            // Sin usuario no es "planta ajena": es un token caducado o revocado. Con el
+            // mensaje de token el frontend renueva la sesion; con el de propiedad no lo
+            // haria y la pagina se quedaria en 403 para siempre.
+            $respuesta = new Respuesta;
+            $respuesta->_403();
+            $respuesta->message = 'El token no se puede authentificar con exito';
+            http_response_code(403);
+            header('Content-Type: application/json');
+            echo json_encode($respuesta);
+            return false;
+        }
+        require_once __DIR__ . '/../DBObjects/plantasAsociadasDB.php';
+        $plantasAsociadas = new PlantasAsociadasDB;
+        if ($plantasAsociadas->isPlantasAsociadasAlUsuario($idUsuario, $idPlanta, $proveedor)) {
+            return true;
         }
 
         // Mismo mensaje tanto si la planta no existe como si es de otro: si dijeramos
@@ -244,8 +238,9 @@ class Autenticacion
 
         if (isset($jwtToken)) {
             try {
-                $decoded = JWT::decode($jwtToken, new Key(self::$secret_key, self::$algorithm));
-                $userId = $decoded->data->id;
+                $datos = $this->conexion::verifyJwt($jwtToken);
+                if (!$datos) return false;
+                $userId = $datos['id'];
 
                 $usuariosDB = new UsuariosDB();
                 
@@ -289,8 +284,8 @@ class Autenticacion
 
         if ($jwtToken) {
             try {
-                $decoded = JWT::decode($jwtToken, new Key(self::$secret_key, self::$algorithm));
-                return $decoded->data->id;
+                $datos = $this->conexion::verifyJwt($jwtToken);
+                return $datos ? $datos['id'] : false;
             } catch (Exception $e) {
                 return false;
             }

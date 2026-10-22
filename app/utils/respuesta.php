@@ -6,6 +6,8 @@ class Respuesta
     public $code = 200;
     public $message;
     public $data;
+    /** Metadata opcional de caché para clientes que muestran la frescura del dato. */
+    public $_cache = null;
 
     public function __construct() {}
 

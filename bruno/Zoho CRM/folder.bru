@@ -1,0 +1,16 @@
+meta {
+  name: Zoho CRM
+  seq: 4
+}
+
+docs {
+  Documentación oficial CRM v2: https://www.zoho.com/crm/developer/docs/api/v2/ y OAuth refresh: https://www.zoho.com/crm/developer/docs/api/v2/refresh.html. La documentación pública actual también ofrece v8; el backend sigue en v2.
+  El CRM de Energia Solar Canarias, directo (sin pasar por nuestro backend).
+  Los clientes de la app son el modulo `Accounts` de Zoho CRM v2; el backend los
+  llama "Clientes" (ZohoController::$routes).
+
+  Orden: 01 (token) -> 02/03/04 (lectura). 05 y 06 ESCRIBEN en el CRM real y
+  estan bloqueadas salvo que pongas `zoho_permitir_escritura` a `si`.
+
+  Ver documentacion/zoho.md.
+}

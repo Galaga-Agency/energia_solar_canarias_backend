@@ -1,0 +1,56 @@
+meta {
+  name: 25 - Login con contraseña (directo)
+  type: http
+  seq: 25
+}
+
+post {
+  url: {{base_url_esc}}/auth/password
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "email": "{{esc_email}}",
+    "password": "{{esc_password}}"
+  }
+}
+
+script:post-response {
+  const data = res.body && res.body.data;
+  if (data && data.tokenIdentificador) {
+    bru.setVar('esc_jwt', data.tokenIdentificador);
+    console.log('esc_jwt guardado (acceso de 15 min; se renueva con la 28). Usuario: ' + data.email + ' | clase: ' + data.clase);
+  } else {
+    console.log('HTTP ' + res.status + ': ' + (res.body && res.body.message));
+  }
+}
+
+docs {
+  Entrar con email + contraseña, SIN codigo por correo. Devuelve lo mismo que
+  /auth/handoff: el JWT de acceso (15 min) en data.tokenIdentificador y la cookie de refresh,
+  que Bruno guarda y la 28 usa para renovar.
+
+  Solo funciona si el usuario tiene encendido el metodo `password` (por defecto
+  esta APAGADO): enciendelo con la 27. Si no, 401.
+
+  Cualquier fallo (email que no existe, contraseña mala, metodo apagado) da el
+  MISMO 401 con el mismo mensaje: no se puede usar para saber que cuentas hay
+  ni como entra cada una. 5 fallos en 15 min por email+IP -> 429.
+
+  Distinto del 01 (/login): ese es el login antiguo de la app movil, que manda
+  un codigo al correo y no depende de estos interruptores.
+}
+
+script:pre-request {
+  const target = String(bru.getEnvVar('base_url_esc') || '');
+  const isLocal = /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(:\d+)?(\/|$)/i.test(target);
+  if (!isLocal) {
+    throw new Error('Bloqueado: la colección del backend solo se puede ejecutar contra localhost.');
+  }
+}

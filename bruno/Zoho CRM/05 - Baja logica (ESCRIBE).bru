@@ -1,0 +1,41 @@
+meta {
+  name: 05 - Baja logica (ESCRIBE)
+  type: http
+  seq: 5
+}
+
+put {
+  url: {{zoho_api_domain}}/crm/v2/Accounts/{{zoho_account_id}}
+  body: json
+  auth: none
+}
+
+headers {
+  Authorization: Zoho-oauthtoken {{zoho_access_token}}
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "data": [
+      {
+        "id": "{{zoho_account_id}}",
+        "Usuario_en_la_app": "Inactivo"
+      }
+    ]
+  }
+}
+
+script:pre-request {
+  // Escribe en el CRM REAL. Hay que pedirlo a proposito.
+  if (bru.getEnvVar('zoho_permitir_escritura') !== 'si') {
+    throw new Error('Bloqueado: esta peticion ESCRIBE en el CRM real. Pon zoho_permitir_escritura = si en el environment si de verdad quieres hacerlo.');
+  }
+}
+
+docs {
+  Lo que hace el backend al eliminar un usuario: NO borra el registro (eso seria DELETE /crm/v2/Accounts/{id}, que el backend no usa), solo cambia el campo Usuario_en_la_app a Inactivo. Es una actualizacion parcial: PUT de un registro con solo ese campo; Zoho responde code SUCCESS, message record updated.
+
+  Bloqueada salvo que zoho_permitir_escritura = si.
+  Documentacion de Zoho: https://www.zoho.com/crm/developer/docs/api/v2/update-specific-record.html
+}

@@ -72,7 +72,7 @@ class VictronEnergyServiceTest extends TestCase
         $timeEnd = '2021-01-02';
         $type = 'power';
         $interval = 'hours';
-        $url = "https://example.com/installations/$siteId/stats?end=$timeEnd&interval=hours&start=$timeStart&type=$type&interval=$interval";
+        $url = "https://example.com/installations/$siteId/stats?end=$timeEnd&interval=$interval&start=$timeStart&type=$type";
         $expectedResponse = json_encode(['data' => 'some data']);
 
         // Configuramos los mocks

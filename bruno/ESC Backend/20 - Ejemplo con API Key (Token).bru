@@ -19,9 +19,17 @@ docs {
   Mismo endpoint que el 06 pero autenticando con la API KEY permanente en vez del JWT.
 
   El backend acepta DOS esquemas en la cabecera Authorization:
-    Bearer <jwt>       -> JWT del login (caduca a los ~180 dias)
+    Bearer <jwt>       -> JWT de acceso de una sesion (15 min, se renueva)
     Token  <api_key>   -> API key permanente de /usuario/bearerToken (no caduca)
 
   Requiere haber ejecutado antes "03 - Crear API Key permanente".
   El scope de la key decide si eres admin (scope1) o cliente (scope2).
+}
+
+script:pre-request {
+  const target = String(bru.getEnvVar('base_url_esc') || '');
+  const isLocal = /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(:\d+)?(\/|$)/i.test(target);
+  if (!isLocal) {
+    throw new Error('Bloqueado: la colección del backend solo se puede ejecutar contra localhost.');
+  }
 }

@@ -1,0 +1,19 @@
+meta {
+  name: GoodWe SEMS+
+  seq: 5
+}
+
+docs {
+  No se añade una referencia de API pública: estas rutas se observaron en la interfaz SEMS+ y no deben presentarse como API oficial. No ejecutar login con la cuenta compartida mientras producción use la sesión.
+  GoodWe directo, sin pasar por nuestro backend.
+
+  GoodWe dio de baja el portal antiguo (www.semsportal.com): su API sigue dando
+  login, listado y detalle, pero las graficas vuelven vacias. Los datos estan
+  ahora en el gateway de SEMS+ (eu-gateway.semsportal.com), que acepta el MISMO
+  token del login antiguo en la cabecera `token`.
+
+  Orden: 01 (login) y luego cualquiera. Ver documentacion/goodwe.md.
+
+  OJO: GoodWe solo admite UNA sesion por cuenta. Cada login de aqui invalida el
+  token que esta usando produccion (se recupera solo, con otro login).
+}

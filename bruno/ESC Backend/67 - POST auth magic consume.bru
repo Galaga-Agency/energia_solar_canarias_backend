@@ -1,0 +1,32 @@
+meta {
+  name: 67 - POST auth magic consume
+  type: http
+  seq: 67
+}
+
+post {
+  url: {{base_url_esc}}/auth/magic/consume
+  body: formUrlEncoded
+  auth: none
+}
+
+headers {
+  Accept: text/html
+  Content-Type: application/x-www-form-urlencoded
+}
+
+body:form-urlencoded {
+  token: {{esc_magic_token}}
+}
+
+docs {
+  Público; consume el enlace de un solo uso tras confirmar explícitamente el acceso en el navegador. Redirige al callback del frontend.
+}
+
+script:pre-request {
+  const target = String(bru.getEnvVar('base_url_esc') || '');
+  const isLocal = /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(:\d+)?(\/|$)/i.test(target);
+  if (!isLocal) {
+    throw new Error('Bloqueado: la colección del backend solo se puede ejecutar contra localhost.');
+  }
+}

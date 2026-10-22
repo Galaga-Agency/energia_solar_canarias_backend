@@ -1,0 +1,34 @@
+meta {
+  name: 49 - POST totalrealprice
+  type: http
+  seq: 49
+}
+
+post {
+  url: {{base_url_esc}}/totalrealprice?plantId={{esc_plant_id}}&proveedor={{esc_proveedor}}
+  body: json
+  auth: none
+}
+
+headers {
+  Accept: application/json
+  Content-Type: application/json
+  Origin: {{base_url_esc}}
+  Authorization: Bearer {{esc_jwt}}
+}
+
+body:json {
+  {}
+}
+
+docs {
+  Bearer propietario; consulta precio real en proveedores que lo ofrecen.
+}
+
+script:pre-request {
+  const target = String(bru.getEnvVar('base_url_esc') || '');
+  const isLocal = /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(:\d+)?(\/|$)/i.test(target);
+  if (!isLocal) {
+    throw new Error('Bloqueado: la colección del backend solo se puede ejecutar contra localhost.');
+  }
+}

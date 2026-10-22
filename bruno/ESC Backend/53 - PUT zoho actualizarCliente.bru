@@ -1,0 +1,41 @@
+meta {
+  name: 53 - PUT zoho actualizarCliente
+  type: http
+  seq: 53
+}
+
+put {
+  url: {{base_url_esc}}/zoho/actualizarCliente
+  body: json
+  auth: none
+}
+
+headers {
+  Accept: application/json
+  Content-Type: application/json
+  Origin: {{base_url_esc}}
+  Authorization: Bearer {{esc_jwt}}
+}
+
+script:pre-request {
+  const target = String(bru.getEnvVar('base_url_esc') || '');
+  const isLocal = /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(:\d+)?(\/|$)/i.test(target);
+  if (!isLocal) {
+    throw new Error('Bloqueado: esta operación solo se puede probar contra localhost.');
+  }
+  if (bru.getEnvVar('esc_zoho_desactivado_confirmado') !== 'si') {
+    throw new Error('Bloqueado: confirma que el backend local tiene ZOHO_DESACTIVADO=1 poniendo esc_zoho_desactivado_confirmado = si.');
+  }
+}
+
+
+body:json {
+  {
+    "idApp": "{{esc_user_id}}",
+    "email": "{{esc_cliente_email}}"
+  }
+}
+
+docs {
+  Bearer admin; escribe datos en Zoho CRM. No ejecutar con Zoho conectado.
+}

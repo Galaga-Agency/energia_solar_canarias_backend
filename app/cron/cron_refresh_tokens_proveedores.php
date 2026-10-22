@@ -133,3 +133,12 @@ try {
 
 $db->close();
 logmsg('== Fin ==');
+
+// El FK elimina tambien sus hashes. Los consumidos de familias vivas se conservan.
+try {
+    require_once __DIR__ . '/../DBObjects/SesionWebDB.php';
+    (new SesionWebDB())->limpiarCaducadas(time());
+    logmsg('auth_sesiones: limpieza completada.');
+} catch (Throwable $e) {
+    logmsg('auth_sesiones: ERROR limpiando -> ' . $e->getMessage());
+}

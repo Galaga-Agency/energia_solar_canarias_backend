@@ -1,0 +1,31 @@
+meta {
+  name: 64 - DELETE usuario
+  type: http
+  seq: 64
+}
+
+delete {
+  url: {{base_url_esc}}/usuario
+  body: none
+  auth: none
+}
+
+headers {
+  Accept: application/json
+  Authorization: Bearer {{esc_jwt}}
+}
+script:pre-request {
+  const target = String(bru.getEnvVar('base_url_esc') || '');
+  const isLocal = /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(:\d+)?(\/|$)/i.test(target);
+  if (!isLocal) {
+    throw new Error('Bloqueado: esta operación solo se puede probar contra localhost.');
+  }
+  if (bru.getEnvVar('esc_zoho_desactivado_confirmado') !== 'si') {
+    throw new Error('Bloqueado: confirma que el backend local tiene ZOHO_DESACTIVADO=1 poniendo esc_zoho_desactivado_confirmado = si.');
+  }
+}
+
+
+docs {
+  Bearer; da de baja al usuario actual y puede sincronizar Zoho. NO ejecutar.
+}

@@ -1,0 +1,33 @@
+meta {
+  name: 45 - POST usuario imagen
+  type: http
+  seq: 45
+}
+
+post {
+  url: {{base_url_esc}}/usuario/imagen
+  body: multipartForm
+  auth: none
+}
+
+headers {
+  Accept: application/json
+    Origin: {{base_url_esc}}
+  Authorization: Bearer {{esc_jwt}}
+}
+
+body:multipart-form {
+  imagen: @file(./files/avatar-test.png)
+}
+
+docs {
+  Bearer; carga archivo al filesystem local. Requiere multipart/form-data.
+}
+
+script:pre-request {
+  const target = String(bru.getEnvVar('base_url_esc') || '');
+  const isLocal = /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(:\d+)?(\/|$)/i.test(target);
+  if (!isLocal) {
+    throw new Error('Bloqueado: la colección del backend solo se puede ejecutar contra localhost.');
+  }
+}

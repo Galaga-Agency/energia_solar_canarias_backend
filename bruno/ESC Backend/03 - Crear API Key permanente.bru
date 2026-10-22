@@ -39,3 +39,11 @@ docs {
     Authorization: Token {{esc_api_key}}
   (ver el request "20 - Ejemplo con API Key (Token)").
 }
+
+script:pre-request {
+  const target = String(bru.getEnvVar('base_url_esc') || '');
+  const isLocal = /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(:\d+)?(\/|$)/i.test(target);
+  if (!isLocal) {
+    throw new Error('Bloqueado: la colección del backend solo se puede ejecutar contra localhost.');
+  }
+}

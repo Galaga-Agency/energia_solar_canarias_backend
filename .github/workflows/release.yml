@@ -1,0 +1,42 @@
+name: Release
+
+# Publica una version en GitHub al subir un tag vX.Y.Z. Las notas salen de la
+# seccion de esa version en CHANGELOG.md. Como publicar: documentacion/versionado.md.
+#
+# No despliega nada: el despliegue sigue siendo el push a main (php.yml).
+on:
+  push:
+    tags: ["v*.*.*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Publicar release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: El tag tiene que coincidir con VERSION
+        run: |
+          set -euo pipefail
+          v=$(tr -d '[:space:]' < VERSION)
+          test "${GITHUB_REF_NAME}" = "v$v" || { echo "::error::el tag ${GITHUB_REF_NAME} no coincide con VERSION ($v)"; exit 1; }
+
+      - name: Notas desde CHANGELOG.md
+        run: |
+          set -euo pipefail
+          v=$(tr -d '[:space:]' < VERSION)
+          # Desde "## [v]" hasta el siguiente "## [".
+          awk -v v="$v" '
+            $0 ~ "^## \\[" v "\\]" {dentro=1; next}
+            dentro && /^## \[/ {exit}
+            dentro {print}
+          ' CHANGELOG.md > notas.md
+          test -s notas.md || { echo "::error::CHANGELOG.md no tiene notas para $v"; exit 1; }
+
+      - name: Crear la release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "${GITHUB_REF_NAME}" --title "${GITHUB_REF_NAME}" --notes-file notas.md --verify-tag

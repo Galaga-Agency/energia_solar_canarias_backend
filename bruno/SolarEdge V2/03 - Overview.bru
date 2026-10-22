@@ -1,0 +1,29 @@
+meta {
+  name: 03 - Overview
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{base_url_solaredge_v2}}/sites/{{solaredge_site_id}}/overview?from={{solaredge_from}}&to={{solaredge_to}}
+  body: none
+  auth: none
+}
+
+params:query {
+  from: {{solaredge_from}}
+  to: {{solaredge_to}}
+}
+
+headers {
+  X-API-Key: {{solaredge_v2_api_key}}
+  Accept: application/json
+}
+
+assert {
+  res.status: eq 200
+}
+
+docs {
+  V1 site/{id}/overview. Ya NO trae currentPower ni lifeTimeData: usar 04 (power) y 11 (lifetime-energy). production.total es del rango from/to.
+}

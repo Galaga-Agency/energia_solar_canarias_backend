@@ -1,0 +1,29 @@
+meta {
+  name: 04 - Power (sustituto tiempo real)
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{base_url_solaredge_v2}}/sites/{{solaredge_site_id}}/power?from={{solaredge_from}}&to={{solaredge_to}}
+  body: none
+  auth: none
+}
+
+params:query {
+  from: {{solaredge_from}}
+  to: {{solaredge_to}}
+}
+
+headers {
+  X-API-Key: {{solaredge_v2_api_key}}
+  Accept: application/json
+}
+
+assert {
+  res.status: eq 200
+}
+
+docs {
+  V1 site/{id}/power. Resolucion por defecto QUARTER_HOUR. El ultimo valor sirve de potencia actual sin pagar Advanced.
+}

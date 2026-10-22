@@ -1,0 +1,36 @@
+meta {
+  name: 59 - DELETE plant alert silenciar
+  type: http
+  seq: 59
+}
+
+delete {
+  url: {{base_url_esc}}/plant/alert/silenciar
+  body: json
+  auth: none
+}
+
+headers {
+  Accept: application/json
+  Authorization: Bearer {{esc_jwt}}
+}
+
+body:json {
+  {
+    "proveedor": "{{esc_proveedor}}",
+    "plantaId": "{{esc_plant_id}}",
+    "alertaId": "{{esc_silence_alert_id}}"
+  }
+}
+
+docs {
+  Bearer con acceso a la planta; reactiva un silencio local.
+}
+
+script:pre-request {
+  const target = String(bru.getEnvVar('base_url_esc') || '');
+  const isLocal = /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(:\d+)?(\/|$)/i.test(target);
+  if (!isLocal) {
+    throw new Error('Bloqueado: la colección del backend solo se puede ejecutar contra localhost.');
+  }
+}

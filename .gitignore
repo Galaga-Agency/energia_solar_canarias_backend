@@ -54,3 +54,14 @@ config/*.bak
 
 # Paginas de prueba locales (llevaban apiKeys y una contrasena real)
 storage/pruebas_*.html
+
+# Volcado de prueba con datos reales de plantas de clientes (estuvo versionado)
+storage/prueba.json
+
+# Variables del docker-compose local (plantilla: .env.example)
+.env
+!.env.example
+
+# Otros volcados de prueba con datos de clientes (purgados de la historia el 2026-10-22)
+prueba.json
+testing/prueba.json

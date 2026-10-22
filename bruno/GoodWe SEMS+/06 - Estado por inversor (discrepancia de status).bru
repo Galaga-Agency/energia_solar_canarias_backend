@@ -1,0 +1,41 @@
+meta {
+  name: 06 - Estado por inversor (discrepancia de status)
+  type: http
+  seq: 6
+}
+
+post {
+  url: https://www.semsportal.com/api/v3/PowerStation/GetInverterAllPoint
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  Token: {{goodwe_token_header}}
+}
+
+body:json {
+  {"PowerStationId":"{{goodwe_station_id}}"}
+}
+
+docs {
+  Demuestra por que una planta sale "disconnected" con potencia.
+
+  El `status` de cada planta en QueryPowerStationMonitor (02) es el PEOR de sus
+  inversores: -1 en cuanto UNO esta offline, aunque otro este generando. Aqui
+  sale el estado de cada inversor (`status`: -1 offline, 0 en espera, 1 generando,
+  2 averia), su `out_pac` (W) y su `last_refresh_time` (hora local de la planta).
+
+  Ejemplo (21/10/2026), goodwe_station_id = 891b527c-0207-4b16-817c-9ab3cdd41605
+  (Aparcamientos Tomas Miller):
+    - 02 devuelve status -1, pac 1212, eday 1.5
+    - 06 devuelve 5020KDTT224W0097 status 1, out_pac 1611, refresco 10/21/2026 11:30
+                  9010KETU228W4645 status -1, out_pac 0,  refresco 09/18/2026 10:49
+
+  Es decir, la planta produce y lo que falla es un inversor desde hace un mes.
+
+  Sin login nuevo: rellena goodwe_token_header con la sesion vigente
+  (goodwe_sesiones) en vez de ejecutar 01, que invalida el token de produccion.
+  El backend expone lo mismo en GET /plant/inventario/{id}?proveedor=goodwe.
+}

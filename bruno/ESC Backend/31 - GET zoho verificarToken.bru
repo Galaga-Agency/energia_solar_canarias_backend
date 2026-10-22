@@ -1,0 +1,28 @@
+meta {
+  name: 31 - GET zoho verificarToken
+  type: http
+  seq: 31
+}
+
+get {
+  url: {{base_url_esc}}/zoho/verificarToken
+  body: none
+  auth: none
+}
+
+headers {
+  Accept: application/json
+  Authorization: Bearer {{esc_jwt}}
+}
+
+docs {
+  Admin; refresca el access token OAuth y consulta Zoho. No modifica registros.
+}
+
+script:pre-request {
+  const target = String(bru.getEnvVar('base_url_esc') || '');
+  const isLocal = /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(:\d+)?(\/|$)/i.test(target);
+  if (!isLocal) {
+    throw new Error('Bloqueado: la colección del backend solo se puede ejecutar contra localhost.');
+  }
+}

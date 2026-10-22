@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../utils/HttpClient.php';
 require_once __DIR__ . '/../models/VictronEnergy.php';
+require_once __DIR__ . '/VictronLogica.php';
 
 class VictronEnergyService
 {
@@ -60,7 +61,9 @@ class VictronEnergyService
     //recoger el grafico de las plantas / parece que tambien funciona para recoger en tiempo real los valores
     public function getGraficoDetails($siteId, $timeStart, $timeEnd, $type, $interval)
     {
-        $url = $this->victronEnergy->getUrl() . "installations/$siteId/stats?end=$timeEnd&interval=hours&start=$timeStart&type=$type&interval=$interval";
+        // `interval` UNA vez: antes iba fijo a "hours" y repetido con el pedido,
+        // y quien leyera el primero servia horas para cualquier rango.
+        $url = $this->victronEnergy->getUrl() . "installations/$siteId/stats?end=$timeEnd&interval=$interval&start=$timeStart&type=$type";
         try {
             $response = $this->httpClient->get($url, $this->header);
             return json_decode($response);
@@ -115,6 +118,39 @@ class VictronEnergyService
         } catch (Exception $e) {
             return ['error' => $e->getMessage()];
         }
+    }
+
+    /**
+     * Energia solar acumulada desde que se dio de alta la instalacion.
+     *
+     * `overallstats` no sirve (solo trae year/month/week/today y vacios en una
+     * planta parada). /stats con type=kwh, interval=years y start=syscreated si
+     * trae `totals`, que es lo que se suma: Pb + Pc + Pg. Por ventanas de 4
+     * anos, porque VRM no contesta rangos de mas de 5.
+     *
+     * @return array{kwh: float, Pb: ?float, Pc: ?float, Pg: ?float, desde: int, hasta: int}|null
+     */
+    public function getTotalHistorico($siteId, $syscreated, ?int $ahora = null): ?array
+    {
+        if (!is_numeric($syscreated) || (int) $syscreated <= 0) {
+            return null;
+        }
+        $ahora = $ahora ?? time();
+
+        // VRM no contesta rangos de mas de 5 anos: se pide por ventanas y se suma.
+        $totales = [];
+        foreach (VictronLogica::ventanasHistorico((int) $syscreated, $ahora) as [$inicio, $fin]) {
+            $datos = $this->getGraficoDetails($siteId, $inicio, $fin, 'kwh', 'years');
+            if (!is_object($datos) || empty($datos->success)) {
+                return null; // un trozo que falla daria un total falso por bajo
+            }
+            $totales[] = $datos->totals ?? null;
+        }
+        $total = VictronLogica::totalHistorico(VictronLogica::sumarTotales($totales));
+        if ($total === null) {
+            return null;
+        }
+        return $total + ['desde' => (int) $syscreated, 'hasta' => $ahora];
     }
 
     //Método que formatea las gráficas por rango
@@ -195,12 +231,10 @@ class VictronEnergyService
             // Consulta la energía solar de Victron para ese subrango
             $data = $this->getGraficoDetails($plantId, $startTimestamp, $endTimestamp, 'solar_yield', 'hours');
 
-            if (isset($data->records->Pb) && is_array($data->records->Pb)) {
-                $energiaWh = array_reduce($data->records->Pb, function ($carry, $item) {
-                    return $carry + ($item[1] ?? 0);
-                }, 0);
-
-                $energiaKwh = $energiaWh; // ¡Ya viene en kWh!
+            // Solar = a bateria (Pb) + a consumo (Pc) + a red (Pg). Solo se
+            // sumaba Pb, asi que lo autoconsumido no contaba para ingresos.
+            if (is_object($data) && isset($data->records)) {
+                $energiaKwh = VictronLogica::energiaSolarKwh($data->records); // ya viene en kWh
                 $energiaTotal += $energiaKwh;
                 $ingresoTotal += $energiaKwh * $rango['precio'];
                 $ahorroTotal += $energiaKwh * $rango['precio_ahorro'];

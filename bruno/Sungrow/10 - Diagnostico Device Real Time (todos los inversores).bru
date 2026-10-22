@@ -1,0 +1,68 @@
+meta {
+  name: 10 - Diagnostico Device Real Time (todos los inversores)
+  type: http
+  seq: 11
+}
+
+post {
+  url: {{base_url_sungrow}}/openapi/getDeviceRealTimeData
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  x-access-key: {{sungrow_secret_key}}
+}
+
+body:json {
+  {
+    "appkey": "{{sungrow_appkey}}",
+    "sys_code": "901",
+    "lang": "_en_US",
+    "token": "{{sungrow_access_token}}",
+    "ps_key_list": {{sungrow_diag_inv_keys}},
+    "device_type": 1,
+    "point_id_list": ["24", "14", "1", "2"]
+  }
+}
+
+script:pre-request {
+  // Orden IGUAL al de getDeviceList: el primero es el que usa el backend.
+  if (!bru.getVar('sungrow_diag_inv_keys'))
+    bru.setVar('sungrow_diag_inv_keys', JSON.stringify(['6165627_1_2_3', '6165627_1_1_3']));
+}
+
+script:post-response {
+  const pts = (res.body.result_data && res.body.result_data.device_point_list) || [];
+  let suma = 0;
+  pts.forEach(x => {
+    const p = x.device_point;
+    suma += Number(p.p24 || 0);
+    console.log(`${p.ps_key} ${p.device_name} t=${p.device_time} p24=${p.p24} W  p1(hoy)=${p.p1} Wh  p2(total)=${p.p2} Wh`);
+  });
+  console.log('SUMA p24 = ' + suma + ' W  (getPowerStationList.curr_power deberia coincidir)');
+  bru.setVar('sungrow_diag_suma_p24', String(suma));
+}
+
+tests {
+  test("hay un inversor a 0 W y otro produciendo", () => {
+    const v = res.body.result_data.device_point_list.map(x => Number(x.device_point.p24 || 0));
+    expect(Math.min(...v)).to.equal(0);
+    expect(Math.max(...v)).to.be.above(0);
+  });
+}
+
+docs {
+  Lectura instantanea (p24 = potencia activa AC, W; p1 = energia de hoy, Wh;
+  p2 = energia total, Wh) de TODOS los inversores. device_time viene en hora
+  LOCAL de la planta (GMT+1), no en +08:00.
+
+  El backend (SungrowService::getFlujoContador) pide solo el primero y SOBRESCRIBE
+  curr_power del getPowerStationList con su p24: por eso /plant/power/realtime da
+  curr_power 0 kW y el diagrama dice "Sin produccion", mientras la lista (que no
+  pasa por ahi) da 2,74 kW. La suma de p24 de todos los inversores si coincide.
+
+  CORREGIDO 2026-10-21: el backend ya pide todos los inversores en esta misma
+  llamada y suma su p24; sin dato conserva el curr_power de la lista.
+}

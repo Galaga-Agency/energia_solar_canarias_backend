@@ -1,0 +1,44 @@
+meta {
+  name: 02 - Buscar cliente por idApp (es nuevo?)
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{zoho_api_domain}}/crm/v2/Accounts/search?criteria=(idApp:equals:{{zoho_id_app}})&fields=id,Account_Name,email,idApp,Usuario_en_la_app,Modified_Time
+  body: none
+  auth: none
+}
+
+params:query {
+  criteria: (idApp:equals:{{zoho_id_app}})
+  fields: id,Account_Name,email,idApp,Usuario_en_la_app,Modified_Time
+}
+
+headers {
+  Authorization: Zoho-oauthtoken {{zoho_access_token}}
+}
+
+script:post-response {
+  // Zoho contesta 204 SIN cuerpo cuando no hay coincidencias.
+  if (res.status === 204) {
+    console.log('idApp ' + bru.getEnvVar('zoho_id_app') + ': NO esta en el CRM. Es nuevo (el alta desde la app lo crearia).');
+    return;
+  }
+  const filas = (res.body && res.body.data) || [];
+  console.log('idApp ' + bru.getEnvVar('zoho_id_app') + ': ' + filas.length + ' cliente(s) en el CRM.');
+  filas.forEach(f => console.log('  id=' + f.id + '  Usuario_en_la_app=' + f.Usuario_en_la_app + '  modificado=' + f.Modified_Time));
+  if (filas[0]) bru.setVar('zoho_account_id', filas[0].id);
+}
+
+docs {
+  La misma busqueda que hacen la baja (appCrearClienteFalse) y obtenerCliente()
+  en el backend: por el campo `idApp`, que guarda el usuario_id de la app.
+
+  - 204 sin cuerpo  -> no existe: el usuario es NUEVO para el CRM.
+  - 200 con data[]  -> ya existe. Guarda su id en `zoho_account_id`.
+
+  OJO con los usuarios de pruebas locales: se crean sobre una copia de la BD de
+  produccion, y su usuario_id puede ser el idApp de un cliente REAL.
+  Compruebalo aqui antes de dar de baja nada con Zoho conectado.
+}

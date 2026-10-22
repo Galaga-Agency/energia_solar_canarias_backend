@@ -1,0 +1,30 @@
+meta {
+  name: 07 - Meters telemetry (energyDetails)
+  type: http
+  seq: 8
+}
+
+get {
+  url: {{base_url_solaredge_v2}}/sites/{{solaredge_site_id}}/meters/telemetry?from={{solaredge_from}}&to={{solaredge_to}}&resolution=DAY
+  body: none
+  auth: none
+}
+
+params:query {
+  from: {{solaredge_from}}
+  to: {{solaredge_to}}
+  resolution: DAY
+}
+
+headers {
+  X-API-Key: {{solaredge_v2_api_key}}
+  Accept: application/json
+}
+
+assert {
+  res.status: eq 200
+}
+
+docs {
+  V1 site/{id}/energyDetails (CONSUMPTION, FEEDIN, PURCHASED, SELFCONSUMPTION) y powerDetails. Una sola llamada devuelve production/consumption/import/export.
+}

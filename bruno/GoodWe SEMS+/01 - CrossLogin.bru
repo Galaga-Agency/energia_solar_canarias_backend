@@ -1,0 +1,41 @@
+meta {
+  name: 01 - CrossLogin
+  type: http
+  seq: 1
+}
+
+post {
+  url: https://www.semsportal.com/api/v1/Common/CrossLogin
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  Token: {"version":"v2.1.0","client":"ios","language":"en"}
+}
+
+body:json {
+  {
+    "account": "{{goodwe_account}}",
+    "pwd": "{{goodwe_password}}"
+  }
+}
+
+script:post-response {
+  const d = res.body && res.body.data;
+  if (d && d.token) {
+    bru.setVar('goodwe_token_header', JSON.stringify({
+      uid: d.uid, timestamp: d.timestamp, token: d.token,
+      client: 'ios', version: 'v2.1.0', language: 'en'
+    }));
+    console.log('Login GoodWe OK. api regional: ' + res.body.api);
+  } else {
+    console.log('Login GoodWe fallido: ' + JSON.stringify(res.body && res.body.msg));
+  }
+}
+
+docs {
+  El mismo login que GoodWeService::crossLogin(). Guarda la cabecera `token`
+  (JSON con uid, timestamp, token...) en `goodwe_token_header` para el resto.
+}

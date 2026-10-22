@@ -38,18 +38,11 @@ class SigenergyService
     private const CACHE_TTL_SEG = 315;
 
     /**
-     * TTL del FLUJO en vivo.
-     *
-     * El limite 1201 de Sigenergy es por estacion, y con 315 s el diagrama
-     * mostraba el mismo numero durante cinco minutos: por rapido que
-     * preguntase el navegador, la cache respondia siempre lo mismo y la vista
-     * "en tiempo real" no se movia. Diez segundos es lo que se pide aqui.
-     *
-     * Solo se aplica a energyFlow y summary, que son los que alimentan el
-     * diagrama. Los historicos siguen con el TTL largo, porque lo que paso
-     * ayer no cambia y ahi el cupo si importa.
+     * Resumen y flujo siguen sujetos al límite de una consulta por estación
+     * cada 5 minutos. No se reduce este TTL para aparentar datos más vivos:
+     * el proveedor devolvería 1201 y la app perdería la última lectura válida.
      */
-    private const CACHE_TTL_VIVO_SEG = 0;
+    private const CACHE_TTL_VIVO_SEG = 315;
 
     /**
      * TTL para historicos de fechas YA CERRADAS (24 h).
@@ -90,7 +83,7 @@ class SigenergyService
      *
      * @return array
      */
-    private function apiCall($path, $ttlSeg = null)
+    private function apiCall($path, $ttlSeg = null, ?string $grupoIntervalo = null)
     {
         $ttlSeg = $ttlSeg ?? self::CACHE_TTL_SEG;
         $tokenService = $this->sigenergy->getTokenService();
@@ -104,11 +97,7 @@ class SigenergyService
             return in_array($c, [11002, 11003], true);
         };
 
-        return $this->cache->recordar(
-            Sigenergy::NOMBRE,
-            $path,
-            $ttlSeg,
-            function () use ($tokenService, $url, $isAuthError) {
+        $fetch = function () use ($tokenService, $url, $isAuthError) {
                 [, $body] = $tokenService->requestWithAutoRefresh(
                     Sigenergy::NOMBRE,
                     function ($token) use ($url) {
@@ -137,14 +126,34 @@ class SigenergyService
                     $body['data'] = self::desanidar($body['data']);
                 }
                 return is_array($body) ? $body : ['code' => -1, 'msg' => 'respuesta no valida', 'data' => null];
-            },
-            // Que se puede cachear lo decide el catalogo de errores, no la cache: asi
-            // el significado de cada codigo vive en un unico sitio (SigenergyErrores) y
-            // no hay dos listas que se puedan desincronizar.
-            function ($resp) {
-                if (!is_array($resp) || !array_key_exists('code', $resp)) return false;
-                return !SigenergyErrores::esTransitorio($resp['code']);
-            }
+        };
+
+        // Que se puede cachear lo decide el catalogo de errores, no la cache: asi
+        // el significado de cada codigo vive en un unico sitio (SigenergyErrores) y
+        // no hay dos listas que se puedan desincronizar.
+        $esCacheable = function ($resp) {
+            if (!is_array($resp) || !array_key_exists('code', $resp)) return false;
+            return !SigenergyErrores::esTransitorio($resp['code']);
+        };
+
+        if ($grupoIntervalo !== null) {
+            return $this->cache->recordarConIntervalo(
+                Sigenergy::NOMBRE,
+                $path,
+                $ttlSeg,
+                $grupoIntervalo,
+                self::CACHE_TTL_SEG,
+                $fetch,
+                $esCacheable
+            );
+        }
+
+        return $this->cache->recordar(
+            Sigenergy::NOMBRE,
+            $path,
+            $ttlSeg,
+            $fetch,
+            $esCacheable
         );
     }
 
@@ -400,7 +409,8 @@ class SigenergyService
             }
             return $this->apiCall(
                 'openapi/systems/' . rawurlencode($systemId) . "/history?$q",
-                $this->ttlHistorico($level, $date)
+                $this->ttlHistorico($level, $date),
+                'history:' . $systemId
             );
         } catch (Exception $e) {
             return ['error' => $e->getMessage()];

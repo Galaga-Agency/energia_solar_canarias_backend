@@ -120,7 +120,7 @@ finally:
 check("el usuario 1 queda como estaba", estado(1) == "0", "OJO: se quedo de baja")
 check(f"el cliente {UID} queda como estaba", estado(UID) == "0", "se quedo de baja")
 
-titulo("4) dar de baja: si Zoho no acepta, aqui tampoco")
+titulo("4) dar de baja: un fallo de Zoho no impide la baja, pero no se traga")
 
 # appCrearClienteFalse() devolvia los errores como STRING (json_encode) y el exito como
 # array. Su llamante los mira con isset($r['error']), que sobre un string es SIEMPRE
@@ -154,16 +154,17 @@ try:
     # El cliente de pruebas es solo local (lo crea crear_usuarios_prueba.php, que no
     # sincroniza con Zoho), asi que NUNCA esta en el CRM: la busqueda no lo encuentra y
     # no se llega a hacer el PUT. Es seguro incluso con las claves ZOHO_* puestas.
+    # Desde b794d2e la baja local queda firme aunque Zoho no confirme: antes, un usuario
+    # creado en la app y nunca sincronizado era IMPOSIBLE de borrar (500 sin salida).
+    # Lo que no puede pasar es que el fallo se calle: la respuesta tiene que decirlo.
     hc, r = api(ADMIN, "DELETE", f"/usuarios/{UID}")
+    mensaje = (r or {}).get("message") or ""
+    check(f"la baja se acepta aunque Zoho no la confirme -> HTTP {hc}", hc == 200, f"llego {hc}: {mensaje!r}")
+    check("el cliente queda de baja aqui", estado(UID) == "1", f"eliminado = {estado(UID)}")
     check(
-        f"Zoho no acepta la baja -> HTTP {hc} (antes: 200 'Usuario eliminado')",
-        hc == 500,
-        f"esperaba 500 y llego {hc}: {(r or {}).get('message')!r}",
-    )
-    check(
-        "y el cliente NO se queda de baja aqui",
-        estado(UID) == "0",
-        "quedo de baja en la app y activo en el CRM: los dos lados descuadrados",
+        f"y la respuesta avisa de que el CRM no se sincronizo ({mensaje!r})",
+        "CRM" in mensaje,
+        "el fallo de Zoho se trago en silencio: nadie sabra que hay que reconciliar",
     )
 finally:
     restaurar()
@@ -210,5 +211,23 @@ check(
     php(RUTA) == "ok",
     "sin /search, Zoho ignora el criteria y se opera sobre el cliente equivocado",
 )
+
+titulo("6) alta desde la app con Zoho desactivado: se crea solo en local")
+# El alta normal es atomica: si Zoho no acepta, se deshace. Con ZOHO_DESACTIVADO=1
+# (local y pruebas) eso dejaria sin poder crear usuarios; en su lugar se crea en local
+# y la respuesta lo dice. Es la forma de dar de alta usuarios nuevos sin tocar el CRM.
+EMAIL_NUEVO = "alta.local.pruebas@galagaagency.com"
+sql(f"DELETE FROM usuarios WHERE email='{EMAIL_NUEVO}';")
+try:
+    hc, r = api(ADMIN, "POST", "/usuarios", body={
+        "email": EMAIL_NUEVO, "nombre": "Alta", "apellido": "Local", "clase": "usuario",
+    })
+    mensaje = (r or {}).get("message") or ""
+    check(f"201 sin pasar por Zoho -> HTTP {hc}", hc == 201, mensaje)
+    check(f"y la respuesta dice que no se creo en el CRM ({mensaje!r})", "Zoho" in mensaje)
+    check("el usuario existe en local", len(sql(f"SELECT usuario_id FROM usuarios WHERE email='{EMAIL_NUEVO}';")) == 1)
+finally:
+    # Borrado fisico: es un usuario de esta prueba y solo existe en la BD local.
+    sql(f"DELETE FROM usuarios WHERE email='{EMAIL_NUEVO}';")
 
 resumen()

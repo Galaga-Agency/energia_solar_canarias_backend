@@ -1,0 +1,37 @@
+meta {
+  name: 50 - POST zoho imprimirWebhook
+  type: http
+  seq: 50
+}
+
+post {
+  url: {{base_url_esc}}/zoho/imprimirWebhook
+  body: json
+  auth: none
+}
+
+headers {
+  Accept: application/json
+  Content-Type: application/json
+  Origin: {{base_url_esc}}
+  Authorization: Bearer {{esc_jwt}}
+}
+
+body:json {
+  {
+    "test": true,
+    "origen": "bruno-local"
+  }
+}
+
+docs {
+  Bearer admin; sobrescribe webhook_data.txt en el filesystem.
+}
+
+script:pre-request {
+  const target = String(bru.getEnvVar('base_url_esc') || '');
+  const isLocal = /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(:\d+)?(\/|$)/i.test(target);
+  if (!isLocal) {
+    throw new Error('Bloqueado: la colección del backend solo se puede ejecutar contra localhost.');
+  }
+}

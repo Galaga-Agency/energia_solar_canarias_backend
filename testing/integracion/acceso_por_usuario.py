@@ -107,22 +107,35 @@ check(f"cliente1 ya no puede leer sus datos: HTTP {hc}", hc == 403, "esperaba 40
 hc, _ = api(ADMIN, "GET", f"/plant/power/realtime/{SIG_A}?proveedor=sigenergy")
 check(f"el admin si sigue pudiendo: HTTP {hc}", hc == 200)
 
-titulo("5) REASIGNAR: al pasarla a cliente2, cliente1 la pierde")
+titulo("5) COMPARTIR: dar acceso a cliente2 no se lo quita a cliente1")
+# Una planta puede tener varios usuarios (f6d3435): antes el DELETE previo al alta se
+# hacia por planta y no por planta Y usuario, asi que dar acceso a una segunda persona
+# borraba a la primera. Quitar el acceso es un paso aparte (DELETE /usuarios/relacionar).
 hc, r = api(ADMIN, "POST", f"/usuarios/relacionar?idusuario={U2}&idplanta={SE_A}&proveedor=SolarEdge")
-check("admin asigna a cliente2 la solaredge que era de cliente1", hc == 200 and r.get("status"), f"HTTP {hc}")
+check("admin da a cliente2 la solaredge de cliente1", hc == 200 and r.get("status"), f"HTTP {hc}")
 
-duenos = [f[0] for f in sql(f"SELECT usuario_id FROM plantas_asociadas WHERE planta_id='{SE_A}';")]
-check(f"en la BD la planta tiene un unico dueno y es {U2} (tiene {duenos})", duenos == [str(U2)])
+duenos = sorted(f[0] for f in sql(f"SELECT usuario_id FROM plantas_asociadas WHERE planta_id='{SE_A}';"))
+check(f"en la BD la planta queda con los dos (tiene {duenos})", duenos == sorted([str(U1), str(U2)]))
 
 hc, r = api(C1, "GET", "/plants")
 v1 = {str(p.get("id")) for p in (r.get("data") or [])}
-check(f"cliente1 ya NO la ve (ve {sorted(v1)})", SE_A not in v1)
+check(f"cliente1 la sigue viendo (ve {sorted(v1)})", SE_A in v1)
 
 hc, r = api(C2, "GET", "/plants")
 v2 = {str(p.get("id")) for p in (r.get("data") or [])}
-check(f"cliente2 SI la ve (ve {sorted(v2)})", SE_A in v2)
+check(f"cliente2 tambien la ve (ve {sorted(v2)})", SE_A in v2)
+
+titulo("6) y al quitarsela a cliente1, solo la pierde el")
+hc, r = api(ADMIN, "DELETE", f"/usuarios/relacionar?idusuario={U1}&idplanta={SE_A}&proveedor=SolarEdge")
+check("admin quita la solaredge a cliente1", hc == 200 and r.get("status"), f"HTTP {hc}")
+
+duenos = [f[0] for f in sql(f"SELECT usuario_id FROM plantas_asociadas WHERE planta_id='{SE_A}';")]
+check(f"en la BD queda solo cliente2 (tiene {duenos})", duenos == [str(U2)])
 
 hc, _ = api(C1, "GET", f"/plant/overview/{SE_A}?proveedor=solaredge")
 check(f"cliente1 ya no lee sus datos: HTTP {hc}", hc == 403)
+
+hc, _ = api(C2, "GET", f"/plant/overview/{SE_A}?proveedor=solaredge")
+check(f"cliente2 si: HTTP {hc}", hc == 200)
 
 resumen()

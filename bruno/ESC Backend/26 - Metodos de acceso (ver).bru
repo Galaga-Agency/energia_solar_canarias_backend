@@ -1,0 +1,29 @@
+meta {
+  name: 26 - Metodos de acceso (ver)
+  type: http
+  seq: 26
+}
+
+get {
+  url: {{base_url_esc}}/usuario/metodos-acceso
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{esc_jwt}}
+}
+
+docs {
+  Como puede entrar el usuario del token: {"enlace": true, "password": false}
+  por defecto. Sin fila en usuarios_metodos_acceso valen los valores por
+  defecto de MetodosAcceso::METODOS.
+}
+
+script:pre-request {
+  const target = String(bru.getEnvVar('base_url_esc') || '');
+  const isLocal = /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(:\d+)?(\/|$)/i.test(target);
+  if (!isLocal) {
+    throw new Error('Bloqueado: la colección del backend solo se puede ejecutar contra localhost.');
+  }
+}

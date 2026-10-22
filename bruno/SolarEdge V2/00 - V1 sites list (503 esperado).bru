@@ -1,0 +1,26 @@
+meta {
+  name: 00 - V1 sites list (503 esperado)
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{base_url_solaredge_v1}}/sites/list?size=1&api_key={{solaredge_v1_api_key}}
+  body: none
+  auth: none
+}
+
+params:query {
+  size: 1
+  api_key: {{solaredge_v1_api_key}}
+}
+
+assert {
+  res.status: eq 503
+  res.body.title: eq Scheduled V1 deprecation window
+}
+
+docs {
+  Lo que usa hoy SolarEdgeService::getAllPlants. Desde octubre de 2026 responde
+  503 application/problem+json con title "Scheduled V1 deprecation window".
+}

@@ -1,0 +1,11 @@
+meta {
+  name: Victron VRM
+}
+
+docs {
+  Documentación oficial y auth actual: https://vrm-api-docs.victronenergy.com/. La cabecera es x-authorization: Token …; no usar Bearer.
+  Llamadas de SOLO LECTURA a la API real de VRM (https://vrmapi.victronenergy.com/v2/),
+  con el mismo token que usa el backend (tabla bearertoken, cabecera `x-authorization: Token ...`).
+  Reproducen las incoherencias de la planta 335939 (Ramón Pino Gordo): el VRM devuelve la
+  ULTIMA foto conocida (2023-08-07) como si fuera actual.
+}

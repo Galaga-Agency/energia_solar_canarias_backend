@@ -1,0 +1,28 @@
+meta {
+  name: 33 - GET usuario imagen
+  type: http
+  seq: 33
+}
+
+get {
+  url: {{base_url_esc}}/usuario/imagen?id={{esc_user_id}}
+  body: none
+  auth: none
+}
+
+headers {
+  Accept: application/json
+  Authorization: Bearer {{esc_jwt}}
+}
+
+docs {
+  Bearer admin; descarga imagen de un usuario. Respuesta binaria.
+}
+
+script:pre-request {
+  const target = String(bru.getEnvVar('base_url_esc') || '');
+  const isLocal = /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(:\d+)?(\/|$)/i.test(target);
+  if (!isLocal) {
+    throw new Error('Bloqueado: la colección del backend solo se puede ejecutar contra localhost.');
+  }
+}

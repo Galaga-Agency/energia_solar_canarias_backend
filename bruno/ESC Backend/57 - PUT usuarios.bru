@@ -1,0 +1,42 @@
+meta {
+  name: 57 - PUT usuarios
+  type: http
+  seq: 57
+}
+
+put {
+  url: {{base_url_esc}}/usuarios
+  body: json
+  auth: none
+}
+
+headers {
+  Accept: application/json
+  Content-Type: application/json
+  Origin: {{base_url_esc}}
+  Authorization: Bearer {{esc_jwt}}
+}
+
+script:pre-request {
+  const target = String(bru.getEnvVar('base_url_esc') || '');
+  const isLocal = /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(:\d+)?(\/|$)/i.test(target);
+  if (!isLocal) {
+    throw new Error('Bloqueado: esta operación solo se puede probar contra localhost.');
+  }
+  if (bru.getEnvVar('esc_zoho_desactivado_confirmado') !== 'si') {
+    throw new Error('Bloqueado: confirma que el backend local tiene ZOHO_DESACTIVADO=1 poniendo esc_zoho_desactivado_confirmado = si.');
+  }
+}
+
+
+body:json {
+  {
+    "idApp": "{{esc_user_id}}",
+    "nombre": "{{esc_nombre_usuario}}",
+    "origen": "app"
+  }
+}
+
+docs {
+  Bearer admin; cuerpo idApp; actualiza usuario y puede sincronizar Zoho. No ejecutar fuera de local.
+}

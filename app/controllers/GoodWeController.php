@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/../services/GoodWeEstado.php';
 require_once __DIR__ . '/../services/GoodWeService.php';
 require_once __DIR__ . '/../services/PrecioService.php';
 require_once __DIR__ . '/../controllers/LogsController.php';
@@ -77,7 +78,7 @@ class GoodWeController
             $decodedResult['data']['powercontrol_status'] = $this->mapGoodWeStatus($decodedResult['data']['powercontrol_status']);
         }
         if (isset($decodedResult['data']['info']['status'])) {
-            $decodedResult['data']['info']['status'] = $this->mapGoodWeStatus($decodedResult['data']['info']['status']);
+            $decodedResult['data']['info']['status'] = GoodWeEstado::dePlanta($decodedResult['data']['info']['status'], $decodedResult['data']['kpi']['pac'] ?? 0);
         }
 
         // Añadir el campo "organizacion" al resultado

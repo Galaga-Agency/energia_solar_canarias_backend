@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../models/conexion.php';
+require_once __DIR__ . '/GeocodificacionCachePolitica.php';
 
 /**
  * Direccion -> coordenadas, para las plantas cuyo proveedor no las da.
@@ -22,9 +23,6 @@ require_once __DIR__ . '/../models/conexion.php';
  */
 class GeocodificadorService
 {
-    /** Segundos entre llamadas a Nominatim (su politica: maximo 1/s). */
-    private const PAUSA_ENTRE_LLAMADAS = 1;
-
     /**
      * Cuantas direcciones NUEVAS se resuelven como maximo en una peticion.
      *
@@ -56,8 +54,8 @@ class GeocodificadorService
      * "esta direccion no existe" — por eso direcciones perfectamente validas
      * quedaban sin punto en el mapa.
      */
-    private static float $ultimaLlamada = 0.0;
     private static int $llamadasEstaPeticion = 0;
+    private bool $cuotaAgotada = false;
 
     public function __construct()
     {
@@ -114,25 +112,17 @@ class GeocodificadorService
             return null;
         }
 
-        // Tope DIARIO, la red de seguridad de verdad.
-        //
-        // Todo lo de arriba evita repetir consultas, pero solo funciona si la
-        // cache se puede escribir. Si la tabla desaparece o la BD rechaza el
-        // INSERT, cada carga de pantalla volveria a preguntar por las mismas
-        // direcciones y la factura crece sola. Este contador vive en la propia
-        // BD, cuenta llamadas reales y corta el grifo pase lo que pase.
-        if (!$this->quedaCuotaHoy()) {
-            return null;
-        }
-
-        $coordenadas = $this->resolverConReintentos($direccion);
+        // Tope diario y ritmo de Nominatim se aplican globalmente, entre workers,
+        // en la misma base de datos. Cada consulta HTTP se registra bajo un lock.
         self::$llamadasEstaPeticion++;
-        $this->apuntarLlamada();
+        $resolucion = $this->resolverConReintentos($direccion);
+        $coordenadas = $resolucion['coordenadas'];
+        $origen = $resolucion['origen'];
 
         // Si la cache NO se pudo escribir, se apaga el geocodificador para el
         // resto de la peticion: sin escritura no hay memoria entre cargas, y
         // seguir preguntando seria pagar lo mismo una y otra vez.
-        if (!$this->guardarCache($hash, $direccion, $coordenadas)) {
+        if (!$this->guardarCache($hash, $direccion, $coordenadas, $origen)) {
             error_log('GeocodificadorService: no se pudo escribir en cache; se detienen las consultas');
             self::$llamadasEstaPeticion = self::MAXIMO_POR_PETICION;
         }
@@ -148,7 +138,7 @@ class GeocodificadorService
     private function leerCache(string $hash)
     {
         $stmt = $this->db->prepare(
-            "SELECT latitud, longitud FROM geocodificacion_cache
+            "SELECT latitud, longitud, origen, consultado_en FROM geocodificacion_cache
               WHERE direccion_hash = ? LIMIT 1"
         );
         if (!$stmt) { return false; }
@@ -159,24 +149,28 @@ class GeocodificadorService
         $stmt->close();
 
         if (!$fila) { return false; }
+        if (GeocodificacionCachePolitica::expirada((string) $fila['origen'], (string) $fila['consultado_en'])) {
+            return false;
+        }
         if ($fila['latitud'] === null || $fila['longitud'] === null) { return null; }
 
         return ['lat' => (float) $fila['latitud'], 'lng' => (float) $fila['longitud']];
     }
 
     /** @return bool true si la fila quedo guardada. */
-    private function guardarCache(string $hash, string $direccion, ?array $coordenadas): bool
+    private function guardarCache(string $hash, string $direccion, ?array $coordenadas, string $origen): bool
     {
         $stmt = $this->db->prepare(
-            "INSERT INTO geocodificacion_cache (direccion_hash, direccion, latitud, longitud)
-             VALUES (?, ?, ?, ?)
-             ON DUPLICATE KEY UPDATE latitud = VALUES(latitud), longitud = VALUES(longitud)"
+            "INSERT INTO geocodificacion_cache (direccion_hash, direccion, latitud, longitud, origen, consultado_en)
+             VALUES (?, ?, ?, ?, ?, NOW())
+             ON DUPLICATE KEY UPDATE latitud = VALUES(latitud), longitud = VALUES(longitud),
+                                     origen = VALUES(origen), consultado_en = NOW()"
         );
         if (!$stmt) { return false; }
 
         $lat = $coordenadas['lat'] ?? null;
         $lng = $coordenadas['lng'] ?? null;
-        $stmt->bind_param('ssdd', $hash, $direccion, $lat, $lng);
+        $stmt->bind_param('ssdds', $hash, $direccion, $lat, $lng, $origen);
         $ok = $stmt->execute();
         $stmt->close();
 
@@ -184,7 +178,7 @@ class GeocodificadorService
     }
 
     /**
-     * Tope diario de llamadas reales al geocodificador.
+     * Tope diario de peticiones HTTP reales a los geocodificadores.
      *
      * 500 al dia es holgadisimo para lo que esto hace — las direcciones de una
      * flota se resuelven UNA vez y quedan cacheadas para siempre, asi que en
@@ -217,14 +211,70 @@ class GeocodificadorService
         return true;
     }
 
-    private function apuntarLlamada(): void
+    private function apuntarLlamada(string $origen): bool
     {
         $stmt = $this->db->prepare(
-            "INSERT INTO geocodificacion_llamadas (fecha, momento) VALUES (CURDATE(), NOW())"
+            "INSERT INTO geocodificacion_llamadas (fecha, momento, origen) VALUES (CURDATE(), NOW(), ?)"
         );
-        if (!$stmt) { return; }
-        $stmt->execute();
+        if (!$stmt) { return false; }
+        $stmt->bind_param('s', $origen);
+        $ok = $stmt->execute();
         $stmt->close();
+        return (bool) $ok;
+    }
+
+    /**
+     * Limita el gasto diario y serializa las consultas compartidas entre todos los
+     * procesos PHP. Nominatim exige como máximo una consulta por segundo por aplicación.
+     *
+     * @return array{lat: float, lng: float}|null|false false = no se pudo reservar
+     */
+    private function llamadaLimitada(string $origen, callable $consulta)
+    {
+        $stmt = $this->db->prepare('SELECT GET_LOCK(?, 30)');
+        if (!$stmt) return false;
+        $lock = 'esc_geocodificacion_limite';
+        $stmt->bind_param('s', $lock);
+        if (!$stmt->execute()) { $stmt->close(); return false; }
+        $fila = $stmt->get_result()->fetch_row();
+        $stmt->close();
+        if (!isset($fila[0]) || (int) $fila[0] !== 1) return false;
+
+        try {
+            if (!$this->quedaCuotaHoy()) {
+                $this->cuotaAgotada = true;
+                return false;
+            }
+
+            if ($origen === 'nominatim') {
+                $stmt = $this->db->prepare(
+                    "SELECT TIMESTAMPDIFF(MICROSECOND, momento, NOW()) AS transcurrido_us
+                       FROM geocodificacion_llamadas
+                      WHERE origen = 'nominatim'
+                   ORDER BY id DESC LIMIT 1"
+                );
+                if (!$stmt) return false;
+                $stmt->execute();
+                $ultima = $stmt->get_result()->fetch_assoc();
+                $stmt->close();
+                $transcurrido = (int) ($ultima['transcurrido_us'] ?? 1000000);
+                if ($transcurrido < 1000000) {
+                    usleep(1000000 - max(0, $transcurrido));
+                }
+            }
+
+            // El registro se escribe antes del HTTP: un worker interrumpido tampoco
+            // permite que otro salte la espera ni el límite diario.
+            if (!$this->apuntarLlamada($origen)) return false;
+            return $consulta();
+        } finally {
+            $stmt = $this->db->prepare('SELECT RELEASE_LOCK(?)');
+            if ($stmt) {
+                $stmt->bind_param('s', $lock);
+                $stmt->execute();
+                $stmt->close();
+            }
+        }
     }
 
     /**
@@ -244,32 +294,43 @@ class GeocodificadorService
      *
      * @return array{lat: float, lng: float}|null
      */
-    private function resolverConReintentos(string $direccion): ?array
+    /**
+     * Intenta Google y después las variantes de Nominatim.
+     *
+     * @return array{coordenadas: array{lat: float, lng: float}|null, origen: string}
+     */
+    private function resolverConReintentos(string $direccion): array
     {
-        // GOOGLE PRIMERO cuando hay clave.
-        //
-        // Nominatim solo conoce lo que este mapeado en OpenStreetMap, y muchas
-        // calles de los pueblos de Gran Canaria no lo estan. Peor: es
-        // incoherente — "Guia, Las Palmas" lo encuentra pero "35450 Guia, Las
-        // Palmas" no, y "35213 Telde" si mientras "Telde" no. No hay forma de
-        // reescribir la consulta que arregle eso.
-        //
-        // Google resuelve estas direcciones tal cual, en un solo intento. Se
-        // deja Nominatim como respaldo gratuito para cuando no haya clave o
-        // Google no conteste, que es mejor que quedarse sin nada.
         $clave = $_ENV['GOOGLE_GEOCODING_API_KEY'] ?? getenv('GOOGLE_GEOCODING_API_KEY') ?: null;
 
         if ($clave) {
-            $coordenadas = $this->consultarGoogle($direccion, $clave);
-            if ($coordenadas !== null) { return $coordenadas; }
+            $coordenadas = $this->llamadaLimitada(
+                'google',
+                fn() => $this->consultarGoogle($direccion, $clave)
+            );
+            if (is_array($coordenadas)) {
+                return ['coordenadas' => $coordenadas, 'origen' => 'google'];
+            }
+            if ($coordenadas === false) {
+                return ['coordenadas' => null, 'origen' => 'error_temporal'];
+            }
         }
 
         foreach ($this->variantes($direccion) as $intento) {
-            $coordenadas = $this->consultarNominatim($intento);
-            if ($coordenadas !== null) { return $coordenadas; }
+            if ($this->cuotaAgotada) break;
+            $coordenadas = $this->llamadaLimitada(
+                'nominatim',
+                fn() => $this->consultarNominatim($intento)
+            );
+            if (is_array($coordenadas)) {
+                return ['coordenadas' => $coordenadas, 'origen' => 'nominatim'];
+            }
+            if ($coordenadas === false) {
+                return ['coordenadas' => null, 'origen' => 'error_temporal'];
+            }
         }
 
-        return null;
+        return ['coordenadas' => null, 'origen' => 'no_encontrado'];
     }
 
     /**
@@ -346,15 +407,6 @@ class GeocodificadorService
      */
     private function consultarNominatim(string $direccion): ?array
     {
-        // Espera lo que falte desde la ULTIMA llamada real, sea de la instancia
-        // que sea. Con un contador por instancia no se esperaba nada, porque
-        // cada planta creaba un geocodificador nuevo.
-        $desde = microtime(true) - self::$ultimaLlamada;
-        if (self::$ultimaLlamada > 0.0 && $desde < self::PAUSA_ENTRE_LLAMADAS) {
-            usleep((int) ((self::PAUSA_ENTRE_LLAMADAS - $desde) * 1_000_000));
-        }
-        self::$ultimaLlamada = microtime(true);
-
         $url = 'https://nominatim.openstreetmap.org/search?format=json&limit=1&q='
              . urlencode($direccion);
 

@@ -1,0 +1,39 @@
+meta {
+  name: 52 - PUT usuario notificaciones
+  type: http
+  seq: 52
+}
+
+put {
+  url: {{base_url_esc}}/usuario/notificaciones
+  body: json
+  auth: none
+}
+
+headers {
+  Accept: application/json
+  Content-Type: application/json
+  Origin: {{base_url_esc}}
+  Authorization: Bearer {{esc_jwt}}
+}
+
+body:json {
+  {
+    "activas": false,
+    "email": true,
+    "severidad_minima": "critical",
+    "frecuencia": "immediate"
+  }
+}
+
+docs {
+  Bearer; cambia preferencias locales del usuario.
+}
+
+script:pre-request {
+  const target = String(bru.getEnvVar('base_url_esc') || '');
+  const isLocal = /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(:\d+)?(\/|$)/i.test(target);
+  if (!isLocal) {
+    throw new Error('Bloqueado: la colección del backend solo se puede ejecutar contra localhost.');
+  }
+}

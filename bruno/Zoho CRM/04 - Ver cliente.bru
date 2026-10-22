@@ -1,0 +1,20 @@
+meta {
+  name: 04 - Ver cliente
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{zoho_api_domain}}/crm/v2/Accounts/{{zoho_account_id}}
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Zoho-oauthtoken {{zoho_access_token}}
+}
+
+docs {
+  Ficha completa del cliente `zoho_account_id` (lo rellenan 02 y 03).
+  Solo lectura.
+}

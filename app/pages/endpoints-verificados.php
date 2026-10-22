@@ -1,5 +1,5 @@
 <?php
-// Referencia de todos los endpoints de la API, verificados end-to-end.
+// Referencia de rutas de la API; la matriz ejecutable y el estado de verificación están en documentacion/rutas-backend.md.
 // Se genera como pagina de la documentacion (index.php ?page=endpoints-verificados).
 // El texto sale de idiomas.json (seccion "endpoints") via translate(), igual que el
 // resto de la documentacion. Las rutas y metodos no se traducen (son literales de la
@@ -25,6 +25,8 @@ $t = fn($clave) => htmlspecialchars(translate('endpoints.' . $clave));
     <h2 class="text-xl font-semibold <?php echo $sub; ?> mb-2"><?php echo $t('auth_titulo'); ?></h2>
     <ul class="list-disc list-inside <?php echo $texto; ?> mb-6">
         <li><?php echo $t('auth_bearer'); ?></li>
+        <li><?php echo $t('auth_sesion'); ?></li>
+        <li><?php echo $t('auth_metodos'); ?></li>
         <li><?php echo $t('auth_apikey'); ?></li>
         <li><?php echo $t('auth_case'); ?></li>
     </ul>
@@ -51,8 +53,17 @@ $t = fn($clave) => htmlspecialchars(translate('endpoints.' . $clave));
                 <?php
                 // Cada fila: metodo, ruta, autorizacion, clave de nota (endpoints.n.<clave>).
                 $filas = [
+                    ['POST',  '/auth/magic-link',                    'publico',        'magic_link'],
+                    ['GET',   '/auth/magic?token={t}',               'publico',        'magic'],
+                    ['POST',  '/auth/magic/consume',                 'publico',        'magic_consume'],
+                    ['POST',  '/auth/handoff',                       'publico',        'handoff'],
+                    ['POST',  '/auth/password',                      'publico',        'password'],
+                    ['POST',  '/auth/refresh',                       'cookie',         'refresh'],
+                    ['POST',  '/auth/logout',                        'cookie',         'logout'],
                     ['POST',  '/login',                              'usuario+apikey', 'login'],
                     ['POST',  '/token',                              'usuario+apikey', 'token'],
+                    ['GET',   '/usuario/metodos-acceso',             'Bearer',         'metodos_get'],
+                    ['PUT',   '/usuario/metodos-acceso',             'Bearer*',        'metodos_put'],
                     ['GET',   '/usuario',                            'Bearer/Token',   'usuario'],
                     ['GET',   '/usuario/bearerToken',                'Bearer',         'bearertoken'],
                     ['GET',   '/usuarios',                           'admin',          'usuarios_get'],
@@ -73,10 +84,11 @@ $t = fn($clave) => htmlspecialchars(translate('endpoints.' . $clave));
                     ['GET',   '/plant/overview/{id}',                'propietario',    'overview'],
                     ['GET',   '/plant/benefits/{id}',                'propietario',    'benefits'],
                     ['GET',   '/plant/alert?proveedor={p}',          'propietario*',   'alert'],
-                    ['GET',   '/plants/graficas',                    'propietario',    'graficas'],
+                    ['POST',  '/plants/graficas?proveedor={p}',      'propietario',    'graficas'],
                     ['GET',   '/plants/energy/{ids}',                'propietario',    'energy'],
                     ['GET',   '/plant/grafica/bateria/{id}',         'propietario',    'bateria'],
                     ['GET',   '/plant/grafica/comparacion/{id}',     'propietario',    'comparacion'],
+                    ['POST',  '/totalrealprice?plantId={id}&proveedor={p}', 'propietario', 'totalrealprice'],
                 ];
                 foreach ($filas as $f) {
                     $colorMet = [

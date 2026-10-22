@@ -1,0 +1,20 @@
+meta {
+  name: 05 - Flujo de energia (SEMS+)
+  type: http
+  seq: 5
+}
+
+get {
+  url: https://eu-gateway.semsportal.com/web/sems/sems-plant/api/stations/flow?stationId={{goodwe_station_id}}
+  body: none
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  token: {{goodwe_token_header}}
+}
+
+docs {
+  Potencia ahora (kW): pSystem, pGrid, pConsum. Lo usa el backend solo cuando el portal antiguo dice que la planta no tiene flujo; aqui no viene la bateria.
+}

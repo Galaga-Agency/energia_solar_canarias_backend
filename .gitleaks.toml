@@ -18,8 +18,10 @@ paths = [
 
 # Valores que NO son secretos aunque lo parezcan:
 regexes = [
-  # Token PUBLICO de login de GoodWe SEMS (constante conocida, no es secreto).
-  '''\*\*\*REMOVED\*\*\*''',
+  # Ejemplo literal de la interfaz; es un placeholder, no una credencial utilizable.
+  '''tu_token_de_acceso''',
+  # Marcadores de las plantillas (bruno/environments/EU.example.bru): TU_API_KEY_..., etc.
+  '''^TU_[A-Z0-9_]+$''',
   # Marcador dejado por la purga del historial.
   '''\*\*\*REMOVED\*\*\*''',
 ]

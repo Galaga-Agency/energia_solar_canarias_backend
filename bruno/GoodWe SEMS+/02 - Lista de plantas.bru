@@ -1,0 +1,24 @@
+meta {
+  name: 02 - Lista de plantas
+  type: http
+  seq: 2
+}
+
+post {
+  url: https://www.semsportal.com/api/PowerStationMonitor/QueryPowerStationMonitor
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  Token: {{goodwe_token_header}}
+}
+
+body:json {
+  {"key":"","orderby":"","powerstation_type":"","powerstation_status":"","page_index":1,"page_size":50,"adcode":"","org_id":"","condition":""}
+}
+
+docs {
+  Portal antiguo, sigue funcionando. Devuelve como mucho 50 por pagina aunque se pidan mas: mira data.record (total) y sube page_index. GoodWeService::GetAllPlants ya pagina.
+}
