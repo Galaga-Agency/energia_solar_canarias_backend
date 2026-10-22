@@ -25,7 +25,7 @@ script:post-response {
   const data = res.body && res.body.data;
   if (data && data.tokenIdentificador) {
     bru.setVar('esc_jwt', data.tokenIdentificador);
-    console.log('esc_jwt guardado (valido ~180 dias). Usuario: ' + data.email + ' | clase: ' + data.clase);
+    console.log('esc_jwt guardado (acceso de 15 min; se renueva con la 28). Usuario: ' + data.email + ' | clase: ' + data.clase);
   } else {
     console.log('Sin JWT. Respuesta: ' + JSON.stringify(res.body));
   }
@@ -42,9 +42,17 @@ docs {
   llego por email (`esc_login_code`).
 
   Si el codigo es correcto y no ha caducado, responde con los datos del usuario y
-  `data.tokenIdentificador` = JWT valido ~180 dias. El script lo guarda en `esc_jwt`,
+  `data.tokenIdentificador` = JWT de acceso de 15 minutos de una sesion renovable (la cookie de refresh la guarda Bruno; renueva con la 28). El script lo guarda en `esc_jwt`,
   que es lo que usan todos los endpoints protegidos: `Authorization: Bearer {{esc_jwt}}`.
 
   Ojo: al validar, el backend BORRA todos los codigos de login del usuario. Si te
   equivocas de codigo tendras que repetir el paso 01.
+}
+
+script:pre-request {
+  const target = String(bru.getEnvVar('base_url_esc') || '');
+  const isLocal = /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(:\d+)?(\/|$)/i.test(target);
+  if (!isLocal) {
+    throw new Error('Bloqueado: la colección del backend solo se puede ejecutar contra localhost.');
+  }
 }

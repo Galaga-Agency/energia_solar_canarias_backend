@@ -1,0 +1,27 @@
+meta {
+  name: 04 - Stats kwh dia de la ultima conexion (con datos)
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{base_url_vrm}}/installations/{{vrm_site_id}}/stats?type=kwh&interval=days&start={{vrm_syscreated}}&end={{vrm_last_timestamp}}
+  body: none
+  auth: none
+}
+
+headers {
+  x-authorization: {{vrm_token}}
+}
+
+assert {
+  res.status: eq 200
+  res.body.success: eq true
+}
+
+tests {
+  test("Issue 2: con la ventana de la ultima conexion si hay produccion (Pb, Pc)", () => {
+    expect(res.body.records.Pb).to.be.an("array").that.is.not.empty;
+    expect(res.body.records.Pc).to.be.an("array").that.is.not.empty;
+  });
+}

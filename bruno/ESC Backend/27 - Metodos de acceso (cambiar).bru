@@ -1,0 +1,44 @@
+meta {
+  name: 27 - Metodos de acceso (cambiar)
+  type: http
+  seq: 27
+}
+
+put {
+  url: {{base_url_esc}}/usuario/metodos-acceso
+  body: json
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{esc_jwt}}
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "metodo": "password",
+    "activo": true,
+    "password": "{{esc_password}}"
+  }
+}
+
+docs {
+  Enciende o apaga UN metodo del usuario del token. Devuelve el estado de todos.
+
+    {"metodo": "password", "activo": true, "password": "..."}  encender (exige contraseña, min. 10)
+    {"metodo": "password", "activo": true, "password": "..."}  con el metodo ya encendido: cambia la contraseña
+    {"metodo": "password", "activo": false}                     apagar (la contraseña no se toca)
+    {"metodo": "enlace",   "activo": false}                     dejar de recibir enlaces por correo
+
+  400 si el metodo no existe, si falta la contraseña al encender, o si el cambio
+  dejaria la cuenta SIN ninguna forma de entrar.
+}
+
+script:pre-request {
+  const target = String(bru.getEnvVar('base_url_esc') || '');
+  const isLocal = /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(:\d+)?(\/|$)/i.test(target);
+  if (!isLocal) {
+    throw new Error('Bloqueado: la colección del backend solo se puede ejecutar contra localhost.');
+  }
+}

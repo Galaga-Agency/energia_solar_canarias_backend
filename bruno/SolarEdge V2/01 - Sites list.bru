@@ -1,0 +1,29 @@
+meta {
+  name: 01 - Sites list
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{base_url_solaredge_v2}}/sites?page=1&sites-in-page=100
+  body: none
+  auth: none
+}
+
+params:query {
+  page: 1
+  sites-in-page: 100
+}
+
+headers {
+  X-API-Key: {{solaredge_v2_api_key}}
+  Accept: application/json
+}
+
+assert {
+  res.status: eq 200
+}
+
+docs {
+  V1 sites/list. Paginado: sites-in-page max 1000 (default 50). Solo Fleet Access. Respuesta { sites: { count, site: [...] } }, id pasa a siteId (entero).
+}

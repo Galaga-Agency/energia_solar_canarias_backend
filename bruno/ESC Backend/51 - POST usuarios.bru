@@ -1,0 +1,42 @@
+meta {
+  name: 51 - POST usuarios
+  type: http
+  seq: 51
+}
+
+post {
+  url: {{base_url_esc}}/usuarios
+  body: json
+  auth: none
+}
+
+headers {
+  Accept: application/json
+  Content-Type: application/json
+  Origin: {{base_url_esc}}
+  Authorization: Bearer {{esc_jwt}}
+}
+
+script:pre-request {
+  const target = String(bru.getEnvVar('base_url_esc') || '');
+  const isLocal = /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(:\d+)?(\/|$)/i.test(target);
+  if (!isLocal) {
+    throw new Error('Bloqueado: esta operación solo se puede probar contra localhost.');
+  }
+  if (bru.getEnvVar('esc_zoho_desactivado_confirmado') !== 'si') {
+    throw new Error('Bloqueado: confirma que el backend local tiene ZOHO_DESACTIVADO=1 poniendo esc_zoho_desactivado_confirmado = si.');
+  }
+}
+
+
+body:json {
+  {
+    "email": "{{esc_nuevo_email}}",
+    "clase": "{{esc_clase}}",
+    "origen": "app"
+  }
+}
+
+docs {
+  Bearer admin; crea usuario local y puede sincronizar Zoho. Solo local desechable con ZOHO_DESACTIVADO=1.
+}

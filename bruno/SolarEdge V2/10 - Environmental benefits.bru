@@ -1,0 +1,28 @@
+meta {
+  name: 10 - Environmental benefits
+  type: http
+  seq: 11
+}
+
+get {
+  url: {{base_url_solaredge_v2}}/sites/{{solaredge_site_id}}/environmental-benefits?unit=METRIC
+  body: none
+  auth: none
+}
+
+params:query {
+  unit: METRIC
+}
+
+headers {
+  X-API-Key: {{solaredge_v2_api_key}}
+  Accept: application/json
+}
+
+assert {
+  res.status: eq 200
+}
+
+docs {
+  V1 site/{id}/envBenefits. systemUnits -> unit. Solo co2Emissions y evMiles (desaparecen treesPlanted, lightBulbs, gasEmissionSaved).
+}

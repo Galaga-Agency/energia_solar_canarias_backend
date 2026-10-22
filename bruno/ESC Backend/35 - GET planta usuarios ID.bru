@@ -1,0 +1,28 @@
+meta {
+  name: 35 - GET planta usuarios ID
+  type: http
+  seq: 35
+}
+
+get {
+  url: {{base_url_esc}}/planta/usuarios/{{esc_plant_id}}?proveedor={{esc_proveedor}}
+  body: none
+  auth: none
+}
+
+headers {
+  Accept: application/json
+  Authorization: Bearer {{esc_jwt}}
+}
+
+docs {
+  Bearer admin; lectura local de usuarios asociados.
+}
+
+script:pre-request {
+  const target = String(bru.getEnvVar('base_url_esc') || '');
+  const isLocal = /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(:\d+)?(\/|$)/i.test(target);
+  if (!isLocal) {
+    throw new Error('Bloqueado: la colección del backend solo se puede ejecutar contra localhost.');
+  }
+}

@@ -1,0 +1,27 @@
+meta {
+  name: 58 - DELETE usuario api-keys ID
+  type: http
+  seq: 58
+}
+
+delete {
+  url: {{base_url_esc}}/usuario/api-keys/{{esc_api_key_id}}
+  body: none
+  auth: none
+}
+
+headers {
+  Accept: application/json
+  Authorization: Bearer {{esc_jwt}}
+}
+docs {
+  Bearer; revoca una API key propia.
+}
+
+script:pre-request {
+  const target = String(bru.getEnvVar('base_url_esc') || '');
+  const isLocal = /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(:\d+)?(\/|$)/i.test(target);
+  if (!isLocal) {
+    throw new Error('Bloqueado: la colección del backend solo se puede ejecutar contra localhost.');
+  }
+}

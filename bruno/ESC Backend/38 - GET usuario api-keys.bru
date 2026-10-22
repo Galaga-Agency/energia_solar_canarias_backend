@@ -1,0 +1,28 @@
+meta {
+  name: 38 - GET usuario api-keys
+  type: http
+  seq: 38
+}
+
+get {
+  url: {{base_url_esc}}/usuario/api-keys
+  body: none
+  auth: none
+}
+
+headers {
+  Accept: application/json
+  Authorization: Bearer {{esc_jwt}}
+}
+
+docs {
+  Bearer; lista metadatos, nunca devuelve claves en claro.
+}
+
+script:pre-request {
+  const target = String(bru.getEnvVar('base_url_esc') || '');
+  const isLocal = /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(:\d+)?(\/|$)/i.test(target);
+  if (!isLocal) {
+    throw new Error('Bloqueado: la colección del backend solo se puede ejecutar contra localhost.');
+  }
+}

@@ -1,0 +1,51 @@
+meta {
+  name: 02 - Diagnostics (codigos de red y PV)
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{base_url_vrm}}/installations/{{vrm_site_id}}/diagnostics?count=1000
+  body: none
+  auth: none
+}
+
+headers {
+  x-authorization: {{vrm_token}}
+}
+
+assert {
+  res.status: eq 200
+  res.body.success: eq true
+}
+
+tests {
+  const recs = res.body.records;
+  const sum = (codes) => recs.filter(r => codes.includes(r.code)).reduce((a, r) => a + Number(r.rawValue), 0);
+  const one = (code) => recs.find(r => r.code === code);
+
+  test("Issue 1: i1..i3 son 'AC Consumption on Input' (lo que el diagrama pinta como Red)", () => {
+    expect(one("i1").description).to.equal("AC Consumption on Input L1");
+    expect(sum(["i1","i2","i3"])).to.be.above(3900);
+  });
+  test("Issue 1: la red real (g1..g3) es NEGATIVA (exportacion en VRM), no +4 kW de importacion", () => {
+    expect(sum(["g1","g2","g3"])).to.be.below(-3900);
+  });
+  test("Issue 1: la entrada AC del inversor esta desconectada/ignorada", () => {
+    expect(one("ic0").formattedValue).to.equal("Not connected");
+    expect(Number(one("IP1").rawValue)).to.equal(0);
+  });
+  test("Issue 1: i*/g*/Pi* son una hora mas antiguos que el resto de la foto", () => {
+    expect(one("bp").timestamp - one("i1").timestamp).to.be.above(3000);
+  });
+  test("Issue 3: 'Pico hoy' (MCPT) es de un solo regulador y de la foto de 2023", () => {
+    const mcpt = recs.filter(r => r.code === "MCPT");
+    expect(mcpt.length).to.equal(3);
+    expect(Number(mcpt[0].rawValue)).to.equal(2084);
+    expect(mcpt[0].timestamp).to.be.below(Date.now() / 1000 - 86400);
+  });
+  test("Issue 3: 't9' (lo que se pinta como Total historico) es un contador VE.Bus Inverter->AcOut a 0", () => {
+    expect(one("t9").description).to.equal("Inverter To AcOut");
+    expect(Number(one("t9").rawValue)).to.equal(0);
+  });
+}

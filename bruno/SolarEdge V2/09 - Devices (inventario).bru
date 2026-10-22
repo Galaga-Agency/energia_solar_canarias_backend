@@ -1,0 +1,31 @@
+meta {
+  name: 09 - Devices (inventario)
+  type: http
+  seq: 10
+}
+
+get {
+  url: {{base_url_solaredge_v2}}/sites/{{solaredge_site_id}}/devices?types=INVERTER&types=BATTERY&types=METER&types=GATEWAY
+  body: none
+  auth: none
+}
+
+params:query {
+  types: INVERTER
+  types: BATTERY
+  types: METER
+  types: GATEWAY
+}
+
+headers {
+  X-API-Key: {{solaredge_v2_api_key}}
+  Accept: application/json
+}
+
+assert {
+  res.status: eq 200
+}
+
+docs {
+  V1 site/{id}/inventory. Sin types solo devuelve inversores.
+}

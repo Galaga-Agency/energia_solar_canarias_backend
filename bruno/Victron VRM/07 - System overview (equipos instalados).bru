@@ -1,0 +1,33 @@
+meta {
+  name: 07 - System overview (equipos instalados)
+  type: http
+  seq: 7
+}
+
+get {
+  url: {{base_url_vrm}}/installations/{{vrm_site_id}}/system-overview
+  body: none
+  auth: none
+}
+
+headers {
+  x-authorization: {{vrm_token}}
+}
+
+assert {
+  res.status: eq 200
+  res.body.success: eq true
+}
+
+tests {
+  const devs = res.body.records.devices;
+  test("Issue 2: SI hay Solar Charger y PV Inverter instalados", () => {
+    const names = devs.map(d => d.name);
+    expect(names).to.include("Solar Charger");
+    expect(names).to.include("PV Inverter");
+  });
+  test("Gateway: lastConnection antiguo (equipo sin conexion)", () => {
+    const gw = devs.find(d => d.name === "Gateway");
+    expect(gw.lastConnection).to.be.below(Date.now() / 1000 - 86400);
+  });
+}

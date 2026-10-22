@@ -1,0 +1,30 @@
+meta {
+  name: 06 - Energy por dia
+  type: http
+  seq: 7
+}
+
+get {
+  url: {{base_url_solaredge_v2}}/sites/{{solaredge_site_id}}/energy?from={{solaredge_from}}&to={{solaredge_to}}&resolution=DAY
+  body: none
+  auth: none
+}
+
+params:query {
+  from: {{solaredge_from}}
+  to: {{solaredge_to}}
+  resolution: DAY
+}
+
+headers {
+  X-API-Key: {{solaredge_v2_api_key}}
+  Accept: application/json
+}
+
+assert {
+  res.status: eq 200
+}
+
+docs {
+  V1 site/{id}/energy y sites/{ids}/energy (el bulk desaparece: una llamada por planta). timeUnit -> resolution; startDate/endDate -> from/to ISO 8601 con zona (sin zona da 400).
+}

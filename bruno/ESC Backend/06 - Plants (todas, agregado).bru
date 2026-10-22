@@ -58,3 +58,11 @@ docs {
     /plants?usuarioId=12                        -> plantas de ese cliente
     /plants?plantId=XXX&proveedor=sungrow       -> clientes de esa planta
 }
+
+script:pre-request {
+  const target = String(bru.getEnvVar('base_url_esc') || '');
+  const isLocal = /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(:\d+)?(\/|$)/i.test(target);
+  if (!isLocal) {
+    throw new Error('Bloqueado: la colección del backend solo se puede ejecutar contra localhost.');
+  }
+}

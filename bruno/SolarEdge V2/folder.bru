@@ -1,0 +1,20 @@
+meta {
+  name: SolarEdge V2
+  seq: 6
+}
+
+docs {
+  Documentación oficial: https://developer.solaredge.com y https://api-docs.solaredge.com/docs/developer-platform/mxj41549n0nxk-migrating-from-v1-to-v2.
+  SolarEdge directo, sin pasar por nuestro backend.
+
+  La Monitoring API V1 (?api_key= en la URL) se retira en noviembre de 2026 y ya
+  devuelve 503 "Scheduled V1 deprecation window". V2 vive en
+  https://monitoringapi.solaredge.com/v2, va con cabecera X-API-Key (Fleet Access)
+  y la clave V1 NO vale: hay que crear una App "Fleet Access / My Fleet" en
+  https://developer.solaredge.com con la cuenta de instalador y pegar su
+  App API Key en solaredge_v2_api_key (environments/EU.bru, no se versiona).
+
+  00 es V1 (espera 503). 01-11 son V2 (esperan 200 cuando haya clave V2).
+  05 (power-flow) es Advanced Monitoring: solo tier Business Pro o Enterprise.
+  Guia: https://api-docs.solaredge.com/docs/developer-platform/mxj41549n0nxk-migrating-from-v1-to-v2
+}

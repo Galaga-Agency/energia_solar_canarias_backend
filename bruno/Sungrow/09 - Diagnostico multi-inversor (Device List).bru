@@ -1,0 +1,58 @@
+meta {
+  name: 09 - Diagnostico multi-inversor (Device List)
+  type: http
+  seq: 10
+}
+
+post {
+  url: {{base_url_sungrow}}/openapi/getDeviceList
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  x-access-key: {{sungrow_secret_key}}
+}
+
+body:json {
+  {
+    "appkey": "{{sungrow_appkey}}",
+    "sys_code": "901",
+    "lang": "_en_US",
+    "token": "{{sungrow_access_token}}",
+    "ps_id": "{{sungrow_diag_ps_id}}",
+    "curPage": 1,
+    "size": 100
+  }
+}
+
+script:pre-request {
+  // Planta del caso (URBASER GRAN CANARIA, 66 kWp). No es un secreto.
+  if (!bru.getVar('sungrow_diag_ps_id')) bru.setVar('sungrow_diag_ps_id', '6165627');
+}
+
+script:post-response {
+  const list = (res.body && res.body.result_data && res.body.result_data.pageList) || [];
+  const inv = list.filter(d => [1, 14].includes(Number(d.device_type)));
+  inv.forEach((d, i) => console.log(`#${i} ${d.ps_key} ${d.device_name} ${d.device_sn} ${d.device_model_code}`));
+  console.log('meter (tipo 7):', list.some(d => Number(d.device_type) === 7) ? 'si' : 'NO');
+  bru.setVar('sungrow_diag_inv_keys', JSON.stringify(inv.map(d => d.ps_key)));
+}
+
+tests {
+  test("result_code 1", () => expect(res.body.result_code).to.equal("1"));
+  test("la planta tiene MAS DE UN inversor (el backend solo usa el primero)", () => {
+    const list = res.body.result_data.pageList;
+    expect(list.filter(d => [1, 14].includes(Number(d.device_type))).length).to.be.above(1);
+  });
+}
+
+docs {
+  Causa raiz del caso 6165627: getDeviceList devuelve DOS inversores y el
+  PRIMERO de la lista (Inverter2, 6165627_1_2_3) esta a cero todo el dia
+  (p2 total = 0). SungrowService::localizarDispositivos() y getFlujoContador()
+  se quedan con el primer device_type 1/14 que aparece, asi que la grafica, el
+  flujo y la potencia "en vivo" salen de un inversor parado. La produccion real
+  esta en Inverter1 (6165627_1_1_3). Ver 10 y 11.
+}

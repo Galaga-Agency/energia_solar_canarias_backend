@@ -1,0 +1,50 @@
+meta {
+  name: 28 - Renovar sesion (refresh)
+  type: http
+  seq: 28
+}
+
+post {
+  url: {{base_url_esc}}/auth/refresh
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  Origin: {{base_url_esc}}
+}
+
+body:json {
+  {}
+}
+
+script:post-response {
+  const data = res.body && res.body.data;
+  if (data && data.tokenIdentificador) {
+    bru.setVar('esc_jwt', data.tokenIdentificador);
+    console.log('esc_jwt renovado (15 min).');
+  } else {
+    console.log('HTTP ' + res.status + ': ' + (res.body && res.body.message));
+  }
+}
+
+docs {
+  Renueva el acceso con la cookie de refresh (Bruno la guarda tras la 02, la 25 o un handoff) y la rota: cada token de refresh sirve UNA vez. Guarda el nuevo acceso en esc_jwt.
+
+  - 200: acceso nuevo de 15 min (data.tokenIdentificador) y cookie nueva.
+  - 409: otra pestaña acaba de renovar con la misma cookie. Espera 1 s y vuelve a
+    intentar; el navegador habrá aplicado la cookie nueva de la respuesta 200 ganadora.
+  - 401: sesión caducada, revocada, cookie desconocida o refresh anterior reutilizado
+    tras la ventana de 5 s. Hay que volver a entrar.
+
+  Exige Content-Type JSON y un Origin permitido (el del frontend o el del backend).
+}
+
+script:pre-request {
+  const target = String(bru.getEnvVar('base_url_esc') || '');
+  const isLocal = /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(:\d+)?(\/|$)/i.test(target);
+  if (!isLocal) {
+    throw new Error('Bloqueado: la colección del backend solo se puede ejecutar contra localhost.');
+  }
+}

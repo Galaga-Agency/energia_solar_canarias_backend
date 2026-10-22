@@ -46,14 +46,16 @@ docs {
   El script post-response guarda automaticamente el id de usuario en `esc_user_id`.
 
   ---
-  EN LOCAL: el envio de correo falla (500 "SMTP Error: Could not authenticate")
-  porque la app password de Gmail de soporte@galagaagency.com esta revocada.
-  NO IMPORTA: el codigo se inserta en la BD ANTES de mandar el email, asi que el
-  500 llega cuando el codigo YA esta guardado. Ignoralo y sacalo de la BD:
+  EN LOCAL el correo llega a Mailpit (http://localhost:8025): el codigo esta ahi.
+  Tambien esta en la tabla `token` (se guarda antes de enviar el correo).
 
-    docker compose exec -T mysql mysql -N -uescuser -pescpassword esc \
-      -e "SELECT token_login FROM token WHERE usuario_id=21 ORDER BY time_token_login DESC LIMIT 1;"
+  Para la web hay formas mas rapidas: la 25 (contraseña) o docker/login-local.sh.
+}
 
-  (cambia usuario_id por el tuyo). Pegalo en `esc_login_code` y ejecuta el 02
-  antes de que pasen los 5 minutos.
+script:pre-request {
+  const target = String(bru.getEnvVar('base_url_esc') || '');
+  const isLocal = /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(:\d+)?(\/|$)/i.test(target);
+  if (!isLocal) {
+    throw new Error('Bloqueado: la colección del backend solo se puede ejecutar contra localhost.');
+  }
 }

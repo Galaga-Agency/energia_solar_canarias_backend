@@ -1,46 +1,45 @@
 # Colección Bruno — ESC
 
-Tres carpetas:
+Carpetas disponibles:
 
-- **ESC Backend** — nuestra propia API (login + endpoints protegidos por token).
-- **Sigenergy** / **Sungrow** — las APIs de los proveedores, directas, sin pasar por nuestro backend.
+- **ESC Backend** — nuestra API (login y endpoints protegidos por token).
+- **Sigenergy**, **Sungrow**, **SolarEdge V2** y **Victron VRM** — documentación oficial y requests directos de lectura a los proveedores.
+- **Zoho CRM** — requests directos; las escrituras necesitan habilitar una variable de seguridad.
+- **GoodWe SEMS+** — endpoints observados en el portal y usados por el backend. No ejecutar el login: invalida la sesión compartida con el backend.
+
+Desde la terminal, sin abrir la app: `npx @usebruno/cli run "<carpeta>" --env EU` dentro de `bruno/`.
 
 ## Uso
 
 1. Abre Bruno → *Open Collection* → selecciona la carpeta `bruno/`.
 2. Arriba a la derecha, selecciona el environment **EU**.
-3. Las credenciales reales están en `environments/EU.bru` (NO se versiona; hay un `EU.example.bru` como plantilla).
+3. Las credenciales reales van en `environments/EU.bru` (no se versiona; usa `EU.example.bru` como plantilla).
 
 ---
 
 ## ESC Backend
 
-`base_url_esc` apunta por defecto a `http://localhost:8080` (el contenedor `esc_app` del `docker-compose.yml`). Cámbialo por la URL de producción si hace falta.
+`base_url_esc` apunta por defecto a `http://localhost:8080` (el contenedor `esc_app` del `docker-compose.yml`). Todos los requests del backend llevan un guard que bloquea cualquier host que no sea loopback; la colección es para el stack local.
 
-### Login (2 pasos, es 2FA)
+### Login
 
-**01 → email → 02**
+Tres formas de sacar el JWT (`esc_jwt`):
 
-- **01 - Login**: `POST /login` con email+password. **No devuelve el JWT**: envía un código al correo del usuario y guarda el id en `esc_user_id`.
-- Abre el email, copia el código y pégalo en la variable `esc_login_code`.
-- **02 - Validar Codigo**: `POST /token` con `{id, token}` → devuelve `data.tokenIdentificador`, el JWT (~180 días). El script lo guarda en `esc_jwt`.
+- **25 - Login con contraseña (directo)**: `POST /auth/password` con `esc_email` + `esc_password`.
+  Devuelve el JWT al momento. Solo si el usuario tiene activado el método `password`
+  (por defecto está apagado): actívalo con la **27** o en *Ajustes* de la web.
+- **Enlace por correo** (lo que usa la web): en local, `docker/login-local.sh <email>` lo
+  hace entero. El correo llega a Mailpit, en http://localhost:8025.
+- **01 → 02** (login antiguo de la app móvil): `POST /login` manda un código al correo
+  (en local, a Mailpit; también está en la tabla `token`). Pégalo en `esc_login_code` y
+  ejecuta la **02** antes de 5 minutos. Si te equivocas de código, repite la 01.
 
-Si te equivocas de código hay que repetir el 01: al validar, el backend borra los códigos del usuario. El código caduca a los **5 minutos**.
+Todas dan una **sesión renovable**: `esc_jwt` dura 15 minutos y Bruno guarda la cookie
+de refresh. Renueva con la **28** (`POST /auth/refresh`) y sal con la **29**
+(`POST /auth/logout`); después de salir, la 28 da 401.
 
-### En local el correo no sale (y no hace falta)
-
-El 01 responde `500 - SMTP Error: Could not authenticate`. Es la app password de Gmail de `soporte@galagaagency.com`, que está revocada — no es tu contraseña ni la config.
-
-Da igual para desarrollar: el código se inserta en la BD **antes** de enviar el email, así que cuando llega el 500 el código ya está guardado. Ignora el error y sácalo de la BD:
-
-```bash
-docker compose exec -T mysql mysql -N -uescuser -pescpassword esc \
-  -e "SELECT token_login FROM token WHERE usuario_id=21 ORDER BY time_token_login DESC LIMIT 1;"
-```
-
-Pégalo en `esc_login_code`, ejecuta el 02 dentro de los 5 minutos y tienes el JWT.
-
-Para arreglar el envío de verdad hace falta generar una nueva app password de Google para `soporte@galagaagency.com` y ponerla en `config/smtp.json` (ese fichero está gitignored, así que cada entorno tiene el suyo).
+La **26** muestra con qué métodos puede entrar el usuario y la **27** los cambia
+(ver [documentacion/autenticacion.md](../documentacion/autenticacion.md)).
 
 ### Usuarios de pruebas tipo cliente
 
@@ -53,7 +52,7 @@ Para probar el filtro de "solo mis plantas" hay dos usuarios de clase 2 (`usuari
 
 La contraseña y el JWT del primero están en `environments/EU.bru` (`esc_cliente_password`, `esc_cliente_jwt`), que no se versiona. Los dos comparten contraseña. Son usuarios **solo de local**: si los necesitas en otro entorno, créalos allí.
 
-Como en local no sale el correo, para renovar su JWT usa el mismo truco del login (01 → código desde la BD → 02), cambiando el `usuario_id` a 1086.
+Para renovar su JWT: `docker/login-local.sh cliente.pruebas@galagaagency.com` (enlace por Mailpit), o el 01 → 02 con su contraseña.
 
 Con ese token, `GET /plants` devuelve solo las plantas asignadas, sin `?proveedor=`. Los requests 21 y 22 asignan y quitan plantas (hace falta el JWT de admin).
 
@@ -63,7 +62,7 @@ El backend acepta **dos** esquemas en la cabecera `Authorization`:
 
 | Cabecera | De dónde sale | Caduca |
 |---|---|---|
-| `Bearer {{esc_jwt}}` | login 01→02 | ~180 días |
+| `Bearer {{esc_jwt}}` | login 01→02, 25 o enlace | 15 min (se renueva con la 28; la sesión dura hasta 180 días) |
 | `Token {{esc_api_key}}` | request 03 | no |
 
 El resto de requests usan `Bearer`. El **20** es el mismo endpoint pero con `Token`, como ejemplo.
@@ -152,6 +151,36 @@ Ojo con una incoherencia: ante una planta ajena, **`/plants/details` responde `4
 ### Ojo con relacionar (21/22)
 
 **No se comprueba que la planta exista.** Un id mal escrito responde `200` y crea una relación muerta: el admin cree que la asignó, el cliente no ve nada y nadie avisa. Aplica a los 5 proveedores.
+
+---
+
+## Zoho CRM
+
+Orden: **01** (token) → **02** / **03** / **04** (lecturas).
+
+- **02 - Buscar cliente por idApp (¿es nuevo?)**: pon el `usuario_id` de la app en
+  `zoho_id_app`. `204` = no está en el CRM (nuevo); `200` = ya existe (guarda su id en
+  `zoho_account_id` y muestra `Usuario_en_la_app`).
+- **05 / 06** cambian `Usuario_en_la_app` a `Inactivo` / `Activo` **en el CRM real**. Están
+  bloqueadas: pon `zoho_permitir_escritura = si` en el environment solo cuando de verdad
+  quieras hacerlo.
+
+Las credenciales `zoho_*` son las mismas que `ZOHO_*` de `config/.env`. Contexto completo:
+[documentacion/zoho.md](../documentacion/zoho.md).
+
+---
+
+## GoodWe SEMS+
+
+Orden: **01** (login) → cualquiera. Pon una planta en `goodwe_station_id` y un día en `goodwe_fecha`.
+
+- **02** listado (portal antiguo; máximo 50 por página).
+- **03 / 04 / 05**: curva de potencia, energía por día/mes/año y flujo, desde SEMS+. Son los
+  que usa el backend desde que GoodWe dio de baja las gráficas del portal antiguo.
+
+**Cada login invalida el token de producción** (GoodWe solo admite una sesión por cuenta).
+Se recupera solo, pero no lances la 01 en bucle. Contexto:
+[documentacion/goodwe.md](../documentacion/goodwe.md).
 
 ---
 
@@ -264,7 +293,7 @@ Con el login V1 el token **va en el BODY** como campo `token`, no como Bearer. E
 ### Rarezas de iSolarCloud
 
 - **`result_code` "1" es ÉXITO**, no un error. Los errores de token llegan como `010` / `er_token_login_invalid` con **HTTP 200** — por eso el backend no puede fiarse del 401 para detectar token caducado.
-- Las series temporales son **por dispositivo**, no por planta: `getStationRealKpi` y los endpoints de chart dan E900 Unauthorized con el plan de esta cuenta. Por eso hay que pasar por el 06 antes del 07. Además la API limita la ventana, así que el backend la trocea en bloques de 2 h y capa el total a 24 h.
+- Las series temporales son **por dispositivo**, no por planta: `getStationRealKpi` y los endpoints de chart dan E900 Unauthorized con el plan de esta cuenta. Por eso hay que pasar por el 06 antes del 07. Además la API limita la ventana, así que el backend la trocea en bloques de 2 h y capa el total a 48 h (en hora local de la planta, sin holgura).
 
 - **`lang` es obligatorio o responde en chino.** Sin él, las unidades llegan como `度`/`万度`/`欧元` y los textos del inventario también (`电表`, `阳光电源股份有限公司`). Con `"lang": "_en_US"` en el body sale todo en inglés. Tiene que llevar **el guion bajo delante**: un valor mal escrito (`en_US`) no da error de idioma, devuelve `result_code` 010 (token inválido) y dispararía el auto-refresh del token para nada. `_es_ES` se acepta pero devuelve lo mismo que el inglés (MWh/EUR/kg son símbolos universales).
 
@@ -277,6 +306,27 @@ Hay dos tipos de inversor: `device_type` 1 (`Inverter`) y 14 (`Hybrid inverter`,
 Para los del tipo 1, `getDevicePointMinuteDataList` devuelve series con normalidad. Para los híbridos responde `success` pero con **cero filas**, sea cual sea el `point` (probados p24, p1, p2, p13, p83, p14, p18) y sea cual sea el `ps_key` (el del dispositivo y el de la planta). Parece el mismo límite de plan de API que los endpoints E900, no un fallo nuestro.
 
 Consecuencia: `/plants/graficas?proveedor=sungrow` devuelve `series: []` para esas plantas. Queda pendiente confirmarlo con Sungrow.
+
+### Diagnóstico: plantas con VARIOS inversores (caso 6165627, 2026-10-21)
+
+URBASER GRAN CANARIA tiene **dos** SG33CX-P2 y ningún contador. `getDeviceList` devuelve primero `Inverter2` (`6165627_1_2_3`), que está a 0 W todo el día (`p2` total = 0), y después `Inverter1` (`6165627_1_1_3`), que es el que produce. El backend se queda con el **primer** inversor de la lista (`localizarDispositivos`, `getFlujoContador`), así que:
+
+- `/plant/power/realtime` sobrescribe `curr_power` con el `p24` del inversor parado → 0 kW y "Sin producción" en el diagrama, mientras la lista (que no pasa por ahí) dice 2,74 kW.
+- La gráfica "Diario" pide minutos solo de ese inversor → línea plana y 0,00 kWh.
+
+Peticiones de diagnóstico (solo lectura, usan `sungrow_access_token`):
+
+- **09** lista los inversores y guarda sus `ps_key` en `sungrow_diag_inv_keys`.
+- **10** `getDeviceRealTimeData` de todos: uno a 0 y otro produciendo; la suma de `p24` es la potencia de la planta.
+- **11** `getDevicePointMinuteDataList` con la ventana que usa el backend para el último bloque de "Diario". `ps_key_list` admite varios `ps_key` en una sola llamada.
+
+Además: `time_stamp`/`device_time` del minuto vienen en **hora local de la planta**, no en +08:00. La vista "Diario" manda `fechaFin` como `yyyy-mm-dd`, el backend la toma como 00:00 y le suma 12 h de holgura, así que **nunca pide nada después de las 12:00** (comprobado con 6020058 el 20/10: la serie se corta a las 12:00).
+
+**Corregido el 2026-10-21** en `SungrowService` (tests en `testing/SungrowMultiInversorTest.php`):
+
+- Tiempo real: una sola `getDeviceRealTimeData` con **todos** los inversores (`ps_key_list`) y `curr_power` = suma de sus `p24`. Si no llega dato se conserva el `curr_power` de la lista (nunca un 0 forzado), y `curr_power_update_time` es el `device_time` de la lectura (hora de Canarias), no la hora de la petición.
+- Gráficas (Diario/Custom y Semana/Mes/Año): misma llamada con todos los inversores y suma por `time_stamp`. Tensiones (`p18`-`p20`, `p44`) y SOC (`p13141`) no se suman: se promedian sin contar el 0 de un inversor parado. El contador (`p80xx`) sigue pidiéndose aparte.
+- Ventana del día: una fecha sola es el día entero (`000000`-`235959`, o hasta ahora si es hoy), sin la holgura de ±12 h. Verificado: 6020058 el 20/10 da serie de 00:00 a 23:55; 6165627 da 3,6 kW en tiempo real y curva no nula.
 
 ---
 

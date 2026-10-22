@@ -1,0 +1,41 @@
+meta {
+  name: 06 - Reactivar (ESCRIBE)
+  type: http
+  seq: 6
+}
+
+put {
+  url: {{zoho_api_domain}}/crm/v2/Accounts/{{zoho_account_id}}
+  body: json
+  auth: none
+}
+
+headers {
+  Authorization: Zoho-oauthtoken {{zoho_access_token}}
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "data": [
+      {
+        "id": "{{zoho_account_id}}",
+        "Usuario_en_la_app": "Activo"
+      }
+    ]
+  }
+}
+
+script:pre-request {
+  // Escribe en el CRM REAL. Hay que pedirlo a proposito.
+  if (bru.getEnvVar('zoho_permitir_escritura') !== 'si') {
+    throw new Error('Bloqueado: esta peticion ESCRIBE en el CRM real. Pon zoho_permitir_escritura = si en el environment si de verdad quieres hacerlo.');
+  }
+}
+
+docs {
+  Deshace la 05: vuelve a poner Usuario_en_la_app en Activo. Es lo que hay que hacer si una prueba marco como inactivo a un cliente real.
+
+  Bloqueada salvo que zoho_permitir_escritura = si.
+  Documentacion de Zoho: https://www.zoho.com/crm/developer/docs/api/v2/update-specific-record.html
+}

@@ -1,0 +1,50 @@
+meta {
+  name: 01 - Detalle instalacion (last_timestamp y extended)
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{base_url_vrm}}/users/{{vrm_user_id}}/installations?idSite={{vrm_site_id}}&extended=1
+  body: none
+  auth: none
+}
+
+headers {
+  x-authorization: {{vrm_token}}
+}
+
+assert {
+  res.status: eq 200
+  res.body.success: eq true
+}
+
+script:post-response {
+  const site = res.body.records && res.body.records[0];
+  if (site) {
+    bru.setVar('vrm_syscreated', site.syscreated);
+    bru.setVar('vrm_last_timestamp', site.last_timestamp);
+  }
+}
+
+tests {
+  const site = res.body.records[0];
+  const ext = Object.fromEntries((site.extended || []).map(e => [e.code, e]));
+  const ageDays = (Date.now() / 1000 - site.last_timestamp) / 86400;
+
+  test("Issue 1-4: la planta no envia datos desde hace mas de 1 dia (last_timestamp)", () => {
+    expect(ageDays).to.be.above(1);
+  });
+  test("Issue 4: el estado que la lista muestra es bst (Battery state), no un estado de planta", () => {
+    expect(ext.bst.idDataAttribute).to.equal(215);
+    expect(ext.bst.description).to.equal("Battery state");
+  });
+  test("Issue 1: el agregado VRM from_to_grid viene vacio (no hay red), solar_yield/consumption sí", () => {
+    expect(ext.from_to_grid.rawValue).to.equal(null);
+    expect(ext.solar_yield.rawValue).to.be.a("number");
+    expect(ext.consumption.rawValue).to.be.a("number");
+  });
+  test("Los valores 'en vivo' tienen el mismo timestamp viejo", () => {
+    expect(ext.solar_yield.timestamp).to.be.below(Date.now() / 1000 - 86400);
+  });
+}

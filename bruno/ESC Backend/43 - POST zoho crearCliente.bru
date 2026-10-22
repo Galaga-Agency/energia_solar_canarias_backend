@@ -1,0 +1,38 @@
+meta {
+  name: 43 - POST zoho crearCliente
+  type: http
+  seq: 43
+}
+
+post {
+  url: {{base_url_esc}}/zoho/crearCliente
+  body: json
+  auth: none
+}
+
+headers {
+  Accept: application/json
+  Content-Type: application/json
+  Origin: {{base_url_esc}}
+  Authorization: Bearer {{esc_jwt}}
+}
+
+script:pre-request {
+  const target = String(bru.getEnvVar('base_url_esc') || '');
+  const isLocal = /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(:\d+)?(\/|$)/i.test(target);
+  if (!isLocal) {
+    throw new Error('Bloqueado: esta operación solo se puede probar contra localhost.');
+  }
+  if (bru.getEnvVar('esc_zoho_desactivado_confirmado') !== 'si') {
+    throw new Error('Bloqueado: confirma que el backend local tiene ZOHO_DESACTIVADO=1 poniendo esc_zoho_desactivado_confirmado = si.');
+  }
+}
+
+
+body:json {
+  {}
+}
+
+docs {
+  Bearer admin; puede crear un registro CRM. Solo con ZOHO_DESACTIVADO=1 en local o con el guard de escritura habilitado.
+}

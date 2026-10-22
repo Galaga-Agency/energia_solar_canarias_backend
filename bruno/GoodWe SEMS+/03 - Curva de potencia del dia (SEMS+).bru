@@ -1,0 +1,24 @@
+meta {
+  name: 03 - Curva de potencia del dia (SEMS+)
+  type: http
+  seq: 3
+}
+
+post {
+  url: https://eu-gateway.semsportal.com/web/sems/sems-plant/api/v1/hems/power/statisticsAndPreV2
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  token: {{goodwe_token_header}}
+}
+
+body:json {
+  {"stationId":"{{goodwe_station_id}}","items":["pSystem","pConsum","pGrid"],"timeScale":1,"timeZone":-1,"startTime":"{{goodwe_fecha}} 00:00:00","endTime":"{{goodwe_fecha}} 23:59:59"}
+}
+
+docs {
+  Potencia minuto a minuto (kW): pSystem = produccion, pConsum = consumo, pGrid = red (negativo = importa). 1440 puntos; los minutos que aun no han pasado van a null. Sustituye a GetPlantPowerChart.
+}

@@ -1,0 +1,27 @@
+meta {
+  name: 60 - DELETE zoho imprimirWebhook
+  type: http
+  seq: 60
+}
+
+delete {
+  url: {{base_url_esc}}/zoho/imprimirWebhook
+  body: none
+  auth: none
+}
+
+headers {
+  Accept: application/json
+  Authorization: Bearer {{esc_jwt}}
+}
+docs {
+  Bearer admin; el handler actual vuelve a sobrescribir webhook_data.txt también con DELETE.
+}
+
+script:pre-request {
+  const target = String(bru.getEnvVar('base_url_esc') || '');
+  const isLocal = /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(:\d+)?(\/|$)/i.test(target);
+  if (!isLocal) {
+    throw new Error('Bloqueado: la colección del backend solo se puede ejecutar contra localhost.');
+  }
+}

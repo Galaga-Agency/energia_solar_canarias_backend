@@ -1,0 +1,24 @@
+meta {
+  name: 04 - Energia por dia-mes-año (SEMS+)
+  type: http
+  seq: 4
+}
+
+post {
+  url: https://eu-gateway.semsportal.com/web/sems/sems-plant/api/stations/statistics
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  token: {{goodwe_token_header}}
+}
+
+body:json {
+  {"stationId":"{{goodwe_station_id}}","isReport":false,"items":["proSystemTotalStats","proConsumStats","proGridStats","proPurchaseStats","proSelfConsumStats"],"dimension":"day","startTime":"2026-09-15 00:00:00","endTime":"{{goodwe_fecha}} 23:59:59"}
+}
+
+docs {
+  kWh por dia. dimension: day, month o year (con la ventana que toque). Ademas de las series trae totales: production, proGrid, proPurchase, proSelfConsum, contributionRate... Sustituye a GetChartByPlant.
+}
