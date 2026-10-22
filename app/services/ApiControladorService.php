@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/GoodWeEstado.php';
 require_once __DIR__ . '/../controllers/SolarEdgeController.php';
 require_once __DIR__ . '/../controllers/GoodWeController.php';
 require_once __DIR__ . '/../controllers/VictronEnergyController.php';
@@ -243,7 +244,9 @@ class ApiControladorService
             $goodWeResponse = $this->goodWeController->GetPowerStationWariningInfoByMultiCondition($pageIndex, $pageSize, $status);
             $goodWeData = json_decode($goodWeResponse, true);
 
-            if ($goodWeData != null) {
+            if (is_array($goodWeData) && !self::alarmasGoodWeValidas($goodWeData)) {
+                $this->goodWeNoDisponible($respuesta);
+            } elseif ($goodWeData != null) {
                 $this->logsController->registrarLog(Logs::INFO, "se han encontrado las plantas en GoodWe");
                 $respuesta->success($goodWeData);
             } else {
@@ -261,6 +264,27 @@ class ApiControladorService
         // Devolver el resultado como JSON
         header('Content-Type: application/json');
         echo json_encode($respuesta);
+    }
+
+    /**
+     * Una respuesta de error de GoodWe (code -1, sin data) NO es "no hay alarmas".
+     * Antes se filtraba igual y el cliente veia "todo correcto" con GoodWe caido.
+     * Una lectura de respaldo de la cache si vale: es una respuesta buena antigua.
+     */
+    private static function alarmasGoodWeValidas(array $goodWeData): bool
+    {
+        require_once __DIR__ . '/GoodWeCachePolitica.php';
+        return GoodWeCachePolitica::esValida($goodWeData) && is_array($goodWeData['data']['list'] ?? null);
+    }
+
+    private function goodWeNoDisponible(Respuesta $respuesta): void
+    {
+        $this->logsController->registrarLog(Logs::ERROR, "GoodWe no devolvio alarmas validas");
+        $respuesta->code = 503;
+        $respuesta->status = false;
+        $respuesta->data = [];
+        $respuesta->message = "GoodWe no está disponible ahora mismo. Inténtalo en unos minutos.";
+        http_response_code(503);
     }
 
     /**
@@ -290,12 +314,13 @@ class ApiControladorService
                 return;
             }
 
-            // La lista viaja en data.data.list; si GoodWe cambia la forma, se
-            // devuelve vacio en lugar de arriesgarse a enseñar de mas.
-            $lista = $goodWeData['data']['list'] ?? null;
-            if (!is_array($lista)) {
-                $lista = [];
+            if (!self::alarmasGoodWeValidas($goodWeData)) {
+                $this->goodWeNoDisponible($respuesta);
+                header('Content-Type: application/json');
+                echo json_encode($respuesta);
+                return;
             }
+            $lista = $goodWeData['data']['list'];
 
             $suyas = [];
             foreach ($lista as $alarma) {
@@ -305,7 +330,8 @@ class ApiControladorService
                 }
             }
 
-            $goodWeData['data']['list'] = $suyas;
+            // Solo datos propios: no exponer tampoco recuentos del parque ajeno.
+            $goodWeData['data'] = ['list' => $suyas, 'record' => count($suyas)];
             $respuesta->success($goodWeData);
         } catch (Throwable $e) {
             $this->logsController->registrarLog(Logs::ERROR, $e->getMessage() . "Error en el servidor de GoodWe");
@@ -599,6 +625,9 @@ class ApiControladorService
             "Sigenergy code={$e['codigo']} ({$datos['msg']}): {$e['causa']}"
         );
         http_response_code($e['http']);
+        if ($e['http'] === 429 && isset($datos['_cache']['esperar_seg'])) {
+            header('Retry-After: ' . max(1, (int) $datos['_cache']['esperar_seg']));
+        }
         header('Content-Type: application/json');
         echo json_encode($respuesta);
         return true;
@@ -901,8 +930,8 @@ class ApiControladorService
                 $solarEdgeData = json_decode($solarEdgeResponse, true);
                 $plants = $solarEdgeData;
             } elseif ($proveedor === $proveedores['VictronEnergy']) {
-                // Obtener datos de VictronEnergy
-                $victronEnergyResponse = $this->victronEnergyController->getSiteDetails($id);
+                // Obtener datos de VictronEnergy, con el total historico para la ficha
+                $victronEnergyResponse = $this->victronEnergyController->getSiteDetailsConTotales($id);
                 $victronEnergyData = json_decode($victronEnergyResponse, true);
                 $plants = $victronEnergyData;
             } elseif ($proveedor === $proveedores['Sungrow']) {
@@ -968,8 +997,8 @@ class ApiControladorService
                 }
 
                 if($proveedor == $proveedores['VictronEnergy']){
-                    // Obtener datos de VictronEnergy
-                    $victronEnergyResponse = $this->victronEnergyController->getSiteDetails($idPlanta);
+                    // Obtener datos de VictronEnergy, con el total historico para la ficha
+                    $victronEnergyResponse = $this->victronEnergyController->getSiteDetailsConTotales($idPlanta);
                     $victronEnergyData = json_decode($victronEnergyResponse, true);
                 }else{
                     $victronEnergyData = "";
@@ -1049,15 +1078,16 @@ class ApiControladorService
         // Procesar datos de GoodWe
         if (isset($goodWeData['data']['list']) && is_array($goodWeData['data']['list'])) {
             foreach ($goodWeData['data']['list'] as $plant) {
-                $status = "";
-                // Mapear el código de estado a una descripción legible
-                $status = $this->mapGoodWeStatus($plant['status']);
+                // El status de GoodWe es el peor de sus inversores: ver GoodWeEstado.
+                $status = GoodWeEstado::dePlanta($plant['status'] ?? null, $plant['pac'] ?? 0);
                 $plants[] = [
                     'id' => $plant['powerstation_id'] ?? '',
                     'name' => $plant['stationname'] ?? '',
                     'address' => $plant['location'] ?? '',
                     'capacity' => $plant['capacity'] ?? 0,
                     'status' => $status,
+                    // Caida parcial: algun inversor sin conexion mientras la planta produce.
+                    'status_detail' => GoodWeEstado::esParcial($plant['status'] ?? null, $plant['pac'] ?? 0) ? 'partial' : null,
                     'type' => $plant['powerstation_type'] ?? '',
                     'latitude' => $plant['latitude'] ?? '',
                     'longitude' => $plant['longitude'] ?? '',
@@ -1140,7 +1170,7 @@ class ApiControladorService
                 $latitud = null;
                 $longitud = null;
 
-                $address = $plant['geofence']; //Le paso el array que luego parseamos para recoger la latitud y longitud
+                $address = $plant['geofence'] ?? ''; //Le paso el array que luego parseamos para recoger la latitud y longitud
 
                 // Buscar los valores de 'lat' y 'lng'
                 if (preg_match('/"lat":([0-9\.-]+)/', $address, $latMatch)) {
@@ -1174,26 +1204,12 @@ class ApiControladorService
                 // por regulador solo aparecen en el detalle, asi que
                 // `daily_energy` se queda como estaba para no pedir una
                 // llamada por planta solo para eso.
-                $potenciaSolarW = null;
-
-                if (isset($plant['extended']) && is_array($plant['extended'])) {
-                    foreach ($plant['extended'] as $item) {
-                        if (($item['code'] ?? null) === 'solar_yield' && isset($item['rawValue'])) {
-                            $potenciaSolarW = (float) $item['rawValue'];
-                            continue;
-                        }
-
-                        if (isset($item['idDataAttribute'], $item['rawValue'])) {
-                            if ($item['idDataAttribute'] == 144) {
-                                $batterySoc = $item['rawValue'];
-                            } elseif ($item['idDataAttribute'] == 143) {
-                                $batteryVoltage = $item['rawValue'];
-                            } elseif ($item['idDataAttribute'] == 215) {
-                                $status = $item['formattedValue'];
-                            }
-                        }
-                    }
-                }
+                // Estado, bateria y potencia, SIEMPRE a cero en cada vuelta: antes
+                // $status/$batterySoc/$batteryVoltage se arrastraban de la planta
+                // anterior. Y `status` ya no es el "Battery state" (attr 215):
+                // es el estado de la planta (sin datos > 1 h -> disconnected,
+                // alarma -> error, si no working). La bateria va en batteryState.
+                $victron = VictronLogica::datosListado($plant, time());
 
                 // Construir el array de datos
                 $plants[] = [
@@ -1201,17 +1217,21 @@ class ApiControladorService
                     'name' => $plant['name'] ?? '',
                     'address' => $plant['geofence'] ?? null,
                     'capacity' => $plant['pvMax'] ?? 0,
-                    'status' => $status ?? null, // Valor predeterminado
+                    'status' => $victron['status'],
                     'type' => $plant['device_icon'] ?? '',
                     'latitude' => $latitud, // Procesado previamente
                     'longitude' => $longitud, // Procesado previamente
                     'organization' => 'victronenergy', // Valor fijo
-                    'batteryVoltage' => $batteryVoltage ?? null,
-                    'batterySoc' => $batterySoc ?? null,
+                    'batteryVoltage' => $victron['batteryVoltage'],
+                    'batterySoc' => $victron['batterySoc'],
+                    // "Cargando" / "Descargando" / "En reposo" de VRM, tal cual.
+                    'batteryState' => $victron['batteryState'],
+                    // Unix (s) del ultimo dato que mando la instalacion.
+                    'last_timestamp' => $victron['lastTimestamp'],
                     // En W, como GoodWe. Null (no 0) cuando la planta no lo
-                    // reporta: "sin lectura" y "no produce" son cosas
-                    // distintas y la interfaz las pinta distinto.
-                    'current_power' => $potenciaSolarW,
+                    // reporta o esta desconectada: "sin lectura" y "no
+                    // produce" son cosas distintas y la interfaz las pinta distinto.
+                    'current_power' => $victron['potenciaSolarW'],
                     'total_energy' => null,
                     // El listado no trae la energia del dia: los "Yield today"
                     // son por regulador y solo aparecen en el detalle.
@@ -1486,7 +1506,7 @@ class ApiControladorService
                 $latitud = null;
                 $longitud = null;
 
-                $address = $plant['geofence']; //Le paso el array que luego parseamos para recoger la latitud y longitud
+                $address = $plant['geofence'] ?? ''; //Le paso el array que luego parseamos para recoger la latitud y longitud
 
                 // Buscar los valores de 'lat' y 'lng'
                 if (preg_match('/"lat":([0-9\.-]+)/', $address, $latMatch)) {
@@ -1520,26 +1540,12 @@ class ApiControladorService
                 // por regulador solo aparecen en el detalle, asi que
                 // `daily_energy` se queda como estaba para no pedir una
                 // llamada por planta solo para eso.
-                $potenciaSolarW = null;
-
-                if (isset($plant['extended']) && is_array($plant['extended'])) {
-                    foreach ($plant['extended'] as $item) {
-                        if (($item['code'] ?? null) === 'solar_yield' && isset($item['rawValue'])) {
-                            $potenciaSolarW = (float) $item['rawValue'];
-                            continue;
-                        }
-
-                        if (isset($item['idDataAttribute'], $item['rawValue'])) {
-                            if ($item['idDataAttribute'] == 144) {
-                                $batterySoc = $item['rawValue'];
-                            } elseif ($item['idDataAttribute'] == 143) {
-                                $batteryVoltage = $item['rawValue'];
-                            } elseif ($item['idDataAttribute'] == 215) {
-                                $status = $item['formattedValue'];
-                            }
-                        }
-                    }
-                }
+                // Estado, bateria y potencia, SIEMPRE a cero en cada vuelta: antes
+                // $status/$batterySoc/$batteryVoltage se arrastraban de la planta
+                // anterior. Y `status` ya no es el "Battery state" (attr 215):
+                // es el estado de la planta (sin datos > 1 h -> disconnected,
+                // alarma -> error, si no working). La bateria va en batteryState.
+                $victron = VictronLogica::datosListado($plant, time());
 
                 // Construir el array de datos
                 $plants[] = [
@@ -1547,17 +1553,21 @@ class ApiControladorService
                     'name' => $plant['name'] ?? '',
                     'address' => $plant['geofence'] ?? null,
                     'capacity' => $plant['pvMax'] ?? 0,
-                    'status' => $status ?? null, // Valor predeterminado
+                    'status' => $victron['status'],
                     'type' => $plant['device_icon'] ?? '',
                     'latitude' => $latitud, // Procesado previamente
                     'longitude' => $longitud, // Procesado previamente
                     'organization' => 'victronenergy', // Valor fijo
-                    'batteryVoltage' => $batteryVoltage ?? null,
-                    'batterySoc' => $batterySoc ?? null,
+                    'batteryVoltage' => $victron['batteryVoltage'],
+                    'batterySoc' => $victron['batterySoc'],
+                    // "Cargando" / "Descargando" / "En reposo" de VRM, tal cual.
+                    'batteryState' => $victron['batteryState'],
+                    // Unix (s) del ultimo dato que mando la instalacion.
+                    'last_timestamp' => $victron['lastTimestamp'],
                     // En W, como GoodWe. Null (no 0) cuando la planta no lo
-                    // reporta: "sin lectura" y "no produce" son cosas
-                    // distintas y la interfaz las pinta distinto.
-                    'current_power' => $potenciaSolarW,
+                    // reporta o esta desconectada: "sin lectura" y "no
+                    // produce" son cosas distintas y la interfaz las pinta distinto.
+                    'current_power' => $victron['potenciaSolarW'],
                     'total_energy' => null,
                     // El listado no trae la energia del dia: los "Yield today"
                     // son por regulador y solo aparecen en el detalle.
@@ -1660,22 +1670,7 @@ class ApiControladorService
     /**
      * Estas funciones se utilizan para mapear el codigo de status
      */
-    // Función para mapear el estado de GoodWe a una descripción legible
-    private function mapGoodWeStatus($statusCode)
-    {
-        switch ($statusCode) {
-            case 2:
-                return 'error';
-            case 1:
-                return 'working';
-            case 0:
-                return 'waiting';
-            case -1:
-                return 'disconnected';
-            default:
-                return 'unknown';
-        }
-    }
+    // El estado de GoodWe se traduce en GoodWeEstado (compartido con el detalle).
 
     // Función para mapear el estado de SolarEdge a una descripción legible
     /**

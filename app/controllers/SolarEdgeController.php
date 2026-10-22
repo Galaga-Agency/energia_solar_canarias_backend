@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../services/SolarEdgeService.php';
+require_once __DIR__ . '/../services/SolarEdgeLogica.php';
 /**
  * @param $siteId = el id de la planta
  * @param $startDate = la fecha de inicio
@@ -121,6 +122,8 @@ class SolarEdgeController
     {
         $this->logsController->registrarLog(Logs::INFO, " accede a la api de solarEdge power en tiempo real");
         $data = $this->solarEdgeService->getPlantPowerRealtime($powerStationId);
+        $flujo = is_array($data) ? $data : json_decode(json_encode($data), true);
+        $data = is_array($flujo) ? SolarEdgeLogica::flujoEnKw($flujo) : $data;
         header('Content-Type: application/json');
         return json_encode($data);
     }
@@ -145,6 +148,9 @@ class SolarEdgeController
         $battery = isset($data) ? json_decode(json_encode($data), true) : [];
 
         $batteryValues = $battery['siteCurrentPowerFlow'] ?? [];
+        if (is_array($batteryValues)) {
+            $batteryValues = SolarEdgeLogica::flujoEnKw($batteryValues);
+        }
 
         // Obtener los datos de la planta desde el servicio de SolarEdge
         $result = $this->solarEdgeService->getSiteDetails($siteId);
@@ -204,12 +210,28 @@ class SolarEdgeController
             $overview = isset($data7) ? json_decode(json_encode($data7), true) : [];
 
             // Validamos las claves específicas
-            $solarProductionValues = $solarProduction['energy']['values'] ?? [];
-            $consumptionMeters = $consumption['energyDetails']['meters'][0]['values'] ?? [];
+            // La API declara la unidad del endpoint; la interfaz común espera kWh.
+            $solarProductionValues = SolarEdgeLogica::serieEnergiaEnKwh(
+                $solarProduction['energy']['values'] ?? [],
+                $solarProduction['energy']['unit'] ?? null
+            );
+            $consumptionMeters = SolarEdgeLogica::serieEnergiaEnKwh(
+                $consumption['energyDetails']['meters'][0]['values'] ?? [],
+                $consumption['energyDetails']['unit'] ?? null
+            );
             $batteryValues = $battery['storageData']['batteries'] ?? [];
-            $exportValues = $export['energyDetails']['meters'][0]['values'] ?? [];
-            $importValues = $import['energyDetails']['meters'][0]['values'] ?? [];
-            $selfConsumptionValues = $selfConsumption['energyDetails']['meters'][0]['values'] ?? [];
+            $exportValues = SolarEdgeLogica::serieEnergiaEnKwh(
+                $export['energyDetails']['meters'][0]['values'] ?? [],
+                $export['energyDetails']['unit'] ?? null
+            );
+            $importValues = SolarEdgeLogica::serieEnergiaEnKwh(
+                $import['energyDetails']['meters'][0]['values'] ?? [],
+                $import['energyDetails']['unit'] ?? null
+            );
+            $selfConsumptionValues = SolarEdgeLogica::serieEnergiaEnKwh(
+                $selfConsumption['energyDetails']['meters'][0]['values'] ?? [],
+                $selfConsumption['energyDetails']['unit'] ?? null
+            );
             $overviewValues = $overview['overview'] ?? [];
 
             // Inicializar las sumas

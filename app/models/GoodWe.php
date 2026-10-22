@@ -62,18 +62,13 @@ class GoodWeTokenAuthentified extends GoodWeToken{
     private $uid;
     private $token;
     
-    public function __construct($token = '***REMOVED***', $timestamp = '1734430598789', $uid = '6c763cdd-b245-4d9b-ab3f-8ccaa1c9f8b7')
+    /** Datos de una sesion; la persistencia y renovacion son de GoodWeSesionService. */
+    public function __construct($token = '', $timestamp = '', $uid = '')
     {
         parent::__construct();
+        $this->token = $token;
         $this->timestamp = $timestamp;
         $this->uid = $uid;
-        // Inicializar el controlador de proveedores
-        $proveedoresController = new ProveedoresController();
-
-        //contiene un diccionario con tokenAuth y con tokenRenovation si estos estan en la bbdd
-        $arrayToken = $proveedoresController->getTokenProveedor('GoodWe');
-        $this->token = $arrayToken['tokenAuth'];
-        $this->timestamp = $arrayToken['expires_at'];
     }
     public function getTimestamp(){
         return $this->timestamp;
@@ -91,7 +86,9 @@ class GoodWeTokenAuthentified extends GoodWeToken{
         return $this->token;
     }
     public function setToken($token){
-        $this->uid = $token;
+        // Antes escribia en $this->uid: tras un re-login el uid quedaba con el token
+        // y la siguiente peticion iba con una cabecera invalida.
+        $this->token = $token;
     }
 }
 ?>

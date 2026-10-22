@@ -49,6 +49,22 @@ class SungrowService
     private const TIPOS_INVERSOR = [1, 14];
 
     /**
+     * Zona horaria de las plantas. `time_stamp` (minutos) y `device_time` (tiempo
+     * real) llegan en hora LOCAL de la planta, no en +08:00 (comprobado el
+     * 2026-10-21 con 6165627 y 6020058: la ultima fila coincide con el reloj de
+     * Canarias). PHP corre en UTC en el contenedor, asi que "ahora" se calcula
+     * aqui y no con date().
+     */
+    private const ZONA_PLANTA = 'Atlantic/Canary';
+
+    /**
+     * Puntos que NO se suman entre varios inversores de una planta: tensiones y
+     * estado de carga. Se promedian (ignorando los ceros de un inversor parado).
+     * El resto (potencias, corrientes, energias) es aditivo.
+     */
+    private const PUNTOS_NO_ADITIVOS = ['p18', 'p19', 'p20', 'p44', 'p13141'];
+
+    /**
      * Catalogo de puntos de medida del inversor para el filtro del panel de graficas.
      *
      * Mapa etiqueta -> id de punto (pXX). p24 esta confirmado oficialmente (potencia
@@ -259,7 +275,7 @@ class SungrowService
             $devices = $inv['result_data']['pageList'] ?? $inv['result_data'] ?? [];
 
             $meterKey  = null;
-            $invKey    = null;
+            $invKeys   = [];
             $hybridKey = null;
             foreach ($devices as $d) {
                 $tipo = (int) ($d['device_type'] ?? 0);
@@ -268,8 +284,12 @@ class SungrowService
                 }
                 // 1 = string, 14 = hibrido. El hibrido no devuelve serie con
                 // este plan, pero se pide igual por si la cuenta cambia.
-                if (($tipo === 1 || $tipo === 14) && $invKey === null) {
-                    $invKey = $d['ps_key'] ?? null;
+                // TODOS los inversores, no el primero: en 6165627 (dos
+                // SG33CX) getDeviceList da primero el que esta parado y la
+                // planta salia a 0 kW mientras el otro producia.
+                $clave = (string) ($d['ps_key'] ?? '');
+                if (in_array($tipo, self::TIPOS_INVERSOR, true) && $clave !== '' && !in_array($clave, $invKeys, true)) {
+                    $invKeys[] = $clave;
                 }
                 // Solo el hibrido lleva bateria. El de string (tipo 1) no
                 // tiene, y pedirle los puntos de bateria devuelve vacio.
@@ -278,8 +298,7 @@ class SungrowService
                 }
             }
 
-            $keys = array_values(array_filter([$invKey, $meterKey]));
-            if (!count($keys)) {
+            if (!count($invKeys) && $meterKey === null) {
                 return null;
             }
 
@@ -290,19 +309,32 @@ class SungrowService
             // instantanea, que es la que usa el panel de iSolarCloud.
             $out = [];
 
-            if ($invKey !== null) {
-                $resp = $this->apiCall('/openapi/getDeviceRealTimeData', [
-                    'ps_key_list'   => [$invKey],
-                    'device_type'   => 1,
-                    'point_id_list' => ['24'],
-                ]);
-                $punto = $resp['result_data']['device_point_list'][0]['device_point'] ?? null;
-                if (isset($punto['p24']) && $punto['p24'] !== '' && $punto['p24'] !== null) {
+            if (count($invKeys)) {
+                // UNA llamada con todos los inversores (ps_key_list admite
+                // varios) y se suma su p24. Si falla o viene vacia NO se toca
+                // curr_power: se queda el de getPowerStationList, que es la
+                // potencia de planta; antes un 0 del primer inversor lo pisaba.
+                try {
+                    $resp = $this->apiCall('/openapi/getDeviceRealTimeData', [
+                        'ps_key_list'   => $invKeys,
+                        'device_type'   => 1,
+                        'point_id_list' => ['24'],
+                    ]);
+                    $suma = self::sumarPotencia($resp['result_data']['device_point_list'] ?? []);
+                } catch (Exception $e) {
+                    $suma = null;
+                }
+                if ($suma !== null) {
                     $out['curr_power'] = [
-                        'value' => round(((float) $punto['p24']) / 1000.0, 3),
+                        'value' => round($suma['w'] / 1000.0, 3),
                         'unit'  => 'kW',
                     ];
-                    $out['curr_power_update_time'] = date('c');
+                    // Hora de la LECTURA, no la de la peticion: date('c')
+                    // hacia pasar por "ahora" un dato de hace minutos.
+                    $hora = self::horaPlantaIso($suma['device_time']);
+                    if ($hora !== null) {
+                        $out['curr_power_update_time'] = $hora;
+                    }
                 }
             }
 
@@ -360,6 +392,148 @@ class SungrowService
         }
         return substr($s, 0, 4) . '-' . substr($s, 4, 2) . '-' . substr($s, 6, 2)
             . 'T' . substr($s, 8, 2) . ':' . substr($s, 10, 2) . ':' . substr($s, 12, 2);
+    }
+
+    /**
+     * Suma la potencia (p24, W) de la `device_point_list` de getDeviceRealTimeData.
+     *
+     * Una planta con varios inversores produce la SUMA de todos. Los que no
+     * traen el punto (null, "", "--") no cuentan; si ninguno lo trae devuelve
+     * null y el llamador conserva el curr_power de la lista de plantas.
+     *
+     * @param array<int, mixed> $lista
+     * @return array{w: float, device_time: ?string}|null device_time = la lectura mas reciente
+     */
+    public static function sumarPotencia(array $lista, string $punto = 'p24'): ?array
+    {
+        $total = 0.0;
+        $hay   = false;
+        $hora  = null;
+        foreach ($lista as $item) {
+            if (!is_array($item)) {
+                continue;
+            }
+            $dp = is_array($item['device_point'] ?? null) ? $item['device_point'] : $item;
+            $v  = self::aFloat($dp[$punto] ?? null);
+            if ($v === null) {
+                continue;
+            }
+            $total += $v;
+            $hay = true;
+            $t = trim((string) ($dp['device_time'] ?? ''));
+            if ($t !== '' && ($hora === null || strcmp($t, $hora) > 0)) {
+                $hora = $t;
+            }
+        }
+        return $hay ? ['w' => $total, 'device_time' => $hora] : null;
+    }
+
+    /**
+     * `20261021114500` (hora local de la planta) -> `2026-10-21T11:45:00+01:00`.
+     * Null si no se reconoce: mejor no dar hora que inventarla.
+     */
+    public static function horaPlantaIso(?string $stamp): ?string
+    {
+        $digitos = preg_replace('/\D/', '', (string) $stamp);
+        if (strlen($digitos) !== 14) {
+            return null;
+        }
+        $d = DateTimeImmutable::createFromFormat('YmdHis', $digitos, new DateTimeZone(self::ZONA_PLANTA));
+        return $d ? $d->format('c') : null;
+    }
+
+    /**
+     * Ventana [inicio, fin] (YmdHis, hora local de la planta) de la serie intradia.
+     *
+     * La vista "Diario" manda fechaInicio/fechaFin como `yyyy-mm-dd`. Antes el fin
+     * se leia como las 00:00 de ese dia y se le sumaban 12 h de "holgura" por un
+     * supuesto +08:00, asi que la serie acababa SIEMPRE a las 12:00. Las horas ya
+     * vienen en hora local: una fecha sola es el dia entero (00:00:00-23:59:59),
+     * y si ese dia es hoy, hasta ahora. Un YmdHis completo se respeta tal cual.
+     *
+     * @return array{0: string, 1: string}
+     */
+    public static function ventanaDelDia(array $params, ?DateTimeImmutable $ahora = null): array
+    {
+        $ahora   = ($ahora ?? new DateTimeImmutable('now'))->setTimezone(new DateTimeZone(self::ZONA_PLANTA));
+        $ahoraTs = $ahora->format('YmdHis');
+
+        $ini = self::aStampDia($params['start'] ?? null, false) ?? substr($ahoraTs, 0, 8) . '000000';
+        $fin = self::aStampDia($params['end'] ?? null, true) ?? $ahoraTs;
+        // Nada del futuro: el dia de hoy termina ahora (menos bloques de 2 h).
+        if (strcmp($fin, $ahoraTs) > 0) {
+            $fin = $ahoraTs;
+        }
+        return [$ini, $fin];
+    }
+
+    /** `2026-10-20` -> `20261020000000` (o `...235959` si es fin); YmdHis se deja igual. */
+    private static function aStampDia($valor, bool $esFin): ?string
+    {
+        if ($valor === null || $valor === '') {
+            return null;
+        }
+        $digitos = preg_replace('/\D/', '', (string) $valor);
+        if (strlen($digitos) === 8) {
+            return $digitos . ($esFin ? '235959' : '000000');
+        }
+        if (strlen($digitos) >= 14) {
+            return substr($digitos, 0, 14);
+        }
+        return null;
+    }
+
+    /**
+     * Fusiona las series de VARIOS dispositivos en una por punto, por time_stamp.
+     *
+     * Entrada: [ps_key => [punto => [time_stamp => ?float]]]. Los puntos aditivos
+     * (potencia, corriente, energia) se SUMAN entre inversores; los de
+     * PUNTOS_NO_ADITIVOS (tensiones, SOC) se promedian ignorando los ceros de un
+     * inversor parado. Un instante en que nadie trae valor queda a null, igual
+     * que antes con un solo inversor. Con un solo dispositivo la salida es su
+     * propia serie, ordenada por tiempo.
+     *
+     * @param array<string, array<string, array<string, ?float>>> $porClave
+     * @param array<int, string> $puntos
+     * @return array<string, array<int, array{time: ?string, value: ?float}>>
+     */
+    public static function sumarPorTimestamp(array $porClave, array $puntos): array
+    {
+        $series = array_fill_keys($puntos, []);
+        foreach ($puntos as $p) {
+            $valores = []; // ts => [valores no nulos]
+            $vistos  = []; // ts => true (aunque todos sean null)
+            foreach ($porClave as $filas) {
+                foreach (($filas[$p] ?? []) as $ts => $v) {
+                    $ts = (string) $ts;
+                    $vistos[$ts] = true;
+                    if ($v !== null) {
+                        $valores[$ts][] = (float) $v;
+                    }
+                }
+            }
+            if (!count($vistos)) {
+                continue;
+            }
+            ksort($vistos, SORT_STRING);
+            $aditivo = !in_array($p, self::PUNTOS_NO_ADITIVOS, true);
+            // PHP convierte las claves numericas ("20261020120000") en int: se
+            // devuelven como texto, igual que las manda la API.
+            foreach (array_keys($vistos) as $ts) {
+                $vs = $valores[$ts] ?? [];
+                $ts = (string) $ts;
+                if (!count($vs)) {
+                    $valor = null;
+                } elseif ($aditivo) {
+                    $valor = array_sum($vs);
+                } else {
+                    $noCero = array_values(array_filter($vs, fn($x) => $x != 0.0));
+                    $valor  = count($noCero) ? array_sum($noCero) / count($noCero) : 0.0;
+                }
+                $series[$p][] = ['time' => $ts === '' ? null : $ts, 'value' => $valor];
+            }
+        }
+        return $series;
     }
 
     // =====================================================================
@@ -537,10 +711,13 @@ class SungrowService
             }
 
             $series = array_fill_keys($puntos, []);
+            // El "dispositivo" inversor son TODOS los inversores de la planta:
+            // se piden en la misma llamada y se suman por instante.
             foreach ($porDispositivo as $key => $suyos) {
+                $claves = self::clavesDe((string) $key, $devs);
                 $parcial = $agregado
-                    ? $this->serieAgregada($key, $suyos, $level, $params)
-                    : $this->serieIntradia($key, $suyos, $params);
+                    ? $this->serieAgregada($claves, $suyos, $level, $params)
+                    : $this->serieIntradia($claves, $suyos, $params);
                 foreach ($parcial as $punto => $valores) {
                     if (!empty($valores)) {
                         $series[$punto] = $valores;
@@ -553,9 +730,10 @@ class SungrowService
             if (self::serieVacia($series)) {
                 $alternativo = $devs['contador'] ?: $devs['inversor'];
                 if ($alternativo) {
+                    $claves = self::clavesDe($alternativo, $devs);
                     $series = $agregado
-                        ? $this->serieAgregada($alternativo, $puntos, $level, $params)
-                        : $this->serieIntradia($alternativo, $puntos, $params);
+                        ? $this->serieAgregada($claves, $puntos, $level, $params)
+                        : $this->serieIntradia($claves, $puntos, $params);
                 }
             }
 
@@ -586,6 +764,22 @@ class SungrowService
         $preferido  = $esContador ? $devs['contador'] : $devs['inversor'];
 
         return $preferido ?: ($esContador ? $devs['inversor'] : $devs['contador']);
+    }
+
+    /**
+     * ps_keys que hay que pedir para un dispositivo: si es el inversor, TODOS los
+     * inversores de la planta (una planta con dos produce la suma); si no (el
+     * contador), solo ese.
+     *
+     * @return array<int, string>
+     */
+    public static function clavesDe(string $key, array $devs): array
+    {
+        $inversores = array_values(array_filter((array) ($devs['inversores'] ?? []), fn($k) => (string) $k !== ''));
+        if ($key === (string) ($devs['inversor'] ?? '') && count($inversores)) {
+            return array_map('strval', $inversores);
+        }
+        return [$key];
     }
 
     /**
@@ -673,7 +867,12 @@ class SungrowService
      * contador si responde: es exactamente lo que pasaba con el flujo en
      * tiempo real, donde el inversor no daba nada y el contador si.
      *
-     * @return array{inversor: ?string, contador: ?string, tipo: ?int}
+     * `inversores` lleva TODOS los ps_key de inversor, en el orden de
+     * getDeviceList; `inversor` sigue siendo el primero (clave de agrupacion y
+     * el `ps_key` que se devuelve). En 6165627 el primero es uno que no
+     * produce nunca, y la grafica salia plana pidiendo solo ese.
+     *
+     * @return array{inversor: ?string, inversores: array<int, string>, contador: ?string, tipo: ?int}
      */
     private function localizarDispositivos($psId)
     {
@@ -692,15 +891,19 @@ class SungrowService
                 'ps_id' => $psId, 'curPage' => 1, 'size' => 50,
             ]);
         } catch (Exception $e) {
-            return ['inversor' => null, 'contador' => null, 'tipo' => null];
+            return ['inversor' => null, 'inversores' => [], 'contador' => null, 'tipo' => null];
         }
 
-        $out = ['inversor' => null, 'contador' => null, 'tipo' => null];
+        $out = ['inversor' => null, 'inversores' => [], 'contador' => null, 'tipo' => null];
         foreach (($devs['result_data']['pageList'] ?? []) as $d) {
             $tipo = (int) ($d['device_type'] ?? 0);
             if (in_array($tipo, self::TIPOS_INVERSOR, true) && $out['inversor'] === null) {
                 $out['inversor'] = $d['ps_key'] ?? null;
                 $out['tipo'] = $tipo;
+            }
+            $clave = (string) ($d['ps_key'] ?? '');
+            if (in_array($tipo, self::TIPOS_INVERSOR, true) && $clave !== '' && !in_array($clave, $out['inversores'], true)) {
+                $out['inversores'][] = $clave;
             }
             if ($tipo === 7 && $out['contador'] === null) {
                 $out['contador'] = $d['ps_key'] ?? null;
@@ -730,52 +933,62 @@ class SungrowService
 
     /**
      * Serie intradia (Day/Custom): getDevicePointMinuteDataList. La API limita la
-     * ventana, asi que se trocea en bloques de 2h y se capa el total a 24h.
+     * ventana, asi que se trocea en bloques de 2h y se capa el total a 48h.
+     *
+     * `$psKeys` puede ser uno o varios ps_key: van todos en la MISMA llamada
+     * (ps_key_list admite lista) y se suman por time_stamp (sumarPorTimestamp).
+     *
+     * @param string|array<int, string> $psKeys
      * @return array<string, array<int, array{time:?string,value:?float}>> series por punto
      */
-    private function serieIntradia($psKey, array $puntos, array $params): array
+    private function serieIntradia($psKeys, array $puntos, array $params): array
     {
+        $psKeys   = array_values(array_map('strval', (array) $psKeys));
         $interval = (int) ($params['interval'] ?? 5);
-        $end   = $params['end']   ?? date('YmdHis');
-        $start = $params['start'] ?? date('YmdHis', strtotime('today'));
 
+        // Las horas de Sungrow ya estan en hora local de la planta: sin
+        // holgura de ±12 h (que cortaba el dia a las 12:00). Ver ventanaDelDia.
+        [$start, $end] = self::ventanaDelDia($params);
+
+        // Ida y vuelta con strtotime/date en la MISMA zona (la de PHP): el
+        // texto YmdHis que se manda es exactamente el de la ventana.
         $sTs = strtotime(self::parseTs($start));
         $eTs = strtotime(self::parseTs($end));
-
-        // Sungrow marca sus horas en +08:00 y la ventana se construye en hora
-        // local: las primeras horas del dia local caian fuera y la serie
-        // empezaba a las 5 de la manana. Se pide con holgura por los dos
-        // lados y el consumidor se queda con el dia que pidio.
-        $sTs -= 12 * 3600;
-        $eTs += 12 * 3600;
+        if ($sTs === false || $eTs === false) {
+            return array_fill_keys($puntos, []);
+        }
         if ($eTs <= $sTs) $eTs = $sTs + 3600;
-        // Recorta el FINAL, no el principio. Moviendo $sTs se perdian las
-        // primeras horas del dia: una ventana de 00:00 a 23:59 mas el margen
-        // de la zona horaria pasa de 24 h y la serie empezaba a las 5 de la
-        // manana, con la madrugada sencillamente ausente del grafico.
+        // Recorta el FINAL, no el principio: asi la madrugada nunca se pierde.
         if ($eTs - $sTs > 48 * 3600) $eTs = $sTs + 48 * 3600;
 
-        $series = array_fill_keys($puntos, []);
+        $porClave = [];
         $csv = implode(',', $puntos);
         for ($ini = $sTs; $ini < $eTs; $ini += 2 * 3600) {
             $fin = min($ini + 2 * 3600, $eTs);
             $resp = $this->apiCall('/openapi/getDevicePointMinuteDataList', [
-                'ps_key_list'      => [$psKey],
+                'ps_key_list'      => $psKeys,
                 'points'           => $csv,
                 'start_time_stamp' => date('YmdHis', $ini),
                 'end_time_stamp'   => date('YmdHis', $fin),
                 'minute_interval'  => $interval,
             ]);
-            foreach (($resp['result_data'][$psKey] ?? []) as $r) {
-                $t = $r['time_stamp'] ?? null;
-                foreach ($puntos as $p) {
-                    if (array_key_exists($p, $r)) {
-                        $series[$p][] = ['time' => $t, 'value' => self::aFloat($r[$p])];
+            foreach ($psKeys as $k) {
+                foreach (($resp['result_data'][$k] ?? []) as $r) {
+                    if (!is_array($r)) {
+                        continue;
+                    }
+                    // Indexado por time_stamp: el minuto frontera de dos
+                    // bloques llega dos veces y no debe contar doble.
+                    $t = (string) ($r['time_stamp'] ?? '');
+                    foreach ($puntos as $p) {
+                        if (array_key_exists($p, $r)) {
+                            $porClave[$k][$p][$t] = self::aFloat($r[$p]);
+                        }
                     }
                 }
             }
         }
-        return $series;
+        return self::sumarPorTimestamp($porClave, $puntos);
     }
 
     /**
@@ -851,8 +1064,16 @@ class SungrowService
         return $series;
     }
 
-    private function serieAgregada($psKey, array $puntos, string $level, array $params): array
+    /**
+     * Serie agregada (Week/Month/Year). Como la intradia: todos los inversores en
+     * una llamada y suma por time_stamp (p1/p24 de cada inversor se suman).
+     *
+     * @param string|array<int, string> $psKeys
+     * @return array<string, array<int, array{time:?string,value:?float}>>
+     */
+    private function serieAgregada($psKeys, array $puntos, string $level, array $params): array
     {
+        $psKeys = array_values(array_map('strval', (array) $psKeys));
         $qt = self::NIVELES_AGREGADOS[$level];
 
         // Una ventana explicita manda sobre la calculada. Sin esto,
@@ -865,7 +1086,7 @@ class SungrowService
             ?? self::rangoNivel($level, $params['date'] ?? null);
 
         $resp = $this->apiCall('/openapi/getDevicePointsDayMonthYearDataList', [
-            'ps_key_list' => [$psKey],
+            'ps_key_list' => $psKeys,
             'data_point'  => implode(',', $puntos),
             'data_type'   => (string) $qt,
             'query_type'  => (string) $qt,
@@ -873,17 +1094,19 @@ class SungrowService
             'end_time'    => $fin,
         ]);
 
-        $dev = $resp['result_data'][$psKey] ?? [];
-        $series = array_fill_keys($puntos, []);
-        foreach ($puntos as $p) {
-            foreach (($dev[$p] ?? []) as $row) {
-                $series[$p][] = [
-                    'time'  => $row['time_stamp'] ?? null,
-                    'value' => self::aFloat($row[(string) $qt] ?? null),
-                ];
+        $porClave = [];
+        foreach ($psKeys as $k) {
+            $dev = $resp['result_data'][$k] ?? [];
+            foreach ($puntos as $p) {
+                foreach ((array) ($dev[$p] ?? []) as $row) {
+                    if (!is_array($row)) {
+                        continue;
+                    }
+                    $porClave[$k][$p][(string) ($row['time_stamp'] ?? '')] = self::aFloat($row[(string) $qt] ?? null);
+                }
             }
         }
-        return $series;
+        return self::sumarPorTimestamp($porClave, $puntos);
     }
 
     /** Convierte el value de la API a float; null / "--" / "" -> null. */

@@ -66,6 +66,38 @@ class VictronEnergyController
         return json_encode($data);
     }
 
+    /**
+     * El detalle de la planta MAS su total historico, para la ficha.
+     *
+     * Mismo formato que getSiteDetails (la cadena de VRM, codificada) con
+     * `records[0].lifetime_energy` anadido: {kwh, Pb, Pc, Pg, desde, hasta}, o
+     * null si VRM no lo da. Va aparte de getSiteDetails porque el listado de
+     * plantas del cliente tambien lo usa, y ahi seria una llamada mas a VRM
+     * por cada planta.
+     */
+    public function getSiteDetailsConTotales($siteId)
+    {
+        $this->logsController->registrarLog(Logs::INFO, " accede a la api de VictronEnergy detalle con totales " . $siteId);
+        $crudo = $this->victronEnergyService->getSiteDetails($siteId);
+        $detalle = is_string($crudo) ? json_decode($crudo, true) : null;
+
+        if (is_array($detalle) && isset($detalle['records'][0]) && is_array($detalle['records'][0])) {
+            $planta = $detalle['records'][0];
+            try {
+                $detalle['records'][0]['lifetime_energy'] =
+                    $this->victronEnergyService->getTotalHistorico($siteId, $planta['syscreated'] ?? null);
+            } catch (Throwable $e) {
+                // El total es un extra: si falla, la ficha sale igual sin el.
+                $this->logsController->registrarLog(Logs::ERROR, "VictronEnergy total historico $siteId: " . $e->getMessage());
+                $detalle['records'][0]['lifetime_energy'] = null;
+            }
+            $crudo = json_encode($detalle);
+        }
+
+        header('Content-Type: application/json');
+        return json_encode($crudo);
+    }
+
     //Método para obtener los datos de todas las plantas
     public function getSiteRealtime($siteId)
     {

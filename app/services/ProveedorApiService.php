@@ -4,6 +4,8 @@ require_once __DIR__ . '/../proveedores/RegistroProveedores.php';
 require_once __DIR__ . '/../proveedores/ErrorProveedor.php';
 require_once __DIR__ . '/../utils/respuesta.php';
 require_once __DIR__ . '/../controllers/LogsController.php';
+require_once __DIR__ . '/CacheApiService.php';
+require_once __DIR__ . '/ProveedorCachePolitica.php';
 
 /**
  * Fachada de los endpoints de planta: UN metodo por endpoint, no uno por proveedor.
@@ -24,11 +26,13 @@ class ProveedorApiService
 {
     private $registro;
     private $logs;
+    private ?CacheApiService $cache;
 
-    public function __construct(?RegistroProveedores $registro = null, $logs = null)
+    public function __construct(?RegistroProveedores $registro = null, $logs = null, ?CacheApiService $cache = null)
     {
         $this->registro = $registro ?? RegistroProveedores::porDefecto();
         $this->logs = $logs ?? new LogsController();
+        $this->cache = $cache;
     }
 
     public function inventario(string $clave, string $planta): void
@@ -43,7 +47,7 @@ class ProveedorApiService
 
     public function alertas(string $clave, string $planta, int $pagina = 1, int $porPagina = 200): void
     {
-        $this->ejecutar($clave, 'alertas', fn(Proveedor $p) => $p->alertas($planta, $pagina, $porPagina), $planta);
+        $this->ejecutar($clave, 'alertas', fn(Proveedor $p) => $p->alertas($planta, $pagina, $porPagina), $planta, "$pagina:$porPagina");
     }
 
     public function beneficios(string $clave, string $planta): void
@@ -66,12 +70,38 @@ class ProveedorApiService
      *   sin datos -> 400
      *   excepcion -> 500
      */
-    private function ejecutar(string $clave, string $operacion, callable $llamada, string $planta): void
+    private function ejecutar(string $clave, string $operacion, callable $llamada, string $planta, string $variacion = ''): void
     {
         $respuesta = new Respuesta;
         try {
             $proveedor = $this->registro->obtener($clave);
-            $datos = $llamada($proveedor);
+            $ttl = ProveedorCachePolitica::ttl($clave, $operacion);
+            $metaCache = null;
+
+            if ($ttl === null) {
+                $datos = $llamada($proveedor);
+            } else {
+                $this->cache ??= new CacheApiService(Conexion::getInstance()->getConexion());
+                $ruta = $operacion . ':' . $planta . ($variacion !== '' ? ':' . $variacion : '');
+                $cacheado = $this->cache->recordar(
+                    $clave,
+                    $ruta,
+                    $ttl,
+                    fn() => ['code' => 200, 'data' => $llamada($proveedor)],
+                    static fn($r) => is_array($r)
+                        && (int) ($r['code'] ?? -1) === 200
+                        && is_array($r['data'] ?? null)
+                        && !isset($r['data']['error']),
+                );
+                if ((int) ($cacheado['code'] ?? -1) === -1) {
+                    throw new RuntimeException((string) ($cacheado['msg'] ?? 'Fallo del proveedor'));
+                }
+                $datos = $cacheado['data'] ?? null;
+                $metaCache = $cacheado['_cache'] ?? null;
+                if (is_array($datos) && isset($datos['_cache'])) {
+                    unset($datos['_cache']);
+                }
+            }
 
             if ($datos === null || $datos === [] || isset($datos['error'])) {
                 $this->logs->registrarLog(Logs::INFO, "No hay $operacion en {$proveedor->nombre()} para $planta");
@@ -81,6 +111,7 @@ class ProveedorApiService
             } else {
                 $this->logs->registrarLog(Logs::INFO, "$operacion de {$proveedor->nombre()} para $planta");
                 $respuesta->success($datos);
+                $respuesta->_cache = $metaCache;
             }
         } catch (ProveedorDesconocido $e) {
             $respuesta->_404();
@@ -98,6 +129,10 @@ class ProveedorApiService
             $respuesta->message = $e->getMessage();
             $respuesta->data = array_filter($e->detalles(), fn($v) => $v !== null);
             http_response_code($e->http());
+            $cacheError = $e->detalles()['_cache'] ?? null;
+            if ($e->http() === 429 && is_array($cacheError) && isset($cacheError['esperar_seg'])) {
+                header('Retry-After: ' . max(1, (int) $cacheError['esperar_seg']));
+            }
         } catch (OperacionNoSoportada $e) {
             // No es un fallo: esa API no ofrece esto. Lo declara el propio proveedor.
             $this->logs->registrarLog(Logs::INFO, $e->getMessage());

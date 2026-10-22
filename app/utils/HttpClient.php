@@ -42,7 +42,8 @@ class HttpClient {
          * Desactiva la verificación del certificado SSL.
          * Esto es útil en entornos de prueba, pero se recomienda mantenerla activada (true) en producción por motivos de seguridad.
          */
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
 
         // Ejecuta la solicitud y guarda la respuesta
         $response = curl_exec($ch);
@@ -95,7 +96,8 @@ class HttpClient {
         curl_setopt($ch, CURLOPT_TIMEOUT, 30);
 
         // Desactiva la verificación del certificado SSL (para entornos de prueba)
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
 
         // Ejecuta la solicitud y guarda la respuesta
         $response = curl_exec($ch);

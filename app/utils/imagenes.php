@@ -24,6 +24,42 @@ class Imagenes
     private $algorithm;
     private $carpetaDestino = __DIR__ . '/img/';
 
+    private function urlBase(): string
+    {
+        $configuredUrl = $_ENV['BACKEND_URL'] ?? getenv('BACKEND_URL');
+        $backendUrl = is_string($configuredUrl) ? trim($configuredUrl) : '';
+        if ($backendUrl !== '') {
+            return rtrim($backendUrl, '/');
+        }
+
+        $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+        $proxyScheme = strtolower(trim(explode(',', (string) ($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? ''))[0]));
+        $https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || $proxyScheme === 'https';
+        return ($https ? 'https://' : 'http://') . $host;
+    }
+
+    /** Devuelve una ruta bajo img/ y rechaza enlaces simbólicos que salgan de esa carpeta. */
+    private function rutaImagenSegura(string $imagen): ?string
+    {
+        $urlPath = parse_url($imagen, PHP_URL_PATH);
+        $nombre = basename(is_string($urlPath) ? $urlPath : $imagen);
+        if ($nombre === '' || $nombre === '.' || $nombre === '..') {
+            return null;
+        }
+
+        $candidata = $this->carpetaDestino . $nombre;
+        $base = realpath($this->carpetaDestino);
+        $real = realpath($candidata);
+        if ($real === false) {
+            return $candidata;
+        }
+        if ($base === false || !str_starts_with($real, $base . DIRECTORY_SEPARATOR) || !is_file($real)) {
+            return null;
+        }
+
+        return $real;
+    }
+
     public function __construct()
     {
         try {
@@ -49,17 +85,27 @@ class Imagenes
 
             // Verificar si la carpeta de destino existe, si no la creamos
             if (!is_dir($this->carpetaDestino)) {
-                mkdir($this->carpetaDestino, 0777, true); // Crear la carpeta si no existe
+                if (!mkdir($this->carpetaDestino, 0755, true) && !is_dir($this->carpetaDestino)) {
+                    $this->respuesta->_500();
+                    $this->respuesta->message = 'No se pudo preparar la carpeta de imágenes';
+                    http_response_code($this->respuesta->code);
+                    echo json_encode($this->respuesta);
+                    return;
+                }
             }
 
             // Obtener la información del archivo
-            $nombreArchivo = $_FILES['imagen']['name'];
-            $tipoArchivo = $_FILES['imagen']['type'];
             $rutaTemporal = $_FILES['imagen']['tmp_name'];
 
-            // Validar el tipo de archivo (opcional)
-            $extensionesPermitidas = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/jpg'];
-            if (!in_array($tipoArchivo, $extensionesPermitidas)) {
+            // El MIME declarado por el navegador no es fiable; se detecta desde el contenido.
+            $tipoArchivo = (new finfo(FILEINFO_MIME_TYPE))->file($rutaTemporal);
+            $extensionesPorMime = [
+                'image/jpeg' => 'jpg',
+                'image/png' => 'png',
+                'image/gif' => 'gif',
+                'image/webp' => 'webp',
+            ];
+            if (!is_string($tipoArchivo) || !isset($extensionesPorMime[$tipoArchivo]) || @getimagesize($rutaTemporal) === false) {
                 // Si el tipo no es permitido, devolvemos un error
                 $this->respuesta->_400();
                 $this->respuesta->message = 'Tipo de archivo no permitido';
@@ -69,14 +115,14 @@ class Imagenes
             }
 
             // Generamos un nombre único para el archivo para evitar sobrescribir archivos
-            $nombreArchivoFinal = uniqid('imagen_') . '.' . pathinfo($nombreArchivo, PATHINFO_EXTENSION);
+            $nombreArchivoFinal = bin2hex(random_bytes(16)) . '.' . $extensionesPorMime[$tipoArchivo];
             $rutaDestino = $this->carpetaDestino . $nombreArchivoFinal;
 
             // Movemos el archivo desde la ubicación temporal a la carpeta de destino
             if (move_uploaded_file($rutaTemporal, $rutaDestino)) {
                 $this->logsController->registrarLog(Logs::INFO, "El usuario subió una imagen: $nombreArchivoFinal");
                 // El archivo se ha subido correctamente
-                $rutaCompleta = $_SERVER['REQUEST_SCHEME'].'s' . '://' . $_SERVER['HTTP_HOST'] . '/img/' . $nombreArchivoFinal;
+                $rutaCompleta = $this->urlBase() . '/img/' . $nombreArchivoFinal;
 
                 //relacionar la imagen con el usuario
                 $usuariosDB = new UsuariosDB;
@@ -85,12 +131,10 @@ class Imagenes
                 $imagenAnterior = $usuariosDB->getUserImage($userId);
                 if ($imagenAnterior) {
                     // Extraer el nombre de la imagen anterior
-                    $imagenAnteriorNombreArray = explode("/", $imagenAnterior);
-                    $imagenAnteriorNombre = end($imagenAnteriorNombreArray);
-                    $rutaImagenAnterior = $this->carpetaDestino . $imagenAnteriorNombre;
+                    $rutaImagenAnterior = $this->rutaImagenSegura((string) $imagenAnterior);
 
                     // Borrar la imagen anterior si existe
-                    if (file_exists($rutaImagenAnterior)) {
+                    if ($rutaImagenAnterior !== null && is_file($rutaImagenAnterior)) {
                         unlink($rutaImagenAnterior);
                     }
                 }
@@ -139,10 +183,8 @@ class Imagenes
     public function borrarImagen($imagenNombre)
     {
         // Verificar que el archivo está dentro de la carpeta 'img/' (evitar ataques de manipulación de ruta)
-        $rutaImagen = $this->carpetaDestino . $imagenNombre;
-
-        // Aseguramos que la ruta esté dentro de la carpeta de imágenes
-        if (strpos(realpath($rutaImagen), realpath($this->carpetaDestino)) !== 0) {
+        $rutaImagen = $this->rutaImagenSegura((string) $imagenNombre);
+        if ($rutaImagen === null) {
             // Si la ruta no está dentro de la carpeta de imágenes, prevenimos el borrado
             $this->respuesta->_400();
             $this->respuesta->message = 'Intento de acceso no autorizado a otro archivo o el archivo no existe';
@@ -152,12 +194,12 @@ class Imagenes
         }
 
         // Verificamos si el archivo existe
-        if (file_exists($rutaImagen)) {
+        if (is_file($rutaImagen)) {
             // Intentamos borrar el archivo
             if (unlink($rutaImagen)) {
                 //Eliminar la imagen de todos los usuarios que tengan la imagen
                 $usuariosDB = new UsuariosDB;
-                $rutaCompleta = $_SERVER['REQUEST_SCHEME'] . '://' . $_SERVER['HTTP_HOST'] . '/img/' . $rutaImagen;
+                $rutaCompleta = $this->urlBase() . '/img/' . basename($rutaImagen);
                 $usuariosDesrelacionador = $usuariosDB->deleteUserImageByPath($rutaCompleta);
                 if ($usuariosDesrelacionador == false) {
                     // Si no se puede borrar el archivo
@@ -203,15 +245,11 @@ class Imagenes
         }
 
         //dejar solo la imagen
-        $imagenNombreArray = explode("/", $imagen);
-
-        $imagenNombre = $imagenNombreArray[count($imagenNombreArray) - 1];
+        $imagenNombre = basename((string) (parse_url((string) $imagen, PHP_URL_PATH) ?: $imagen));
 
         // Verificar que el archivo está dentro de la carpeta 'img/' (evitar ataques de manipulación de ruta)
-        $rutaImagen = $this->carpetaDestino . $imagenNombre;
-
-        // Aseguramos que la ruta esté dentro de la carpeta de imágenes
-        if (strpos(realpath($rutaImagen), realpath($this->carpetaDestino)) !== 0) {
+        $rutaImagen = $this->rutaImagenSegura($imagenNombre);
+        if ($rutaImagen === null) {
             // Si la ruta no está dentro de la carpeta de imágenes, prevenimos el borrado
             $this->respuesta->_400();
             $this->respuesta->message = 'Intento de acceso no autorizado a otro archivo';
@@ -221,7 +259,7 @@ class Imagenes
         }
 
         // Verificamos si el archivo existe
-        if (file_exists($rutaImagen)) {
+        if (is_file($rutaImagen)) {
             // Intentamos borrar el archivo
             if (unlink($rutaImagen)) {
                 $usuariosDB->deleteUserImage($idUser);
@@ -292,8 +330,7 @@ class Imagenes
         }
 
         // Extraer el nombre de la imagen
-        $imagenNombreArray = explode("/", $imagen);
-        $imagenNombre = $imagenNombreArray[count($imagenNombreArray) - 1];
+        $imagenNombre = basename((string) (parse_url((string) $imagen, PHP_URL_PATH) ?: $imagen));
 
         $this->obtenerImagen($imagenNombre);
     }
@@ -302,10 +339,8 @@ class Imagenes
     public function obtenerImagen($imagenNombre)
     {
         // Verificar la ruta del archivo
-        $rutaImagen = $this->carpetaDestino . $imagenNombre;
-
-        // Aseguramos que la ruta esté dentro de la carpeta de imágenes
-        if (strpos(realpath($rutaImagen), realpath($this->carpetaDestino)) !== 0) {
+        $rutaImagen = $this->rutaImagenSegura($imagenNombre);
+        if ($rutaImagen === null) {
             $this->respuesta->_400();
             $this->respuesta->message = 'Intento de acceso no autorizado a otro archivo';
             http_response_code($this->respuesta->code);
@@ -314,7 +349,7 @@ class Imagenes
         }
 
         // Verificar que el archivo exista
-        if (file_exists($rutaImagen)) {
+        if (is_file($rutaImagen)) {
             $tipoArchivo = mime_content_type($rutaImagen);
             header('Content-Type: ' . $tipoArchivo);
             readfile($rutaImagen);

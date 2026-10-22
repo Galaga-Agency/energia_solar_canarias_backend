@@ -17,7 +17,7 @@ require_once __DIR__ . '/OperacionNoSoportada.php';
 abstract class ProveedorBase implements Proveedor
 {
     /** Lanza OperacionNoSoportada con el nombre del metodo que la llamo. */
-    protected function noSoportada(string $operacion): void
+    protected function noSoportada(string $operacion): never
     {
         throw new OperacionNoSoportada($this->nombre(), $operacion);
     }
