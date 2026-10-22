@@ -229,24 +229,6 @@ class Conexion
         }
     }
 
-    //crear jwt 180 dias
-    static public function jwt($id, $email)
-    {
-        $time = time(); // Devuelve la fecha Unix actual
-        $token = array(
-            "iat" => $time, // Tiempo en que inicia el token
-            "exp" => $time + (60 * 60 * 24 * 180), // Tiempo en el que expira el token (180 días)
-            "data" => [
-                "id" => $id,
-                "email" => $email
-            ]
-        );
-
-        $jwt = JWT::encode($token, self::$secret_key, self::$algorithm);
-
-        return $jwt;
-        //echo '<pre>'; print_r($jwt); echo '</pre>'; // Sirve para saber que nos devuelve el token
-    }
 
     /**
      * JWT de sesion para el acceso por enlace magico: 30 dias.
@@ -259,19 +241,16 @@ class Conexion
      * Misma clave y mismo algoritmo que jwt(), asi que el middleware de
      * autenticacion lo valida sin cambios.
      */
-    static public function jwtSesion($id, $email)
-    {
-        $time = time();
-        $token = array(
-            "iat" => $time,
-            "exp" => $time + (60 * 60 * 24 * 30), // 30 dias
-            "data" => [
-                "id" => $id,
-                "email" => $email
-            ]
-        );
 
-        return JWT::encode($token, self::$secret_key, self::$algorithm);
+    /** Access token web corto y revocable, compatible con data.id/email. */
+    static public function jwtAcceso(int $id, string $email, string $sid): string
+    {
+        $ahora = time();
+        return JWT::encode([
+            'iat' => $ahora, 'exp' => $ahora + 900,
+            'sid' => $sid, 'token_use' => 'access',
+            'data' => ['id' => $id, 'email' => $email],
+        ], self::$secret_key, self::$algorithm);
     }
 
     static public function jwtPermanente($id, $email)
@@ -302,10 +281,30 @@ class Conexion
      * @param string $jwt Token JWT recibido
      * @return array|false Devuelve los datos del token si es válido, o false si no lo es
      */
+    /** Claims completos de un JWT ya validado (iat, sid...). null si no es valido. */
+    public static function claimsJwt($jwt): ?object
+    {
+        if (!is_string($jwt) || $jwt === '' || self::verifyJwt($jwt) === false) return null;
+        try {
+            return JWT::decode($jwt, new Key(self::$secret_key, self::$algorithm));
+        } catch (Exception $e) {
+            return null;
+        }
+    }
+
     public static function verifyJwt($jwt)
     {
         try {
             $decoded = JWT::decode($jwt, new Key(self::$secret_key, self::$algorithm));
+            // Solo valen los JWT de acceso de una sesion viva (salir, cambiar contraseña o
+            // desactivar la cuenta los invalida al momento). Los JWT largos sin sesion (30 y
+            // 180 dias) ya no se aceptan: quien tuviera uno vuelve a entrar. Las claves de
+            // API (Authorization: Token <uuid>) no pasan por aqui y siguen igual.
+            require_once __DIR__ . '/../services/SesionWebService.php';
+            if (!isset($decoded->sid) || ($decoded->token_use ?? '') !== 'access' || !is_string($decoded->sid)
+                || !(new SesionWebDB())->vigente($decoded->sid, (int) $decoded->data->id, time(), SesionWebService::INACTIVIDAD_SEG)) {
+                return false;
+            }
             return (array) $decoded->data; // Devuelve los datos si el token es válido
         } catch (Exception $e) {
             error_log("Error al verificar JWT: " . $e->getMessage());

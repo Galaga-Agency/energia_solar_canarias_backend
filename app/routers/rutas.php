@@ -87,11 +87,9 @@ $handled = false; // Bandera para indicar si la ruta fue manejada
 switch ($method) {
     case 'GET':
         switch (true) {
-            // Paso 2 del acceso sin contraseña: el usuario pulsa el enlace del
-            // correo. Valida, consume el token y REDIRIGE al frontend con un
-            // codigo de traspaso de un solo uso. Nunca devuelve JSON: aqui ha
-            // llegado un navegador siguiendo un enlace, no una llamada de la
-            // API. Ver MagicLinkController.
+            // GET solo valida y presenta confirmacion. Los scanners de correo
+            // pueden visitar enlaces automaticamente; el token se consume en
+            // el POST explicito /auth/magic/consume.
             //
             // Va lo PRIMERO del switch a proposito: es la unica ruta publica
             // del bloque GET y no debe pasar por ninguna comprobacion de token.
@@ -99,7 +97,7 @@ switch ($method) {
                 $handled = true;
                 require_once __DIR__ . '/../controllers/MagicLinkController.php';
                 $magicController = new MagicLinkController();
-                $magicController->canjearEnlace();
+                $magicController->confirmarEnlace();
                 break;
 
             case ($request === 'zoho/actualizarDatosPlantas'):
@@ -243,7 +241,9 @@ switch ($method) {
                                 $propias = (new PlantasAsociadasDB)->getPlantasAsociadasAlUsuario($idUsuario);
                                 $idsPropias = [];
                                 foreach (($propias ?: []) as $fila) {
-                                    $idsPropias[(string) $fila['planta_id']] = true;
+                                    if (strcasecmp((string) $fila['nombre_proveedor'], 'GoodWe') === 0) {
+                                        $idsPropias[(string) $fila['planta_id']] = true;
+                                    }
                                 }
                                 (new ApiControladorService)->alarmasGoodWeDelUsuario(
                                     $pageIndex,
@@ -394,6 +394,21 @@ switch ($method) {
                         http_response_code($respuesta->code);
                         echo json_encode($respuesta);
                     }
+                } else {
+                    $respuesta->_403();
+                    $respuesta->message = 'El token no se puede authentificar con exito';
+                    http_response_code($respuesta->code);
+                    echo json_encode($respuesta);
+                }
+                break;
+
+            // Metodos de acceso del propio usuario (enlace, contraseña...). El
+            // usuario_id sale del token, nunca de la peticion.
+            case ($request === 'usuario/metodos-acceso'):
+                $handled = true;
+                if ($authMiddleware->verificarTokenUsuarioActivo() != false) {
+                    require_once __DIR__ . '/../controllers/AccesoController.php';
+                    (new AccesoController())->obtenerMetodos((int) $authMiddleware->obtenerIdUsuarioActivo());
                 } else {
                     $respuesta->_403();
                     $respuesta->message = 'El token no se puede authentificar con exito';
@@ -1135,6 +1150,34 @@ switch ($method) {
                 $magicController->solicitarEnlace($postBody);
                 break;
 
+            // El enlace solo se gasta despues de que la persona confirme.
+            case ($request === 'auth/magic/consume'):
+                $handled = true;
+                require_once __DIR__ . '/../controllers/MagicLinkController.php';
+                $magicController = new MagicLinkController();
+                $magicController->consumirEnlace($_POST['token'] ?? '');
+                break;
+
+            // Entrar con email + contraseña, sin pasar por el correo. Solo si el
+            // usuario lo ha activado en Ajustes (por defecto esta apagado).
+            // Ver AccesoController y documentacion/autenticacion.md.
+            case ($request === 'auth/refresh'):
+                $handled = true;
+                require_once __DIR__ . '/../controllers/SesionWebController.php';
+                (new SesionWebController())->renovar();
+                break;
+            case ($request === 'auth/logout'):
+                $handled = true;
+                require_once __DIR__ . '/../controllers/SesionWebController.php';
+                (new SesionWebController())->cerrar();
+                break;
+
+            case ($request === 'auth/password'):
+                $handled = true;
+                require_once __DIR__ . '/../controllers/AccesoController.php';
+                (new AccesoController())->entrarConPassword(file_get_contents("php://input"));
+                break;
+
             // Paso 3: canjear el codigo de traspaso por el JWT de sesion.
             case ($request === 'auth/handoff'):
                 $handled = true;
@@ -1166,29 +1209,37 @@ switch ($method) {
             case ($request === 'clima'):
                 $handled = true;
                 if ($authMiddleware->verificarTokenUsuarioActivo() != false) {
-                    // Decodificar el cuerpo JSON
                     $input = json_decode(file_get_contents("php://input"), true);
-                    // Verificar si se proporcionó el campo 'name'
-                    if (isset($input['name'])) {
-                        $name = $input['name'];
-                        // Pasarle la ruta
-                        $openMeteo = new OpenMeteo;
-                        $resultado = $openMeteo->obtenerClima($name);
-                    } elseif (isset($input['lat']) && isset($input['long'])) {
-                        $lat = $input['lat'];
-                        $long = $input['long'];
-                        // Pasarle la ruta
-                        $openMeteo = new OpenMeteo;
-                        $resultado = $openMeteo->obtenerClimaCoordenadas($lat, $long);
-                    } else {
-                        $respuesta->_404();
-                        $respuesta->message = 'No se a encontrado el campo name o lat y long en el json';
+                    try {
+                        $openMeteo = new OpenMeteo();
+                        if (is_array($input) && isset($input['name'])) {
+                            $resultado = $openMeteo->obtenerClima($input['name']);
+                        } elseif (is_array($input) && isset($input['lat'], $input['long'])) {
+                            $resultado = $openMeteo->obtenerClimaCoordenadas($input['lat'], $input['long']);
+                        } else {
+                            $respuesta->_400();
+                            $respuesta->message = 'Indica name o las coordenadas lat y long';
+                            http_response_code($respuesta->code);
+                            echo json_encode($respuesta);
+                            break;
+                        }
+                        // /clima conserva el JSON original que consume el parser del frontend.
+                        header('Content-Type: application/json');
+                        echo $resultado;
+                    } catch (InvalidArgumentException $e) {
+                        $respuesta->_400();
+                        $respuesta->message = $e->getMessage();
                         http_response_code($respuesta->code);
                         echo json_encode($respuesta);
-                        break;
+                    } catch (Throwable $e) {
+                        error_log('Open-Meteo: ' . $e->getMessage());
+                        $respuesta->status = false;
+                        $respuesta->code = 503;
+                        $respuesta->message = 'El servicio de clima no está disponible';
+                        $respuesta->data = [];
+                        http_response_code(503);
+                        echo json_encode($respuesta);
                     }
-                    //Enviar la respuesta en formato json
-                    echo $resultado;
                 } else {
                     $respuesta->_403();
                     $respuesta->message = 'El token no se puede authentificar con exito';
@@ -1204,6 +1255,9 @@ switch ($method) {
                     if (isset($_GET['plantId']) && isset($_GET['proveedor'])) {
                         $plantId = $_GET['plantId'];
                         $proveedor = $_GET['proveedor'];
+                        // Un cliente solo ve los ingresos de SUS plantas. Antes no se
+                        // comprobaba y cualquier usuario podia pedir los de cualquier planta.
+                        if (!$authMiddleware->puedeVerPlanta($plantId, $proveedor)) break;
                         $respuesta = new Respuesta;
                         //declaramos la variable a null para evitar problemas de declaración
                         $realPrice = null;
@@ -1423,6 +1477,21 @@ switch ($method) {
 
     case 'PUT':
         switch (true) {
+            // Encender o apagar un metodo de acceso del propio usuario. Para
+            // encender la contraseña hay que mandarla: {metodo, activo, password}.
+            case ($request === 'usuario/metodos-acceso'):
+                $handled = true;
+                if ($authMiddleware->verificarTokenUsuarioActivo() != false) {
+                    require_once __DIR__ . '/../controllers/AccesoController.php';
+                    (new AccesoController())->cambiarMetodo((int) $authMiddleware->obtenerIdUsuarioActivo(), file_get_contents("php://input"), $authMiddleware->getBearerToken() ?: null);
+                } else {
+                    $respuesta->_403();
+                    $respuesta->message = 'El token no se puede authentificar con exito';
+                    http_response_code($respuesta->code);
+                    echo json_encode($respuesta);
+                }
+                break;
+
             // Guardar las preferencias de notificacion del propio usuario.
             //
             // Esta ruta estaba declarada DOS veces dentro del bloque GET: la de
@@ -1797,11 +1866,14 @@ switch ($method) {
 
                 if ($authMiddleware->verificarTokenUsuarioActivo() != false) {
                     if ($authMiddleware->verificarAdmin()) {
-                        $zohoService = new ZohoService();
-                        /*
-                        $zohoRespuesta = $zohoService->eliminarCliente($clienteId);
-                        */
-                        $respuesta->success($zohoRespuesta);
+                        // La baja directa de un Account CRM está deliberadamente
+                        // desactivada. La ruta antigua respondía con una variable
+                        // indefinida y podía aparentar éxito sin hacer nada.
+                        $respuesta->status = false;
+                        $respuesta->code = 501;
+                        $respuesta->message = 'La eliminación directa de clientes en Zoho no está habilitada';
+                        $respuesta->data = [];
+                        http_response_code(501);
                         echo json_encode($respuesta);
                     } else {
                         $respuesta->_403();

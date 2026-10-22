@@ -14,6 +14,7 @@ class Correo
     public $username;
     public $password;
     public $port;
+    public $secure;
     public $message;
 
     public function __construct()
@@ -27,7 +28,27 @@ class Correo
             $this->username = $value['username'];
             $this->password = $value['password'];
             $this->port = $value['port'];
+            // Opcional. Sin la clave se usa STARTTLS, que es lo que exige el SMTP real.
+            $this->secure = $value['secure'] ?? 'tls';
         }
+    }
+
+    /**
+     * Cifrado de la conexion SMTP.
+     *
+     * Por defecto STARTTLS. Con "secure": "none" en smtp.json se habla en claro: solo
+     * para el buzon local de desarrollo (Mailpit, ver docker-compose.yml y
+     * docker/smtp-local.json), que no ofrece TLS. Un SMTP real nunca debe ir asi.
+     */
+    private function aplicarCifrado()
+    {
+        if ($this->secure === 'none') {
+            $this->mail->SMTPSecure = '';
+            // PHPMailer intenta STARTTLS por su cuenta si el servidor lo anuncia.
+            $this->mail->SMTPAutoTLS = false;
+            return;
+        }
+        $this->mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
     }
 
     public function login($dataUsuario, $token, $idiomaUsuario = 'es')
@@ -43,7 +64,7 @@ class Correo
                 $this->mail->SMTPAuth = true;
                 $this->mail->Username = $this->username; // Tu correo de WorkMail
                 $this->mail->Password = $this->password; // Contraseña de la cuenta de WorkMail
-                $this->mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS; // Usa SSL
+                $this->aplicarCifrado();
                 $this->mail->Port = $this->port; // También puedes usar 587 para TLS
                 $this->mail->CharSet = 'UTF-8'; // Configuración para UTF-8
 
@@ -133,7 +154,7 @@ class Correo
                 $this->mail->SMTPAuth = true;
                 $this->mail->Username = $this->username; // Usuario SMTP
                 $this->mail->Password = $this->password; // Contraseña SMTP
-                $this->mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS; // SSL
+                $this->aplicarCifrado();
                 $this->mail->Port = $this->port; // Puerto
                 $this->mail->CharSet = 'UTF-8'; // Configuración para UTF-8
 
@@ -273,7 +294,7 @@ class Correo
             $this->mail->SMTPAuth = true;
             $this->mail->Username = $this->username;
             $this->mail->Password = $this->password;
-            $this->mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+            $this->aplicarCifrado();
             $this->mail->Port = $this->port;
             $this->mail->CharSet = 'UTF-8';
 
@@ -347,6 +368,69 @@ class Correo
         }
     }
 
+    /**
+     * Aviso de seguridad: han cambiado las formas de entrar de la cuenta.
+     *
+     * Se envia siempre, lo haya hecho el propio usuario o no: si alguien con su
+     * sesion activa pone una contraseña o apaga el enlace, el dueño se entera.
+     * $cambios: frases ya redactadas (sin datos del usuario), una por linea.
+     */
+    public function avisoCambioAcceso($dataUsuario, array $cambios, $idiomaUsuario = 'es')
+    {
+        try {
+            if (!isset($dataUsuario['email'])) {
+                throw new Exception('falta el email del usuario');
+            }
+            $this->mail->isSMTP();
+            $this->mail->Host = $this->host;
+            $this->mail->SMTPAuth = true;
+            $this->mail->Username = $this->username;
+            $this->mail->Password = $this->password;
+            $this->aplicarCifrado();
+            $this->mail->Port = $this->port;
+            $this->mail->CharSet = 'UTF-8';
+            $this->mail->setFrom('admin@app-energiasolarcanarias.com', 'Energía Solar Canarias');
+            $this->mail->addAddress($dataUsuario['email'], $dataUsuario['nombre'] ?? '');
+            $this->mail->isHTML(true);
+
+            $nombreSeguro = htmlentities($dataUsuario['nombre'] ?? '');
+            $lista = '';
+            foreach ($cambios as $cambio) {
+                $lista .= '<li style="margin:0 0 6px;">' . htmlentities($cambio) . '</li>';
+            }
+            if ($idiomaUsuario == 'es') {
+                $this->mail->Subject = 'Han cambiado las formas de entrar en tu cuenta';
+                $saludo = 'Hola ' . $nombreSeguro . ',';
+                $intro = 'Se acaban de hacer estos cambios en cómo se entra en tu cuenta de Energía Solar Canarias:';
+                $aviso = 'Si has sido tú, no tienes que hacer nada. Si no reconoces este cambio, escríbenos cuanto antes a info@energiasolarcanarias.es.';
+            } else {
+                $this->mail->Subject = 'Your sign-in methods have changed';
+                $saludo = 'Hi ' . $nombreSeguro . ',';
+                $intro = 'These changes were just made to how your Energía Solar Canarias account signs in:';
+                $aviso = 'If this was you, there is nothing to do. If you do not recognise it, write to info@energiasolarcanarias.es as soon as possible.';
+            }
+            $this->message =
+                '<div style="background:#f4f1ea;padding:32px 16px;font-family:Helvetica,Arial,sans-serif;">'
+                . '<div style="max-width:520px;margin:0 auto;background:#ffffff;padding:32px;">'
+                . '<p style="font-size:18px;color:#21332a;margin:0 0 16px;">' . $saludo . '</p>'
+                . '<p style="font-size:16px;color:#21332a;line-height:1.5;margin:0 0 16px;">' . $intro . '</p>'
+                . '<ul style="font-size:16px;color:#21332a;line-height:1.5;margin:0 0 24px;padding-left:20px;">' . $lista . '</ul>'
+                . '<p style="font-size:14px;color:#5b5551;line-height:1.5;margin:0;">' . $aviso . '</p>'
+                . '</div>'
+                . '<div style="text-align:center;margin-top:24px;">'
+                . '<img src="' . $this->backendUrl() . '/public/assets/img/logo-esc-2026.png"'
+                . ' width="200" style="width:200px;height:auto;" alt="Energía Solar Canarias">'
+                . '</div>'
+                . '</div>';
+            $this->mail->Body = $this->message;
+            $this->mail->send();
+            return true;
+        } catch (Exception $e) {
+            error_log('Correo avisoCambioAcceso: ' . $e->getMessage());
+            return false;
+        }
+    }
+
     public function recuperarContrasena($dataUsuario, $tokenRecuperacion, $idiomaUsuario = 'es')
     {
         try {
@@ -360,7 +444,7 @@ class Correo
                 $this->mail->SMTPAuth = true;
                 $this->mail->Username = $this->username; // Tu correo de WorkMail
                 $this->mail->Password = $this->password; // Contraseña de la cuenta de WorkMail
-                $this->mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS; // Usa SSL
+                $this->aplicarCifrado();
                 $this->mail->Port = $this->port; // También puedes usar 587 para TLS
                 $this->mail->CharSet = 'UTF-8'; // Configuración para UTF-8
 
@@ -447,7 +531,7 @@ class Correo
             $this->mail->SMTPAuth = true;
             $this->mail->Username = $this->username;
             $this->mail->Password = $this->password;
-            $this->mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+            $this->aplicarCifrado();
             $this->mail->Port = $this->port;
             $this->mail->CharSet = 'UTF-8';
 

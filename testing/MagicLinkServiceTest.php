@@ -107,6 +107,29 @@ class MagicLinkServiceTest extends TestCase
         $this->assertSame(0, $conexion->numeroDeConsultas());
     }
 
+    /** Abrir la URL del correo solo comprueba el token; no lo consume. */
+    public function testValidarMagicLinkEsUnaConsultaDeSoloLectura()
+    {
+        $conexion = ConexionDoble::conGuion([
+            'SELECT usuario_id FROM magic_links' => ['fila' => ['usuario_id' => 7]],
+        ]);
+        $servicio = new MagicLinkService($conexion);
+
+        $this->assertTrue($servicio->validarMagicLink(str_repeat('a', 64)));
+        $this->assertStringContainsStringIgnoringCase('SELECT', $conexion->primerStatement());
+        $this->assertStringContainsString('consumido_en IS NULL', $conexion->primerStatement());
+        $this->assertStringContainsString('expira_en > NOW()', $conexion->primerStatement());
+    }
+
+    public function testTokenMalformadoSeRechazaSinConsultarLaBaseDeDatos()
+    {
+        $conexion = ConexionDoble::conGuion([]);
+        $servicio = new MagicLinkService($conexion);
+
+        $this->assertFalse($servicio->validarMagicLink('abc'));
+        $this->assertSame(0, $conexion->numeroDeConsultas());
+    }
+
     public function testElHandoffSeComportaIgualQueElEnlace()
     {
         $servicio = new MagicLinkService(ConexionDoble::conInsert('auth_handoffs'));
