@@ -1,5 +1,31 @@
 name: energia-solar-canarias
 
+# Configuracion comun de los procesos periodicos (crons): misma imagen que el
+# backend, mismo codigo montado, Zoho desconectado y TODO el correo a Mailpit.
+x-cron: &cron
+  build:
+    context: .
+    dockerfile: Dockerfile
+  restart: unless-stopped
+  depends_on:
+    mysql:
+      condition: service_healthy
+    mailpit:
+      condition: service_started
+  working_dir: /var/www/html
+  environment:
+    TZ: Atlantic/Canary
+    ZOHO_DESACTIVADO: ${ZOHO_DESACTIVADO:-1}
+    FRONTEND_URL: http://localhost:3001
+    BACKEND_URL: http://localhost:8080
+  volumes:
+    - ./:/var/www/html
+    - /var/www/html/vendor
+    # Un cron que manda correos (avisos) nunca puede usar el SMTP real en local.
+    - ./docker/smtp-local.json:/var/www/html/config/smtp.json:ro
+  networks:
+    - esc_net
+
 services:
   # ---------------------------------------------------------------------------
   # Base de datos MySQL
@@ -44,10 +70,27 @@ services:
     depends_on:
       mysql:
         condition: service_healthy
+      mailpit:
+        condition: service_started
     environment:
       TZ: Atlantic/Canary
+      # A donde apuntan el enlace del correo de acceso y la redireccion tras
+      # canjearlo. Sin esto valen los de produccion y el login local acaba alli.
+      FRONTEND_URL: http://localhost:3001
+      BACKEND_URL: http://localhost:8080
+      # Local NUNCA habla con el Zoho real, aunque config/.env traiga las claves:
+      # una baja de pruebas llego a escribir en el CRM de produccion. Para probar
+      # Zoho a proposito, ponlo a 0 (ver documentacion/zoho.md).
+      ZOHO_DESACTIVADO: ${ZOHO_DESACTIVADO:-1}
     ports:
       - "8080:80"
+    # Sano = Apache sirve PHP y la BD responde (la pagina de documentacion la usa).
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "-o", "/dev/null", "http://localhost/?page=endpoints-verificados"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
     volumes:
       # Codigo montado para desarrollo en caliente. Se excluye vendor/ para usar
       # el que instala la imagen (evita problemas de permisos/plataforma).
@@ -57,6 +100,42 @@ services:
       # backend. Solo aqui: produccion despliega con git pull y sus cabeceras las
       # pone el vhost del VPS. Ver docker/cors-dev.conf.
       - ./docker/cors-dev.conf:/etc/apache2/conf-enabled/cors-dev.conf:ro
+      # En local TODO el correo va a Mailpit, tenga lo que tenga config/smtp.json.
+      # Asi no sale ningun correo real desde un entorno de pruebas. Ver README,
+      # "Entrar en local".
+      - ./docker/smtp-local.json:/var/www/html/config/smtp.json:ro
+    networks:
+      - esc_net
+
+  # ---------------------------------------------------------------------------
+  # Frontend local en la misma red. El navegador usa /backend-api; Next lo
+  # reenvia a http://app sin exponer nombres de Docker al navegador.
+  # ---------------------------------------------------------------------------
+  frontend:
+    build:
+      context: ../energia_solar_canarias_frontend
+      dockerfile: Dockerfile.local
+    container_name: esc_frontend
+    restart: unless-stopped
+    depends_on:
+      app:
+        condition: service_healthy
+    environment:
+      NODE_ENV: development
+      NEXT_TELEMETRY_DISABLED: "1"
+      NEXT_PUBLIC_API_BASE_URL: http://app
+    ports:
+      - "127.0.0.1:3001:3000"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:3000/es/login').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 60s
+    volumes:
+      - ../energia_solar_canarias_frontend:/app
+      - /app/node_modules
+      - /app/.next
     networks:
       - esc_net
 
@@ -65,24 +144,71 @@ services:
   # para que los tokens no caduquen nunca mientras el stack este arriba.
   # ---------------------------------------------------------------------------
   token-refresher:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    <<: *cron
     container_name: esc_token_refresher
-    restart: unless-stopped
-    depends_on:
-      mysql:
-        condition: service_healthy
-    working_dir: /var/www/html
-    environment:
-      TZ: Atlantic/Canary
-    volumes:
-      - ./:/var/www/html
-      - /var/www/html/vendor
     entrypoint:
       - sh
       - -c
       - "while true; do php app/cron/cron_refresh_tokens_proveedores.php; sleep 21600; done"
+
+  # ---------------------------------------------------------------------------
+  # Avisos de alertas por correo: como en produccion (crontab del VPS, cada 10
+  # min). En local los correos llegan a Mailpit y solo a quien los haya pedido
+  # en Ajustes (son opt-in).
+  # ---------------------------------------------------------------------------
+  avisos-alertas:
+    <<: *cron
+    container_name: esc_avisos_alertas
+    entrypoint:
+      - sh
+      - -c
+      - "sleep 60; while true; do php app/cron/cron_avisos_alertas.php; sleep 600; done"
+
+  # ---------------------------------------------------------------------------
+  # Sincronizacion diaria con Zoho (en produccion, cada dia a las 00:00). Solo
+  # con el perfil "zoho": `docker compose --profile zoho up -d`. Con
+  # ZOHO_DESACTIVADO=1 (por defecto en local) no llega a hablar con el CRM.
+  # ---------------------------------------------------------------------------
+  zoho-sync:
+    <<: *cron
+    container_name: esc_zoho_sync
+    profiles: ["zoho"]
+    # Aqui NO hay valor por defecto: para sincronizar con el CRM real hay que decirlo
+    # explicitamente (ZOHO_DESACTIVADO=0). Si no, el contenedor se niega a arrancar el
+    # cron y lo deja escrito en el log, en vez de no sincronizar en silencio.
+    environment:
+      TZ: Atlantic/Canary
+      FRONTEND_URL: http://localhost:3001
+      BACKEND_URL: http://localhost:8080
+      ZOHO_DESACTIVADO: ${ZOHO_DESACTIVADO:-}
+    entrypoint:
+      - sh
+      - -c
+      - |
+        if [ "$$ZOHO_DESACTIVADO" != "0" ]; then
+          echo "zoho-sync: NO se sincroniza. Define ZOHO_DESACTIVADO=0 para conectar con el CRM real." >&2
+          sleep infinity
+        fi
+        while true; do php app/cron/cron_llamar_endpoint_zoho.php; sleep 86400; done
+
+  # ---------------------------------------------------------------------------
+  # Mailpit: buzon de correo de desarrollo (http://localhost:8025). Recoge todo lo
+  # que envia el backend en local (enlaces de acceso, avisos...) y no lo reenvia
+  # a nadie. Es la forma de entrar en la app en local: el login es por enlace
+  # magico y el enlace solo existe en el correo.
+  # ---------------------------------------------------------------------------
+  mailpit:
+    image: axllent/mailpit:v1.27.0
+    container_name: esc_mailpit
+    restart: unless-stopped
+    environment:
+      # Acepta cualquier usuario/contraseña y sin TLS: el backend se autentica
+      # siempre (SMTPAuth) y aqui no hay nada que proteger.
+      MP_SMTP_AUTH_ACCEPT_ANY: "1"
+      MP_SMTP_AUTH_ALLOW_INSECURE: "1"
+      TZ: Atlantic/Canary
+    ports:
+      - "8025:8025"
     networks:
       - esc_net
 
@@ -90,7 +216,8 @@ services:
   # phpMyAdmin: gestion de la BD por navegador (http://localhost:8081)
   # ---------------------------------------------------------------------------
   phpmyadmin:
-    image: phpmyadmin:latest
+    # Version fija (Dependabot la sube): `latest` cambiaba sin avisar.
+    image: phpmyadmin:5.2.3
     container_name: esc_phpmyadmin
     restart: unless-stopped
     depends_on:

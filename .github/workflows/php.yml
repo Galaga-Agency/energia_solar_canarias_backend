@@ -1,9 +1,9 @@
 name: CI/CD
 
-# Tests en cada push/PR a main. Despliegue SOLO en push a main y SOLO si los tests pasan.
+# CI en cada rama y PR a main. Despliegue SOLO en push a main y SOLO si los tests pasan.
 on:
   push:
-    branches: [main]
+    branches: ["**"]
   pull_request:
     branches: [main]
 
@@ -32,7 +32,7 @@ jobs:
     # (solo actions/checkout, que si esta permitida) y ademas fijamos exactamente la
     # misma version que produccion (el contenedor de deploy es php:8.2-apache).
     container:
-      image: php:8.2-cli
+      image: php:8.2.35-cli
     steps:
       - uses: actions/checkout@v7
 
@@ -57,14 +57,31 @@ jobs:
       - name: Auditoria de dependencias
         run: composer audit --no-interaction
 
-      # ISO A.8.28: analisis estatico. INFORMATIVO de momento (no rompe el build)
-      # hasta generar el baseline; ver phpstan.neon.dist para gatearlo del todo.
+      # ISO A.8.28: analisis estatico. ROMPE el build: los avisos que ya habia
+      # estan en phpstan-baseline.neon y solo fallan los nuevos.
       - name: Analisis estatico (PHPStan)
-        continue-on-error: true
-        run: vendor/bin/phpstan analyse --no-progress --error-format=github
+        run: vendor/bin/phpstan analyse --no-progress --memory-limit=1G --error-format=github
 
       - name: Ejecutar PHPUnit
         run: vendor/bin/phpunit --configuration phpunit.xml
+
+  # ---------------------------------------------------------------------------
+  # VERSION — VERSION tiene que ser SemVer y tener su entrada en CHANGELOG.md.
+  # Asi el tag que se publique despues (release.yml) siempre tiene notas.
+  # ---------------------------------------------------------------------------
+  version:
+    name: Version y changelog
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Comprobar VERSION y CHANGELOG
+        run: |
+          set -euo pipefail
+          v=$(tr -d '[:space:]' < VERSION)
+          echo "VERSION = $v"
+          echo "$v" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$' || { echo "::error file=VERSION::'$v' no es SemVer (X.Y.Z)"; exit 1; }
+          grep -q "^## \[$v\]" CHANGELOG.md || { echo "::error file=CHANGELOG.md::falta la seccion '## [$v]'"; exit 1; }
 
   # ---------------------------------------------------------------------------
   # SECRETOS — gitleaks escanea el arbol en cada push/PR. Si encuentra una
@@ -94,7 +111,7 @@ jobs:
   # ---------------------------------------------------------------------------
   deploy:
     name: Deploy (self-hosted)
-    needs: [test, secrets]
+    needs: [test, secrets, version]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: self-hosted
     steps:
@@ -144,3 +161,6 @@ jobs:
           fi
           # 3) Zoho tiene que llegar a $_ENV (el fix EGPCS)
           docker exec esc_backend php -r 'exit(isset($_ENV["ZOHO_REFRESH_TOKEN"]) ? 0 : 1);'
+          # 4) y Zoho NO puede estar desactivado en produccion (ZOHO_DESACTIVADO es
+          #    solo para local y pruebas: con el puesto, el CRM deja de sincronizarse).
+          docker exec esc_backend php -r '$v = getenv("ZOHO_DESACTIVADO") ?: ($_ENV["ZOHO_DESACTIVADO"] ?? ""); exit(in_array(strtolower(trim($v)), ["1","true","si","sí","yes"], true) ? 1 : 0);'

@@ -1,13 +1,7 @@
 # PHPStan — analisis estatico. Cubre ISO 27001:2022 A.8.28 (codificacion segura).
 #
-# ADOPCION GRADUAL en codigo existente:
-#   1. En CI arranca en modo INFORMATIVO (continue-on-error), no rompe el build.
-#   2. Cuando quieras GATEARLO de verdad, genera el baseline una vez:
-#        composer install
-#        vendor/bin/phpstan analyse --generate-baseline
-#      eso crea phpstan-baseline.neon con los avisos ACTUALES (se ignoran),
-#      descomenta el include de abajo, y quita el continue-on-error del workflow.
-#      A partir de ahi solo fallan los problemas NUEVOS.
+# Analisis bloqueante en CI. El baseline conserva solo avisos anteriores; los
+# nuevos errores hacen fallar el workflow y los arreglados se quitan del baseline.
 parameters:
     level: 4
     paths:
@@ -16,5 +10,8 @@ parameters:
     # Los .php de app/pages usan $theme que define index.php al incluirlos:
     # no es un error real, se documenta con /** @var string $theme */ en cada pagina.
 
-# includes:
-#     - phpstan-baseline.neon
+# Baseline generado el 2026-10-15 con los 101 avisos que ya habia: se ignoran
+# esos y fallan solo los NUEVOS. Al arreglar uno, regenera el baseline:
+#   vendor/bin/phpstan analyse --memory-limit=1G --generate-baseline
+includes:
+    - phpstan-baseline.neon

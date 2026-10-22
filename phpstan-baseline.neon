@@ -1,0 +1,420 @@
+parameters:
+	ignoreErrors:
+		-
+			message: '#^Method ClasesDB\:\:getClases\(\) should return array but returns false\.$#'
+			identifier: return.type
+			count: 1
+			path: app/DBObjects/clasesDB.php
+
+		-
+			message: '#^PHPDoc tag @param references unknown parameter\: \$idPlanta$#'
+			identifier: parameter.notFound
+			count: 1
+			path: app/DBObjects/clasesDB.php
+
+		-
+			message: '#^PHPDoc tag @param references unknown parameter\: \$idUsuario$#'
+			identifier: parameter.notFound
+			count: 1
+			path: app/DBObjects/clasesDB.php
+
+		-
+			message: '#^PHPDoc tag @param references unknown parameter\: \$proveedor$#'
+			identifier: parameter.notFound
+			count: 1
+			path: app/DBObjects/clasesDB.php
+
+		-
+			message: '#^Property ClasesDB\:\:\$conexion is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: app/DBObjects/clasesDB.php
+
+		-
+			message: '#^Unreachable statement \- code above always terminates\.$#'
+			identifier: deadCode.unreachable
+			count: 1
+			path: app/DBObjects/clasesDB.php
+
+		-
+			message: '#^Property LogsDB\:\:\$conexion is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: app/DBObjects/logsDB.php
+
+		-
+			message: '#^Method PlantasAsociadasDB\:\:getPlantasAsociadasAlUsuario\(\) should return array but returns false\.$#'
+			identifier: return.type
+			count: 1
+			path: app/DBObjects/plantasAsociadasDB.php
+
+		-
+			message: '#^PHPDoc tag @param references unknown parameter\: \$idPlanta$#'
+			identifier: parameter.notFound
+			count: 1
+			path: app/DBObjects/plantasAsociadasDB.php
+
+		-
+			message: '#^PHPDoc tag @param references unknown parameter\: \$proveedor$#'
+			identifier: parameter.notFound
+			count: 1
+			path: app/DBObjects/plantasAsociadasDB.php
+
+		-
+			message: '#^Property PlantasAsociadasDB\:\:\$conexion is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: app/DBObjects/plantasAsociadasDB.php
+
+		-
+			message: '#^Unreachable statement \- code above always terminates\.$#'
+			identifier: deadCode.unreachable
+			count: 1
+			path: app/DBObjects/plantasAsociadasDB.php
+
+		-
+			message: '#^Class Token referenced with incorrect case\: token\.$#'
+			identifier: class.nameCase
+			count: 2
+			path: app/DBObjects/proveedoresDB.php
+
+		-
+			message: '#^Method ProveedoresDB\:\:getTodosProveedores\(\) should return array but returns false\.$#'
+			identifier: return.type
+			count: 1
+			path: app/DBObjects/proveedoresDB.php
+
+		-
+			message: '#^Method ProveedoresDB\:\:getTokenProveedor\(\) should return Token but returns false\.$#'
+			identifier: return.type
+			count: 2
+			path: app/DBObjects/proveedoresDB.php
+
+		-
+			message: '#^Method ProveedoresDB\:\:verificarTokenProveedor\(\) should return Token but returns false\.$#'
+			identifier: return.type
+			count: 2
+			path: app/DBObjects/proveedoresDB.php
+
+		-
+			message: '#^Property ProveedoresDB\:\:\$conexion is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: app/DBObjects/proveedoresDB.php
+
+		-
+			message: '#^Unreachable statement \- code above always terminates\.$#'
+			identifier: deadCode.unreachable
+			count: 2
+			path: app/DBObjects/proveedoresDB.php
+
+		-
+			message: '#^Method UsuariosDB\:\:deleteUserImage\(\) should return string\|null but returns false\.$#'
+			identifier: return.type
+			count: 1
+			path: app/DBObjects/usuariosDB.php
+
+		-
+			message: '#^Method UsuariosDB\:\:getUserImage\(\) should return string\|null but returns false\.$#'
+			identifier: return.type
+			count: 1
+			path: app/DBObjects/usuariosDB.php
+
+		-
+			message: '#^Method UsuariosDB\:\:putUserPassword\(\) should return bool but returns null\.$#'
+			identifier: return.type
+			count: 1
+			path: app/DBObjects/usuariosDB.php
+
+		-
+			message: '#^Method UsuariosDB\:\:verificarEstadoUsuario\(\) should return bool but returns null\.$#'
+			identifier: return.type
+			count: 1
+			path: app/DBObjects/usuariosDB.php
+
+		-
+			message: '#^PHPDoc tag @param references unknown parameter\: \$email$#'
+			identifier: parameter.notFound
+			count: 1
+			path: app/DBObjects/usuariosDB.php
+
+		-
+			message: '#^PHPDoc tag @param references unknown parameter\: \$id$#'
+			identifier: parameter.notFound
+			count: 2
+			path: app/DBObjects/usuariosDB.php
+
+		-
+			message: '#^PHPDoc tag @param references unknown parameter\: \$proveedor$#'
+			identifier: parameter.notFound
+			count: 2
+			path: app/DBObjects/usuariosDB.php
+
+		-
+			message: '#^Strict comparison using \!\=\= between int and null will always evaluate to true\.$#'
+			identifier: notIdentical.alwaysTrue
+			count: 3
+			path: app/DBObjects/usuariosDB.php
+
+		-
+			message: '#^Strict comparison using \=\=\= between int and null will always evaluate to false\.$#'
+			identifier: identical.alwaysFalse
+			count: 1
+			path: app/DBObjects/usuariosDB.php
+
+		-
+			message: '#^Unreachable statement \- code above always terminates\.$#'
+			identifier: deadCode.unreachable
+			count: 1
+			path: app/DBObjects/usuariosDB.php
+
+		-
+			message: '#^PHPDoc tag @param references unknown parameter\: \$powerStationId$#'
+			identifier: parameter.notFound
+			count: 3
+			path: app/controllers/GoodWeController.php
+
+		-
+			message: '#^Unreachable statement \- code above always terminates\.$#'
+			identifier: deadCode.unreachable
+			count: 1
+			path: app/controllers/SolarEdgeController.php
+
+		-
+			message: '#^Property UsuariosController\:\:\$usuarios is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: app/controllers/usuarios.php
+
+		-
+			message: '#^Variable \$conn might not be defined\.$#'
+			identifier: variable.undefined
+			count: 2
+			path: app/controllers/usuarios.php
+
+		-
+			message: '#^Variable \$logsController might not be defined\.$#'
+			identifier: variable.undefined
+			count: 1
+			path: app/controllers/usuarios.php
+
+		-
+			message: '#^Call to function is_array\(\) with array will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: app/cron/cron_avisos_alertas.php
+
+		-
+			message: '#^Offset ''mensaje'' on array\{alerta_id\: non\-empty\-string, proveedor\: string, severidad\: ''critical''\|''info''\|''warning'', mensaje\: string, planta_nombre\: string\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/cron/cron_avisos_alertas.php
+
+		-
+			message: '#^Offset ''planta_nombre'' on array\{alerta_id\: non\-empty\-string, proveedor\: string, severidad\: ''critical''\|''info''\|''warning'', mensaje\: string, planta_nombre\: string\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/cron/cron_avisos_alertas.php
+
+		-
+			message: '#^Offset ''severidad'' on array\{alerta_id\: non\-empty\-string, proveedor\: string, severidad\: ''critical''\|''info''\|''warning'', mensaje\: string, planta_nombre\: string\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/cron/cron_avisos_alertas.php
+
+		-
+			message: '#^Call to function is_array\(\) with array will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: app/middlewares/autenticacion.php
+
+		-
+			message: '#^If condition is always true\.$#'
+			identifier: if.alwaysTrue
+			count: 1
+			path: app/middlewares/autenticacion.php
+
+		-
+			message: '#^Unreachable statement \- code above always terminates\.$#'
+			identifier: deadCode.unreachable
+			count: 1
+			path: app/middlewares/autenticacion.php
+
+		-
+			message: '#^Variable \$resultado might not be defined\.$#'
+			identifier: variable.undefined
+			count: 1
+			path: app/middlewares/autenticacion.php
+
+		-
+			message: '#^Property GoodWe\:\:\$proveedoresController is unused\.$#'
+			identifier: property.unused
+			count: 1
+			path: app/models/GoodWe.php
+
+		-
+			message: '#^Instanceof between mysqli and mysqli will always evaluate to true\.$#'
+			identifier: instanceof.alwaysTrue
+			count: 1
+			path: app/models/conexion.php
+
+		-
+			message: '#^Negated boolean expression is always true\.$#'
+			identifier: booleanNot.alwaysTrue
+			count: 1
+			path: app/models/conexion.php
+
+		-
+			message: '#^Result of \|\| is always true\.$#'
+			identifier: booleanOr.alwaysTrue
+			count: 1
+			path: app/models/conexion.php
+
+		-
+			message: '#^Property InsertToken\:\:\$conexion is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: app/models/insert_token.php
+
+		-
+			message: '#^Property InsertToken\:\:\$dataUsuario is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: app/models/insert_token.php
+
+		-
+			message: '#^Property InsertToken\:\:\$table is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: app/models/insert_token.php
+
+		-
+			message: '#^Unreachable statement \- code above always terminates\.$#'
+			identifier: deadCode.unreachable
+			count: 1
+			path: app/models/insert_token.php
+
+		-
+			message: '#^Property Login\:\:\$conexion is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: app/models/login.php
+
+		-
+			message: '#^Property Login\:\:\$table is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: app/models/login.php
+
+		-
+			message: '#^Variable \$conexion might not be defined\.$#'
+			identifier: variable.undefined
+			count: 1
+			path: app/models/login.php
+
+		-
+			message: '#^Offset ''DELETE''\|''GET''\|''POST''\|''PUT'' on array\{GET\: ''text\-green\-500'', POST\: ''text\-yellow\-500'', PUT\: ''text\-blue\-500'', DELETE\: ''text\-red\-500''\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/pages/endpoints-verificados.php
+
+		-
+			message: '#^Loose comparison using \=\= between non\-empty\-string and '''' will always evaluate to false\.$#'
+			identifier: equal.alwaysFalse
+			count: 1
+			path: app/routers/rutas.php
+		-
+			message: '#^Negated boolean expression is always false\.$#'
+			identifier: booleanNot.alwaysFalse
+			count: 1
+			path: app/routers/rutas.php
+
+		-
+			message: '#^Offset ''idApp'' on non\-empty\-array\<mixed\> in isset\(\) always exists and is not nullable\.$#'
+			identifier: isset.offset
+			count: 1
+			path: app/routers/rutas.php
+
+		-
+			message: '#^Offset 1 on array\{non\-falsy\-string, non\-empty\-string\} in isset\(\) always exists and is not nullable\.$#'
+			identifier: isset.offset
+			count: 1
+			path: app/routers/rutas.php
+
+		-
+			message: '#^Offset 1 on array\{non\-falsy\-string, numeric\-string\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/routers/rutas.php
+
+		-
+			message: '#^Offset ''ps_id'' on non\-empty\-array\<mixed\> on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/services/ApiControladorService.php
+
+		-
+			message: '#^Offset ''systemId'' on non\-empty\-array\<mixed, mixed\> on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 2
+			path: app/services/ApiControladorService.php
+
+		-
+			message: '#^Offset ''systemId'' on non\-empty\-array\<mixed\> on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 2
+			path: app/services/ApiControladorService.php
+
+		-
+			message: '#^Strict comparison using \!\=\= between mixed and null will always evaluate to true\.$#'
+			identifier: notIdentical.alwaysTrue
+			count: 3
+			path: app/services/ApiControladorService.php
+
+		-
+			message: '#^Undefined variable\: \$usuarioId$#'
+			identifier: variable.undefined
+			count: 4
+			path: app/services/MagicLinkService.php
+
+		-
+			message: '#^Strict comparison using \!\=\= between int and false will always evaluate to true\.$#'
+			identifier: notIdentical.alwaysTrue
+			count: 1
+			path: app/services/SigenergyService.php
+
+		-
+			message: '#^If condition is always true\.$#'
+			identifier: if.alwaysTrue
+			count: 1
+			path: app/services/SungrowService.php
+
+		-
+			message: '#^Method SungrowService\:\:localizarInversor\(\) is unused\.$#'
+			identifier: method.unused
+			count: 1
+			path: app/services/SungrowService.php
+
+		-
+			message: '#^Method SungrowService\:\:serieDiariaIntegrada\(\) is unused\.$#'
+			identifier: method.unused
+			count: 1
+			path: app/services/SungrowService.php
+
+		-
+			message: '#^Method SungrowService\:\:stampToIso\(\) is unused\.$#'
+			identifier: method.unused
+			count: 1
+			path: app/services/SungrowService.php
+
+		-
+			message: '#^Strict comparison using \!\=\= between mixed and null will always evaluate to true\.$#'
+			identifier: notIdentical.alwaysTrue
+			count: 3
+			path: app/services/SungrowService.php
+
+		-
+			message: '#^Dead catch \- Throwable is never thrown in the try block\.$#'
+			identifier: catch.neverThrown
+			count: 1
+			path: app/utils/imagenes.php
